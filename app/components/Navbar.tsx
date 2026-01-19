@@ -91,8 +91,8 @@ export default function Navbar() {
             <Link href="/properties" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Properties
             </Link>
-            <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
-              Pricing
+            <Link href="/auth/signup" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+              Create Account
             </Link>
           </div>
 
