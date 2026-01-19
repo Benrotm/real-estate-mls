@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { MOCK_PROPERTIES } from '../app/lib/properties.ts';
+import { MOCK_PROPERTIES } from '../app/lib/properties';
 import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
