@@ -130,73 +130,105 @@ export default function PricingPage() {
 
     const currentPlans = plans[userType];
 
+    const selectorStyles = {
+        owner: {
+            text: 'text-cyan-500/20',
+            stroke: '#22d3ee',
+            shadow: 'rgba(34, 211, 238, 0.5)',
+            border: 'border-cyan-500/30'
+        },
+        client: {
+            text: 'text-rose-500/20',
+            stroke: '#fb7185',
+            shadow: 'rgba(251, 113, 133, 0.5)',
+            border: 'border-rose-500/30'
+        },
+        agent: {
+            text: 'text-emerald-500/20',
+            stroke: '#34d399',
+            shadow: 'rgba(52, 211, 153, 0.5)',
+            border: 'border-emerald-500/30'
+        },
+        developer: {
+            text: 'text-fuchsia-500/20',
+            stroke: '#e879f9',
+            shadow: 'rgba(232, 121, 249, 0.5)',
+            border: 'border-fuchsia-500/30'
+        }
+    };
+    const currentStyle = selectorStyles[userType];
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-20 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="text-center mb-16">
+                <div className="text-center mb-8">
                     <div className="inline-block mb-4 px-5 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold uppercase tracking-wider shadow-xl shadow-cyan-500/50">
                         <span className="mr-1">⭐</span> Flexible Plans
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-6" style={{ textShadow: '0 0 40px rgba(0,0,0,0.8)' }}>Choose Your Plan</h1>
                     <p className="text-xl text-gray-100 max-w-2xl mx-auto font-medium" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
                         Select the perfect plan for your needs. Upgrade or downgrade anytime.
                     </p>
                 </div>
 
                 {/* Role Selector */}
-                <div className="bg-slate-800 p-2 rounded-2xl shadow-2xl border-2 border-cyan-500/30 max-w-5xl mx-auto mb-12 flex flex-col md:flex-row gap-2">
-                    <button
-                        onClick={() => setUserType('owner')}
-                        className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'owner' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
-                    >
-                        <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
-                            <Building className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <div className={`font-bold ${userType === 'owner' ? 'text-cyan-300' : 'text-gray-300'}`}>Property Owner</div>
-                            <div className="text-xs text-gray-400">List your properties</div>
-                        </div>
-                    </button>
+                <div className={`bg-slate-800 p-2 rounded-2xl shadow-2xl border-2 ${currentStyle.border} max-w-5xl mx-auto mb-12 flex flex-col gap-6 transition-colors duration-300`}>
+                    <h1 className={`text-4xl md:text-5xl font-bold ${currentStyle.text} mb-2 drop-shadow-2xl text-center mt-4 transition-all duration-300`} style={{ WebkitTextStroke: `1px ${currentStyle.stroke}`, textShadow: `0 0 20px ${currentStyle.shadow}` }}>
+                        I am...
+                    </h1>
+                    <div className="flex flex-col md:flex-row gap-2">
+                        <button
+                            onClick={() => setUserType('owner')}
+                            className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'owner' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
+                        >
+                            <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
+                                <Building className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className={`font-bold ${userType === 'owner' ? 'text-cyan-300' : 'text-gray-300'}`}>Property Owner</div>
+                                <div className="text-xs text-gray-400">List your properties</div>
+                            </div>
+                        </button>
 
-                    <button
-                        onClick={() => setUserType('client')}
-                        className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'client' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
-                    >
-                        <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
-                            <Users className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <div className={`font-bold ${userType === 'client' ? 'text-cyan-300' : 'text-gray-300'}`}>Client</div>
-                            <div className="text-xs text-gray-400">Browse and find properties</div>
-                        </div>
-                    </button>
+                        <button
+                            onClick={() => setUserType('client')}
+                            className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'client' ? 'border-rose-400 bg-rose-500/20' : 'border-transparent hover:bg-slate-700'}`}
+                        >
+                            <div className="p-3 rounded-lg bg-gradient-to-br from-amber-400 to-rose-500 text-white shadow-lg shadow-rose-500/50">
+                                <Users className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className={`font-bold ${userType === 'client' ? 'text-rose-300' : 'text-gray-300'}`}>Client</div>
+                                <div className="text-xs text-gray-400">Browse and find properties</div>
+                            </div>
+                        </button>
 
-                    <button
-                        onClick={() => setUserType('agent')}
-                        className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'agent' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
-                    >
-                        <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
-                            <Briefcase className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <div className={`font-bold ${userType === 'agent' ? 'text-cyan-300' : 'text-gray-300'}`}>Real Estate Agent</div>
-                            <div className="text-xs text-gray-400">Manage multiple listings</div>
-                        </div>
-                    </button>
+                        <button
+                            onClick={() => setUserType('agent')}
+                            className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'agent' ? 'border-emerald-400 bg-emerald-500/20' : 'border-transparent hover:bg-slate-700'}`}
+                        >
+                            <div className="p-3 rounded-lg bg-gradient-to-br from-emerald-400 to-green-600 text-white shadow-lg shadow-emerald-500/50">
+                                <Briefcase className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className={`font-bold ${userType === 'agent' ? 'text-emerald-300' : 'text-gray-300'}`}>Real Estate Agent</div>
+                                <div className="text-xs text-gray-400">Manage multiple listings</div>
+                            </div>
+                        </button>
 
-                    <button
-                        onClick={() => setUserType('developer')}
-                        className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'developer' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
-                    >
-                        <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
-                            <Building className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <div className={`font-bold ${userType === 'developer' ? 'text-cyan-300' : 'text-gray-300'}`}>RE Developer</div>
-                            <div className="text-xs text-gray-400">Large projects & scale</div>
-                        </div>
-                    </button>
+                        <button
+                            onClick={() => setUserType('developer')}
+                            className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'developer' ? 'border-fuchsia-400 bg-fuchsia-500/20' : 'border-transparent hover:bg-slate-700'}`}
+                        >
+                            <div className="p-3 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-fuchsia-500/50">
+                                <Building className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className={`font-bold ${userType === 'developer' ? 'text-fuchsia-300' : 'text-gray-300'}`}>RE Developer</div>
+                                <div className="text-xs text-gray-400">Large projects & scale</div>
+                            </div>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Banner */}
