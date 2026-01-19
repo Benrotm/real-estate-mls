@@ -18,7 +18,7 @@ export default function Home() {
         <div className="-mt-16 relative z-20 space-y-6">
           <RoleSelector mode="navigation" />
           <div className="flex justify-center">
-            <HomeValuationWidget />
+            <HomeValuationWidget variant="home" />
           </div>
         </div>
       </div>
