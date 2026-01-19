@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../context/LanguageContext';
-import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield } from 'lucide-react';
+import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X } from 'lucide-react';
 import { SERVICES } from '../lib/services';
 
 export default function Navbar() {
@@ -14,7 +14,8 @@ export default function Navbar() {
   const { language, setLanguage } = useLanguage();
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // NEW state
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const languages = [
     { code: 'en', label: 'English', flag: '🇺🇸' },
@@ -91,7 +92,7 @@ export default function Navbar() {
             <Link href="/properties" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Properties
             </Link>
-            <Link href="/auth/signup" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+            <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Create Account
             </Link>
           </div>
@@ -218,12 +219,45 @@ export default function Navbar() {
             )}
 
             {/* Mobile Menu Button */}
-            <button className="md:hidden p-2 hover:bg-cyan-500/20 rounded-md text-white">
-              <Menu className="w-6 h-6" />
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 hover:bg-cyan-500/20 rounded-md text-white"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-slate-900 border-b border-white/10 animate-in slide-in-from-top-4 duration-200">
+          <div className="px-4 py-4 space-y-2">
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
+              Home
+            </Link>
+            <div className="space-y-1">
+              <div className="px-3 py-2 text-base font-medium text-gray-400 uppercase text-xs tracking-wider">Services</div>
+              {SERVICES.map((service) => (
+                <Link
+                  key={service.slug}
+                  href={`/services/${service.slug}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-3 py-2 pl-6 rounded-md text-sm font-medium text-gray-300 hover:text-cyan-300 hover:bg-white/5"
+                >
+                  {service.title}
+                </Link>
+              ))}
+            </div>
+            <Link href="/properties" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
+              Properties
+            </Link>
+            <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
+              Create Account
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

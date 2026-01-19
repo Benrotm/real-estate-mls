@@ -150,7 +150,7 @@ export default function PricingPage() {
                         onClick={() => setUserType('owner')}
                         className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'owner' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
                     >
-                        <div className={`p-3 rounded-lg ${userType === 'owner' ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50' : 'bg-slate-700 text-gray-400'}`}>
+                        <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
                             <Building className="w-6 h-6" />
                         </div>
                         <div>
@@ -163,7 +163,7 @@ export default function PricingPage() {
                         onClick={() => setUserType('client')}
                         className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'client' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
                     >
-                        <div className={`p-3 rounded-lg ${userType === 'client' ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50' : 'bg-slate-700 text-gray-400'}`}>
+                        <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
                             <Users className="w-6 h-6" />
                         </div>
                         <div>
@@ -176,7 +176,7 @@ export default function PricingPage() {
                         onClick={() => setUserType('agent')}
                         className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'agent' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
                     >
-                        <div className={`p-3 rounded-lg ${userType === 'agent' ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50' : 'bg-slate-700 text-gray-400'}`}>
+                        <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
                             <Briefcase className="w-6 h-6" />
                         </div>
                         <div>
@@ -189,7 +189,7 @@ export default function PricingPage() {
                         onClick={() => setUserType('developer')}
                         className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'developer' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
                     >
-                        <div className={`p-3 rounded-lg ${userType === 'developer' ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50' : 'bg-slate-700 text-gray-400'}`}>
+                        <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
                             <Building className="w-6 h-6" />
                         </div>
                         <div>
@@ -218,7 +218,7 @@ export default function PricingPage() {
                                 </div>
                             )}
 
-                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 mx-auto transition-transform group-hover:scale-110 duration-300 ${plan.popular ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30' : 'bg-slate-700 text-cyan-400'}`}>
+                            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 mx-auto transition-transform group-hover:scale-110 duration-300 bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30">
                                 {plan.icon}
                             </div>
 
