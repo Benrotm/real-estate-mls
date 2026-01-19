@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Building, Check, Eye, Clock, ArrowUpRight, Plus, BarChart, TrendingUp, MessageSquare } from 'lucide-react';
+import HomeValuationWidget from '../../components/HomeValuationWidget';
 
 export default function OwnerDashboard() {
     return (
@@ -36,7 +37,7 @@ export default function OwnerDashboard() {
                     {/* Card 2 */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <div className="text-sm font-medium text-slate-500 mb-1">Active</div>
+                            <div className="text-sm font-medium text-slate-500 mb-1">Active Clients</div>
                             <div className="text-3xl font-bold text-slate-900">0</div>
                         </div>
                         <div className="w-12 h-12 bg-green-100 text-green-500 rounded-lg flex items-center justify-center">
@@ -58,7 +59,7 @@ export default function OwnerDashboard() {
                     {/* Card 4 */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <div className="text-sm font-medium text-slate-500 mb-1">Pending</div>
+                            <div className="text-sm font-medium text-slate-500 mb-1">Interested</div>
                             <div className="text-3xl font-bold text-slate-900">0</div>
                         </div>
                         <div className="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
@@ -68,20 +69,12 @@ export default function OwnerDashboard() {
                 </div>
 
                 {/* Tools & Insights */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     {/* Valuation Reports */}
-                    <Link href="/dashboard/owner/valuation" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
-                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                            <BarChart className="w-8 h-8" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">Valuation Reports</h3>
-                            <p className="text-slate-500 text-sm">Get AI-powered estimates and detailed market analysis for your properties.</p>
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                            <ArrowUpRight className="w-5 h-5" />
-                        </div>
-                    </Link>
+                    {/* Valuation Reports */}
+                    <div className="h-full">
+                        <HomeValuationWidget linkPath="/dashboard/owner/valuation" />
+                    </div>
 
                     {/* Market Insights */}
                     <Link href="/dashboard/owner/market" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
@@ -90,10 +83,18 @@ export default function OwnerDashboard() {
                         </div>
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">Market Insights</h3>
-                            <p className="text-slate-500 text-sm">Track local trends, price fluctuations, and demand in your area.</p>
+                            <p className="text-slate-500 text-sm">Track local trends.</p>
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors">
-                            <ArrowUpRight className="w-5 h-5" />
+                    </Link>
+
+                    {/* Messages / Chat */}
+                    <Link href="/dashboard/owner/chat" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
+                        <div className="w-16 h-16 bg-green-50 text-green-600 rounded-xl flex items-center justify-center group-hover:bg-green-600 group-hover:text-white transition-colors">
+                            <MessageSquare className="w-8 h-8" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-green-600 transition-colors">Messages</h3>
+                            <p className="text-slate-500 text-sm">Chat with clients.</p>
                         </div>
                     </Link>
                 </div>

@@ -2,12 +2,26 @@ import Hero from "./components/Hero";
 import Link from 'next/link';
 import { ArrowRight, Plus } from 'lucide-react';
 import PropertyCard from "./components/PropertyCard";
+import RoleSelector from "./components/RoleSelector";
+import HomeValuationWidget from "./components/HomeValuationWidget";
 import { MOCK_PROPERTIES } from "./lib/properties"; // Reuse existing mocks if possible, or create local ones for visuals
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+
+      {/* Hero Section */}
       <Hero />
+
+      {/* Role Selection - Quick Action */}
+      <div className="bg-slate-900 pb-16 px-4">
+        <div className="-mt-16 relative z-20 space-y-6">
+          <RoleSelector mode="navigation" />
+          <div className="flex justify-center">
+            <HomeValuationWidget />
+          </div>
+        </div>
+      </div>
 
       {/* Premium Listings Section */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
@@ -71,7 +85,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Ready to sell Your Property?</h2>
           <p className="text-xl text-orange-100 mb-10 max-w-2xl mx-auto">
-            Join thousands of property owners and agents. Get maximum exposure with virtual tours, professional listings, and targeted marketing.
+            Join thousands of property owners, clients and agents on the Imobum.com Real Estate Platform. Get maximum experience with virtual tours or direct contact, AI tools, targeted marketing, market insights, Automatic Price Evaluation feature and professional dashboards with chat between the platform users.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/dashboard/owner" className="bg-orange-800/30 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-800/50 transition-all flex items-center gap-2">
@@ -79,7 +93,7 @@ export default function Home() {
               Create Free Listing
             </Link>
             <Link href="/pricing" className="bg-white text-orange-600 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:scale-105 transition-all">
-              YES
+              Market Price Evaluation for Properties
             </Link>
           </div>
         </div>

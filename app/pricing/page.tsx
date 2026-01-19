@@ -1,10 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Check, X, Building, Users, Briefcase, Zap, Star, ShieldCheck } from 'lucide-react';
+import RoleSelector from '../components/RoleSelector';
 
-export default function PricingPage() {
+function PricingContent() {
+    const searchParams = useSearchParams();
+    const roleParam = searchParams.get('role');
+
     const [userType, setUserType] = useState<'owner' | 'client' | 'agent' | 'developer'>('owner');
+
+    useEffect(() => {
+        if (roleParam && ['owner', 'client', 'agent', 'developer'].includes(roleParam)) {
+            setUserType(roleParam as any);
+        }
+    }, [roleParam]);
+
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
     const toggleBilling = () => setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly');
@@ -172,64 +184,11 @@ export default function PricingPage() {
                 </div>
 
                 {/* Role Selector */}
-                <div className={`bg-slate-800 p-2 rounded-2xl shadow-2xl border-2 ${currentStyle.border} max-w-5xl mx-auto mb-12 flex flex-col gap-6 transition-colors duration-300`}>
-                    <h1 className={`text-4xl md:text-5xl font-bold ${currentStyle.text} mb-2 drop-shadow-2xl text-center mt-4 transition-all duration-300`} style={{ WebkitTextStroke: `1px ${currentStyle.stroke}`, textShadow: `0 0 20px ${currentStyle.shadow}` }}>
-                        I am...
-                    </h1>
-                    <div className="flex flex-col md:flex-row gap-2">
-                        <button
-                            onClick={() => setUserType('owner')}
-                            className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'owner' ? 'border-cyan-400 bg-cyan-500/20' : 'border-transparent hover:bg-slate-700'}`}
-                        >
-                            <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/50">
-                                <Building className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <div className={`font-bold ${userType === 'owner' ? 'text-cyan-300' : 'text-gray-300'}`}>Property Owner</div>
-                                <div className="text-xs text-gray-400">List your properties</div>
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => setUserType('client')}
-                            className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'client' ? 'border-rose-400 bg-rose-500/20' : 'border-transparent hover:bg-slate-700'}`}
-                        >
-                            <div className="p-3 rounded-lg bg-gradient-to-br from-amber-400 to-rose-500 text-white shadow-lg shadow-rose-500/50">
-                                <Users className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <div className={`font-bold ${userType === 'client' ? 'text-rose-300' : 'text-gray-300'}`}>Client</div>
-                                <div className="text-xs text-gray-400">Browse and find properties</div>
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => setUserType('agent')}
-                            className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'agent' ? 'border-emerald-400 bg-emerald-500/20' : 'border-transparent hover:bg-slate-700'}`}
-                        >
-                            <div className="p-3 rounded-lg bg-gradient-to-br from-emerald-400 to-green-600 text-white shadow-lg shadow-emerald-500/50">
-                                <Briefcase className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <div className={`font-bold ${userType === 'agent' ? 'text-emerald-300' : 'text-gray-300'}`}>Real Estate Agent</div>
-                                <div className="text-xs text-gray-400">Manage multiple listings</div>
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => setUserType('developer')}
-                            className={`flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left ${userType === 'developer' ? 'border-fuchsia-400 bg-fuchsia-500/20' : 'border-transparent hover:bg-slate-700'}`}
-                        >
-                            <div className="p-3 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-fuchsia-500/50">
-                                <Building className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <div className={`font-bold ${userType === 'developer' ? 'text-fuchsia-300' : 'text-gray-300'}`}>RE Developer</div>
-                                <div className="text-xs text-gray-400">Large projects & scale</div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
+                <RoleSelector
+                    mode="selection"
+                    selectedRole={userType}
+                    onSelect={setUserType}
+                />
 
                 {/* Banner */}
                 <div className="bg-gradient-to-r from-lime-500/20 to-emerald-500/20 border-2 border-lime-500/30 rounded-xl p-4 flex items-center justify-center gap-2 mb-12 text-lime-200 font-bold max-w-4xl mx-auto shadow-lg">
@@ -329,5 +288,13 @@ export default function PricingPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function PricingPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Loading...</div>}>
+            <PricingContent />
+        </Suspense>
     );
 }

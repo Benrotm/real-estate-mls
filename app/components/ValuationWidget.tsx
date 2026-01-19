@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Property } from '../lib/properties';
 import { calculateValuation, ValuationResult } from '../lib/valuation';
-import { Lock, TrendingUp, Info, CheckCircle, BarChart3, Star, Home, ArrowUpRight } from 'lucide-react';
+import { Lock, TrendingUp, Info, CheckCircle, BarChart3, Star, Home, ArrowUpRight, Sofa, Building, Layers, Search } from 'lucide-react';
 import Link from 'next/link';
 
 interface ValuationWidgetProps {
@@ -123,33 +123,66 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                                 Valuation Factors
                             </h4>
                             <div className="space-y-3">
+                                {/* Base Price */}
                                 <div className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg">
                                     <span className="text-slate-600">Base Market Value</span>
                                     <span className="font-bold text-slate-700">{formatPrice(valuation.factors.basePrice)}</span>
                                 </div>
-                                {valuation.factors.typeAdjustment !== 0 && (
-                                    <div className="flex justify-between items-center text-sm p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
-                                        <span className="text-indigo-700 font-medium flex items-center gap-2">
-                                            <Home className="w-4 h-4" /> Building Type ({property.specs.type})
-                                        </span>
+
+                                {/* New Parameter: Market Comparison */}
+                                <div className="flex justify-between items-center text-sm p-3 bg-cyan-50/50 rounded-lg border border-cyan-100">
+                                    <span className="text-cyan-700 font-medium flex items-center gap-2">
+                                        <Search className="w-4 h-4" /> Market Comparison
+                                    </span>
+                                    <span className={`font-bold ${valuation.factors.marketComparisonPercent > 0 ? 'text-cyan-700' : 'text-orange-500'}`}>
+                                        {valuation.factors.marketComparisonPercent > 0 ? '+' : ''}{valuation.factors.marketComparisonPercent}%
+                                    </span>
+                                </div>
+
+                                {/* Building Type (Enhanced with %) */}
+                                <div className="flex justify-between items-center text-sm p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
+                                    <span className="text-indigo-700 font-medium flex items-center gap-2">
+                                        <Building className="w-4 h-4" /> Building Type ({property.specs.type})
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold px-1.5 py-0.5 bg-white rounded text-indigo-500">{valuation.factors.buildingTypePercent}%</span>
                                         <span className="font-bold text-indigo-700">+{formatPrice(valuation.factors.typeAdjustment)}</span>
                                     </div>
-                                )}
-                                {valuation.factors.floorAdjustment !== 0 && (
-                                    <div className="flex justify-between items-center text-sm p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                                        <span className="text-blue-700 font-medium flex items-center gap-2">
-                                            <ArrowUpRight className="w-4 h-4" /> Floor Level
-                                        </span>
+                                </div>
+
+                                {/* Floor Level (Enhanced with %) */}
+                                <div className="flex justify-between items-center text-sm p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                                    <span className="text-blue-700 font-medium flex items-center gap-2">
+                                        <Layers className="w-4 h-4" /> Floor Level
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold px-1.5 py-0.5 bg-white rounded text-blue-500">{valuation.factors.floorPositionPercent}%</span>
                                         <span className="font-bold text-blue-700">
                                             {valuation.factors.floorAdjustment > 0 ? '+' : ''}{formatPrice(valuation.factors.floorAdjustment)}
                                         </span>
                                     </div>
-                                )}
+                                </div>
+
+                                {/* Premium Features (Previously just Feature Bonus) */}
+                                <div className="flex justify-between items-center text-sm p-3 bg-purple-50/50 rounded-lg border border-purple-100">
+                                    <span className="text-purple-700 font-medium flex items-center gap-2">
+                                        <Star className="w-4 h-4" /> Premium Features
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold px-1.5 py-0.5 bg-white rounded text-purple-500">{valuation.factors.premiumFeaturesPercent}%</span>
+                                        <span className="font-bold text-purple-700">+{formatPrice(valuation.factors.featureBonus)}</span>
+                                    </div>
+                                </div>
+
+                                {/* Interior (Previously combined, now separate item) */}
                                 <div className="flex justify-between items-center text-sm p-3 bg-emerald-50/50 rounded-lg border border-emerald-100">
                                     <span className="text-emerald-700 font-medium flex items-center gap-2">
-                                        <Star className="w-4 h-4" /> Features & Interior
+                                        <Sofa className="w-4 h-4" /> Interior & Furnishing
                                     </span>
-                                    <span className="font-bold text-emerald-700">+{formatPrice(valuation.factors.featureBonus + valuation.factors.interiorBonus)}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold px-1.5 py-0.5 bg-white rounded text-emerald-500">{valuation.factors.interiorFurnishingPercent}%</span>
+                                        <span className="font-bold text-emerald-700">+{formatPrice(valuation.factors.interiorBonus)}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

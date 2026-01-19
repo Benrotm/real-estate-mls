@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building } from 'lucide-react';
 
 export default function DashboardLayout({
     children,
@@ -13,18 +13,28 @@ export default function DashboardLayout({
     const pathname = usePathname();
     const isAgent = pathname.includes('/dashboard/agent');
     const isOwner = pathname.includes('/dashboard/owner');
+    const isDeveloper = pathname.includes('/dashboard/developer');
 
     // Define menu items based on "role" (derived from URL for this demo)
     const menuItems = isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
+        { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
         { name: 'Daily Activities', icon: Calendar, href: '/dashboard/agent/activities' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
+        { name: 'Chat', icon: MessageSquare, href: '/dashboard/agent/chat' },
     ] : isOwner ? [
         { name: 'My Properties', icon: Home, href: '/dashboard/owner' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
         { name: 'Market Insights', icon: Briefcase, href: '/dashboard/owner/market' },
+        { name: 'Chat', icon: MessageSquare, href: '/dashboard/owner/chat' },
+    ] : isDeveloper ? [
+        { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/developer' },
+        { name: 'My Projects', icon: Building, href: '/dashboard/developer/projects' },
+        { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/developer/valuation' },
+        { name: 'Analytics', icon: BarChart2, href: '/dashboard/developer/analytics' },
+        { name: 'Chat', icon: MessageSquare, href: '/dashboard/developer/chat' },
     ] : [
         // Default / Selection View
         { name: 'Choose Role', icon: Users, href: '/dashboard' }
@@ -38,7 +48,7 @@ export default function DashboardLayout({
                     Dashboard
                 </h2>
                 <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
-                    {isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : 'Welcome'}
+                    {isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : 'Welcome'}
                 </p>
             </div>
 

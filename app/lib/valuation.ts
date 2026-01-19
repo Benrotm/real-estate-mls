@@ -12,6 +12,12 @@ export interface ValuationResult {
         floorAdjustment: number;
         featureBonus: number;
         interiorBonus: number;
+        // New fields for UI display (percentages)
+        marketComparisonPercent: number;
+        floorPositionPercent: number;
+        buildingTypePercent: number;
+        premiumFeaturesPercent: number;
+        interiorFurnishingPercent: number;
     };
     comparables: {
         id: number;
@@ -23,47 +29,60 @@ export interface ValuationResult {
 
 export function calculateValuation(property: Property): ValuationResult {
     // 1. Comparative Price (Base)
-    // In a real app, this would use DB queries for similar location/sqft
     const avgSqftPrice = property.location.city === 'Beverly Hills' ? 1200 :
         property.location.city === 'Paris' ? 5000 : // EUR/sqft approx
             600; // Austin/General
 
+    // Market Comparison Logic
+    // Simulate market average being slightly different
+    const marketAvgSqft = avgSqftPrice * (1 + (Math.random() * 0.2 - 0.1)); // +/- 10%
+    const marketComparisonPercent = Math.round(((avgSqftPrice - marketAvgSqft) / marketAvgSqft) * 100);
+
     let basePrice = property.specs.sqft * avgSqftPrice;
 
     // Adjust base if it's wildly off from the listed price (for mock consistency)
-    // We want the valuation to be somewhat realistic relative to the listing
     const marketVariance = Math.random() * 0.1 - 0.05; // +/- 5%
     basePrice = property.price * (1 + marketVariance);
 
     // 2. Type of Building Adjustment
     let typeAdjustment = 0;
+    let buildingTypePercent = 0;
     switch (property.specs.type) {
-        case 'House': typeAdjustment = 1.15; break; // +15% premium
-        case 'Apartment': typeAdjustment = 1.0; break;
-        case 'Commercial': typeAdjustment = 1.10; break;
-        case 'Industrial': typeAdjustment = 0.95; break;
-        case 'Land': typeAdjustment = 0.90; break;
-        case 'Business': typeAdjustment = 1.05; break;
-        default: typeAdjustment = 1.0;
+        case 'House': typeAdjustment = 1.15; buildingTypePercent = 15; break;
+        case 'Apartment': typeAdjustment = 1.0; buildingTypePercent = 0; break;
+        case 'Commercial': typeAdjustment = 1.10; buildingTypePercent = 10; break;
+        case 'Industrial': typeAdjustment = 0.95; buildingTypePercent = -5; break;
+        case 'Land': typeAdjustment = 0.90; buildingTypePercent = -10; break;
+        case 'Business': typeAdjustment = 1.05; buildingTypePercent = 5; break;
+        default: typeAdjustment = 1.0; buildingTypePercent = 0;
     }
     const typeValue = basePrice * (typeAdjustment - 1);
 
     // 3. Floor Adjustment (For Apartments)
     let floorAdjustment = 0;
+    let floorPositionPercent = 0;
     if (property.specs.type === 'Apartment' && property.specs.floor) {
         if (property.specs.floor > 10) {
-            floorAdjustment = property.specs.floor * 1000; // $1k per floor above 10
+            floorAdjustment = property.specs.floor * 1000;
+            floorPositionPercent = Math.min(15, property.specs.floor); // Up to 15%
         } else if (property.specs.floor === 1) {
-            floorAdjustment = -10000; // Ground floor discount
+            floorAdjustment = -10000;
+            floorPositionPercent = -5;
+        } else {
+            floorPositionPercent = 2; // Slight bonus for mid floors
+            floorAdjustment = 2000;
         }
     }
 
     // 4. Interior Design & Features
     const interiorScore = property.specs.interiorRating || 5;
-    const interiorBonus = (interiorScore - 5) * 15000; // $15k per point above average
+    const interiorBonus = (interiorScore - 5) * 15000;
+    // Calculate percentage relative to base price approx, capped reasonable
+    const interiorFurnishingPercent = Math.min(20, Math.max(-10, (interiorScore - 5) * 3));
 
     const featureCount = property.features.length;
-    const featureBonus = featureCount * 5000; // $5k per feature
+    const featureBonus = featureCount * 5000;
+    const premiumFeaturesPercent = Math.min(25, featureCount * 2); // 2% per feature
 
     // Total Calculation
     let estimatedValue = basePrice + floorAdjustment + interiorBonus + featureBonus;
@@ -84,7 +103,12 @@ export function calculateValuation(property: Property): ValuationResult {
             typeAdjustment: typeValue,
             floorAdjustment,
             featureBonus,
-            interiorBonus
+            interiorBonus,
+            marketComparisonPercent,
+            floorPositionPercent,
+            buildingTypePercent,
+            premiumFeaturesPercent,
+            interiorFurnishingPercent
         },
         comparables: [
             { id: 101, address: 'Nearby Property A', price: estimatedValue * 0.98, similarity: 92 },

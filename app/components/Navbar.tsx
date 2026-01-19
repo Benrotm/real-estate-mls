@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../context/LanguageContext';
-import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X } from 'lucide-react';
+import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X, Hammer } from 'lucide-react';
 import { SERVICES } from '../lib/services';
 
 export default function Navbar() {
@@ -44,6 +44,12 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-6">
             <Link href="/" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors flex items-center gap-2">
               Home
+            </Link>
+            <Link href="/properties" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+              Properties
+            </Link>
+            <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+              Create Account
             </Link>
 
             {/* Services Dropdown */}
@@ -88,13 +94,6 @@ export default function Navbar() {
                 </>
               )}
             </div>
-
-            <Link href="/properties" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
-              Properties
-            </Link>
-            <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
-              Create Account
-            </Link>
           </div>
 
           {/* Actions */}
@@ -181,6 +180,9 @@ export default function Navbar() {
                           <Link href="/dashboard/agent" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                             <div className="w-5"><User className="w-4 h-4" /></div> Agent Dashboard
                           </Link>
+                          <Link href="/dashboard/developer" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
+                            <div className="w-5"><Hammer className="w-4 h-4" /></div> Developer Dashboard
+                          </Link>
                           <Link href="/properties" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                             <div className="w-5"><Menu className="w-4 h-4" /></div> My Properties
                           </Link>
@@ -236,6 +238,12 @@ export default function Navbar() {
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
               Home
             </Link>
+            <Link href="/properties" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
+              Properties
+            </Link>
+            <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
+              Create Account
+            </Link>
             <div className="space-y-1">
               <div className="px-3 py-2 text-base font-medium text-gray-400 uppercase text-xs tracking-wider">Services</div>
               {SERVICES.map((service) => (
@@ -249,12 +257,6 @@ export default function Navbar() {
                 </Link>
               ))}
             </div>
-            <Link href="/properties" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
-              Properties
-            </Link>
-            <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
-              Create Account
-            </Link>
           </div>
         </div>
       )}
