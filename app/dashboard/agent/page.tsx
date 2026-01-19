@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bookmark, ArrowUpRight } from 'lucide-react';
+import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bookmark, ArrowUpRight, TrendingUp } from 'lucide-react';
 
 export default function AgentDashboard() {
     return (
@@ -107,7 +107,38 @@ export default function AgentDashboard() {
                     <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl -ml-12 pointer-events-none"></div>
                 </div>
 
-                {/* 3. Main Widgets Grid */}
+                {/* 3. Tools & Insights */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    {/* Valuation Reports */}
+                    <Link href="/dashboard/owner/valuation" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
+                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <BarChart className="w-8 h-8" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">Valuation Reports</h3>
+                            <p className="text-slate-500 text-sm">Get AI-powered estimates and detailed market analysis for your properties.</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                            <ArrowUpRight className="w-5 h-5" />
+                        </div>
+                    </Link>
+
+                    {/* Market Insights */}
+                    <Link href="/dashboard/owner/market" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
+                        <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                            <TrendingUp className="w-8 h-8" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">Market Insights</h3>
+                            <p className="text-slate-500 text-sm">Track local trends, price fluctuations, and demand in your area.</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors">
+                            <ArrowUpRight className="w-5 h-5" />
+                        </div>
+                    </Link>
+                </div>
+
+                {/* 4. Main Widgets Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                     {/* Left Column (2/3 width) */}
