@@ -1,102 +1,206 @@
-import { TrendingUp, Users, Phone, Calendar, DollarSign } from 'lucide-react';
+import Link from 'next/link';
+import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bookmark, ArrowUpRight } from 'lucide-react';
 
 export default function AgentDashboard() {
     return (
-        <div className="space-y-8">
-            <div>
-                <h1 className="text-2xl font-bold mb-2">Agent Overview</h1>
-                <p className="text-foreground/60">Welcome back, Sarah. Here's your performance for today.</p>
-            </div>
-
-            {/* Top KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="p-6 bg-card border border-border rounded-xl shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="bg-primary/10 p-3 rounded-lg text-primary">
-                            <DollarSign className="w-6 h-6" />
+        <div className="min-h-screen bg-gray-50 pb-20">
+            {/* Header Stripe */}
+            <div className="bg-[#1e293b] text-white py-8 px-4 sm:px-6 lg:px-8 mt-16">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div className="flex items-center gap-2 text-orange-400 text-xs font-bold uppercase tracking-wider mb-1">
+                            <Building className="w-3 h-3" /> Agent Dashboard
                         </div>
-                        <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">+12%</span>
+                        <h1 className="text-3xl font-bold">Welcome back, ben.silion</h1>
+                        <p className="text-slate-400 mt-1">Manage your listings and track your performance</p>
                     </div>
-                    <h3 className="text-2xl font-bold">$2.4M</h3>
-                    <p className="text-sm text-foreground/60">Sales Volume (YTD)</p>
-                </div>
 
-                <div className="p-6 bg-card border border-border rounded-xl shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="bg-secondary/10 p-3 rounded-lg text-secondary">
-                            <Users className="w-6 h-6" />
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="relative flex-1 md:w-64">
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                className="w-full bg-white text-slate-900 px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
                         </div>
-                        <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">+5</span>
+                        <Link href="/properties/add" className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-colors whitespace-nowrap text-sm">
+                            <Plus className="w-4 h-4" /> Add Property
+                        </Link>
                     </div>
-                    <h3 className="text-2xl font-bold">142</h3>
-                    <p className="text-sm text-foreground/60">Active Leads</p>
-                </div>
-
-                <div className="p-6 bg-card border border-border rounded-xl shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="bg-blue-500/10 p-3 rounded-lg text-blue-500">
-                            <Phone className="w-6 h-6" />
-                        </div>
-                        <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">-2</span>
-                    </div>
-                    <h3 className="text-2xl font-bold">18/30</h3>
-                    <p className="text-sm text-foreground/60">Daily Calls Goal</p>
-                </div>
-
-                <div className="p-6 bg-card border border-border rounded-xl shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="bg-purple-500/10 p-3 rounded-lg text-purple-500">
-                            <Calendar className="w-6 h-6" />
-                        </div>
-                        <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Today</span>
-                    </div>
-                    <h3 className="text-2xl font-bold">4</h3>
-                    <p className="text-sm text-foreground/60">Appointments Booked</p>
                 </div>
             </div>
 
-            {/* Pipeline & Tasks Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-card border border-border rounded-xl p-6">
-                    <h3 className="text-lg font-bold mb-6">Upcoming Appointments</h3>
-                    <div className="space-y-4">
-                        {[
-                            { time: '10:00 AM', client: 'John Doe', type: 'Viewing', loc: '123 Palm Ave' },
-                            { time: '1:30 PM', client: 'Jane Smith', type: 'Listing Pres', loc: '456 Oak Ln' },
-                            { time: '4:00 PM', client: 'Mike Johnson', type: 'Closing', loc: 'Office' },
-                        ].map((apt, i) => (
-                            <div key={i} className="flex items-center gap-4 p-4 rounded-lg bg-background border border-border">
-                                <div className="w-16 text-center">
-                                    <div className="font-bold text-sm">{apt.time}</div>
-                                </div>
-                                <div className="flex-1">
-                                    <div className="font-bold">{apt.client}</div>
-                                    <div className="text-xs text-foreground/60">{apt.type} • {apt.loc}</div>
-                                </div>
-                                <button className="text-xs bg-primary text-white px-3 py-1 rounded-md">View</button>
-                            </div>
-                        ))}
+            {/* Dashboard Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+
+                {/* 1. Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {/* Active Listings */}
+                    <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div className="text-xs font-medium text-slate-500 mb-1">Active Listings</div>
+                            <div className="text-3xl font-bold text-slate-900">0</div>
+                            <div className="text-xs text-slate-400 mt-1">0 pending</div>
+                        </div>
+                        <div className="w-10 h-10 bg-orange-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/30">
+                            <Building className="w-5 h-5" />
+                        </div>
+                    </div>
+
+                    {/* Total Leads */}
+                    <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div className="text-xs font-medium text-slate-500 mb-1">Total Leads</div>
+                            <div className="text-3xl font-bold text-slate-900">0</div>
+                            <div className="text-xs text-slate-400 mt-1">0 new</div>
+                        </div>
+                        <div className="w-10 h-10 bg-blue-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            <Users className="w-5 h-5" />
+                        </div>
+                    </div>
+
+                    {/* Total Views */}
+                    <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div className="text-xs font-medium text-slate-500 mb-1">Total Views</div>
+                            <div className="text-3xl font-bold text-slate-900">0</div>
+                            <div className="text-xs text-slate-400 mt-1">All listings</div>
+                        </div>
+                        <div className="w-10 h-10 bg-emerald-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                            <Eye className="w-5 h-5" />
+                        </div>
+                    </div>
+
+                    {/* Conversion Rate */}
+                    <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div className="text-xs font-medium text-slate-500 mb-1">Conversion Rate</div>
+                            <div className="text-3xl font-bold text-slate-900">0%</div>
+                            <div className="text-xs text-slate-400 mt-1">0 closed deals</div>
+                        </div>
+                        <div className="w-10 h-10 bg-purple-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
+                            <Target className="w-5 h-5" />
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-card border border-border rounded-xl p-6">
-                    <h3 className="text-lg font-bold mb-6">Recent Activity</h3>
-                    <div className="relative border-l border-border ml-3 space-y-6 pl-6 pb-2">
-                        {[
-                            { text: 'Logged 15 calls for Prospecting', time: '2 hours ago' },
-                            { text: 'Added new listing: Sunset Villa', time: '4 hours ago' },
-                            { text: 'Contract signed with Alice Brown', time: 'Yesterday' },
-                            { text: 'Updated valuation for Penthouse', time: 'Yesterday' },
-                        ].map((act, i) => (
-                            <div key={i} className="relative">
-                                <div className="absolute -left-[29px] top-1 w-3 h-3 bg-secondary rounded-full border-2 border-card"></div>
-                                <div className="text-sm text-foreground/80">{act.text}</div>
-                                <div className="text-xs text-foreground/40">{act.time}</div>
-                            </div>
-                        ))}
+                {/* 2. Portfolio Banner */}
+                <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
+                    <div className="relative z-10">
+                        <div className="text-sm font-medium text-orange-100 mb-1">Active Portfolio Value</div>
+                        <div className="text-4xl font-bold text-white">$0</div>
                     </div>
-                    <button className="w-full mt-4 text-sm text-center text-primary font-medium hover:underline">View All History</button>
+
+                    <div className="flex gap-12 mt-4 md:mt-0 relative z-10 text-center">
+                        <div>
+                            <div className="text-3xl font-bold">0</div>
+                            <div className="text-xs text-orange-100">Total Listings</div>
+                        </div>
+                        <div>
+                            <div className="text-3xl font-bold">0</div>
+                            <div className="text-xs text-orange-100">Leads This Week</div>
+                        </div>
+                    </div>
+
+                    {/* Decorative Circles */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-32 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl -ml-12 pointer-events-none"></div>
                 </div>
+
+                {/* 3. Main Widgets Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    {/* Left Column (2/3 width) */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Recent Inquiries */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[300px]">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="flex items-center gap-2 font-bold text-slate-900">
+                                    <MessageSquare className="w-4 h-4 text-orange-500" /> Recent Inquiries
+                                </h3>
+                                <button className="text-xs font-bold text-slate-500 flex items-center gap-1 hover:text-slate-900 transition-colors">
+                                    View All <ArrowUpRight className="w-3 h-3" />
+                                </button>
+                            </div>
+
+                            <div className="h-64 flex flex-col items-center justify-center text-slate-400">
+                                <MessageSquare className="w-12 h-12 mb-3 opacity-20" />
+                                <div className="text-sm font-medium">No inquiries yet</div>
+                            </div>
+                        </div>
+
+                        {/* My Listings */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[300px]">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="flex items-center gap-2 font-bold text-slate-900">
+                                    <Building className="w-4 h-4 text-orange-500" /> My Listings
+                                </h3>
+                                <button className="text-xs font-bold text-slate-500 flex items-center gap-1 hover:text-slate-900 transition-colors">
+                                    Manage All <ArrowUpRight className="w-3 h-3" />
+                                </button>
+                            </div>
+
+                            <div className="h-64 flex flex-col items-center justify-center">
+                                <Building className="w-12 h-12 mb-3 text-slate-300 opacity-50" />
+                                <div className="text-sm font-medium text-slate-500 mb-6">No properties listed yet</div>
+                                <Link href="/properties/add" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                                    <Plus className="w-4 h-4" /> Add Your First Property
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column (1/3 width) */}
+                    <div className="space-y-8">
+                        {/* Lead Pipeline */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[240px]">
+                            <h3 className="flex items-center gap-2 font-bold text-slate-900 mb-6">
+                                <BarChart className="w-4 h-4 text-orange-500" /> Lead Pipeline
+                            </h3>
+                            <div className="h-40 flex items-center justify-center text-slate-400 text-sm font-medium">
+                                No leads data yet
+                            </div>
+                        </div>
+
+                        {/* Saved Searches */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[240px]">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="flex items-center gap-2 font-bold text-slate-900">
+                                    <Bookmark className="w-4 h-4 text-orange-500" /> Saved Searches
+                                </h3>
+                                <ArrowUpRight className="w-4 h-4 text-slate-400" />
+                            </div>
+
+                            <div className="h-40 flex flex-col items-center justify-center text-center">
+                                <div className="text-sm font-medium text-slate-400 mb-2">No saved searches</div>
+                                <Link href="/properties" className="text-xs font-bold text-orange-500 hover:text-orange-600">
+                                    Browse Properties
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Your Plan */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 className="font-bold text-slate-900 mb-6">Your Plan</h3>
+
+                            <div className="flex flex-col items-center mb-6">
+                                <div className="bg-orange-500 text-white font-bold px-4 py-1.5 rounded-md uppercase text-sm tracking-wide shadow-md mb-3">
+                                    Free
+                                </div>
+                                <p className="text-xs text-slate-500 font-medium">0 / 1 listings used</p>
+                            </div>
+
+                            <div className="w-full bg-slate-100 rounded-full h-1.5 mb-6">
+                                <div className="bg-orange-500 h-1.5 rounded-full w-0"></div>
+                            </div>
+
+                            <button className="w-full border border-slate-200 text-slate-700 font-bold py-2.5 rounded-lg hover:border-slate-400 hover:bg-slate-50 transition-colors text-sm">
+                                Upgrade Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

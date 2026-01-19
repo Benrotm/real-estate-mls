@@ -1,6 +1,6 @@
 import Hero from "./components/Hero";
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 import PropertyCard from "./components/PropertyCard";
 import { MOCK_PROPERTIES } from "./lib/properties"; // Reuse existing mocks if possible, or create local ones for visuals
 
@@ -69,16 +69,17 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl -translate-x-1/3 translate-y-1/3"></div>
 
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Ready to List Your Property?</h2>
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Ready to sell Your Property?</h2>
           <p className="text-xl text-orange-100 mb-10 max-w-2xl mx-auto">
             Join thousands of property owners and agents. Get maximum exposure with virtual tours, professional listings, and targeted marketing.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/pricing" className="bg-white text-orange-600 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:scale-105 transition-all">
-              View Pricing Plans
-            </Link>
-            <Link href="/dashboard/owner" className="bg-orange-800/30 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-800/50 transition-all">
+            <Link href="/dashboard/owner" className="bg-orange-800/30 backdrop-blur border border-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-800/50 transition-all flex items-center gap-2">
+              <Plus className="w-5 h-5" />
               Create Free Listing
+            </Link>
+            <Link href="/pricing" className="bg-white text-orange-600 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:scale-105 transition-all">
+              YES
             </Link>
           </div>
         </div>

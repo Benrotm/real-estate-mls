@@ -1,86 +1,89 @@
 import Link from 'next/link';
-import { Bed, Bath, Expand, MapPin, Building } from 'lucide-react';
-import { Property } from '@/app/lib/properties';
+import Image from 'next/image';
+import { Property } from '../lib/properties';
+import { Bed, Bath, Ruler, MapPin, Heart } from 'lucide-react';
 
-export default function PropertyCard({ property }: { property: Property }) {
-    const formatter = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: property.currency || 'USD',
-        maximumFractionDigits: 0,
-    });
+interface PropertyCardProps {
+    property: Property;
+}
+
+export default function PropertyCard({ property }: PropertyCardProps) {
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: property.currency,
+            maximumFractionDigits: 0,
+        }).format(price) + (property.listingType === 'For Rent' ? '/mo' : '');
+    };
 
     return (
-        <Link href={`/properties/${property.id}`} className="group block h-full">
-            <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300 h-full flex flex-col transform hover:-translate-y-1">
-                {/* Image */}
-                <div className="relative h-64 overflow-hidden">
-                    <img
-                        src={property.images[0]}
-                        alt={property.title}
-                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                    />
+        <div className="group bg-white rounded-xl overflow-hidden border border-slate-100 shadow-[0_0_50px_rgba(0,0,0,0.3)] hover:shadow-none transition-all duration-300 hover:translate-y-1">
+            <div className="relative h-64 w-full overflow-hidden">
+                <Image
+                    src={property.images[0]}
+                    alt={property.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                />
 
-                    {/* Badges */}
-                    <div className="absolute top-4 left-4 flex flex-col gap-2 items-start">
-                        <div className={`backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow-sm ${property.listingType === 'For Rent' ? 'bg-blue-600' : 'bg-emerald-500'}`}>
-                            {property.listingType}
-                        </div>
-                        {property.virtualTourUrl && (
-                            <div className="bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow-sm flex items-center gap-1">
-                                <span>🎥</span> 360°
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="absolute top-4 right-4">
-                        <button className="bg-white p-2 rounded-full shadow-md text-gray-400 hover:text-red-500 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5 4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
-                        </button>
-                    </div>
-
-                    {/* Price Tag Overlay (Optional design choice, but PropList puts it in content usually. Let's keep it clean here and put price in content as per design image 1). */}
-                    {/* Actually image 1 puts price at bottom left. Image 2 puts price at bottom left. */}
+                {/* Badges */}
+                <div className="absolute top-4 left-4">
+                    {property.listingType === 'For Sale' ? (
+                        <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                            For Sale
+                        </span>
+                    ) : (
+                        <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                            For Rent
+                        </span>
+                    )}
                 </div>
 
-                {/* Content */}
-                <div className="p-6 flex-grow flex flex-col">
-                    <div className="mb-4">
-                        <div className="text-xs font-semibold text-primary uppercase tracking-wide mb-1 flex items-center gap-1">
-                            <Building className="w-3 h-3" /> {property.specs.type}
-                        </div>
-                        <h3 className="text-lg font-bold text-secondary group-hover:text-primary transition-colors line-clamp-1 mb-2">{property.title}</h3>
-                        <div className="flex items-center text-sm text-gray-500">
-                            <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                            <span className="truncate">{property.location.city}, {property.location.state}</span>
-                        </div>
+                {property.isFeatured && (
+                    <div className="absolute top-4 right-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                        Featured
                     </div>
+                )}
 
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-6 font-medium">
-                        <div className="flex items-center gap-1.5">
-                            <Bed className="w-4 h-4 text-gray-400" />
-                            <span>{property.specs.beds}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <Bath className="w-4 h-4 text-gray-400" />
-                            <span>{property.specs.baths}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <Expand className="w-4 h-4 text-gray-400" />
-                            <span>{property.specs.sqft} sqft</span>
-                        </div>
-                    </div>
-
-                    <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                        <div>
-                            <span className="text-2xl font-bold text-secondary">{formatter.format(property.price)}</span>
-                            {property.listingType === 'For Rent' && <span className="text-sm text-gray-400 font-medium">/mo</span>}
-                        </div>
-                        <span className="border border-orange-200 text-primary px-4 py-2 rounded-lg text-sm font-bold group-hover:bg-primary group-hover:text-white transition-all">
-                            View Details
-                        </span>
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                    <div className="text-white font-bold text-lg flex items-center justify-between">
+                        <span>{formatPrice(property.price)}</span>
+                        <Heart className="w-5 h-5 hover:fill-red-500 hover:text-red-500 transition-colors cursor-pointer" />
                     </div>
                 </div>
             </div>
-        </Link>
+
+            <div className="p-5">
+                <h3 className="text-lg font-bold text-slate-900 mb-1 line-clamp-1 group-hover:text-violet-600 transition-colors">
+                    {property.title}
+                </h3>
+                <div className="flex items-center text-slate-500 mb-4 text-sm">
+                    <MapPin className="w-4 h-4 mr-1 text-slate-400" />
+                    {property.location.city}, {property.location.state}
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 py-3 border-t border-slate-100">
+                    <div className="flex items-center gap-2 text-slate-700">
+                        <Bed className="w-5 h-5 text-blue-500" />
+                        <span className="font-bold text-sm">{property.specs.beds}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-700">
+                        <Bath className="w-5 h-5 text-blue-500" />
+                        <span className="font-bold text-sm">{property.specs.baths}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-700">
+                        <Ruler className="w-4 h-4 text-blue-500" />
+                        <span className="font-bold text-sm">{property.specs.sqft}</span>
+                    </div>
+                </div>
+
+                <Link
+                    href={`/properties/${property.id}`}
+                    className="block mt-4 w-full text-center bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 hover:shadow-lg transition-all transform active:scale-95"
+                >
+                    View Details
+                </Link>
+            </div>
+        </div>
     );
 }

@@ -196,8 +196,8 @@ export const MOCK_PROPERTIES: Property[] = [
         },
         features: ['Loading Bays', 'High Ceilings', 'Office Space', 'Security'],
         images: [
-            'https://images.unsplash.com/photo-1586528116311-ad86d790d798?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
-            'https://images.unsplash.com/photo-1553413077-190dd305871c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80'
+            'https://images.unsplash.com/photo-1553413077-190dd305871c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
+            'https://images.unsplash.com/photo-1586528116311-ad86d790d798?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80'
         ],
         agent: {
             id: 'a2',
@@ -252,5 +252,215 @@ export const MOCK_PROPERTIES: Property[] = [
             lastUpdated: '2026-01-08'
         },
         isFeatured: false
+    },
+    {
+        id: '6',
+        listingType: 'For Sale',
+        currency: 'USD',
+        title: 'Seaside Retreat',
+        description: 'Exclusive beachfront property with private access to the ocean and panoramic sunset views.',
+        location: {
+            address: '45 Ocean Drive',
+            city: 'Miami',
+            state: 'FL',
+            zip: '33109',
+            lat: 25.7617,
+            lng: -80.1918
+        },
+        price: 7500000,
+        specs: {
+            beds: 5,
+            baths: 6,
+            sqft: 5500,
+            yearBuilt: 2021,
+            type: 'House',
+            stories: 3,
+            interiorRating: 10
+        },
+        features: ['Private Beach', 'Infinity Pool', 'Guest House', 'Outdoor Kitchen'],
+        images: [
+            'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
+            'https://images.unsplash.com/photo-1570129477492-45c003edd2be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80'
+        ],
+        agent: {
+            id: 'a3',
+            name: 'David Sun',
+            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            phone: '(555) 321-7654'
+        },
+        valuation: {
+            estimatedPrice: 7600000,
+            confidence: 90,
+            lastUpdated: '2026-01-18'
+        },
+        isFeatured: true
+    },
+    {
+        id: '7',
+        listingType: 'For Rent',
+        currency: 'USD',
+        title: 'Urban Industrial Loft',
+        description: 'Converted warehouse loft with exposed brick, high ceilings, and modern finishes in the heart of the arts district.',
+        location: {
+            address: '77 Art Street',
+            city: 'Seattle',
+            state: 'WA',
+            zip: '98101',
+            lat: 47.6062,
+            lng: -122.3321
+        },
+        price: 4500,
+        specs: {
+            beds: 1,
+            baths: 2,
+            sqft: 1200,
+            floor: 3,
+            yearBuilt: 1920,
+            type: 'Apartment',
+            interiorRating: 8
+        },
+        features: ['Exposed Brick', 'Smart Lighting', 'Roof Access', 'Pet Friendly'],
+        images: [
+            'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
+            'https://images.unsplash.com/photo-1505691938895-1758d7feb511?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80'
+        ],
+        agent: {
+            id: 'a2',
+            name: 'Michael Estate',
+            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            phone: '(555) 987-6543'
+        },
+        valuation: {
+            estimatedPrice: 4600,
+            confidence: 85,
+            lastUpdated: '2026-01-12'
+        },
+        isFeatured: false
+    },
+    {
+        id: '8',
+        listingType: 'For Sale',
+        currency: 'USD',
+        title: 'Modern Mountain Cabin',
+        description: 'Luxury ski-in/ski-out cabin with panoramic mountain views, hot tub, and cozy fireplace.',
+        location: {
+            address: '404 Peak Road',
+            city: 'Aspen',
+            state: 'CO',
+            zip: '81611',
+            lat: 39.1911,
+            lng: -106.8175
+        },
+        price: 3200000,
+        specs: {
+            beds: 3,
+            baths: 3,
+            sqft: 2500,
+            yearBuilt: 2018,
+            type: 'House',
+            stories: 2,
+            interiorRating: 9
+        },
+        features: ['Ski Access', 'Hot Tub', 'Fireplace', 'Heated Driveway'],
+        images: [
+            'https://images.unsplash.com/photo-1510798831971-661eb04b3739?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
+            'https://images.unsplash.com/photo-1449844908441-8829872d2607?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80'
+        ],
+        agent: {
+            id: 'a1',
+            name: 'Sarah Broker',
+            image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            phone: '(555) 123-4567'
+        },
+        valuation: {
+            estimatedPrice: 3150000,
+            confidence: 92,
+            lastUpdated: '2026-01-14'
+        },
+        isFeatured: true
+    },
+    {
+        id: '9',
+        listingType: 'For Rent',
+        currency: 'USD',
+        title: 'Downtown Retail Showcase',
+        description: 'High-visibility corner retail space in a bustling shopping district. Ideal for luxury brands.',
+        location: {
+            address: '101 Commerce St',
+            city: 'Austin',
+            state: 'TX',
+            zip: '78701',
+            lat: 30.2672,
+            lng: -97.7431
+        },
+        price: 12000,
+        specs: {
+            beds: 0,
+            baths: 1,
+            sqft: 1800,
+            yearBuilt: 2010,
+            type: 'Commercial',
+            floor: 1,
+            interiorRating: 8
+        },
+        features: ['Large Windows', 'High Foot Traffic', 'Storage', 'Security System'],
+        images: [
+            'https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
+            'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80'
+        ],
+        agent: {
+            id: 'a3',
+            name: 'David Sun',
+            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            phone: '(555) 321-7654'
+        },
+        valuation: {
+            estimatedPrice: 12500,
+            confidence: 88,
+            lastUpdated: '2026-01-05'
+        },
+        isFeatured: false
+    },
+    {
+        id: '10',
+        listingType: 'For Sale',
+        currency: 'USD',
+        title: 'Golden Gate View Condo',
+        description: 'Elegant condo with breathtaking views of the Golden Gate Bridge. Features concierge and gym access.',
+        location: {
+            address: '500 Bay View',
+            city: 'San Francisco',
+            state: 'CA',
+            zip: '94123',
+            lat: 37.8018,
+            lng: -122.4398
+        },
+        price: 2800000,
+        specs: {
+            beds: 2,
+            baths: 2,
+            sqft: 1400,
+            yearBuilt: 2016,
+            type: 'Apartment',
+            floor: 12,
+            interiorRating: 9
+        },
+        features: ['Bridge View', 'Concierge', 'Gym', 'Parking'],
+        images: [
+            'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
+            'https://images.unsplash.com/photo-1484154218962-a1c002085d2f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80'
+        ],
+        agent: {
+            id: 'a2',
+            name: 'Michael Estate',
+            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+            phone: '(555) 987-6543'
+        },
+        valuation: {
+            estimatedPrice: 2750000,
+            confidence: 94,
+            lastUpdated: '2026-01-17'
+        },
+        isFeatured: true
     }
 ];

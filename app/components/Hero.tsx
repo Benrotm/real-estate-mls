@@ -16,11 +16,11 @@ export default function Hero() {
                 </div>
 
                 <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight leading-tight" style={{ textShadow: '0 0 40px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.5)' }}>
-                    Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-lime-400 to-emerald-400">Dream</span> Property
+                    Find <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-lime-400 to-emerald-400">Your</span> Property
                 </h1>
 
                 <p className="text-2xl text-white mb-10 max-w-2xl mx-auto leading-relaxed font-medium" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
-                    Discover exceptional properties with immersive virtual tours. Buy, sell, or rent with confidence on the most trusted real estate platform.
+                    Buy, sell, or rent with confidence on the most trusted real estate platform.
                 </p>
 
                 {/* Search Bar */}
