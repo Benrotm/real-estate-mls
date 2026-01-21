@@ -24,9 +24,7 @@ export default function Home() {
               <BadgeCheck className="w-4 h-4" />
               Best Price Property Listings
             </div>
-            <p className="text-slate-500 text-lg max-w-2xl">
-              Best Price Property Listings
-            </p>
+
           </div>
           <Link href="/properties" className="hidden md:flex items-center gap-2 text-orange-600 font-bold hover:text-orange-700 transition-colors">
             View All <ArrowRight className="w-5 h-5" />
@@ -54,7 +52,7 @@ export default function Home() {
         <div className="flex justify-between items-center mb-10">
           <div>
             <div className="text-secondary font-bold uppercase tracking-wider text-sm mb-2 bg-blue-100 w-fit px-3 py-1 rounded-full text-blue-700">Just Added</div>
-            <h2 className="text-3xl font-bold text-secondary">Recent Properties</h2>
+
           </div>
           <Link href="/properties" className="text-sm font-semibold text-slate-500 hover:text-primary">
             View All
