@@ -5,7 +5,7 @@ import RoleSelector from './RoleSelector';
 
 export default function Hero() {
     return (
-        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-12 pb-12 md:pt-24 md:pb-24 overflow-hidden">
+        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-12 pb-6 md:pt-24 md:pb-8 overflow-hidden">
             {/* Background Decor */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-30">
                 <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-cyan-500 rounded-full blur-3xl" />
