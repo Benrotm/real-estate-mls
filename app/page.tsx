@@ -1,9 +1,9 @@
 import Hero from "./components/Hero";
 import Link from 'next/link';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRight, Plus, BadgeCheck } from 'lucide-react';
 import PropertyCard from "./components/PropertyCard";
 import RoleSelector from "./components/RoleSelector";
-import HomeValuationWidget from "./components/HomeValuationWidget";
+import TrustStats from "./components/TrustStats";
 import { MOCK_PROPERTIES } from "./lib/properties"; // Reuse existing mocks if possible, or create local ones for visuals
 
 export default function Home() {
@@ -14,23 +14,19 @@ export default function Home() {
       <Hero />
 
       {/* Role Selection - Quick Action */}
-      <div className="bg-slate-900 pb-16 px-4">
-        <div className="-mt-16 relative z-20 space-y-6">
-          <RoleSelector mode="navigation" />
-          <div className="flex justify-center">
-            <HomeValuationWidget variant="home" />
-          </div>
-        </div>
-      </div>
+      {/* Role Selection - Quick Action */}
 
       {/* Premium Listings Section */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <div className="text-secondary font-bold uppercase tracking-wider text-sm mb-2 bg-orange-100 w-fit px-3 py-1 rounded-full text-orange-700">Featured</div>
+            <div className="flex items-center gap-2 text-secondary font-bold uppercase tracking-wider text-sm mb-2 bg-orange-100 w-fit px-3 py-1 rounded-full text-orange-700">
+              <BadgeCheck className="w-4 h-4" />
+              Best Price Property Listings
+            </div>
             <h2 className="text-4xl font-bold text-secondary mb-4">Premium Listings</h2>
             <p className="text-slate-500 text-lg max-w-2xl">
-              Explore our handpicked selection of exclusive properties available for sale and rent.
+              Best Price Property Listings
             </p>
           </div>
           <Link href="/properties" className="hidden md:flex items-center gap-2 text-primary font-bold hover:text-orange-700 transition-colors">
@@ -93,11 +89,14 @@ export default function Home() {
               Create Free Listing
             </Link>
             <Link href="/pricing" className="bg-white text-orange-600 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:scale-105 transition-all">
-              Market Price Evaluation for Properties
+              Free Property Price Evaluation
             </Link>
           </div>
         </div>
       </section>
-    </div>
+
+      {/* Trust Stats Section */}
+      < TrustStats />
+    </div >
   );
 }

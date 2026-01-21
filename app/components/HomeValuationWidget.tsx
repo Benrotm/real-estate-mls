@@ -21,8 +21,8 @@ export default function HomeValuationWidget({ linkPath = "/dashboard/owner/valua
                             <BarChart className="w-8 h-8" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-xl font-bold text-white mb-1 group-hover:text-fuchsia-300 transition-colors">Valuation Reports</h3>
-                            <p className="text-fuchsia-200/70 text-sm">Unlock AI-powered price insights for any property.</p>
+                            <h3 className="text-xl font-bold text-white mb-1 group-hover:text-fuchsia-300 transition-colors">Property Price Calculator</h3>
+                            <p className="text-fuchsia-200/70 text-sm">AI-powered price insights for any property.</p>
                         </div>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 
 import { Building, Users, Briefcase } from 'lucide-react';
 import Link from 'next/link';
@@ -12,6 +13,8 @@ interface RoleSelectorProps {
 }
 
 export default function RoleSelector({ mode, selectedRole, onSelect }: RoleSelectorProps) {
+    const [hoveredRole, setHoveredRole] = useState<UserType | null>(null);
+
     // Default to 'owner' if no selection is provided in navigation mode for visual consistency,
     // though in navigation mode we might want no default highlight or hover effects.
     // For this design, let's allow highlighting specific visuals based on hover or just simple cards.
@@ -46,41 +49,42 @@ export default function RoleSelector({ mode, selectedRole, onSelect }: RoleSelec
         }
     };
 
-    // Use specific style for the selected role, or default to owner style for the container if nothing selected (or handle generic)
-    // For the container style "I am...", we typically want it to reflect the *active* selection.
-    // In navigation mode, maybe we don't change the "I am..." style dynamically on hover to avoid flickering, 
-    // or we pick a neutral style. The user requested "move it", implying consistent behavior.
-
-    // In pricing page (selection mode), 'selectedRole' is controlled.
-    // In homepage (navigation mode), there is no "selected" role until you hover?
-    // Let's stick to the existing styling logic. If mode is navigation, we render Links.
-
-    const activeStyle = selectedRole ? selectorStyles[selectedRole] : selectorStyles.owner;
+    // Determine active style: Hover takes precedence, then selected, then default 'owner'
+    const activeRole = hoveredRole || selectedRole || 'owner';
+    const activeStyle = selectorStyles[activeRole];
 
     const RoleButton = ({ role, label, subLabel, icon: Icon, colorClass, borderClass, bgClass, textClass, shadowClass }: any) => {
         const isSelected = selectedRole === role;
 
         // Base classes
-        const baseClasses = `flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left`;
+        const baseClasses = `flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left relative overflow-hidden group`;
         const activeClasses = isSelected
             ? `${borderClass} ${bgClass}`
-            : `border-transparent hover:bg-slate-700`; // Default hover for non-selected
+            : `border-transparent hover:bg-slate-700/50`; // Default hover for non-selected
 
         const content = (
             <>
-                <div className={`p-3 rounded-lg bg-gradient-to-br ${colorClass} text-white shadow-lg ${shadowClass}`}>
+                <div className={`p-3 rounded-lg bg-gradient-to-br ${colorClass} text-white shadow-lg ${shadowClass} relative z-10 transition-transform group-hover:scale-110 duration-300`}>
                     <Icon className="w-6 h-6" />
                 </div>
-                <div>
-                    <div className={`font-bold ${isSelected ? textClass : 'text-gray-300'}`}>{label}</div>
-                    <div className="text-xs text-gray-400">{subLabel}</div>
+                <div className="relative z-10">
+                    <div className={`font-bold transition-colors duration-300 ${isSelected ? textClass : 'text-gray-300 group-hover:text-white'}`}>{label}</div>
+                    <div className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors duration-300">{subLabel}</div>
                 </div>
+
+                {/* Hover Glow Effect */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
             </>
         );
 
         if (mode === 'navigation') {
             return (
-                <Link href={`/pricing?role=${role}`} className={`${baseClasses} border-slate-700/50 hover:border-slate-500 bg-slate-800/50 hover:bg-slate-800`}>
+                <Link
+                    href={`/pricing?role=${role}`}
+                    className={`${baseClasses} border-slate-700/50 hover:border-slate-500 bg-slate-800/50 hover:bg-slate-800`}
+                    onMouseEnter={() => setHoveredRole(role)}
+                    onMouseLeave={() => setHoveredRole(null)}
+                >
                     {content}
                 </Link>
             );
@@ -90,6 +94,8 @@ export default function RoleSelector({ mode, selectedRole, onSelect }: RoleSelec
             <button
                 onClick={() => onSelect && onSelect(role)}
                 className={`${baseClasses} ${activeClasses}`}
+                onMouseEnter={() => setHoveredRole(role)}
+                onMouseLeave={() => setHoveredRole(null)}
             >
                 {content}
             </button>
@@ -97,8 +103,8 @@ export default function RoleSelector({ mode, selectedRole, onSelect }: RoleSelec
     };
 
     return (
-        <div className={`bg-slate-800 p-2 rounded-2xl shadow-2xl border-2 ${activeStyle.border} max-w-5xl mx-auto mb-12 flex flex-col gap-6 transition-colors duration-300`}>
-            <h1 className={`text-4xl md:text-5xl font-bold ${activeStyle.text} mb-2 drop-shadow-2xl text-center mt-4 transition-all duration-300`} style={{ WebkitTextStroke: `1px ${activeStyle.stroke}`, textShadow: `0 0 20px ${activeStyle.shadow}` }}>
+        <div className={`bg-slate-800 p-2 rounded-2xl shadow-2xl border-2 ${activeStyle.border} max-w-5xl mx-auto mb-4 flex flex-col gap-4 transition-colors duration-500`}>
+            <h1 className={`text-3xl md:text-4xl font-bold ${activeStyle.text} mb-1 drop-shadow-2xl text-center mt-2 transition-all duration-500`} style={{ WebkitTextStroke: `1px ${activeStyle.stroke}`, textShadow: `0 0 20px ${activeStyle.shadow}` }}>
                 I am...
             </h1>
             <div className="flex flex-col md:flex-row gap-2">
