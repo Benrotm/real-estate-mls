@@ -24,8 +24,8 @@ export default function Home() {
               <BadgeCheck className="w-4 h-4" />
               Best Price Property Listings
             </div>
-            <h2 className="text-4xl font-bold text-secondary mb-4">Premium Listings</h2>
-            <p className="text-slate-500 text-lg max-w-2xl">
+            <h2 className="text-4xl font-bold text-secondary mb-0">Premium Listings</h2>
+            <p className="text-slate-500 text-lg max-w-2xl -mt-2">
               Best Price Property Listings
             </p>
           </div>
