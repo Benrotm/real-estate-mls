@@ -24,12 +24,12 @@ export default function Home() {
               <BadgeCheck className="w-4 h-4" />
               Best Price Property Listings
             </div>
-            <h2 className="text-4xl font-bold text-secondary mb-0">Premium Listings</h2>
-            <p className="text-slate-500 text-lg max-w-2xl -mt-2">
+            <h2 className="text-4xl font-bold text-secondary mb-0 leading-none">Premium Listings</h2>
+            <p className="text-slate-500 text-lg max-w-2xl -mt-4 relative z-10">
               Best Price Property Listings
             </p>
           </div>
-          <Link href="/properties" className="hidden md:flex items-center gap-2 text-primary font-bold hover:text-orange-700 transition-colors">
+          <Link href="/properties" className="hidden md:flex items-center gap-2 text-orange-600 font-bold hover:text-orange-700 transition-colors">
             View All <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
