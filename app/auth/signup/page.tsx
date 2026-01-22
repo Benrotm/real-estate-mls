@@ -8,7 +8,7 @@ import { supabase } from '@/app/lib/supabase/client';
 
 export default function SignUpPage() {
     const router = useRouter();
-    const [role, setRole] = useState<'client' | 'agent' | 'owner'>('client');
+    const [role, setRole] = useState<'client' | 'agent' | 'owner' | 'developer'>('client');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -83,7 +83,7 @@ export default function SignUpPage() {
                 </div>
 
                 {/* Role Selection */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <button
                         onClick={() => setRole('client')}
                         className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${role === 'client' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
@@ -104,6 +104,13 @@ export default function SignUpPage() {
                     >
                         <Briefcase className={`mb-2 w-6 h-6 ${role === 'agent' ? 'text-orange-600' : 'text-slate-400'}`} />
                         <span className={`text-xs font-bold ${role === 'agent' ? 'text-orange-700' : 'text-slate-500'}`}>Agent</span>
+                    </button>
+                    <button
+                        onClick={() => setRole('developer')}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${role === 'developer' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+                    >
+                        <Building className={`mb-2 w-6 h-6 ${role === 'developer' ? 'text-orange-600' : 'text-slate-400'}`} />
+                        <span className={`text-xs font-bold ${role === 'developer' ? 'text-orange-700' : 'text-slate-500'}`}>Developer</span>
                     </button>
                 </div>
 
@@ -232,7 +239,7 @@ export default function SignUpPage() {
                             disabled
                         >
                             <span className="sr-only">Sign up with Apple</span>
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.25.18l.9.2.73.26.59.3.5.32.41.34.34.41.32.5.3.59.26.73.2.9.13.98v.24l-.13.98-.2.9-.26.73-.3.59-.32.5-.41.34-.34.41-.5.32-.59.3-.73.26-.9.2-.98.13h-.24l-.98-.13-.9-.2-.73-.26-.59-.3-.5-.32-.41-.34-.34-.41-.32-.5-.3-.59-.26-.73-.2-.9-.13-.98V9l.13-.98.2-.9.26-.73.3-.59.32-.5.41-.34.34-.41.5-.32.59-.3.73-.26.9-.2.98-.13h.24l.98.13zM12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16 8 8 0 010-16z" /></svg>
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.25.18l.9.2.73.26.59.3.5.32.41.34.34.41.32.5.3.59.26.73.2.9.13.98v.24l-.13.98-.2.9-.26.73-.3.59-.32.5-.41.34-.34.41-.5.32-.59.3-.73.26-.9.2-.98.13h-.24l-.98-.13-.9-.2-.73-.26-.59-.3-.5-.32-.41-.34-.34.41-.32-.5-.3-.59-.26-.73-.2-.9-.13-.98V9l.13-.98.2-.9.26-.73.3-.59.32-.5.41-.34.34-.41.5-.32.59-.3.73-.26.9-.2.98-.13h.24l.98.13zM12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16 8 8 0 010-16z" /></svg>
                         </button>
                         <button
                             type="button"
