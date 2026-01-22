@@ -15,13 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 import { LanguageProvider } from "./context/LanguageContext";
+import { getUserProfile } from "./lib/auth";
 
 export const metadata: Metadata = {
   title: "EstateMLS | Premium Real Estate & Valuation",
   description: "Advanced MLS with Virtual Tours and AI Price Valuation",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <LanguageProvider>
-          <Navbar />
+          <Navbar user={await getUserProfile()} />
           <main className="flex-grow pt-16">
             {children}
           </main>

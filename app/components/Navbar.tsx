@@ -5,11 +5,17 @@ import Link from 'next/link';
 import { useLanguage } from '../context/LanguageContext';
 import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X, Hammer } from 'lucide-react';
 import { SERVICES } from '../lib/services';
+import { UserProfile } from '../lib/auth';
 
-export default function Navbar() {
-  const isLoggedIn = true; // Demo active
-  const userEmail = "bensilion@gmail.com"; // Requested Super Admin email
-  const isSuperAdmin = userEmail === 'bensilion@gmail.com';
+interface NavbarProps {
+  user: UserProfile | null;
+}
+
+export default function Navbar({ user }: NavbarProps) {
+  const isLoggedIn = !!user;
+  const userEmail = user?.full_name || "User";
+  const userRole = user?.role;
+  const isSuperAdmin = userRole === 'super_admin';
 
   const { language, setLanguage } = useLanguage();
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -48,9 +54,11 @@ export default function Navbar() {
             <Link href="/properties" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Properties
             </Link>
-            <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
-              Create Account
-            </Link>
+            {!isLoggedIn && (
+              <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+                Create Account
+              </Link>
+            )}
 
             {/* Services Dropdown */}
             <div className="relative group">
@@ -149,7 +157,7 @@ export default function Navbar() {
                     <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 border-2 border-orange-500">
                       <User className="w-5 h-5" />
                     </div>
-                    <span className="hidden md:block text-sm font-bold">{userEmail.split('@')[0]}</span>
+                    <span className="hidden md:block text-sm font-bold">{user?.full_name?.split(' ')[0] || "User"}</span>
                   </button>
 
                   {isUserMenuOpen && (
@@ -158,10 +166,10 @@ export default function Navbar() {
                       <div className="absolute right-0 mt-3 w-64 bg-white text-slate-900 rounded-xl shadow-2xl border border-slate-200 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
                         {/* Header */}
                         <div className="px-4 py-4 border-b border-slate-100">
-                          <div className="font-bold text-base">{userEmail.split('@')[0]}</div>
-                          <div className="text-sm text-slate-500">{userEmail}</div>
+                          <div className="font-bold text-base">{user?.full_name || "User"}</div>
+                          <div className="text-sm text-slate-500 truncate">{user?.role}</div>
                           <div className="mt-2 flex gap-2">
-                            <span className="text-xs font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded w-fit uppercase">Free</span>
+                            <span className="text-xs font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded w-fit uppercase">{user?.plan_tier || 'Free'}</span>
                             {isSuperAdmin && (
                               <span className="text-xs font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded w-fit uppercase">Admin</span>
                             )}
@@ -174,15 +182,21 @@ export default function Navbar() {
                               <div className="w-5"><Shield className="w-4 h-4" /></div> Super Admin
                             </Link>
                           )}
-                          <Link href="/dashboard/owner" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
-                            <div className="w-5"><Home className="w-4 h-4" /></div> Property Owner Dashboard
-                          </Link>
-                          <Link href="/dashboard/agent" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
-                            <div className="w-5"><User className="w-4 h-4" /></div> Agent Dashboard
-                          </Link>
-                          <Link href="/dashboard/developer" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
-                            <div className="w-5"><Hammer className="w-4 h-4" /></div> Developer Dashboard
-                          </Link>
+                          {(userRole === 'owner' || isSuperAdmin) && (
+                            <Link href="/dashboard/owner" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
+                              <div className="w-5"><Home className="w-4 h-4" /></div> Property Owner Dashboard
+                            </Link>
+                          )}
+                          {(userRole === 'agent' || isSuperAdmin) && (
+                            <Link href="/dashboard/agent" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
+                              <div className="w-5"><User className="w-4 h-4" /></div> Agent Dashboard
+                            </Link>
+                          )}
+                          {(userRole === 'developer' || isSuperAdmin) && (
+                            <Link href="/dashboard/developer" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
+                              <div className="w-5"><Hammer className="w-4 h-4" /></div> Developer Dashboard
+                            </Link>
+                          )}
                           <Link href="/properties" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                             <div className="w-5"><Menu className="w-4 h-4" /></div> My Properties
                           </Link>
@@ -195,9 +209,11 @@ export default function Navbar() {
                           <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                             <div className="w-5"><Settings className="w-4 h-4" /></div> Profile
                           </Link>
-                          <button className="w-full text-left px-4 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm font-bold text-red-500">
-                            <div className="w-5 relative"><div className="w-4 h-4 border-2 border-red-500 rounded-full border-t-transparent animate-spin hidden" /> <span className="text-xl leading-none">→</span></div> Logout
-                          </button>
+                          <form action="/auth/signout" method="post">
+                            <button className="w-full text-left px-4 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm font-bold text-red-500">
+                              <div className="w-5"><LogOut className="w-4 h-4" /></div> Logout
+                            </button>
+                          </form>
                         </div>
                       </div>
                     </>
@@ -241,9 +257,11 @@ export default function Navbar() {
             <Link href="/properties" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
               Properties
             </Link>
-            <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
-              Create Account
-            </Link>
+            {!isLoggedIn && (
+              <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
+                Create Account
+              </Link>
+            )}
             <div className="space-y-1">
               <div className="px-3 py-2 text-base font-medium text-gray-400 uppercase text-xs tracking-wider">Services</div>
               {SERVICES.map((service) => (

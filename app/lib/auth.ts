@@ -19,18 +19,8 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     // 1. Get Auth User
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // DEMO OVERRIDE: If no user found, mock one to allow Admin access for testing
     if (authError || !user) {
-        console.warn('Authentication failed or no session. Using MOCK ADMIN for Demo.');
-        return {
-            id: 'mock-admin-id',
-            full_name: 'Super Admin (Demo)',
-            role: 'super_admin',
-            plan_tier: 'enterprise',
-            listings_limit: 9999,
-            listings_count: 0,
-            avatar_url: ''
-        };
+        return null; // Correctly return null for unauthenticated users
     }
 
     // 2. Get Profile
