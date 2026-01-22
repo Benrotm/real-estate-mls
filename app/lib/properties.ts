@@ -23,6 +23,10 @@ export interface Property {
         stories?: number; // For houses
         type: 'Apartment' | 'House' | 'Land' | 'Commercial' | 'Industrial' | 'Business';
         interiorRating?: number; // 1-10 scale
+        totalFloors?: number;
+        buildingType?: string; // e.g., 'Detached', 'Semi-Detached', 'High-Rise'
+        interiorCondition?: string; // e.g., 'New', 'Good', 'Needs Renovation'
+        furnishing?: string; // e.g., 'Furnished', 'Unfurnished', 'Partially'
     };
     features: string[]; // e.g., "Pool", "Gym", "Smart Home"
     images: string[];
@@ -34,6 +38,7 @@ export interface Property {
     };
     ownerId?: string;
     virtualTourUrl?: string; // 360 link
+    virtualTourType?: 'No Virtual Tour' | 'Virtual Tour' | 'Video Tour' | '3D Walkthrough' | 'Virtual Reality';
     valuation?: {
         estimatedPrice: number;
         confidence: number; // 0-100%
@@ -65,9 +70,12 @@ export const MOCK_PROPERTIES: Property[] = [
             yearBuilt: 2022,
             type: 'House',
             stories: 2,
-            interiorRating: 10
+            interiorRating: 10,
+            buildingType: 'Detached',
+            interiorCondition: 'New',
+            furnishing: 'Furnished'
         },
-        features: ['Pool', 'Smart Home', 'Wine Cellar', 'Theater', 'Marble Floors', 'Designer Kitchen'],
+        features: ['Pool', 'Smart Home', 'Wine Cellar', 'Theater', 'Marble Floors', 'Designer Kitchen', 'Garage', 'Garden', 'Security', 'Fireplace'],
         images: [
             'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',
             'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80',

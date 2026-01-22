@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Phone, Lock, Building, Users, Briefcase, Chrome, Github, Loader2 } from 'lucide-react';
-import { supabase } from '@/app/lib/supabase';
+import { supabase } from '@/app/lib/supabase/client';
 
 export default function SignUpPage() {
     const router = useRouter();

@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 import ValuationWidget from '../../components/ValuationWidget';
 import ContactForm from '../../components/ContactForm';
-import { supabase } from "@/app/lib/supabase";
+import { supabase } from "@/app/lib/supabase/client";
 
 export default async function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -44,7 +44,11 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 type: dbProperty.property_type,
                 stories: dbProperty.stories,
                 floor: dbProperty.floor,
-                interiorRating: dbProperty.interior_rating
+                interiorRating: dbProperty.interior_rating,
+                buildingType: dbProperty.building_type || 'Detached', // Fallback
+                interiorCondition: dbProperty.condition || 'Good', // Fallback
+                furnishing: dbProperty.furnishing || 'Unfurnished', // Fallback
+                totalFloors: dbProperty.total_floors
             },
             features: dbProperty.features || [],
             images: dbProperty.images || [],
@@ -175,6 +179,30 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 <div className="leading-tight">
                                     <div className="font-extrabold text-2xl text-slate-900">{formatter.format(property.specs.sqft || 0).replace('$', '')}</div>
                                     <div className="text-slate-500 font-bold text-sm">Sq Ft</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Additional Details Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Building</div>
+                                <div className="text-slate-900 font-bold">{property.specs.buildingType || 'N/A'}</div>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Condition</div>
+                                <div className="text-slate-900 font-bold">{property.specs.interiorCondition || 'N/A'}</div>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Furnishing</div>
+                                <div className="text-slate-900 font-bold">{property.specs.furnishing || 'N/A'}</div>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Floors</div>
+                                <div className="text-slate-900 font-bold">
+                                    {property.specs.floor ? `Flr ${property.specs.floor}` : ''}
+                                    {property.specs.floor && property.specs.totalFloors ? ' / ' : ''}
+                                    {property.specs.totalFloors ? `${property.specs.totalFloors} Tot` : 'N/A'}
                                 </div>
                             </div>
                         </div>

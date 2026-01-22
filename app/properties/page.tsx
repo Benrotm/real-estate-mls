@@ -5,7 +5,7 @@ import PropertyCard from "@/app/components/PropertyCard";
 import PropertyMap from "@/app/components/PropertyMap";
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
 import { Map, LayoutGrid, Loader2, Search, ListFilter, Bookmark, ChevronDown } from "lucide-react";
-import { supabase } from "@/app/lib/supabase";
+import { supabase } from "@/app/lib/supabase/client";
 
 export default function PropertiesPage() {
     const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);

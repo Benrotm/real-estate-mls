@@ -175,7 +175,7 @@ export default function Navbar() {
                             </Link>
                           )}
                           <Link href="/dashboard/owner" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
-                            <div className="w-5"><Home className="w-4 h-4" /></div> Dashboard
+                            <div className="w-5"><Home className="w-4 h-4" /></div> Property Owner Dashboard
                           </Link>
                           <Link href="/dashboard/agent" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                             <div className="w-5"><User className="w-4 h-4" /></div> Agent Dashboard

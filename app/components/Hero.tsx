@@ -20,11 +20,11 @@ export default function Hero() {
 
 
                 <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight leading-tight" style={{ textShadow: '0 0 40px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.5)' }}>
-                    Find <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-lime-400 to-emerald-400">Your</span> Property
+                    Find <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-amber-500">Real</span> Property <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-amber-500">Price</span>
                 </h1>
 
                 <p className="text-xl text-white mb-8 max-w-2xl mx-auto leading-relaxed font-medium" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
-                    <span className="text-orange-500 font-bold">Buy</span>, <span className="text-emerald-500 font-bold">Sell</span>, or <span className="text-blue-500 font-bold">Rent</span>. Virtual Tours, AI, Market Insights, and other features like <span className="text-purple-400 font-bold">Market Price Evaluation for Properties</span>.
+                    <span className="text-orange-500 font-bold">Buy</span>, <span className="text-emerald-500 font-bold">Sell</span>, or <span className="text-blue-500 font-bold">Rent</span>. Virtual Tours, AI, Market Insights, plus other smart features like <span className="text-purple-400 font-bold">Real Market Price Value</span> for all Properties.
                 </p>
 
                 {/* Search Bar */}

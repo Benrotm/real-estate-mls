@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings } from 'lucide-react';
 
 export default function DashboardLayout({
     children,
@@ -14,9 +14,23 @@ export default function DashboardLayout({
     const isAgent = pathname.includes('/dashboard/agent');
     const isOwner = pathname.includes('/dashboard/owner');
     const isDeveloper = pathname.includes('/dashboard/developer');
+    const isAdmin = pathname.includes('/dashboard/admin');
 
     // Define menu items based on "role" (derived from URL for this demo)
-    const menuItems = isAgent ? [
+    const menuItems = isAdmin ? [
+        { name: 'Console', icon: Shield, href: '/dashboard/admin' },
+        { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' }, // We can keep single page or split, user asked for menu entry.
+        // For now, let's keep it all in /admin page but link effectively acts as anchors or we split.
+        // Given user request "Plan Settings for setting plans and syncing", maybe we should point to same page or anchor?
+        // Actually best to strictly follow request and maybe just direct to /dashboard/admin for now,
+        // OR distinct pages. Let's make it single page with anchors or subpages.
+        // User asked for "Plan Settings" entry.
+        // Let's create a visual link, even if it goes to same page or a new one.
+        // For simplicity and existing structure, let's make /dashboard/admin/plans redirect to the section or be a separate page.
+        // Let's stick to /dashboard/admin for Console.
+        { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
+        { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
+    ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
@@ -48,7 +62,7 @@ export default function DashboardLayout({
                     Dashboard
                 </h2>
                 <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
-                    {isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : 'Welcome'}
+                    {isAdmin ? 'Super Admin' : isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : 'Welcome'}
                 </p>
             </div>
 

@@ -42,7 +42,12 @@ async function migrate() {
                 features: prop.features,
                 images: prop.images,
                 virtual_tour_url: prop.virtualTourUrl,
-                is_featured: prop.isFeatured
+                virtual_tour_type: prop.virtualTourType || 'No Virtual Tour',
+                is_featured: prop.isFeatured,
+                // Add default valuation if missing in mock
+                valuation_estimated_price: prop.valuation?.estimatedPrice ?? 0,
+                valuation_confidence: prop.valuation?.confidence ?? 0,
+                valuation_last_updated: prop.valuation?.lastUpdated ?? new Date().toISOString()
             });
 
         if (error) {

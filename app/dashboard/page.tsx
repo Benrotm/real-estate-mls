@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { UserCheck, Building, ArrowRight, Search } from 'lucide-react';
+import { UserCheck, Building, ArrowRight, Search, Shield } from 'lucide-react';
 
 export default function DashboardHome() {
     return (
@@ -9,8 +9,21 @@ export default function DashboardHome() {
                 Select a role to view the specific dashboard experience. In a real app, this would be determined by your login credentials.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Agent Card */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {/* Admin Card */}
+                <Link href="/dashboard/admin" className="group text-left p-6 bg-card border border-border rounded-2xl hover:border-sidebar-primary hover:shadow-xl transition-all relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                    <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center mb-4 group-hover:bg-red-500 group-hover:text-white transition-colors relative z-10">
+                        <Shield className="w-6 h-6" />
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Super Admin</h2>
+                    <p className="text-foreground/60 text-sm mb-4">
+                        Configure plans, manage users, and system settings.
+                    </p>
+                    <div className="flex items-center text-red-500 text-sm font-medium">
+                        Open Console <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                </Link>
                 <Link href="/dashboard/agent" className="group text-left p-8 bg-card border border-border rounded-2xl hover:border-secondary hover:shadow-xl transition-all">
                     <div className="w-14 h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
                         <UserCheck className="w-8 h-8" />

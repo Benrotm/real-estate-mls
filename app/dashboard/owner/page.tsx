@@ -1,15 +1,21 @@
 import Link from 'next/link';
 import { Building, Check, Eye, Clock, ArrowUpRight, Plus, BarChart, TrendingUp, MessageSquare } from 'lucide-react';
 import HomeValuationWidget from '../../components/HomeValuationWidget';
+import { getUserProfile, getUsageStats } from '../../lib/auth';
 
-export default function OwnerDashboard() {
+export default async function OwnerDashboard() {
+    const profile = await getUserProfile();
+    const usageCount = profile ? await getUsageStats(profile.id) : 0;
+    const limit = profile?.listings_limit || 1; // Default fallback for Owner/Client
+    const usagePercent = Math.min(100, Math.round((usageCount / limit) * 100));
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Header Stripe */}
             <div className="bg-[#1e293b] text-white py-12 px-4 sm:px-6 lg:px-8 mt-16">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold">Welcome back, ben.silion</h1>
+                        <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || 'Owner'}</h1>
                         <p className="text-slate-400 mt-1">Your property dashboard</p>
                     </div>
                     <Link href="/properties/add" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors">
@@ -27,7 +33,7 @@ export default function OwnerDashboard() {
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
                             <div className="text-sm font-medium text-slate-500 mb-1">My Listings</div>
-                            <div className="text-3xl font-bold text-slate-900">0</div>
+                            <div className="text-3xl font-bold text-slate-900">{usageCount}</div>
                         </div>
                         <div className="w-12 h-12 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center">
                             <Building className="w-6 h-6" />
@@ -150,9 +156,9 @@ export default function OwnerDashboard() {
                             <h3 className="font-bold text-slate-900 mb-6 text-left">Your Plan</h3>
 
                             <div className="inline-block bg-orange-500 text-white font-bold px-6 py-2 rounded-lg mb-2 uppercase text-sm tracking-wide shadow-lg shadow-orange-500/30">
-                                Free
+                                {profile?.plan_tier || 'Free'}
                             </div>
-                            <p className="text-xs text-slate-400 font-medium mb-6">1 listings allowed</p>
+                            <p className="text-xs text-slate-400 font-medium mb-6">{usageCount} / {limit} listings allowed</p>
 
                             <button className="w-full border border-slate-200 text-slate-700 font-bold py-2 rounded-lg hover:border-slate-400 transition-colors">
                                 Upgrade Plan
