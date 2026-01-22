@@ -14,8 +14,8 @@ export default function BottomAuthBar({ user }: BottomAuthBarProps) {
     // Don't show if user is logged in
     if (user) return null;
 
-    // Don't show on auth pages to avoid clutter
-    if (pathname.startsWith('/auth')) return null;
+    // Only show on the "Create Account" (Pricing) page
+    if (pathname !== '/pricing') return null;
 
     return (
         <div className="fixed bottom-0 left-0 w-full bg-slate-900/95 backdrop-blur-md border-t border-white/10 p-4 z-50 animate-in slide-in-from-bottom-full duration-300">
