@@ -18,7 +18,7 @@ export default function BottomAuthBar({ user }: BottomAuthBarProps) {
     if (pathname.startsWith('/auth')) return null;
 
     return (
-        <div className="fixed bottom-0 left-0 w-full bg-slate-900/95 backdrop-blur-md border-t border-white/10 p-4 z-40 md:hidden animate-in slide-in-from-bottom-full duration-300">
+        <div className="fixed bottom-0 left-0 w-full bg-slate-900/95 backdrop-blur-md border-t border-white/10 p-4 z-50 animate-in slide-in-from-bottom-full duration-300">
             <div className="flex gap-4 max-w-7xl mx-auto">
                 <Link
                     href="/auth/login"
