@@ -54,11 +54,9 @@ export default function Navbar({ user }: NavbarProps) {
             <Link href="/properties" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Properties
             </Link>
-            {!isLoggedIn && (
-              <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
-                Create Account
-              </Link>
-            )}
+            <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+              Upgrade Account
+            </Link>
 
             {/* Services Dropdown */}
             <div className="relative group">
@@ -257,11 +255,9 @@ export default function Navbar({ user }: NavbarProps) {
             <Link href="/properties" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
               Properties
             </Link>
-            {!isLoggedIn && (
-              <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
-                Create Account
-              </Link>
-            )}
+            <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
+              Upgrade Account
+            </Link>
             <div className="space-y-1">
               <div className="px-3 py-2 text-base font-medium text-gray-400 uppercase text-xs tracking-wider">Services</div>
               {SERVICES.map((service) => (

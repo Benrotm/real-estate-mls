@@ -20,6 +20,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+
         return null; // Correctly return null for unauthenticated users
     }
 

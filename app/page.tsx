@@ -1,12 +1,25 @@
 import Hero from "./components/Hero";
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { ArrowRight, Plus, BadgeCheck } from 'lucide-react';
 import PropertyCard from "./components/PropertyCard";
 import RoleSelector from "./components/RoleSelector";
 import TrustStats from "./components/TrustStats";
 import { MOCK_PROPERTIES } from "./lib/properties"; // Reuse existing mocks if possible, or create local ones for visuals
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const code = params?.code;
+
+  if (code) {
+    const codeValue = Array.isArray(code) ? code[0] : code;
+    redirect(`/auth/callback?code=${codeValue}`);
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
 
