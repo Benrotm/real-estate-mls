@@ -4,7 +4,7 @@ import { UserCheck, Building, ArrowRight, Search, Shield } from 'lucide-react';
 export default function DashboardHome() {
     return (
         <div className="max-w-4xl mx-auto text-center mt-20">
-            <h1 className="text-3xl font-bold mb-4">Welcome to EstateMLS Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-4">Welcome to Imobum Dashboard</h1>
             <p className="text-foreground/60 mb-12 max-w-lg mx-auto">
                 Select a role to view the specific dashboard experience. In a real app, this would be determined by your login credentials.
             </p>

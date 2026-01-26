@@ -13,7 +13,7 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="col-span-1 md:col-span-1">
                         <Link href="/" className="font-bold text-xl tracking-tight flex items-center gap-1 text-white">
-                            Estate<span className="text-cyan-400">MLS</span>
+                            Imobum
                         </Link>
                         <p className="mt-4 text-sm text-slate-400">
                             Premium real estate marketplace connecting buyers, sellers, and agents with cutting-edge technology.
@@ -49,7 +49,7 @@ export default function Footer() {
 
                 <div className="mt-12 border-t border-slate-800 pt-8">
                     <p className="text-base text-center text-slate-500">
-                        &copy; 2026 EstateMLS. All rights reserved.
+                        &copy; 2026 Imobum. All rights reserved.
                     </p>
                 </div>
             </div>

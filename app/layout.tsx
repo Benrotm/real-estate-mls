@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EstateMLS | Premium Real Estate & Valuation",
-  description: "Advanced MLS with Virtual Tours and AI Price Valuation",
+  title: "Imobum | Premium Real Estate & Valuation",
+  description: "Advanced Real Estate Marketplace with AI Price Valuation",
 };
 
 export default async function RootLayout({
