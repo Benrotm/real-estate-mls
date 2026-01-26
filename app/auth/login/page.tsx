@@ -52,7 +52,6 @@ export default function LoginPage() {
                 else if (role === 'client') targetPath = '/properties'; // Redirect clients to properties
 
                 console.log('Login successful. Role:', role, 'Redirecting to:', targetPath);
-                console.log('Login successful. Role:', role, 'Redirecting to:', targetPath);
                 // Use window.location.href to force a full page reload.
                 // This ensures the session cookie is correctly recognized by the server (Navbar updates)
                 // and avoids any client-side router state issues.

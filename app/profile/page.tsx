@@ -1,75 +1,93 @@
-import { getUserProfile } from '../lib/auth';
-import { User, Mail, Shield, Award } from 'lucide-react';
+import { getUserProfile } from '@/app/lib/auth';
+import { redirect } from 'next/navigation';
+import { User, Mail, Shield, Building } from 'lucide-react';
 
 export default async function ProfilePage() {
     const profile = await getUserProfile();
 
     if (!profile) {
-        return (
-            <div className="min-h-screen pt-24 px-4">
-                <div className="max-w-2xl mx-auto text-center">
-                    <h1 className="text-2xl font-bold text-slate-900">Please Log In</h1>
-                    <p className="text-slate-600 mt-2">You need to be logged in to view your profile.</p>
-                </div>
-            </div>
-        );
+        redirect('/auth/login');
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-                <div className="bg-white shadow rounded-2xl overflow-hidden">
-                    {/* Header */}
-                    <div className="bg-[#1e293b] px-6 py-8 text-white">
-                        <div className="flex items-center gap-6">
-                            <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center text-3xl font-bold border-4 border-white/20">
-                                {profile.full_name?.charAt(0) || <User />}
+        <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8 mt-16">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+                <div className="bg-slate-900 px-6 py-8 sm:p-10">
+                    <div className="flex items-center gap-6">
+                        <div className="h-24 w-24 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white/20">
+                            <span className="text-3xl font-bold">{profile.full_name?.[0]?.toUpperCase() || 'U'}</span>
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-bold text-white">{profile.full_name || 'User'}</h1>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="px-3 py-1 bg-white/10 rounded-full text-sm font-medium text-cyan-300 backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+                                    {profile.role}
+                                </span>
+                                <span className="px-3 py-1 bg-white/10 rounded-full text-sm font-medium text-orange-300 backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+                                    {profile.plan_tier} Plan
+                                </span>
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold">{profile.full_name}</h1>
-                                <p className="text-slate-300 flex items-center gap-2 mt-1">
-                                    <Shield className="w-4 h-4" /> {profile.role} account
-                                </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="px-6 py-8 sm:p-10 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <User className="w-5 h-5 text-orange-600" />
+                                Personal Information
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Full Name</label>
+                                    <div className="text-slate-900 font-medium">{profile.full_name || 'Not set'}</div>
+                                </div>
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                        <Mail className="w-3 h-3" /> Email
+                                    </label>
+                                    <div className="text-slate-900 font-medium">{profile.full_name ? `${profile.full_name.toLowerCase().replace(' ', '.')}@example.com` : 'user@example.com'}</div>
+                                    <p className="text-xs text-slate-400 mt-1">*Email masked for privacy in this demo</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <Shield className="w-5 h-5 text-orange-600" />
+                                Account Details
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">User ID</label>
+                                    <div className="text-slate-600 font-mono text-sm">{profile.id}</div>
+                                </div>
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                        <Building className="w-3 h-3" /> Listings
+                                    </label>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-2xl font-bold text-slate-900">{profile.listings_count}</span>
+                                        <span className="text-sm text-slate-500">/ {profile.listings_limit} used</span>
+                                    </div>
+                                    <div className="mt-2 w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                        <div
+                                            className="bg-orange-500 h-2 rounded-full transition-all"
+                                            style={{ width: `${Math.min((profile.listings_count / profile.listings_limit) * 100, 100)}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Details */}
-                    <div className="px-6 py-8 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Account ID</label>
-                                <p className="text-slate-900 font-mono text-sm mt-1">{profile.id}</p>
-                            </div>
-
-                            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Plan</label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Award className="w-5 h-5 text-orange-500" />
-                                    <span className="text-slate-900 font-bold capitalize">{profile.plan_tier}</span>
-                                </div>
-                            </div>
-
-                            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Listings Usage</label>
-                                <p className="text-slate-900 font-medium mt-1">
-                                    {profile.listings_count} / {profile.listings_limit} used
-                                </p>
-                                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                                    <div
-                                        className="bg-orange-500 h-2 rounded-full"
-                                        style={{ width: `${Math.min(100, (profile.listings_count / profile.listings_limit) * 100)}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="border-t border-gray-100 pt-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4">Account Settings</h3>
-                            <button className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 transition-colors">
-                                Edit Profile
+                    <div className="border-t border-slate-100 pt-8 flex justify-end">
+                        <form action="/auth/signout" method="post">
+                            <button className="px-6 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors">
+                                Sign Out
                             </button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>

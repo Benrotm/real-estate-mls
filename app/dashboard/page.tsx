@@ -1,12 +1,29 @@
-import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getUserProfile } from '@/app/lib/auth';
 import { UserCheck, Building, ArrowRight, Search, Shield } from 'lucide-react';
+import Link from 'next/link';
 
-export default function DashboardHome() {
+export default async function DashboardHome() {
+    const profile = await getUserProfile();
+
+    if (!profile) {
+        redirect('/auth/login');
+    }
+
+    // Automatic redirection based on role
+    if (profile.role === 'owner') redirect('/dashboard/owner');
+    if (profile.role === 'agent') redirect('/dashboard/agent');
+    if (profile.role === 'developer') redirect('/dashboard/developer');
+    if (profile.role === 'super_admin') redirect('/dashboard/admin');
+    if (profile.role === 'client') redirect('/properties');
+
+    // Fallback UI (e.g. if role is missing or invalid, though uncommon)
+    // We keep the old UI as a fallback/debug view
     return (
         <div className="max-w-4xl mx-auto text-center mt-20">
             <h1 className="text-3xl font-bold mb-4">Welcome to Imobum Dashboard</h1>
             <p className="text-foreground/60 mb-12 max-w-lg mx-auto">
-                Select a role to view the specific dashboard experience. In a real app, this would be determined by your login credentials.
+                We couldn't determine your specific dashboard. Please select one below or contact support.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
