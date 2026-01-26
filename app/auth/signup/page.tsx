@@ -44,8 +44,10 @@ export default function SignUpPage() {
                 if (role === 'owner') targetPath = '/dashboard/owner';
                 else if (role === 'agent') targetPath = '/dashboard/agent';
                 else if (role === 'developer') targetPath = '/dashboard/developer';
+                else if (role === 'client') targetPath = '/properties';
 
-                router.push(targetPath);
+                // Force full reload to update Navbar auth state
+                window.location.href = targetPath;
             } else {
                 // Email confirmation might be required
                 setError('Check your email to confirm your account!');

@@ -52,11 +52,15 @@ export default function LoginPage() {
                 else if (role === 'client') targetPath = '/properties'; // Redirect clients to properties
 
                 console.log('Login successful. Role:', role, 'Redirecting to:', targetPath);
-                router.push(targetPath);
+                console.log('Login successful. Role:', role, 'Redirecting to:', targetPath);
+                // Use window.location.href to force a full page reload.
+                // This ensures the session cookie is correctly recognized by the server (Navbar updates)
+                // and avoids any client-side router state issues.
+                window.location.href = targetPath;
             } else {
-                router.push('/dashboard');
+                window.location.href = '/dashboard';
             }
-            router.refresh();
+            // router.refresh() is not needed with window.location.href as it triggers a full load
         } catch (err: any) {
             setError(err.message || 'An error occurred during sign in');
         } finally {

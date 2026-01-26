@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description: "Advanced Real Estate Marketplace with AI Price Valuation",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function RootLayout({
   children,
 }: Readonly<{
