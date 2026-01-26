@@ -175,7 +175,18 @@ export default function Navbar({ user }: NavbarProps) {
                         </div>
 
                         <div className="py-2">
-                          <Link href="/dashboard" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-bold text-slate-700 hover:text-slate-900">
+                          {/* Dynamic Dashboard Link */}
+                          <Link
+                            href={
+                              isSuperAdmin ? '/dashboard/admin' :
+                                userRole === 'owner' ? '/dashboard/owner' :
+                                  userRole === 'agent' ? '/dashboard/agent' :
+                                    userRole === 'developer' ? '/dashboard/developer' :
+                                      '/dashboard'
+                            }
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-bold text-slate-700 hover:text-slate-900"
+                          >
                             <div className="w-5"><Home className="w-4 h-4" /></div> Dashboard
                           </Link>
                           {isSuperAdmin && (

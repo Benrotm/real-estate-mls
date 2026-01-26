@@ -29,7 +29,26 @@ export default function LoginPage() {
 
             if (error) throw error;
 
-            router.push('/dashboard');
+            if (data.user) {
+                // Fetch profile to get role
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', data.user.id)
+                    .single();
+
+                const role = profile?.role;
+                let targetPath = '/dashboard';
+
+                if (role === 'owner') targetPath = '/dashboard/owner';
+                else if (role === 'agent') targetPath = '/dashboard/agent';
+                else if (role === 'developer') targetPath = '/dashboard/developer';
+                else if (role === 'super_admin') targetPath = '/dashboard/admin';
+
+                router.push(targetPath);
+            } else {
+                router.push('/dashboard');
+            }
             router.refresh();
         } catch (err: any) {
             setError(err.message || 'An error occurred during sign in');

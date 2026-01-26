@@ -40,7 +40,12 @@ export default function SignUpPage() {
             if (error) throw error;
 
             if (data.session) {
-                router.push('/dashboard');
+                let targetPath = '/dashboard';
+                if (role === 'owner') targetPath = '/dashboard/owner';
+                else if (role === 'agent') targetPath = '/dashboard/agent';
+                else if (role === 'developer') targetPath = '/dashboard/developer';
+
+                router.push(targetPath);
             } else {
                 // Email confirmation might be required
                 setError('Check your email to confirm your account!');
