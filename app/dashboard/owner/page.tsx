@@ -5,8 +5,18 @@ import { getUserProfile, getUsageStats } from '../../lib/auth';
 
 export default async function OwnerDashboard() {
     const profile = await getUserProfile();
-    const usageCount = profile ? await getUsageStats(profile.id) : 0;
-    const limit = profile?.listings_limit || 1; // Default fallback for Owner/Client
+
+    if (!profile) {
+        // Redirect to login with intent to be an owner
+        // Using redirect from next/navigation (Server Component)
+        const { redirect } = await import('next/navigation');
+        redirect('/auth/login?role=owner');
+        // This return is for TypeScript flow analysis (redirect throws internally)
+        return null;
+    }
+
+    const usageCount = await getUsageStats(profile.id);
+    const limit = profile.listings_limit || 1; // Default fallback for Owner/Client
     const usagePercent = Math.min(100, Math.round((usageCount / limit) * 100));
 
     return (
@@ -156,7 +166,7 @@ export default async function OwnerDashboard() {
                             <h3 className="font-bold text-slate-900 mb-6 text-left">Your Plan</h3>
 
                             <div className="inline-block bg-orange-500 text-white font-bold px-6 py-2 rounded-lg mb-2 uppercase text-sm tracking-wide shadow-lg shadow-orange-500/30">
-                                {profile?.plan_tier || 'Free'}
+                                {profile.plan_tier || 'Free'}
                             </div>
                             <p className="text-xs text-slate-400 font-medium mb-6">{usageCount} / {limit} listings allowed</p>
 

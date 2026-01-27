@@ -3,12 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Mail, Phone, Lock, Building, Users, Briefcase, Chrome, Github, Loader2 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 
 export default function SignUpPage() {
     const router = useRouter();
-    const [role, setRole] = useState<'client' | 'agent' | 'owner' | 'developer'>('client');
+    const searchParams = useSearchParams();
+    const initialRole = searchParams.get('role') as 'client' | 'agent' | 'owner' | 'developer' | null;
+    const [role, setRole] = useState<'client' | 'agent' | 'owner' | 'developer'>(initialRole && ['client', 'agent', 'owner', 'developer'].includes(initialRole) ? initialRole : 'client');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

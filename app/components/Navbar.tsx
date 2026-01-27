@@ -141,7 +141,7 @@ export default function Navbar({ user }: NavbarProps) {
             {/* Auth State Demo */}
             {isLoggedIn ? (
               <>
-                <Link href="/properties/add" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-lg hover:-translate-y-0.5">
+                <Link href="/dashboard/owner/add-property" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-lg hover:-translate-y-0.5">
                   <Plus className="w-4 h-4" />
                   <span>List Property</span>
                 </Link>
@@ -241,7 +241,7 @@ export default function Navbar({ user }: NavbarProps) {
                   Sign Up
                 </Link>
 
-                <Link href="/properties/add" className="hidden lg:flex items-center gap-2 text-cyan-400 font-bold hover:text-cyan-300 ml-2">
+                <Link href="/dashboard/owner/add-property" className="hidden lg:flex items-center gap-2 text-cyan-400 font-bold hover:text-cyan-300 ml-2">
                   <Plus className="w-5 h-5" />
                   <span>List Property</span>
                 </Link>

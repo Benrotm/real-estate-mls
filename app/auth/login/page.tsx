@@ -2,12 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Phone, Lock, ArrowRight, Github, Twitter, Chrome, Loader2 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const roleParam = searchParams.get('role');
+    const signupLink = roleParam ? `/auth/signup?role=${roleParam}` : '/auth/signup';
+
     const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -254,7 +258,7 @@ export default function LoginPage() {
                 <div className="text-center mt-4">
                     <p className="text-sm text-gray-600">
                         Don't have an account?{' '}
-                        <Link href="/auth/signup" className="font-bold text-orange-600 hover:text-orange-500">
+                        <Link href={signupLink} className="font-bold text-orange-600 hover:text-orange-500">
                             Create free account
                         </Link>
                     </p>
