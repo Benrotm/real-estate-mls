@@ -33,6 +33,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             location_city: dbProperty.location_city,
             location_county: dbProperty.location_county,
             location_area: dbProperty.location_area,
+            latitude: dbProperty.latitude,
+            longitude: dbProperty.longitude,
 
             price: dbProperty.price,
 
@@ -50,10 +52,16 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             partitioning: dbProperty.partitioning,
             comfort: dbProperty.comfort,
 
+            building_type: dbProperty.building_type,
+            interior_condition: dbProperty.interior_condition,
+            furnishing: dbProperty.furnishing,
+
             features: dbProperty.features || [],
             images: dbProperty.images || [],
             owner_id: dbProperty.owner_id,
 
+            video_url: dbProperty.video_url, // Legacy
+            youtube_video_url: dbProperty.youtube_video_url, // New
             virtual_tour_url: dbProperty.virtual_tour_url,
             promoted: dbProperty.promoted,
 
@@ -107,7 +115,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-10">
 
-                    {/* NEW Reference Design Implementation */}
+                    {/* Info Header */}
                     <div>
                         {/* 1. Badges Row */}
                         <div className="flex flex-wrap gap-2 mb-4">
@@ -195,6 +203,18 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 <div className="text-slate-900 font-bold">{property.comfort || 'N/A'}</div>
                             </div>
                             <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Building</div>
+                                <div className="text-slate-900 font-bold">{property.building_type || 'N/A'}</div>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Condition</div>
+                                <div className="text-slate-900 font-bold">{property.interior_condition || 'N/A'}</div>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Furnishing</div>
+                                <div className="text-slate-900 font-bold">{property.furnishing || 'N/A'}</div>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                                 <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Year Built</div>
                                 <div className="text-slate-900 font-bold">{property.year_built || 'N/A'}</div>
                             </div>
@@ -236,25 +256,44 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                     </div>
 
-                    {/* Virtual Tour */}
-                    {property.virtual_tour_url && (
+                    {/* Media: Video & Virtual Tour */}
+                    {(property.youtube_video_url || property.virtual_tour_url) && (
                         <div className="space-y-4">
-                            <div className="bg-zinc-950 rounded-2xl overflow-hidden shadow-2xl">
-                                <div className="p-4 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center">
-                                    <h3 className="text-white font-bold flex items-center gap-2">
-                                        🎥 360° Virtual Tour
-                                    </h3>
-                                    <span className="text-xs text-zinc-400">Interactive Walkthrough</span>
+                            <h2 className="text-2xl font-bold text-slate-900">Media & Tours</h2>
+
+                            {property.youtube_video_url && (
+                                <div className="bg-black rounded-2xl overflow-hidden shadow-lg aspect-video">
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        src={property.youtube_video_url.replace('watch?v=', 'embed/')}
+                                        title="Property Video"
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    ></iframe>
                                 </div>
-                                <div className="w-full h-[400px] bg-zinc-800 flex items-center justify-center relative group cursor-pointer hover:bg-zinc-700 transition-colors">
-                                    <div className="text-center">
-                                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                                            <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
-                                        </div>
-                                        <p className="text-zinc-300 font-medium">Start Virtual Tour</p>
+                            )}
+
+                            {property.virtual_tour_url && (
+                                <div className="bg-zinc-950 rounded-2xl overflow-hidden shadow-2xl mt-6">
+                                    <div className="p-4 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center">
+                                        <h3 className="text-white font-bold flex items-center gap-2">
+                                            🎥 360° Virtual Tour
+                                        </h3>
+                                        <span className="text-xs text-zinc-400">Interactive Walkthrough</span>
+                                    </div>
+                                    <div className="w-full h-[400px]">
+                                        <iframe
+                                            src={property.virtual_tour_url}
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            allowFullScreen
+                                        ></iframe>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
 

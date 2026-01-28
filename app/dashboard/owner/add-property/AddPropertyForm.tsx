@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createProperty } from '@/app/lib/actions/properties';
-import { PROPERTY_TYPES, TRANSACTION_TYPES, PARTITIONING_TYPES, COMFORT_TYPES } from '@/app/lib/properties';
+import { PROPERTY_TYPES, TRANSACTION_TYPES, PARTITIONING_TYPES, COMFORT_TYPES, BUILDING_TYPES, INTERIOR_CONDITIONS, FURNISHING_TYPES, PROPERTY_FEATURES } from '@/app/lib/properties';
 import { Loader2, Plus, Camera, MapPin, Layout, DollarSign, Home, Briefcase } from 'lucide-react';
 
 export default function AddPropertyForm() {
@@ -42,14 +42,28 @@ export default function AddPropertyForm() {
 
             if (formData.get('partitioning')) submissionData.append('partitioning', formData.get('partitioning') as string);
             if (formData.get('comfort')) submissionData.append('comfort', formData.get('comfort') as string);
+
+            // New Fields
+            if (formData.get('building_type')) submissionData.append('building_type', formData.get('building_type') as string);
+            if (formData.get('interior_condition')) submissionData.append('interior_condition', formData.get('interior_condition') as string);
+            if (formData.get('furnishing')) submissionData.append('furnishing', formData.get('furnishing') as string);
+            if (formData.get('youtube_video_url')) submissionData.append('youtube_video_url', formData.get('youtube_video_url') as string);
+            if (formData.get('virtual_tour_url')) submissionData.append('virtual_tour_url', formData.get('virtual_tour_url') as string);
+
             if (formData.get('description')) submissionData.append('description', formData.get('description') as string);
 
             // Collect Features
             const selectedFeatures: string[] = [];
+            // Special checkboxes
             const featureList = ['has_video', 'has_virtual_tour', 'commission_0', 'exclusive', 'luxury', 'hotel_regime', 'foreclosure'];
             for (const f of featureList) {
-                if (formData.get(f) === 'on') selectedFeatures.push(f); // Or Map to nice name
+                if (formData.get(f) === 'on') selectedFeatures.push(f);
             }
+            // Standard amenities
+            for (const f of PROPERTY_FEATURES) {
+                if (formData.get(f) === 'on') selectedFeatures.push(f);
+            }
+
             submissionData.append('features', JSON.stringify(selectedFeatures));
 
             const result = await createProperty(submissionData);
@@ -201,6 +215,46 @@ export default function AddPropertyForm() {
                             {COMFORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                     </div>
+
+                    {/* NEW FIELDS */}
+                    <div className="col-span-2">
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Building Type</label>
+                        <select name="building_type" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none">
+                            <option value="">Select...</option>
+                            {BUILDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Interior Condition</label>
+                        <select name="interior_condition" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none">
+                            <option value="">Select...</option>
+                            {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Furnishing</label>
+                        <select name="furnishing" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none">
+                            <option value="">Select...</option>
+                            {FURNISHING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* Section 4.5: Media URLs */}
+            <div>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
+                    <Camera className="w-5 h-5 text-pink-500" /> Media Links
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">YouTube Video URL</label>
+                        <input name="youtube_video_url" placeholder="https://youtube.com/watch?v=..." className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Virtual Tour URL (Matterport/etc)</label>
+                        <input name="virtual_tour_url" placeholder="https://my.matterport.com/show/?m=..." className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
+                    </div>
                 </div>
             </div>
 
@@ -209,35 +263,31 @@ export default function AddPropertyForm() {
                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
                     <Briefcase className="w-5 h-5 text-orange-500" /> Features & Amenities
                 </h3>
-                <div className="flex flex-wrap gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="has_video" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <span className="text-slate-700 font-medium">Video Available</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="has_virtual_tour" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <span className="text-slate-700 font-medium">Virtual Tour</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
+
+                {/* Special Tags */}
+                <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b border-gray-100">
+                    <label className="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition">
                         <input type="checkbox" name="commission_0" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <span className="text-slate-700 font-medium">0% Commission</span>
+                        <span className="text-blue-900 font-bold text-xs uppercase">0% Commission</span>
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="exclusive" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <span className="text-slate-700 font-medium">Exclusive</span>
+                    <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-100 hover:bg-amber-100 transition">
+                        <input type="checkbox" name="exclusive" className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
+                        <span className="text-amber-900 font-bold text-xs uppercase">Exclusive</span>
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="luxury" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <span className="text-slate-700 font-medium">Luxury</span>
+                    <label className="flex items-center gap-2 cursor-pointer bg-purple-50 px-3 py-2 rounded-lg border border-purple-100 hover:bg-purple-100 transition">
+                        <input type="checkbox" name="luxury" className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" />
+                        <span className="text-purple-900 font-bold text-xs uppercase">Luxury</span>
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="hotel_regime" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <span className="text-slate-700 font-medium">Hotel Regime</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="foreclosure" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <span className="text-slate-700 font-medium">Foreclosure</span>
-                    </label>
+                </div>
+
+                {/* Standard Amenities */}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {PROPERTY_FEATURES.map(feature => (
+                        <label key={feature} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-slate-50 rounded-lg transition">
+                            <input type="checkbox" name={feature} className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 border-gray-300" />
+                            <span className="text-slate-700 text-sm whitespace-nowrap">{feature}</span>
+                        </label>
+                    ))}
                 </div>
             </div>
 

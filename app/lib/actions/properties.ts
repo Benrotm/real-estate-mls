@@ -49,6 +49,11 @@ export async function createProperty(formData: FormData) {
             partitioning: formData.get('partitioning') as string,
             comfort: formData.get('comfort') as string,
 
+            // Enhanced
+            building_type: formData.get('building_type') as string,
+            interior_condition: formData.get('interior_condition') as string,
+            furnishing: formData.get('furnishing') as string,
+
             // Details
             features: features,
 
@@ -56,6 +61,8 @@ export async function createProperty(formData: FormData) {
             // images: formData.getAll('images') as string[], // If passing multiselect or similar
             // For now assuming we might receive a JSON string of URLs or just ignore
 
+            video_url: formData.get('video_url') as string, // Legacy if needed
+            youtube_video_url: formData.get('youtube_video_url') as string,
             virtual_tour_url: formData.get('virtual_tour_url') as string,
 
             status: 'active'
@@ -121,7 +128,51 @@ export async function getProperties(filters?: any) {
 
         // Advanced
         if (filters.partitioning) query = query.eq('partitioning', filters.partitioning);
-        if (filters.comfort) query = query.eq('comfort', filters.comfort);
+        if (filters.comfort) {
+            query = query.eq('comfort', filters.comfort);
+        }
+
+        // New Filters
+        if (filters.building_type) {
+            query = query.eq('building_type', filters.building_type);
+        }
+        if (filters.interior_condition) {
+            query = query.eq('interior_condition', filters.interior_condition);
+        }
+        if (filters.furnishing) {
+            query = query.eq('furnishing', filters.furnishing);
+        }
+
+        // Media Filters
+        if (filters.has_video === 'true') {
+            // Check if either youtube_video_url OR video_url OR virtual_tour_url is present ??
+            // Or just youtube_video_url. The prompt said "video link".
+            // Supabase doesn't support complex ORs easily in chain without 'or'.
+            // Let's just check youtube_video_url for now as that's the main "video".
+            query = query.not('youtube_video_url', 'is', null);
+        }
+
+        // Sort
+        if (filters.sort) {
+            switch (filters.sort) {
+                case 'price_asc':
+                    query = query.order('price', { ascending: true });
+                    break;
+                case 'price_desc':
+                    query = query.order('price', { ascending: false });
+                    break;
+                case 'newest':
+                    query = query.order('created_at', { ascending: false });
+                    break;
+                case 'oldest':
+                    query = query.order('created_at', { ascending: true });
+                    break;
+                default:
+                    query = query.order('created_at', { ascending: false });
+            }
+        } else {
+            query = query.order('created_at', { ascending: false });
+        }
 
         // Boolean / Content Checks
         if (filters.has_video === 'true' || filters.has_video === true) {

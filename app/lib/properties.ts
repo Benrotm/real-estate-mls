@@ -32,10 +32,16 @@ export interface Property {
     partitioning?: string;
     comfort?: string; // 1, 2, Lux
 
+    // Enhanced Fields
+    building_type?: string;
+    interior_condition?: string;
+    furnishing?: string;
+    youtube_video_url?: string;
+
     features: string[]; // checkboxes
 
     images: string[];
-    video_url?: string;
+    video_url?: string; // Legacy or generic video
     virtual_tour_url?: string;
 
     status: 'active' | 'pending' | 'sold' | 'draft';
@@ -65,21 +71,31 @@ export const CURRENCIES = ['EUR', 'USD', 'RON'] as const;
 export const PARTITIONING_TYPES = ['Decomandat', 'Semidecomandat', 'Nedecomandat', 'Circular', 'Vagon'] as const;
 export const COMFORT_TYPES = ['Lux', '1', '2', '3'] as const;
 
+export const BUILDING_TYPES = ['Apartment Block', 'Individual House', 'Duplex', 'Villa', 'Office Building', 'Mixed Use'] as const;
+export const INTERIOR_CONDITIONS = ['Newly Built', 'Renovated', 'Good', 'Fair', 'Needs Renovation'] as const;
+export const FURNISHING_TYPES = ['Unfurnished', 'Semi-furnished', 'Furnished', 'Luxury Furnished'] as const;
+
 export const PROPERTY_FEATURES = [
-    'Elevator',
-    'Central Heating',
-    'Solar Panels',
     'Pool',
-    'Video Intercom',
-    'Security',
-    'Air Conditioning',
-    'Parking',
+    'Garage',
     'Garden',
-    'Terrace',
-    'Fireplace',
-    'Sauna',
     'Gym',
-    'Smart Home'
+    'Security',
+    'Elevator',
+    'Parking',
+    'Balcony',
+    'Fireplace',
+    'Air Conditioning',
+    'Furnished',
+    'Pet Friendly',
+    'Laundry',
+    'Storage',
+    'Smart Home',
+    'Solar Panels',
+    'Video Intercom',
+    'Central Heating',
+    'Terrace',
+    'Sauna'
 ] as const;
 
 export const MOCK_PROPERTIES: Property[] = [

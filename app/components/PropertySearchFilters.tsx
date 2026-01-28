@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES } from '@/app/lib/properties';
+import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES, BUILDING_TYPES, INTERIOR_CONDITIONS, FURNISHING_TYPES } from '@/app/lib/properties';
 import { Search, X } from 'lucide-react';
 
 export default function PropertySearchFilters() {
@@ -28,6 +28,11 @@ export default function PropertySearchFilters() {
         floor: searchParams.get('floor') || '',
         partitioning: searchParams.get('partitioning') || '',
         comfort: searchParams.get('comfort') || '',
+
+        // New Filters
+        building_type: searchParams.get('building_type') || '',
+        interior_condition: searchParams.get('interior_condition') || '',
+        furnishing: searchParams.get('furnishing') || '',
 
         // Checkboxes
         has_video: searchParams.get('has_video') === 'true',
@@ -59,6 +64,11 @@ export default function PropertySearchFilters() {
             floor: searchParams.get('floor') || '',
             partitioning: searchParams.get('partitioning') || '',
             comfort: searchParams.get('comfort') || '',
+
+            building_type: searchParams.get('building_type') || '',
+            interior_condition: searchParams.get('interior_condition') || '',
+            furnishing: searchParams.get('furnishing') || '',
+
             has_video: searchParams.get('has_video') === 'true',
             has_virtual_tour: searchParams.get('has_virtual_tour') === 'true',
             commission_0: searchParams.get('commission_0') === 'true',
@@ -102,6 +112,7 @@ export default function PropertySearchFilters() {
             listing_type: '', type: '', location_county: '', location_city: '', location_area: '',
             minPrice: '', maxPrice: '', rooms: '', area: '', bathrooms: '',
             year_built: '', floor: '', partitioning: '', comfort: '',
+            building_type: '', interior_condition: '', furnishing: '',
             has_video: false, has_virtual_tour: false, commission_0: false,
             exclusive: false, luxury: false, hotel_regime: false, foreclosure: false,
             features: []
@@ -310,6 +321,39 @@ export default function PropertySearchFilters() {
                                 >
                                     <option value="">Floor</option>
                                     {['Parter', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10+'].map(f => <option key={f} value={f}>{f}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Enhanced Characteristics */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Characteristics</label>
+                            <div className="flex gap-2 mb-1">
+                                <select
+                                    className="p-2 border rounded-md text-sm flex-1 w-full"
+                                    value={filters.building_type}
+                                    onChange={(e) => handleChange('building_type', e.target.value)}
+                                >
+                                    <option value="">Building Type</option>
+                                    {BUILDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex gap-2">
+                                <select
+                                    className="p-2 border rounded-md text-sm flex-1"
+                                    value={filters.interior_condition}
+                                    onChange={(e) => handleChange('interior_condition', e.target.value)}
+                                >
+                                    <option value="">Condition</option>
+                                    {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                                <select
+                                    className="p-2 border rounded-md text-sm flex-1"
+                                    value={filters.furnishing}
+                                    onChange={(e) => handleChange('furnishing', e.target.value)}
+                                >
+                                    <option value="">Furnishing</option>
+                                    {FURNISHING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
                         </div>
