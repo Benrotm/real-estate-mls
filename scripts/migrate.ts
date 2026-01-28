@@ -20,34 +20,41 @@ async function migrate() {
             .from('properties')
             .upsert({
                 id: prop.id,
-                listing_type: prop.listingType,
+                owner_id: prop.owner_id,
+                listing_type: prop.listing_type,
                 currency: prop.currency,
                 title: prop.title,
                 description: prop.description,
-                address: prop.location.address,
-                city: prop.location.city,
-                state: prop.location.state,
-                zip: prop.location.zip,
-                lat: prop.location.lat,
-                lng: prop.location.lng,
+                address: prop.address,
+                location_city: prop.location_city,
+                location_county: prop.location_county,
+                location_area: prop.location_area,
+                // zip/lat/lng if available in mock, otherwise undefined or adapt
+                // lat: prop.latitude,
+                // lng: prop.longitude, 
                 price: prop.price,
-                beds: prop.specs.beds,
-                baths: prop.specs.baths,
-                sqft: prop.specs.sqft,
-                year_built: prop.specs.yearBuilt,
-                property_type: prop.specs.type,
-                stories: prop.specs.stories,
-                floor: prop.specs.floor,
-                interior_rating: prop.specs.interiorRating,
+                bedrooms: prop.bedrooms,
+                bathrooms: prop.bathrooms,
+                area_usable: prop.area_usable,
+                area_built: prop.area_built,
+                year_built: prop.year_built,
+                type: prop.type,
+                // stories/floor mapping
+                floor: prop.floor,
+                total_floors: prop.total_floors,
+                partitioning: prop.partitioning,
+                comfort: prop.comfort,
+
                 features: prop.features,
                 images: prop.images,
-                virtual_tour_url: prop.virtualTourUrl,
-                virtual_tour_type: prop.virtualTourType || 'No Virtual Tour',
-                is_featured: prop.isFeatured,
-                // Add default valuation if missing in mock
-                valuation_estimated_price: prop.valuation?.estimatedPrice ?? 0,
-                valuation_confidence: prop.valuation?.confidence ?? 0,
-                valuation_last_updated: prop.valuation?.lastUpdated ?? new Date().toISOString()
+                virtual_tour_url: prop.virtual_tour_url,
+                promoted: prop.promoted,
+                status: prop.status || 'active',
+
+                // Add default valuation if needed or skip
+                valuation_estimated_price: prop.price * 0.95, // mock logic
+                valuation_confidence: 85,
+                valuation_last_updated: new Date().toISOString()
             });
 
         if (error) {

@@ -16,20 +16,43 @@ export default function AddPropertyForm() {
         setError(null);
 
         try {
-            const rawData = Object.fromEntries(formData.entries());
-            const features = [];
+            // Prepare FormData for server action
+            const submissionData = new FormData();
 
-            // Collect booleans manually effectively
+            // Map and Append Fields (similar to public form)
+            submissionData.append('title', formData.get('title') as string);
+            submissionData.append('listing_type', formData.get('listing_type') as string);
+            submissionData.append('type', formData.get('type') as string);
+            submissionData.append('price', formData.get('price') as string);
+            submissionData.append('currency', formData.get('currency') as string);
+
+            submissionData.append('location_county', formData.get('location_county') as string);
+            submissionData.append('location_city', formData.get('location_city') as string);
+            submissionData.append('location_area', formData.get('location_area') as string);
+            submissionData.append('address', formData.get('address') as string);
+
+            if (formData.get('rooms')) submissionData.append('rooms', formData.get('rooms') as string);
+            if (formData.get('bedrooms')) submissionData.append('bedrooms', formData.get('bedrooms') as string);
+            if (formData.get('bathrooms')) submissionData.append('bathrooms', formData.get('bathrooms') as string);
+            if (formData.get('year_built')) submissionData.append('year_built', formData.get('year_built') as string);
+            if (formData.get('area_usable')) submissionData.append('area_usable', formData.get('area_usable') as string);
+            if (formData.get('area_built')) submissionData.append('area_built', formData.get('area_built') as string);
+            if (formData.get('floor')) submissionData.append('floor', formData.get('floor') as string);
+            if (formData.get('total_floors')) submissionData.append('total_floors', formData.get('total_floors') as string);
+
+            if (formData.get('partitioning')) submissionData.append('partitioning', formData.get('partitioning') as string);
+            if (formData.get('comfort')) submissionData.append('comfort', formData.get('comfort') as string);
+            if (formData.get('description')) submissionData.append('description', formData.get('description') as string);
+
+            // Collect Features
+            const selectedFeatures: string[] = [];
             const featureList = ['has_video', 'has_virtual_tour', 'commission_0', 'exclusive', 'luxury', 'hotel_regime', 'foreclosure'];
             for (const f of featureList) {
-                if (rawData[f] === 'on') features.push(f);
+                if (formData.get(f) === 'on') selectedFeatures.push(f); // Or Map to nice name
             }
+            submissionData.append('features', JSON.stringify(selectedFeatures));
 
-            // Add custom payload
-            const result = await createProperty({
-                ...rawData,
-                features
-            });
+            const result = await createProperty(submissionData);
 
             if (result.error) {
                 setError(result.error);

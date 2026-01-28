@@ -13,7 +13,7 @@ import {
     Building2,
     CheckCircle2
 } from 'lucide-react';
-import { createProperty } from '../../lib/actions';
+import { createProperty } from '@/app/lib/actions/properties';
 
 const PROPERTY_TYPES = ['Apartment', 'House', 'Land', 'Commercial', 'Industrial', 'Business'];
 const FEATURE_CATEGORIES = {
@@ -21,7 +21,8 @@ const FEATURE_CATEGORIES = {
     'Community & Recreation': ['Clubhouse', 'Park', 'Playground', 'Jogging Track', 'Common Garden', 'Party Hall', 'Library', 'Amphitheatre'],
     'Sports & Fitness': ['Gym', 'Swimming Pool', 'Basketball Court', 'tennis Court', 'Football Field', 'Squash Court', 'Yoga Deck'],
     'Security & Safety': ['24/7 Security', 'CCTV Surveillance', 'Gated Community', 'Intercom', 'Fire Safety', 'Video Door Phone'],
-    'Sustainability & Services': ['Green Building', 'Rainwater Harvesting', 'Sewage Treatment', 'Power Backup', 'Elevator', 'Concierge', 'Maintenance Staff', 'Visitor Parking']
+    'Sustainability & Services': ['Green Building', 'Rainwater Harvesting', 'Sewage Treatment', 'Power Backup', 'Elevator', 'Concierge', 'Maintenance Staff', 'Visitor Parking'],
+    'Listing Tags': ['Commission 0%', 'Exclusive', 'Luxury', 'Hotel Regime', 'Foreclosure']
 };
 
 export default function AddPropertyForm() {
@@ -74,42 +75,38 @@ export default function AddPropertyForm() {
         setSubmitting(true);
 
         const formDataToSend = new FormData();
-        // Append simple fields
+        // Core fields
         formDataToSend.append('title', formData.title);
         formDataToSend.append('description', formData.description);
+        formDataToSend.append('type', formData.propertyType); // Mapped from propertyType
+        formDataToSend.append('listing_type', formData.listingType); // Mapped from listingType
+
         formDataToSend.append('price', formData.price);
-        formDataToSend.append('listingType', formData.listingType);
         formDataToSend.append('currency', formData.currency);
-        formDataToSend.append('virtualTourType', formData.virtualTourType);
-        formDataToSend.append('virtualTourUrl', formData.virtualTourUrl); // Added field
 
-        // Complex objects
-        const location = {
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            zip: formData.zip,
-            lat: 0, // Mock lat/lng, ideally replaced by Geocoding API
-            lng: 0
-        };
-        formDataToSend.append('location', JSON.stringify(location));
+        // Location
+        formDataToSend.append('address', formData.address);
+        formDataToSend.append('location_city', formData.city);
+        formDataToSend.append('location_county', formData.state); // Using state input for county
+        formDataToSend.append('location_area', ''); // Not in form yet, empty for now
 
-        const specs = {
-            beds: formData.beds,
-            baths: formData.baths,
-            sqft: formData.sqft,
-            yearBuilt: formData.yearBuilt,
-            type: formData.propertyType,
-            totalFloors: formData.totalFloors,
-            floor: formData.floor,
-            buildingType: formData.buildingType,
-            interiorCondition: formData.interiorCondition,
-            furnishing: formData.furnishing,
-            // interiorRating can be added if UI field exists, skipping for now as not in form
-        };
-        formDataToSend.append('specs', JSON.stringify(specs));
+        // Specs
+        formDataToSend.append('bedrooms', formData.beds);
+        formDataToSend.append('bathrooms', formData.baths);
+        formDataToSend.append('area_usable', formData.sqft); // Mapping sqft to area_usable
+
+        formDataToSend.append('year_built', formData.yearBuilt);
+        formDataToSend.append('floor', formData.floor);
+        formDataToSend.append('total_floors', formData.totalFloors);
+
+        // New fields not yet in UI, sending defaults or empty
+        formDataToSend.append('partitioning', '');
+        formDataToSend.append('comfort', '');
+
+        // Features & Media
         formDataToSend.append('features', JSON.stringify(formData.features));
-        formDataToSend.append('images', JSON.stringify([])); // Todo: Implement Image Upload
+        formDataToSend.append('virtual_tour_url', formData.virtualTourUrl);
+        // images skipped for now
 
         try {
             const result = await createProperty(formDataToSend);

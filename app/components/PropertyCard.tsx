@@ -13,7 +13,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             style: 'currency',
             currency: property.currency,
             maximumFractionDigits: 0,
-        }).format(price) + (property.listingType === 'For Rent' ? '/mo' : '');
+        }).format(price) + (property.listing_type === 'For Rent' ? '/mo' : '');
     };
 
     return (
@@ -28,7 +28,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
                 {/* Badges */}
                 <div className="absolute top-4 left-4">
-                    {property.listingType === 'For Sale' ? (
+                    {property.listing_type === 'For Sale' ? (
                         <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                             For Sale
                         </span>
@@ -39,7 +39,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                     )}
                 </div>
 
-                {property.isFeatured && (
+                {property.promoted && (
                     <div className="absolute top-4 right-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                         Featured
                     </div>
@@ -59,21 +59,21 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                 </h3>
                 <div className="flex items-center text-slate-500 mb-4 text-sm">
                     <MapPin className="w-4 h-4 mr-1 text-slate-400" />
-                    {property.location.city}, {property.location.state}
+                    {property.location_city}, {property.location_county}
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 py-3 border-t border-slate-100">
                     <div className="flex items-center gap-2 text-slate-700">
                         <Bed className="w-5 h-5 text-blue-500" />
-                        <span className="font-bold text-sm">{property.specs.beds}</span>
+                        <span className="font-bold text-sm">{property.bedrooms || 0}</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-700">
                         <Bath className="w-5 h-5 text-blue-500" />
-                        <span className="font-bold text-sm">{property.specs.baths}</span>
+                        <span className="font-bold text-sm">{property.bathrooms || 0}</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-700">
                         <Ruler className="w-4 h-4 text-blue-500" />
-                        <span className="font-bold text-sm">{property.specs.sqft}</span>
+                        <span className="font-bold text-sm">{property.area_usable || 0} mp</span>
                     </div>
                 </div>
 

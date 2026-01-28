@@ -4,7 +4,7 @@ import { createClient } from '@/app/lib/supabase/server';
 import { Property, Property as PropertyType } from '@/app/lib/properties'; // Alias to avoid confusion if needed
 import { revalidatePath } from 'next/cache';
 
-export async function createProperty(formData: any) {
+export async function createProperty(formData: FormData) {
     const supabase = await createClient();
 
     // Get current user
@@ -13,58 +13,75 @@ export async function createProperty(formData: any) {
         return { error: 'Unauthorized' };
     }
 
-    // Prepare data
-    const propertyData = {
-        owner_id: user.id,
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        listing_type: formData.listing_type,
-        price: parseFloat(formData.price),
-        currency: formData.currency,
+    try {
+        // Extract and parse fields
+        const featuresRaw = formData.get('features');
+        const features = featuresRaw ? JSON.parse(featuresRaw as string) : [];
 
-        location_county: formData.location_county,
-        location_city: formData.location_city,
-        location_area: formData.location_area,
-        address: formData.address,
+        // Prepare data matching the DB schema
+        const propertyData = {
+            owner_id: user.id,
+            title: formData.get('title') as string,
+            description: formData.get('description') as string,
+            type: formData.get('type') as string,
+            listing_type: formData.get('listing_type') as string,
+            price: parseFloat(formData.get('price') as string),
+            currency: formData.get('currency') as string,
 
-        rooms: parseInt(formData.rooms) || null,
-        bedrooms: parseInt(formData.bedrooms) || null,
-        bathrooms: parseInt(formData.bathrooms) || null,
+            // Location
+            location_county: formData.get('location_county') as string,
+            location_city: formData.get('location_city') as string,
+            location_area: formData.get('location_area') as string,
+            address: formData.get('address') as string,
 
-        area_usable: parseFloat(formData.area_usable) || null,
-        area_built: parseFloat(formData.area_built) || null,
+            // Specs
+            rooms: formData.get('rooms') ? parseInt(formData.get('rooms') as string) : null,
+            bedrooms: formData.get('bedrooms') ? parseInt(formData.get('bedrooms') as string) : null,
+            bathrooms: formData.get('bathrooms') ? parseInt(formData.get('bathrooms') as string) : null,
 
-        year_built: parseInt(formData.year_built) || null,
-        floor: parseInt(formData.floor) || null,
-        total_floors: parseInt(formData.total_floors) || null,
+            area_usable: formData.get('area_usable') ? parseFloat(formData.get('area_usable') as string) : null,
+            area_built: formData.get('area_built') ? parseFloat(formData.get('area_built') as string) : null,
 
-        partitioning: formData.partitioning,
-        comfort: formData.comfort,
+            year_built: formData.get('year_built') ? parseInt(formData.get('year_built') as string) : null,
+            floor: formData.get('floor') ? parseInt(formData.get('floor') as string) : null,
+            total_floors: formData.get('total_floors') ? parseInt(formData.get('total_floors') as string) : null,
 
-        features: formData.features || [],
+            partitioning: formData.get('partitioning') as string,
+            comfort: formData.get('comfort') as string,
 
-        // TODO: Handle Image Uploads separately or pass URLs
-        images: formData.images || [],
+            // Details
+            features: features,
 
-        status: 'active'
-    };
+            // Media (handling placeholder or array)
+            // images: formData.getAll('images') as string[], // If passing multiselect or similar
+            // For now assuming we might receive a JSON string of URLs or just ignore
 
-    const { data, error } = await supabase
-        .from('properties')
-        .insert(propertyData)
-        .select()
-        .single();
+            virtual_tour_url: formData.get('virtual_tour_url') as string,
 
-    if (error) {
-        console.error('Error creating property:', error);
-        return { error: error.message };
+            status: 'active'
+        };
+
+        const { data, error } = await supabase
+            .from('properties')
+            .insert(propertyData)
+            .select(`
+            *,
+            owner:profiles(full_name)
+        `).single();
+
+        if (error) {
+            console.error('Error creating property:', error);
+            return { error: error.message };
+        }
+
+        revalidatePath('/properties');
+        revalidatePath('/dashboard/owner');
+
+        return { success: true, data };
+    } catch (e: any) {
+        console.error('Unexpected error in createProperty:', e);
+        return { error: e.message || 'Internal Server Error' };
     }
-
-    revalidatePath('/properties');
-    revalidatePath('/dashboard/owner');
-
-    return { success: true, data };
 }
 
 export async function getProperties(filters?: any) {
@@ -74,24 +91,65 @@ export async function getProperties(filters?: any) {
         .from('properties')
         .select(`
             *,
-            owner:profiles(full_name, email, phone, avatar_url)
+            owner:profiles(full_name)
         `)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
     // Apply filters
+    // Apply filters
     if (filters) {
         if (filters.listing_type) query = query.eq('listing_type', filters.listing_type);
         if (filters.type) query = query.eq('type', filters.type);
+
         if (filters.minPrice) query = query.gte('price', filters.minPrice);
         if (filters.maxPrice) query = query.lte('price', filters.maxPrice);
-        if (filters.city) query = query.ilike('location_city', `%${filters.city}%`);
-        if (filters.rooms) query = query.gte('rooms', filters.rooms);
 
-        // Boolean filters
-        // Adjust based on how features are stored (jsonb array)
-        if (filters.features && filters.features.length > 0) {
-            query = query.contains('features', filters.features); // Supabase JSONB contains
+        // Location
+        if (filters.location_county) query = query.ilike('location_county', `%${filters.location_county}%`);
+        if (filters.city) query = query.ilike('location_city', `%${filters.city}%`); // keeping 'city' param support if used elsewhere
+        if (filters.location_city) query = query.ilike('location_city', `%${filters.location_city}%`);
+        if (filters.location_area) query = query.ilike('location_area', `%${filters.location_area}%`);
+
+        // Specs
+        if (filters.rooms) query = query.gte('rooms', filters.rooms);
+        if (filters.bathrooms) query = query.gte('bathrooms', filters.bathrooms);
+        if (filters.area) query = query.gte('area_usable', filters.area); // 'area' filter maps to area_usable
+
+        if (filters.year_built) query = query.gte('year_built', filters.year_built);
+        if (filters.floor) query = query.eq('floor', filters.floor); // Exact match for floor or range? UI sends exact value usually
+
+        // Advanced
+        if (filters.partitioning) query = query.eq('partitioning', filters.partitioning);
+        if (filters.comfort) query = query.eq('comfort', filters.comfort);
+
+        // Boolean / Content Checks
+        if (filters.has_video === 'true' || filters.has_video === true) {
+            query = query.not('video_url', 'is', null);
+        }
+        if (filters.has_virtual_tour === 'true' || filters.has_virtual_tour === true) {
+            query = query.not('virtual_tour_url', 'is', null);
+        }
+
+        // Feature flags (assuming they are stored in 'features' JSONB array)
+        // We'll collect all tags to search for
+        const featureTags = [];
+        if (filters.commission_0 === 'true' || filters.commission_0 === true) featureTags.push('Commission 0%');
+        if (filters.exclusive === 'true' || filters.exclusive === true) featureTags.push('Exclusive');
+        if (filters.luxury === 'true' || filters.luxury === true) featureTags.push('Luxury');
+        if (filters.hotel_regime === 'true' || filters.hotel_regime === true) featureTags.push('Hotel Regime');
+        if (filters.foreclosure === 'true' || filters.foreclosure === true) featureTags.push('Foreclosure');
+
+        if (filters.features) {
+            if (Array.isArray(filters.features)) {
+                featureTags.push(...filters.features);
+            } else if (typeof filters.features === 'string') {
+                featureTags.push(filters.features);
+            }
+        }
+
+        if (featureTags.length > 0) {
+            query = query.contains('features', featureTags);
         }
     }
 
@@ -102,7 +160,14 @@ export async function getProperties(filters?: any) {
         return [];
     }
 
-    return data as PropertyType[];
+    return (data || []).map((p: any) => ({
+        ...p,
+        bedrooms: p.bedrooms ?? p.beds,
+        bathrooms: p.bathrooms ?? p.baths,
+        area_usable: p.area_usable ?? p.sqft,
+        type: p.type ?? p.property_type,
+        location_city: p.location_city ?? p.city,
+    })) as PropertyType[];
 }
 
 export async function getPropertyById(id: string) {
@@ -112,13 +177,23 @@ export async function getPropertyById(id: string) {
         .from('properties')
         .select(`
             *,
-            owner:profiles(full_name, email, phone, avatar_url)
+            owner:profiles(full_name)
         `)
         .eq('id', id)
         .single();
 
-    if (error) return null;
-    return data as PropertyType;
+    if (error || !data) return null;
+
+    // Map legacy fields
+    const p = data as any;
+    return {
+        ...p,
+        bedrooms: p.bedrooms ?? p.beds,
+        bathrooms: p.bathrooms ?? p.baths,
+        area_usable: p.area_usable ?? p.sqft,
+        type: p.type ?? p.property_type,
+        location_city: p.location_city ?? p.city,
+    } as PropertyType;
 }
 
 export async function getUserProperties() {

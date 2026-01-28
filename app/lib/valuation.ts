@@ -29,8 +29,8 @@ export interface ValuationResult {
 
 export function calculateValuation(property: Property): ValuationResult {
     // 1. Comparative Price (Base)
-    const avgSqftPrice = property.location.city === 'Beverly Hills' ? 1200 :
-        property.location.city === 'Paris' ? 5000 : // EUR/sqft approx
+    const avgSqftPrice = property.location_city === 'Beverly Hills' ? 1200 :
+        property.location_city === 'Paris' ? 5000 : // EUR/sqft approx
             600; // Austin/General
 
     // Market Comparison Logic
@@ -38,7 +38,7 @@ export function calculateValuation(property: Property): ValuationResult {
     const marketAvgSqft = avgSqftPrice * (1 + (Math.random() * 0.2 - 0.1)); // +/- 10%
     const marketComparisonPercent = Math.round(((avgSqftPrice - marketAvgSqft) / marketAvgSqft) * 100);
 
-    let basePrice = property.specs.sqft * avgSqftPrice;
+    let basePrice = (property.area_usable || 0) * avgSqftPrice;
 
     // Adjust base if it's wildly off from the listed price (for mock consistency)
     const marketVariance = Math.random() * 0.1 - 0.05; // +/- 5%
@@ -47,7 +47,7 @@ export function calculateValuation(property: Property): ValuationResult {
     // 2. Type of Building Adjustment
     let typeAdjustment = 0;
     let buildingTypePercent = 0;
-    switch (property.specs.type) {
+    switch (property.type) {
         case 'House': typeAdjustment = 1.15; buildingTypePercent = 15; break;
         case 'Apartment': typeAdjustment = 1.0; buildingTypePercent = 0; break;
         case 'Commercial': typeAdjustment = 1.10; buildingTypePercent = 10; break;
@@ -61,11 +61,11 @@ export function calculateValuation(property: Property): ValuationResult {
     // 3. Floor Adjustment (For Apartments)
     let floorAdjustment = 0;
     let floorPositionPercent = 0;
-    if (property.specs.type === 'Apartment' && property.specs.floor) {
-        if (property.specs.floor > 10) {
-            floorAdjustment = property.specs.floor * 1000;
-            floorPositionPercent = Math.min(15, property.specs.floor); // Up to 15%
-        } else if (property.specs.floor === 1) {
+    if (property.type === 'Apartment' && property.floor) {
+        if (property.floor > 10) {
+            floorAdjustment = property.floor * 1000;
+            floorPositionPercent = Math.min(15, property.floor); // Up to 15%
+        } else if (property.floor === 1) {
             floorAdjustment = -10000;
             floorPositionPercent = -5;
         } else {
@@ -75,7 +75,8 @@ export function calculateValuation(property: Property): ValuationResult {
     }
 
     // 4. Interior Design & Features
-    const interiorScore = property.specs.interiorRating || 5;
+    // internal rating not in new schema, assuming default
+    const interiorScore = 5;
     const interiorBonus = (interiorScore - 5) * 15000;
     // Calculate percentage relative to base price approx, capped reasonable
     const interiorFurnishingPercent = Math.min(20, Math.max(-10, (interiorScore - 5) * 3));

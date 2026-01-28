@@ -5,9 +5,9 @@ import PropertyCard from '@/app/components/PropertyCard';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
-export default async function PropertiesPage({ searchParams }: { searchParams: any }) {
-    // Await searchParams in case it's a promise (Next.js 15+ compat, though safe here usually)
-    const filters = searchParams;
+export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
+    // Await searchParams in case it's a promise (Next.js 15+ compat)
+    const filters = await searchParams;
     const properties = await getProperties(filters);
 
     return (

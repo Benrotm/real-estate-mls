@@ -109,7 +109,7 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                             <p className="text-sm text-gray-600 font-medium mb-1">Price / Sqft</p>
-                            <p className="text-3xl font-bold text-slate-700">{currencySymbol}{Math.round(valuation.estimatedValue / property.specs.sqft)}</p>
+                            <p className="text-3xl font-bold text-slate-700">{currencySymbol}{Math.round(valuation.estimatedValue / (property.area_usable || 1))}</p>
                         </div>
                     </div>
 
@@ -142,7 +142,7 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                                 {/* Building Type (Enhanced with %) */}
                                 <div className="flex justify-between items-center text-sm p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
                                     <span className="text-indigo-700 font-medium flex items-center gap-2">
-                                        <Building className="w-4 h-4" /> Building Type ({property.specs.type})
+                                        <Building className="w-4 h-4" /> Building Type ({property.type})
                                     </span>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs font-bold px-1.5 py-0.5 bg-white rounded text-indigo-500">{valuation.factors.buildingTypePercent}%</span>
@@ -206,7 +206,7 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                             </div>
                             <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-slate-500 leading-relaxed">
                                 <Info className="w-4 h-4 inline mr-1 mb-0.5" />
-                                Estimates based on recent sales of similar properties in {property.location.city}. Actual value may vary based on market conditions.
+                                Estimates based on recent sales of similar properties in {property.location_city}. Actual value may vary based on market conditions.
                             </div>
                         </div>
                     </div>

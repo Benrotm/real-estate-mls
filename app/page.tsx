@@ -5,7 +5,7 @@ import { ArrowRight, Plus, BadgeCheck } from 'lucide-react';
 import PropertyCard from "./components/PropertyCard";
 import RoleSelector from "./components/RoleSelector";
 import TrustStats from "./components/TrustStats";
-import { MOCK_PROPERTIES } from "./lib/properties"; // Reuse existing mocks if possible, or create local ones for visuals
+import { getProperties } from "./lib/actions/properties";
 
 export default async function Home({
   searchParams,
@@ -19,6 +19,16 @@ export default async function Home({
     const codeValue = Array.isArray(code) ? code[0] : code;
     redirect(`/auth/callback?code=${codeValue}`);
   }
+
+  // Fetch real properties
+  const allProperties = await getProperties();
+
+  // Filter for featured/promoted (if we had a promoted flag, otherwise just take some)
+  // For now, let's say "Best Price" = cheapest or just the first few
+  const featuredProperties = allProperties.slice(0, 3);
+
+  // Recent = just the most recent ones (getProperties orders by created_at desc by default)
+  const recentProperties = allProperties.slice(0, 6); // Take first 6 as recent
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -37,7 +47,6 @@ export default async function Home({
               <BadgeCheck className="w-4 h-4" />
               Best Price Property Listings
             </div>
-
           </div>
           <Link href="/properties" className="hidden md:flex items-center gap-2 text-orange-600 font-bold hover:text-orange-700 transition-colors">
             View All <ArrowRight className="w-5 h-5" />
@@ -45,12 +54,14 @@ export default async function Home({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {/* Using MOCK_PROPERTIES from lib to ensure consistency */}
-          {MOCK_PROPERTIES.slice(0, 3).map((property) => (
+          {featuredProperties.slice(0, 3).map((property) => (
             <div key={property.id} className="h-full">
               <PropertyCard property={property} />
             </div>
           ))}
+          {featuredProperties.length === 0 && (
+            <p className="text-gray-500 col-span-3 text-center">No featured properties found.</p>
+          )}
         </div>
 
         <div className="mt-12 text-center md:hidden">
@@ -73,12 +84,14 @@ export default async function Home({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {/* Duplicating mocks or using new ones for demonstration of more content */}
-          {MOCK_PROPERTIES.slice(0, 3).map((property) => (
+          {recentProperties.slice(0, 3).map((property) => (
             <div key={`recent-${property.id}`} className="h-full">
               <PropertyCard property={property} />
             </div>
           ))}
+          {recentProperties.length === 0 && (
+            <p className="text-gray-500 col-span-3 text-center">No recent properties found.</p>
+          )}
         </div>
       </section>
 

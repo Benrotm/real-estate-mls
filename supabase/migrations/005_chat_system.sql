@@ -26,6 +26,16 @@ create table if not exists messages (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Ensure columns exist if table was already created (idemptorency)
+DO $$
+BEGIN
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS conversation_id uuid references conversations(id) on delete cascade;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS sender_id uuid references profiles(id) on delete set null;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS content text;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read boolean default false;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS created_at timestamp with time zone default timezone('utc'::text, now());
+END $$;
+
 -- RLS Policies
 
 -- Enable RLS

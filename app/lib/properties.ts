@@ -64,3 +64,52 @@ export const TRANSACTION_TYPES = ['For Sale', 'For Rent'] as const;
 export const CURRENCIES = ['EUR', 'USD', 'RON'] as const;
 export const PARTITIONING_TYPES = ['Decomandat', 'Semidecomandat', 'Nedecomandat', 'Circular', 'Vagon'] as const;
 export const COMFORT_TYPES = ['Lux', '1', '2', '3'] as const;
+
+export const PROPERTY_FEATURES = [
+    'Elevator',
+    'Central Heating',
+    'Solar Panels',
+    'Pool',
+    'Video Intercom',
+    'Security',
+    'Air Conditioning',
+    'Parking',
+    'Garden',
+    'Terrace',
+    'Fireplace',
+    'Sauna',
+    'Gym',
+    'Smart Home'
+] as const;
+
+export const MOCK_PROPERTIES: Property[] = [
+    {
+        id: '1',
+        owner_id: '430ed9f0-3164-4346-a7e3-8124f35b5053', // Valid Profile ID from DB
+        title: 'Modern Apartment in City Center',
+        description: 'A beautiful apartment...',
+        type: 'Apartment',
+        listing_type: 'For Sale',
+        location_county: 'Bucuresti',
+        location_city: 'Bucuresti',
+        location_area: 'Unirii',
+        address: 'Blvd Unirii',
+        price: 150000,
+        currency: 'EUR',
+        rooms: 3,
+        bedrooms: 2,
+        bathrooms: 2,
+        area_usable: 85,
+        area_built: 100,
+        year_built: 2020,
+        floor: 3,
+        total_floors: 8,
+        partitioning: 'Decomandat',
+        comfort: 'Lux',
+        features: ['Air Conditioning', 'Central Heating'],
+        images: ['/placeholder-property.jpg'],
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    }
+];
