@@ -15,7 +15,7 @@ export default async function DashboardHome() {
     if (profile.role === 'agent') redirect('/dashboard/agent');
     if (profile.role === 'developer') redirect('/dashboard/developer');
     if (profile.role === 'super_admin') redirect('/dashboard/admin');
-    if (profile.role === 'client') redirect('/properties');
+    if (profile.role === 'client') redirect('/dashboard/client');
 
     // Fallback UI (e.g. if role is missing or invalid, though uncommon)
     // We keep the old UI as a fallback/debug view
