@@ -34,9 +34,34 @@ export async function GET(request: Request) {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (user) {
+                // Check if we have a pending role update from signup
+                const signupRole = cookieStore.get('signup_role')?.value;
                 let role = user.user_metadata?.role;
 
-                // Fallback to DB profile if missing in metadata
+                // Priority: Cookie Role > Metadata Role > Profile Role > 'client'
+                if (signupRole && ['client', 'agent', 'owner', 'developer'].includes(signupRole)) {
+                    // Update the user's metadata and profile with the selected role
+                    // We do this because the trigger 'handle_new_user' might have already run with default 'client'
+                    // or metadata was missing during social signup.
+
+                    // 1. Update Profile (Most critical for app logic)
+                    await supabase
+                        .from('profiles')
+                        .update({ role: signupRole, listings_limit: signupRole === 'owner' ? 1 : (signupRole === 'agent' ? 5 : 0) }) // Simple default logic, trigger does better but we override here
+                        .eq('id', user.id);
+
+                    // 2. Update Metadata (Enable future sessions to see it)
+                    await supabase.auth.updateUser({
+                        data: { role: signupRole }
+                    });
+
+                    role = signupRole;
+
+                    // Cleanup cookie
+                    cookieStore.set({ name: 'signup_role', value: '', maxAge: 0, path: '/' });
+                }
+
+                // Fallback to DB profile if missing in metadata and no cookie override
                 if (!role) {
                     const { data: profile } = await supabase
                         .from('profiles')

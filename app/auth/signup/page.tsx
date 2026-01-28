@@ -64,6 +64,9 @@ export default function SignUpPage() {
 
     const handleSocialLogin = async (provider: 'google' | 'github') => {
         try {
+            // Store selected role in a cookie for the callback to read
+            document.cookie = `signup_role=${role}; path=/; max-age=300; SameSite=Lax`;
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider,
                 options: {
