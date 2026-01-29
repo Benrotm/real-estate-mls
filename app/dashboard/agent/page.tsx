@@ -5,8 +5,16 @@ import { getUserProfile, getUsageStats } from '../../lib/auth';
 export default async function AgentDashboard() {
     const profile = await getUserProfile();
     const usageCount = profile ? await getUsageStats(profile.id) : 0;
-    const limit = profile?.listings_limit || 5; // Default fallback
+    const featuredCount = profile ? await getFeaturedStats(profile.id) : 0;
+
+    const limit = profile?.listings_limit || 5;
+    const featuredLimit = profile?.featured_limit || 0;
+
     const usagePercent = Math.min(100, Math.round((usageCount / limit) * 100));
+    const featuredPercent = featuredLimit > 0 ? Math.min(100, Math.round((featuredCount / featuredLimit) * 100)) : 0;
+
+    const availableListings = Math.max(0, limit - usageCount);
+    const availableFeatured = Math.max(0, featuredLimit - featuredCount);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
@@ -22,13 +30,6 @@ export default async function AgentDashboard() {
                     </div>
 
                     <div className="flex items-center gap-3 w-full md:w-auto">
-                        <div className="relative flex-1 md:w-64">
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                className="w-full bg-white text-slate-900 px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
                         <Link href="/properties/add" className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-colors whitespace-nowrap text-sm">
                             <Plus className="w-4 h-4" /> Add Property
                         </Link>
@@ -46,22 +47,22 @@ export default async function AgentDashboard() {
                         <div>
                             <div className="text-xs font-medium text-slate-500 mb-1">Active Listings</div>
                             <div className="text-3xl font-bold text-slate-900">{usageCount}</div>
-                            <div className="text-xs text-slate-400 mt-1">/{limit} allowed</div>
+                            <div className="text-xs text-green-600 font-bold mt-1">{availableListings} Available</div>
                         </div>
                         <div className="w-10 h-10 bg-orange-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/30">
                             <Building className="w-5 h-5" />
                         </div>
                     </div>
 
-                    {/* Total Leads */}
+                    {/* Featured Listings */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <div className="text-xs font-medium text-slate-500 mb-1">Total Leads</div>
-                            <div className="text-3xl font-bold text-slate-900">12</div>
-                            <div className="text-xs text-slate-400 mt-1">2 new today</div>
+                            <div className="text-xs font-medium text-slate-500 mb-1">Featured</div>
+                            <div className="text-3xl font-bold text-slate-900">{featuredCount}</div>
+                            <div className="text-xs text-purple-600 font-bold mt-1">{availableFeatured} Available</div>
                         </div>
-                        <div className="w-10 h-10 bg-blue-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
-                            <Users className="w-5 h-5" />
+                        <div className="w-10 h-10 bg-purple-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
+                            <Target className="w-5 h-5" />
                         </div>
                     </div>
 
@@ -77,15 +78,15 @@ export default async function AgentDashboard() {
                         </div>
                     </div>
 
-                    {/* Conversion Rate */}
+                    {/* Total Leads */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <div className="text-xs font-medium text-slate-500 mb-1">Conversion Rate</div>
-                            <div className="text-3xl font-bold text-slate-900">2.4%</div>
-                            <div className="text-xs text-slate-400 mt-1">Top 10% market</div>
+                            <div className="text-xs font-medium text-slate-500 mb-1">Total Leads</div>
+                            <div className="text-3xl font-bold text-slate-900">12</div>
+                            <div className="text-xs text-slate-400 mt-1">2 new today</div>
                         </div>
-                        <div className="w-10 h-10 bg-purple-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
-                            <Target className="w-5 h-5" />
+                        <div className="w-10 h-10 bg-blue-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            <Users className="w-5 h-5" />
                         </div>
                     </div>
                 </div>
@@ -103,8 +104,8 @@ export default async function AgentDashboard() {
                             <div className="text-xs text-orange-100">Total Listings</div>
                         </div>
                         <div>
-                            <div className="text-3xl font-bold">12</div>
-                            <div className="text-xs text-orange-100">Leads This Week</div>
+                            <div className="text-3xl font-bold">{availableListings}</div>
+                            <div className="text-xs text-orange-100">Slots Available</div>
                         </div>
                     </div>
 
@@ -122,10 +123,7 @@ export default async function AgentDashboard() {
                         </div>
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">Valuation Reports</h3>
-                            <p className="text-slate-500 text-sm">Get AI-powered estimates and detailed market analysis for your properties.</p>
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                            <ArrowUpRight className="w-5 h-5" />
+                            <p className="text-slate-500 text-sm">AI-powered estimates.</p>
                         </div>
                     </Link>
 
@@ -136,10 +134,7 @@ export default async function AgentDashboard() {
                         </div>
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">Market Insights</h3>
-                            <p className="text-slate-500 text-sm">Track local trends, price fluctuations, and demand in your area.</p>
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors">
-                            <ArrowUpRight className="w-5 h-5" />
+                            <p className="text-slate-500 text-sm">Track local trends.</p>
                         </div>
                     </Link>
 
@@ -200,32 +195,43 @@ export default async function AgentDashboard() {
 
                     {/* Right Column (1/3 width) */}
                     <div className="space-y-8">
-                        {/* Lead Pipeline */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[240px]">
-                            <h3 className="flex items-center gap-2 font-bold text-slate-900 mb-6">
-                                <BarChart className="w-4 h-4 text-orange-500" /> Lead Pipeline
-                            </h3>
-                            <div className="h-40 flex items-center justify-center text-slate-400 text-sm font-medium">
-                                No leads data yet
-                            </div>
-                        </div>
-
                         {/* Your Plan */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                            <h3 className="font-bold text-slate-900 mb-6">Your Plan</h3>
-
-                            <div className="flex flex-col items-center mb-6">
-                                <div className="bg-orange-500 text-white font-bold px-4 py-1.5 rounded-md uppercase text-sm tracking-wide shadow-md mb-3">
+                            <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between">
+                                Your Plan
+                                <span className="inline-block bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded uppercase tracking-wide">
                                     {profile?.plan_tier || 'Free'}
+                                </span>
+                            </h3>
+
+                            {/* Listings Progress */}
+                            <div className="mb-6">
+                                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                                    <span>Listings Used</span>
+                                    <span>{usageCount} / {limit}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 font-medium">{usageCount} / {limit} listings used</p>
+                                <div className="w-full bg-slate-100 rounded-full h-2 mb-1">
+                                    <div
+                                        className={`h-2 rounded-full ${usagePercent >= 100 ? 'bg-red-500' : 'bg-orange-500'}`}
+                                        style={{ width: `${usagePercent}%` }}
+                                    ></div>
+                                </div>
+                                <p className="text-xs text-slate-400 text-right">{availableListings} available</p>
                             </div>
 
-                            <div className="w-full bg-slate-100 rounded-full h-1.5 mb-6">
-                                <div
-                                    className={`h-1.5 rounded-full ${usagePercent >= 100 ? 'bg-red-500' : 'bg-orange-500'}`}
-                                    style={{ width: `${usagePercent}%` }}
-                                ></div>
+                            {/* Featured Progress */}
+                            <div className="mb-6">
+                                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                                    <span>Featured Slots</span>
+                                    <span>{featuredCount} / {featuredLimit}</span>
+                                </div>
+                                <div className="w-full bg-slate-100 rounded-full h-2 mb-1">
+                                    <div
+                                        className={`h-2 rounded-full ${featuredPercent >= 100 ? 'bg-red-500' : 'bg-purple-500'}`}
+                                        style={{ width: `${featuredPercent}%` }}
+                                    ></div>
+                                </div>
+                                <p className="text-xs text-slate-400 text-right">{availableFeatured} available</p>
                             </div>
 
                             <button className="w-full border border-slate-200 text-slate-700 font-bold py-2.5 rounded-lg hover:border-slate-400 hover:bg-slate-50 transition-colors text-sm">

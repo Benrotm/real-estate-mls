@@ -81,16 +81,25 @@ export async function getUsageStats(userId: string) {
     const { count, error } = await supabase
         .from('properties')
         .select('*', { count: 'exact', head: true })
-        // In a real app with RLS, this filter might be redundant but safe
-        // We assume RLS allows users to see their own properties or we explicitly filter by owner_id if column exists
-        // For this demo, let's assume 'owner_id' is the column or RLS handles it.
-        // Given properties table schema, let's check if owner_id exists in properties.ts or schema.
-        // It's safer to rely on RLS, but let's add .eq just in case.
-        // Actually, let's just use RLS (select all user can see).
-        ;
+        .eq('owner_id', userId);
 
     if (error) {
         console.error('Error fetching usage stats:', error);
+        return 0;
+    }
+    return count || 0;
+}
+
+export async function getFeaturedStats(userId: string) {
+    const supabase = await createClient();
+    const { count, error } = await supabase
+        .from('properties')
+        .select('*', { count: 'exact', head: true })
+        .eq('owner_id', userId)
+        .eq('promoted', true);
+
+    if (error) {
+        console.error('Error fetching featured stats:', error);
         return 0;
     }
     return count || 0;

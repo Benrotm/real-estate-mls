@@ -16,8 +16,16 @@ export default async function OwnerDashboard() {
     }
 
     const usageCount = await getUsageStats(profile.id);
-    const limit = profile.listings_limit || 1; // Default fallback for Owner/Client
+    const featuredCount = await getFeaturedStats(profile.id);
+
+    const limit = profile.listings_limit || 1;
+    const featuredLimit = profile.featured_limit || 0;
+
     const usagePercent = Math.min(100, Math.round((usageCount / limit) * 100));
+    const featuredPercent = featuredLimit > 0 ? Math.min(100, Math.round((featuredCount / featuredLimit) * 100)) : 0;
+
+    const availableListings = Math.max(0, limit - usageCount);
+    const availableFeatured = Math.max(0, featuredLimit - featuredCount);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
@@ -39,25 +47,27 @@ export default async function OwnerDashboard() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {/* Card 1 */}
+                    {/* Card 1: My Listings */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
                             <div className="text-sm font-medium text-slate-500 mb-1">My Listings</div>
-                            <div className="text-3xl font-bold text-slate-900">{usageCount}</div>
+                            <div className="text-3xl font-bold text-slate-900">{usageCount} <span className="text-base text-slate-400 font-normal">/ {limit}</span></div>
+                            <div className="text-xs text-green-600 font-bold mt-1">{availableListings} Available</div>
                         </div>
                         <div className="w-12 h-12 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center">
                             <Building className="w-6 h-6" />
                         </div>
                     </div>
 
-                    {/* Card 2 */}
+                    {/* Card 2: Featured */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <div className="text-sm font-medium text-slate-500 mb-1">Active Clients</div>
-                            <div className="text-3xl font-bold text-slate-900">0</div>
+                            <div className="text-sm font-medium text-slate-500 mb-1">Featured</div>
+                            <div className="text-3xl font-bold text-slate-900">{featuredCount} <span className="text-base text-slate-400 font-normal">/ {featuredLimit}</span></div>
+                            <div className="text-xs text-purple-600 font-bold mt-1">{availableFeatured} Available</div>
                         </div>
-                        <div className="w-12 h-12 bg-green-100 text-green-500 rounded-lg flex items-center justify-center">
-                            <Check className="w-6 h-6" />
+                        <div className="w-12 h-12 bg-purple-100 text-purple-500 rounded-lg flex items-center justify-center">
+                            <TrendingUp className="w-6 h-6" />
                         </div>
                     </div>
 
@@ -86,7 +96,6 @@ export default async function OwnerDashboard() {
 
                 {/* Tools & Insights */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    {/* Valuation Reports */}
                     {/* Valuation Reports */}
                     <div className="h-full">
                         <HomeValuationWidget linkPath="/dashboard/owner/valuation" />
@@ -153,26 +162,56 @@ export default async function OwnerDashboard() {
 
                     {/* Right Column (Span 1) */}
                     <div className="space-y-8">
+                        {/* Your Plan */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between">
+                                Your Plan
+                                <span className="inline-block bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded uppercase tracking-wide">
+                                    {profile.plan_tier || 'Free'}
+                                </span>
+                            </h3>
+
+                            {/* Listings Progress */}
+                            <div className="mb-6">
+                                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                                    <span>Listings Used</span>
+                                    <span>{usageCount} / {limit}</span>
+                                </div>
+                                <div className="w-full bg-slate-100 rounded-full h-2 mb-1">
+                                    <div
+                                        className={`h-2 rounded-full ${usagePercent >= 100 ? 'bg-red-500' : 'bg-orange-500'}`}
+                                        style={{ width: `${usagePercent}%` }}
+                                    ></div>
+                                </div>
+                                <p className="text-xs text-slate-400 text-right">{availableListings} available</p>
+                            </div>
+
+                            {/* Featured Progress */}
+                            <div className="mb-6">
+                                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                                    <span>Featured Slots</span>
+                                    <span>{featuredCount} / {featuredLimit}</span>
+                                </div>
+                                <div className="w-full bg-slate-100 rounded-full h-2 mb-1">
+                                    <div
+                                        className={`h-2 rounded-full ${featuredPercent >= 100 ? 'bg-red-500' : 'bg-purple-500'}`}
+                                        style={{ width: `${featuredPercent}%` }}
+                                    ></div>
+                                </div>
+                                <p className="text-xs text-slate-400 text-right">{availableFeatured} available</p>
+                            </div>
+
+                            <button className="w-full border border-slate-200 text-slate-700 font-bold py-2 rounded-lg hover:border-slate-400 hover:bg-slate-50 transition-colors text-sm">
+                                Upgrade Plan
+                            </button>
+                        </div>
+
                         {/* Property Types */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-64 flex flex-col">
                             <h3 className="font-bold text-slate-900 mb-4">Property Types</h3>
                             <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
                                 No data available
                             </div>
-                        </div>
-
-                        {/* Your Plan */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center">
-                            <h3 className="font-bold text-slate-900 mb-6 text-left">Your Plan</h3>
-
-                            <div className="inline-block bg-orange-500 text-white font-bold px-6 py-2 rounded-lg mb-2 uppercase text-sm tracking-wide shadow-lg shadow-orange-500/30">
-                                {profile.plan_tier || 'Free'}
-                            </div>
-                            <p className="text-xs text-slate-400 font-medium mb-6">{usageCount} / {limit} listings allowed</p>
-
-                            <button className="w-full border border-slate-200 text-slate-700 font-bold py-2 rounded-lg hover:border-slate-400 transition-colors">
-                                Upgrade Plan
-                            </button>
                         </div>
                     </div>
                 </div>
