@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bookmark, ArrowUpRight, TrendingUp } from 'lucide-react';
-import { getUserProfile, getUsageStats } from '../../lib/auth';
+import { getUserProfile, getUsageStats, getFeaturedStats } from '../../lib/auth';
 
 export default async function AgentDashboard() {
     const profile = await getUserProfile();

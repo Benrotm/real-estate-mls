@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Building, Check, Eye, Clock, ArrowUpRight, Plus, BarChart, TrendingUp, MessageSquare } from 'lucide-react';
 import HomeValuationWidget from '../../components/HomeValuationWidget';
-import { getUserProfile, getUsageStats } from '../../lib/auth';
+import { getUserProfile, getUsageStats, getFeaturedStats } from '../../lib/auth';
 
 export default async function OwnerDashboard() {
     const profile = await getUserProfile();
