@@ -37,6 +37,8 @@ export interface Property {
     interior_condition?: string;
     furnishing?: string;
     youtube_video_url?: string;
+    social_media_url?: string;
+    personal_property_id?: string;
 
     features: string[]; // checkboxes
 

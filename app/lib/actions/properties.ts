@@ -54,14 +54,18 @@ export async function createProperty(formData: FormData) {
             interior_condition: formData.get('interior_condition') as string,
             furnishing: formData.get('furnishing') as string,
 
+            // New Requests
+            social_media_url: formData.get('social_media_url') as string,
+            personal_property_id: formData.get('personal_property_id') as string,
+
             // Details
             features: features,
 
-            // Media (handling placeholder or array)
-            // images: formData.getAll('images') as string[], // If passing multiselect or similar
-            // For now assuming we might receive a JSON string of URLs or just ignore
+            // Media
+            // If images are passed as JSON string of URLs
+            images: formData.get('images') ? JSON.parse(formData.get('images') as string) : [],
 
-            video_url: formData.get('video_url') as string, // Legacy if needed
+            video_url: formData.get('video_url') as string,
             youtube_video_url: formData.get('youtube_video_url') as string,
             virtual_tour_url: formData.get('virtual_tour_url') as string,
 

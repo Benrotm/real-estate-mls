@@ -4,12 +4,54 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createProperty } from '@/app/lib/actions/properties';
 import { PROPERTY_TYPES, TRANSACTION_TYPES, PARTITIONING_TYPES, COMFORT_TYPES, BUILDING_TYPES, INTERIOR_CONDITIONS, FURNISHING_TYPES, PROPERTY_FEATURES } from '@/app/lib/properties';
-import { Loader2, Plus, Camera, MapPin, Layout, DollarSign, Home, Briefcase } from 'lucide-react';
+import { Loader2, Plus, Camera, MapPin, Layout, DollarSign, Home, Briefcase, Trash2, X } from 'lucide-react';
+import { supabase } from '@/app/lib/supabase/client';
 
 export default function AddPropertyForm() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [images, setImages] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        setUploading(true);
+        const files = Array.from(e.target.files);
+        const newUrls: string[] = [];
+
+        try {
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                const filePath = `listings/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('property-images')
+                    .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('property-images')
+                    .getPublicUrl(filePath);
+
+                newUrls.push(publicUrl);
+            }
+
+            setImages(prev => [...prev, ...newUrls]);
+        } catch (err: any) {
+            console.error('Upload failed:', err);
+            setError('Failed to upload images. Please try again.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const removeImage = (index: number) => {
+        setImages(prev => prev.filter((_, i) => i !== index));
+    };
 
     async function handleSubmit(formData: FormData) {
         setLoading(true);
@@ -51,6 +93,13 @@ export default function AddPropertyForm() {
             if (formData.get('virtual_tour_url')) submissionData.append('virtual_tour_url', formData.get('virtual_tour_url') as string);
 
             if (formData.get('description')) submissionData.append('description', formData.get('description') as string);
+
+            // New Fields - Social and ID
+            if (formData.get('social_media_url')) submissionData.append('social_media_url', formData.get('social_media_url') as string);
+            if (formData.get('personal_property_id')) submissionData.append('personal_property_id', formData.get('personal_property_id') as string);
+
+            // Images
+            submissionData.append('images', JSON.stringify(images));
 
             // Collect Features
             const selectedFeatures: string[] = [];
@@ -241,8 +290,55 @@ export default function AddPropertyForm() {
                 </div>
             </div>
 
-            {/* Section 4.5: Media URLs */}
-            <div>
+        </div>
+            </div >
+
+        {/* Section: Images */ }
+        < div >
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
+                    <Camera className="w-5 h-5 text-indigo-500" /> Property Images
+                </h3>
+                
+                <div className="mb-4">
+                    <label className="block w-full cursor-pointer bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:bg-slate-100 transition">
+                        <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
+                        <div className="flex flex-col items-center gap-2">
+                            {uploading ? (
+                                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                            ) : (
+                                <Camera className="w-8 h-8 text-slate-400" />
+                            )}
+                            <span className="text-sm font-medium text-slate-600">
+                                {uploading ? 'Uploading...' : 'Click to upload property specific images'}
+                            </span>
+                            <span className="text-xs text-slate-400">JPG, PNG supported</span>
+                        </div>
+                    </label>
+                </div>
+
+    {/* Image Previews */ }
+    {
+        images.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {images.map((url, index) => (
+                    <div key={index} className="relative group aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                        <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                        <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm"
+                        >
+                            <X className="w-3 h-3" />
+                        </button>
+                    </div>
+                ))}
+            </div>
+        )
+    }
+            </div >
+
+        {/* Section 4.5: Media URLs */ }
+        < div >
                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
                     <Camera className="w-5 h-5 text-pink-500" /> Media Links
                 </h3>
@@ -256,58 +352,75 @@ export default function AddPropertyForm() {
                         <input name="virtual_tour_url" placeholder="https://my.matterport.com/show/?m=..." className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
                     </div>
                 </div>
-            </div>
+            </div >
 
-            {/* Section 5: Features Checkboxes */}
-            <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
-                    <Briefcase className="w-5 h-5 text-orange-500" /> Features & Amenities
+        {/* Section Identification */ }
+        < div >
+                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
+                    <Briefcase className="w-5 h-5 text-teal-500" /> Identification & Socials
                 </h3>
-
-                {/* Special Tags */}
-                <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b border-gray-100">
-                    <label className="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition">
-                        <input type="checkbox" name="commission_0" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <span className="text-blue-900 font-bold text-xs uppercase">0% Commission</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-100 hover:bg-amber-100 transition">
-                        <input type="checkbox" name="exclusive" className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
-                        <span className="text-amber-900 font-bold text-xs uppercase">Exclusive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer bg-purple-50 px-3 py-2 rounded-lg border border-purple-100 hover:bg-purple-100 transition">
-                        <input type="checkbox" name="luxury" className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" />
-                        <span className="text-purple-900 font-bold text-xs uppercase">Luxury</span>
-                    </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                         <label className="block text-sm font-bold text-slate-700 mb-1">Social Media Link (e.g. Instagram Post)</label>
+                         <input name="social_media_url" placeholder="https://instagram.com/p/..." className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
+                    </div>
+                    <div>
+                         <label className="block text-sm font-bold text-slate-700 mb-1">Personal Website Property ID</label>
+                         <input name="personal_property_id" placeholder="e.g. PROP-1234" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
+                    </div>
                 </div>
+            </div >
 
-                {/* Standard Amenities */}
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                    {PROPERTY_FEATURES.map(feature => (
-                        <label key={feature} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-slate-50 rounded-lg transition">
-                            <input type="checkbox" name={feature} className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 border-gray-300" />
-                            <span className="text-slate-700 text-sm whitespace-nowrap">{feature}</span>
-                        </label>
-                    ))}
-                </div>
-            </div>
+        {/* Section 5: Features Checkboxes */ }
+        < div >
+        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
+            <Briefcase className="w-5 h-5 text-orange-500" /> Features & Amenities
+        </h3>
 
-            {/* Description */}
-            <div>
+    {/* Special Tags */ }
+    <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b border-gray-100">
+        <label className="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition">
+            <input type="checkbox" name="commission_0" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+            <span className="text-blue-900 font-bold text-xs uppercase">0% Commission</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-100 hover:bg-amber-100 transition">
+            <input type="checkbox" name="exclusive" className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
+            <span className="text-amber-900 font-bold text-xs uppercase">Exclusive</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer bg-purple-50 px-3 py-2 rounded-lg border border-purple-100 hover:bg-purple-100 transition">
+            <input type="checkbox" name="luxury" className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" />
+            <span className="text-purple-900 font-bold text-xs uppercase">Luxury</span>
+        </label>
+    </div>
+
+    {/* Standard Amenities */ }
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {PROPERTY_FEATURES.map(feature => (
+            <label key={feature} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-slate-50 rounded-lg transition">
+                <input type="checkbox" name={feature} className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 border-gray-300" />
+                <span className="text-slate-700 text-sm whitespace-nowrap">{feature}</span>
+            </label>
+        ))}
+    </div>
+            </div >
+
+        {/* Description */ }
+        < div >
                 <label className="block text-sm font-bold text-slate-700 mb-1">Description</label>
                 <textarea name="description" rows={5} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none"></textarea>
-            </div>
+            </div >
 
-            <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
-                <button type="button" onClick={() => router.back()} className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition">Cancel</button>
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2"
-                >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                    Create Listing
-                </button>
-            </div>
-        </form>
+        <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
+            <button type="button" onClick={() => router.back()} className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+            <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2"
+            >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                Create Listing
+            </button>
+        </div>
+        </form >
     );
 }
