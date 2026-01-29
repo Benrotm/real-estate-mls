@@ -290,15 +290,12 @@ export default function AddPropertyForm() {
                 </div>
             </div>
 
-        </div>
-            </div >
-
-        {/* Section: Images */ }
-        < div >
+            {/* Section: Images */}
+            <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
                     <Camera className="w-5 h-5 text-indigo-500" /> Property Images
                 </h3>
-                
+
                 <div className="mb-4">
                     <label className="block w-full cursor-pointer bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:bg-slate-100 transition">
                         <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
@@ -316,29 +313,29 @@ export default function AddPropertyForm() {
                     </label>
                 </div>
 
-    {/* Image Previews */ }
-    {
-        images.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {images.map((url, index) => (
-                    <div key={index} className="relative group aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-                        <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                        <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm"
-                        >
-                            <X className="w-3 h-3" />
-                        </button>
-                    </div>
-                ))}
-            </div>
-        )
-    }
+                {/* Image Previews */}
+                {
+                    images.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {images.map((url, index) => (
+                                <div key={index} className="relative group aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                                    <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeImage(index)}
+                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )
+                }
             </div >
 
-        {/* Section 4.5: Media URLs */ }
-        < div >
+            {/* Section 4.5: Media URLs */}
+            < div >
                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
                     <Camera className="w-5 h-5 text-pink-500" /> Media Links
                 </h3>
@@ -354,73 +351,73 @@ export default function AddPropertyForm() {
                 </div>
             </div >
 
-        {/* Section Identification */ }
-        < div >
-                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
+            {/* Section Identification */}
+            < div >
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
                     <Briefcase className="w-5 h-5 text-teal-500" /> Identification & Socials
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                         <label className="block text-sm font-bold text-slate-700 mb-1">Social Media Link (e.g. Instagram Post)</label>
-                         <input name="social_media_url" placeholder="https://instagram.com/p/..." className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Social Media Link (e.g. Instagram Post)</label>
+                        <input name="social_media_url" placeholder="https://instagram.com/p/..." className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
                     </div>
                     <div>
-                         <label className="block text-sm font-bold text-slate-700 mb-1">Personal Website Property ID</label>
-                         <input name="personal_property_id" placeholder="e.g. PROP-1234" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Personal Website Property ID</label>
+                        <input name="personal_property_id" placeholder="e.g. PROP-1234" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none" />
                     </div>
                 </div>
             </div >
 
-        {/* Section 5: Features Checkboxes */ }
-        < div >
-        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
-            <Briefcase className="w-5 h-5 text-orange-500" /> Features & Amenities
-        </h3>
+            {/* Section 5: Features Checkboxes */}
+            < div >
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-t pt-6">
+                    <Briefcase className="w-5 h-5 text-orange-500" /> Features & Amenities
+                </h3>
 
-    {/* Special Tags */ }
-    <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b border-gray-100">
-        <label className="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition">
-            <input type="checkbox" name="commission_0" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-            <span className="text-blue-900 font-bold text-xs uppercase">0% Commission</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-100 hover:bg-amber-100 transition">
-            <input type="checkbox" name="exclusive" className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
-            <span className="text-amber-900 font-bold text-xs uppercase">Exclusive</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer bg-purple-50 px-3 py-2 rounded-lg border border-purple-100 hover:bg-purple-100 transition">
-            <input type="checkbox" name="luxury" className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" />
-            <span className="text-purple-900 font-bold text-xs uppercase">Luxury</span>
-        </label>
-    </div>
+                {/* Special Tags */}
+                <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b border-gray-100">
+                    <label className="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition">
+                        <input type="checkbox" name="commission_0" className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                        <span className="text-blue-900 font-bold text-xs uppercase">0% Commission</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-2 rounded-lg border border-amber-100 hover:bg-amber-100 transition">
+                        <input type="checkbox" name="exclusive" className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
+                        <span className="text-amber-900 font-bold text-xs uppercase">Exclusive</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer bg-purple-50 px-3 py-2 rounded-lg border border-purple-100 hover:bg-purple-100 transition">
+                        <input type="checkbox" name="luxury" className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" />
+                        <span className="text-purple-900 font-bold text-xs uppercase">Luxury</span>
+                    </label>
+                </div>
 
-    {/* Standard Amenities */ }
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {PROPERTY_FEATURES.map(feature => (
-            <label key={feature} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-slate-50 rounded-lg transition">
-                <input type="checkbox" name={feature} className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 border-gray-300" />
-                <span className="text-slate-700 text-sm whitespace-nowrap">{feature}</span>
-            </label>
-        ))}
-    </div>
+                {/* Standard Amenities */}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {PROPERTY_FEATURES.map(feature => (
+                        <label key={feature} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-slate-50 rounded-lg transition">
+                            <input type="checkbox" name={feature} className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 border-gray-300" />
+                            <span className="text-slate-700 text-sm whitespace-nowrap">{feature}</span>
+                        </label>
+                    ))}
+                </div>
             </div >
 
-        {/* Description */ }
-        < div >
+            {/* Description */}
+            < div >
                 <label className="block text-sm font-bold text-slate-700 mb-1">Description</label>
                 <textarea name="description" rows={5} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outlines-none"></textarea>
             </div >
 
-        <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
-            <button type="button" onClick={() => router.back()} className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition">Cancel</button>
-            <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2"
-            >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                Create Listing
-            </button>
-        </div>
+            <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
+                <button type="button" onClick={() => router.back()} className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2"
+                >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                    Create Listing
+                </button>
+            </div>
         </form >
     );
 }
