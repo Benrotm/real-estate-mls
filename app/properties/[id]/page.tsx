@@ -63,6 +63,10 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             video_url: dbProperty.video_url, // Legacy
             youtube_video_url: dbProperty.youtube_video_url, // New
             virtual_tour_url: dbProperty.virtual_tour_url,
+
+            social_media_url: dbProperty.social_media_url,
+            personal_property_id: dbProperty.personal_property_id,
+
             promoted: dbProperty.promoted,
 
             status: dbProperty.status,
@@ -97,16 +101,18 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 </div>
             </div>
 
-            {/* Hero Images - Kept simple but visually impressive */}
+            {/* Hero Images - Dynamic Grid */}
             <div className="h-[50vh] md:h-[60vh] relative z-0 grid grid-cols-1 md:grid-cols-2 gap-1 text-slate-800 overflow-hidden">
                 <img src={property.images[0] || '/placeholder.jpg'} className="w-full h-full object-cover" alt="Main View" />
                 <div className="hidden md:grid grid-rows-2 gap-1">
                     <img src={property.images[1] || property.images[0] || '/placeholder.jpg'} className="w-full h-full object-cover" alt="Secondary View" />
                     <div className="relative">
-                        <img src={property.images[0] || '/placeholder.jpg'} className="w-full h-full object-cover opacity-80" alt="More" />
-                        <button className="absolute inset-0 m-auto bg-white/90 text-slate-900 px-6 py-2 h-fit w-fit rounded-lg font-bold shadow-lg hover:scale-105 transition-transform">
-                            View All Photos
-                        </button>
+                        <img src={property.images[2] || property.images[0] || '/placeholder.jpg'} className="w-full h-full object-cover opacity-80" alt="More" />
+                        {property.images.length > 3 && (
+                            <button className="absolute inset-0 m-auto bg-white/90 text-slate-900 px-6 py-2 h-fit w-fit rounded-lg font-bold shadow-lg hover:scale-105 transition-transform">
+                                View All {property.images.length} Photos
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -325,6 +331,30 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 <div className="text-sm text-slate-500 font-medium">Senior Realtor</div>
                             </div>
                         </div>
+
+                        {/* Social & ID */}
+                        {(property.personal_property_id || property.social_media_url) && (
+                            <div className="mb-6 space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                {property.personal_property_id && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-slate-500 font-medium">Property ID:</span>
+                                        <span className="font-mono font-bold text-slate-900 bg-white px-2 py-1 rounded border border-slate-200">{property.personal_property_id}</span>
+                                    </div>
+                                )}
+                                {property.social_media_url && (
+                                    <div className="pt-2 border-t border-slate-200">
+                                        <a
+                                            href={property.social_media_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-2 rounded-lg hover:opacity-90 transition shadow-sm"
+                                        >
+                                            View on Social Media
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <ContactForm
                             propertyTitle={property.title}
