@@ -1,8 +1,6 @@
-'use client';
-
 import { useState, useTransition } from 'react';
-import { updateUserBonus, sendNotification } from '@/app/lib/admin';
-import { Gift, MessageSquare, Check, X } from 'lucide-react';
+import { updateUserBonus, sendNotification, updateUserRoleAndPlan } from '@/app/lib/admin';
+import { Gift, MessageSquare, Check, Edit, UserCog } from 'lucide-react';
 
 interface UserActionsProps {
     user: any;
@@ -11,11 +9,16 @@ interface UserActionsProps {
 export default function UserActions({ user }: UserActionsProps) {
     const [showBonusModal, setShowBonusModal] = useState(false);
     const [showMsgModal, setShowMsgModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     const [bonusAmount, setBonusAmount] = useState(user.bonus_listings || 0);
     const [msgTitle, setMsgTitle] = useState('');
     const [msgBody, setMsgBody] = useState('');
+
+    // Edit State
+    const [selectedRole, setSelectedRole] = useState(user.role || 'client');
+    const [selectedPlan, setSelectedPlan] = useState(user.plan_tier || 'Free');
 
     const handleBonusSave = () => {
         startTransition(async () => {
@@ -43,8 +46,30 @@ export default function UserActions({ user }: UserActionsProps) {
         });
     };
 
+    const handleEditSave = () => {
+        startTransition(async () => {
+            try {
+                // Ensure Plan name case matches DB (Capitalized usually: Free, Premium, Professional)
+                // We'll trust the admin selects nicely, or we force title case.
+                await updateUserRoleAndPlan(user.id, selectedRole, selectedPlan);
+                alert('User role and plan updated! Limits recalculated.');
+                setShowEditModal(false);
+            } catch (e: any) {
+                alert('Failed: ' + e.message);
+            }
+        });
+    };
+
     return (
         <div className="flex gap-2">
+            <button
+                onClick={() => setShowEditModal(true)}
+                className="p-2 bg-slate-500/10 text-slate-400 hover:bg-slate-500 hover:text-white rounded-lg transition-colors border border-slate-500/30"
+                title="Edit Role & Plan"
+            >
+                <Edit size={16} />
+            </button>
+
             <button
                 onClick={() => setShowBonusModal(true)}
                 className="p-2 bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white rounded-lg transition-colors border border-purple-500/30"
@@ -60,6 +85,67 @@ export default function UserActions({ user }: UserActionsProps) {
             >
                 <MessageSquare size={16} />
             </button>
+
+            {/* Edit User Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-700 p-6 rounded-xl w-full max-w-sm shadow-2xl">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <UserCog className="text-slate-400" /> Edit User Access
+                        </h3>
+
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-xs uppercase text-slate-500 font-bold mb-1">Role</label>
+                                <select
+                                    value={selectedRole}
+                                    onChange={(e) => setSelectedRole(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-blue-500 outline-none"
+                                >
+                                    <option value="client">Client</option>
+                                    <option value="owner">Owner</option>
+                                    <option value="agent">Agent</option>
+                                    <option value="developer">Developer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs uppercase text-slate-500 font-bold mb-1">Plan Tier</label>
+                                <select
+                                    value={selectedPlan}
+                                    onChange={(e) => setSelectedPlan(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-blue-500 outline-none"
+                                >
+                                    <option value="Free">Free</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Professional">Professional</option>
+                                    <option value="Enterprise">Enterprise</option>
+                                </select>
+                                <p className="text-xs text-slate-500 mt-2">
+                                    Changing this will reset the user's listing limits to the plan defaults.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="px-4 py-2 text-slate-400 hover:text-white"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleEditSave}
+                                disabled={isPending}
+                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2"
+                            >
+                                {isPending ? 'Saving...' : <><Check size={16} /> Save Changes</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Bonus Modal */}
             {showBonusModal && (

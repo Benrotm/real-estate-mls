@@ -275,3 +275,43 @@ export async function sendNotification(userId: string, title: string, message: s
     if (error) throw new Error(error.message);
     // No revalidate needed unless we are showing sent messages list
 }
+
+export async function updateUserRoleAndPlan(userId: string, role: string, planTier: string) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    // 1. Fetch the Plan Limits from the `plans` table
+    const { data: planData, error: planError } = await supabase
+        .from('plans')
+        .select('listings_limit, featured_limit')
+        .eq('role', role)
+        .eq('name', planTier) // planTier matches the 'name' column in plans table
+        .single();
+
+    let listingsLimit = 0;
+    let featuredLimit = 0;
+
+    if (planData) {
+        listingsLimit = planData.listings_limit;
+        featuredLimit = planData.featured_limit;
+    } else {
+        // Fallback logic if plan not found in DB
+        console.warn(`Plan not found for ${role} - ${planTier}. using defaults.`);
+        if (role === 'agent') { listingsLimit = 5; featuredLimit = 0; }
+        else if (role === 'owner') { listingsLimit = 1; featuredLimit = 0; }
+    }
+
+    // 2. Update the Profile with new Role, Plan, and Limits
+    const { error } = await supabase
+        .from('profiles')
+        .update({
+            role: role,
+            plan_tier: planTier,
+            listings_limit: listingsLimit,
+            featured_limit: featuredLimit
+        })
+        .eq('id', userId);
+
+    if (error) throw new Error(error.message);
+    revalidatePath('/dashboard/admin/users');
+}
