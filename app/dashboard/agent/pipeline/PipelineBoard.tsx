@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, BedDouble, Ruler, MapPin } from 'lucide-react';
 
 interface Lead {
     id: string;
@@ -47,10 +47,6 @@ export default function PipelineBoard({ initialLeads }: PipelineBoardProps) {
 
     return (
         <div className="flex-1 overflow-x-auto">
-            {/* Debug Data */}
-            <div className="bg-slate-100 p-2 text-xs mb-4 font-mono overflow-auto max-h-32 border border-slate-300">
-                DEBUG LEADS[0]: {JSON.stringify(initialLeads.find(l => l.name === 'Card Details Test') || initialLeads[0], null, 2)}
-            </div>
             <div className="flex gap-6 min-w-max h-full pb-4">
                 {STAGES.map(stage => {
                     const stageLeads = initialLeads.filter(l => l.status === stage.id);
@@ -83,13 +79,38 @@ export default function PipelineBoard({ initialLeads }: PipelineBoardProps) {
                                                 </span>
                                             </div>
 
-                                            <p className="text-xs text-slate-500 mb-3">
-                                                Interested in: <span className="font-medium text-slate-700">{lead.preference_type || 'Any Property'}</span>
-                                            </p>
+                                            <div className="space-y-2 mb-3">
+                                                <p className="text-xs text-slate-500">
+                                                    Type: <span className="font-medium text-slate-700">{lead.preference_type || 'Any Property'}</span>
+                                                </p>
 
-                                            {lead.preference_location_city && (
-                                                <div className="text-xs text-slate-400 mb-3 flex items-center gap-1">
-                                                    📍 {lead.preference_location_city}
+                                                {/* New Fields: Rooms & Surface */}
+                                                <div className="flex items-center gap-4 text-xs text-slate-500">
+                                                    {(lead.preference_rooms_min !== undefined || lead.preference_rooms_max !== undefined) && (lead.preference_rooms_min !== null || lead.preference_rooms_max !== null) && (
+                                                        <span title="Rooms" className="flex items-center gap-1.5">
+                                                            <BedDouble className="w-3.5 h-3.5 text-slate-400" />
+                                                            {lead.preference_rooms_min || 0}
+                                                            {lead.preference_rooms_max ? ` - ${lead.preference_rooms_max}` : '+'}
+                                                        </span>
+                                                    )}
+                                                    {(lead.preference_surface_min !== undefined) && (lead.preference_surface_min !== null) && (
+                                                        <span title="Min Surface" className="flex items-center gap-1.5">
+                                                            <Ruler className="w-3.5 h-3.5 text-slate-400" />
+                                                            {lead.preference_surface_min}m²
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Location: City + Area */}
+                                            {(lead.preference_location_city || lead.preference_location_area) && (
+                                                <div className="text-xs text-slate-400 mb-3 flex items-start gap-1.5">
+                                                    <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400" />
+                                                    <span className="line-clamp-2">
+                                                        {lead.preference_location_city}
+                                                        {lead.preference_location_city && lead.preference_location_area ? ', ' : ''}
+                                                        {lead.preference_location_area}
+                                                    </span>
                                                 </div>
                                             )}
 
