@@ -35,6 +35,7 @@ export interface LeadData {
     viewed_count_total?: string;
     move_urgency?: string;
     payment_method?: string;
+    cash_amount?: number;
     bank_status?: string;
     budget_vs_market?: string;
     agent_interest_rating?: string;

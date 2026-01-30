@@ -80,8 +80,8 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
             type="button"
             onClick={() => setActiveTab(id)}
             className={`flex-1 m-1 py-2 px-4 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-all ${activeTab === id
-                    ? 'bg-white shadow-sm text-orange-600 font-bold'
-                    : 'text-slate-500 hover:bg-slate-50'
+                ? 'bg-white shadow-sm text-orange-600 font-bold'
+                : 'text-slate-500 hover:bg-slate-50'
                 }`}
         >
             <Icon className="w-4 h-4" />
@@ -187,6 +187,22 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                                         </label>
                                     </div>
                                 </div>
+
+                                {/* Conditional Cash Amount */}
+                                {formData.payment_method === 'Cash' && (
+                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Available Cash Amount</label>
+                                        <input
+                                            type="number"
+                                            name="cash_amount"
+                                            placeholder="e.g. 120000"
+                                            value={formData.cash_amount || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 bg-green-50 border-green-200 text-green-800 font-bold"
+                                        />
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Bank Status (Pre-approval)</label>
                                     <select name="bank_status" value={formData.bank_status || ''} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
@@ -261,8 +277,8 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                                         <div key={feature}
                                             onClick={() => handleFeatureToggle(feature)}
                                             className={`px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-colors border ${(formData.preference_features || []).includes(feature)
-                                                    ? 'bg-orange-100 text-orange-700 border-orange-200'
-                                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                                                ? 'bg-orange-100 text-orange-700 border-orange-200'
+                                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
                                                 }`}
                                         >
                                             {feature}
