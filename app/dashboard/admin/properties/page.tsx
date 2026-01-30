@@ -9,20 +9,53 @@ export default async function AdminPropertiesPage() {
     let properties: any[] = [];
     let errorMsg = null;
     let debugUser = null;
+    let rawError = null;
 
     try {
-        properties = await fetchAllPropertiesAdmin();
-    } catch (err: any) {
-        errorMsg = err.message;
-        // Fetch debug info manually
+        // INLINED FETCH LOGIC
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-            debugUser = { id: user.id, email: user.email, profile };
-        } else {
-            debugUser = "No User Session";
+
+        if (!user) {
+            throw new Error("No authenticated user found (Inline Check)");
         }
+
+        // Check Admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile || profile.role !== 'super_admin') {
+            throw new Error(`Unauthorized. Current Profile Role: ${profile?.role}`);
+        }
+
+        // Fetch Properties
+        const { data, error } = await supabase
+            .from('properties')
+            .select(`
+                *,
+                owner:profiles!properties_owner_id_fkey(full_name)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        properties = data || [];
+
+    } catch (err: any) {
+        errorMsg = err.message || "Unknown Error";
+        rawError = JSON.stringify(err);
+
+        // Validation of User State
+        try {
+            const sb = await createClient();
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+                const { data: p } = await sb.from('profiles').select('*').eq('id', user.id).single();
+                debugUser = { id: user.id, role: p?.role, email: user.email };
+            }
+        } catch (e) { }
     }
 
     async function deleteProperty(formData: FormData) {
@@ -37,13 +70,12 @@ export default async function AdminPropertiesPage() {
                 <div className="bg-red-50 border border-red-200 rounded-xl p-6">
                     <h2 className="text-xl font-bold text-red-800 flex items-center gap-2">
                         <AlertTriangle className="w-6 h-6" />
-                        Debug: Fetch Failed
+                        DEBUG_V2: Fetch Failed
                     </h2>
-                    <p className="text-red-700 font-mono mt-2">{errorMsg}</p>
-
-                    <div className="mt-4 p-4 bg-white rounded border border-red-100 font-mono text-xs overflow-auto">
-                        <strong>User Debug Info:</strong>
-                        <pre>{JSON.stringify(debugUser, null, 2)}</pre>
+                    <p className="text-red-700 font-mono mt-2 mb-4">{errorMsg}</p>
+                    <div className="bg-white p-4 rounded border text-xs font-mono overflow-auto">
+                        <p><strong>Raw Error:</strong> {rawError}</p>
+                        <p className="mt-2"><strong>User Context:</strong> {JSON.stringify(debugUser)}</p>
                     </div>
                 </div>
             </div>
@@ -54,7 +86,7 @@ export default async function AdminPropertiesPage() {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900">All Properties Management</h1>
+                    <h1 className="text-3xl font-bold text-slate-900">All Properties Management (v2.0)</h1>
                     <p className="text-slate-500">Super Admin view of all listings.</p>
                 </div>
                 <div className="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold">
@@ -102,8 +134,8 @@ export default async function AdminPropertiesPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${property.status === 'active' ? 'bg-green-100 text-green-700' :
-                                        property.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                            'bg-slate-100 text-slate-600'
+                                            property.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-slate-100 text-slate-600'
                                         }`}>
                                         {property.status}
                                     </span>
