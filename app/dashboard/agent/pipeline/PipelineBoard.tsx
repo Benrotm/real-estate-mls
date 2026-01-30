@@ -10,9 +10,13 @@ interface Lead {
     status: string;
     preference_type?: string;
     preference_location_city?: string;
+    preference_location_area?: string;
     budget_max?: number;
     currency?: string;
     created_at: string;
+    preference_rooms_min?: number;
+    preference_rooms_max?: number;
+    preference_surface_min?: number;
 }
 
 interface PipelineBoardProps {
