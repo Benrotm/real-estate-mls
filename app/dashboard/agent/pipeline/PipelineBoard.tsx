@@ -47,6 +47,10 @@ export default function PipelineBoard({ initialLeads }: PipelineBoardProps) {
 
     return (
         <div className="flex-1 overflow-x-auto">
+            {/* Debug Data */}
+            <div className="bg-slate-100 p-2 text-xs mb-4 font-mono overflow-auto max-h-32 border border-slate-300">
+                DEBUG LEADS[0]: {JSON.stringify(initialLeads.find(l => l.name === 'Card Details Test') || initialLeads[0], null, 2)}
+            </div>
             <div className="flex gap-6 min-w-max h-full pb-4">
                 {STAGES.map(stage => {
                     const stageLeads = initialLeads.filter(l => l.status === stage.id);
