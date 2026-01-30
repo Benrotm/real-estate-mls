@@ -29,6 +29,19 @@ export interface LeadData {
     preference_surface_min?: number;
 
     preference_features?: string[];
+
+    // detailed criteria
+    search_duration?: string;
+    viewed_count_total?: string;
+    move_urgency?: string;
+    payment_method?: string;
+    bank_status?: string;
+    budget_vs_market?: string;
+    agent_interest_rating?: string;
+    viewed_count_agent?: number;
+    last_viewing_date?: string;
+    outcome_status?: string;
+    next_steps_summary?: string;
 }
 
 export async function createLead(data: LeadData) {

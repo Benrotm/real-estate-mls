@@ -17,6 +17,10 @@ interface Lead {
     preference_rooms_min?: number;
     preference_rooms_max?: number;
     preference_surface_min?: number;
+    // detailed criteria (optional mainly for view)
+    search_duration?: string;
+    move_urgency?: string;
+    agent_interest_rating?: string;
 }
 
 interface PipelineBoardProps {
