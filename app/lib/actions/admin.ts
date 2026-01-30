@@ -62,7 +62,7 @@ export async function fetchAllPropertiesAdmin() {
         .from('properties')
         .select(`
             *,
-            owner:profiles(full_name, email, role)
+            owner:profiles(full_name)
         `)
         .order('created_at', { ascending: false });
 
