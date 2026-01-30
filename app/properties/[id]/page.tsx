@@ -70,6 +70,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             promoted: dbProperty.promoted,
 
             status: dbProperty.status,
+            score: dbProperty.score,
             created_at: dbProperty.created_at,
             updated_at: dbProperty.updated_at
         };
@@ -142,6 +143,14 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             {property.promoted && (
                                 <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-md uppercase tracking-wide">
                                     Promoted
+                                </span>
+                            )}
+
+                            {(property.score !== undefined && property.score > 0) && (
+                                <span className={`text-white text-xs font-bold px-3 py-1.5 rounded-md uppercase tracking-wide flex items-center gap-1 ${property.score >= 80 ? 'bg-red-600' :
+                                    property.score >= 50 ? 'bg-orange-500' : 'bg-slate-500'
+                                    }`}>
+                                    ★ Quality Score: {property.score}
                                 </span>
                             )}
                         </div>

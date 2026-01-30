@@ -39,11 +39,20 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                     )}
                 </div>
 
-                {property.promoted && (
-                    <div className="absolute top-4 right-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
-                        Featured
-                    </div>
-                )}
+                <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
+                    {property.promoted && (
+                        <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                            Featured
+                        </div>
+                    )}
+                    {(property.score !== undefined && property.score > 0) && (
+                        <div className={`text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1 ${property.score >= 80 ? 'bg-red-600' :
+                                property.score >= 50 ? 'bg-orange-500' : 'bg-slate-500'
+                            }`}>
+                            <span className="text-[10px]">★</span> Score: {property.score}
+                        </div>
+                    )}
+                </div>
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                     <div className="text-white font-bold text-lg flex items-center justify-between">
