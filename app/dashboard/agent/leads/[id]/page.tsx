@@ -13,6 +13,7 @@ export default async function LeadDetailsPage({ params }: { params: { id: string
         notFound();
     }
 
+    // Force redeploy - verifying contact page route
     async function handleAddNote(formData: FormData) {
         "use server";
         const content = formData.get('content') as string;
