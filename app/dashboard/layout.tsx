@@ -19,6 +19,8 @@ export default function DashboardLayout({
     // Define menu items based on "role" (derived from URL for this demo)
     const menuItems = isAdmin ? [
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
+        { name: 'All Leads', icon: Users, href: '/dashboard/admin/leads' },
+        { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
         { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' },
         { name: 'Lead Scoring', icon: BarChart2, href: '/dashboard/admin/scoring' },
         { name: 'Property Scoring', icon: Building, href: '/dashboard/admin/scoring/properties' },
