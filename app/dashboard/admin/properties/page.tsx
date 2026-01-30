@@ -1,16 +1,53 @@
 import { fetchAllPropertiesAdmin, deletePropertyAdmin, updatePropertyStatusAdmin } from '@/app/lib/actions/admin';
-import { Trash2, Building, MapPin, ExternalLink } from 'lucide-react';
+import { Trash2, Building, MapPin, ExternalLink, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/app/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPropertiesPage() {
-    const properties = await fetchAllPropertiesAdmin();
+    let properties: any[] = [];
+    let errorMsg = null;
+    let debugUser = null;
+
+    try {
+        properties = await fetchAllPropertiesAdmin();
+    } catch (err: any) {
+        errorMsg = err.message;
+        // Fetch debug info manually
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            debugUser = { id: user.id, email: user.email, profile };
+        } else {
+            debugUser = "No User Session";
+        }
+    }
 
     async function deleteProperty(formData: FormData) {
         'use server';
         const id = formData.get('id') as string;
         await deletePropertyAdmin(id);
+    }
+
+    if (errorMsg) {
+        return (
+            <div className="p-8 max-w-7xl mx-auto">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+                    <h2 className="text-xl font-bold text-red-800 flex items-center gap-2">
+                        <AlertTriangle className="w-6 h-6" />
+                        Debug: Fetch Failed
+                    </h2>
+                    <p className="text-red-700 font-mono mt-2">{errorMsg}</p>
+
+                    <div className="mt-4 p-4 bg-white rounded border border-red-100 font-mono text-xs overflow-auto">
+                        <strong>User Debug Info:</strong>
+                        <pre>{JSON.stringify(debugUser, null, 2)}</pre>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
