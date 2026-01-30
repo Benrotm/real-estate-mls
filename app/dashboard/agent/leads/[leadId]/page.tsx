@@ -5,16 +5,16 @@ import { notFound } from 'next/navigation';
 import LeadForm from '../LeadForm';
 import { revalidatePath } from 'next/cache';
 
-export default async function LeadDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-    const lead = await fetchLead(id);
-    const notes = await fetchNotes(id);
+export default async function LeadDetailsPage({ params }: { params: Promise<{ leadId: string }> }) {
+    const { leadId } = await params;
+    const lead = await fetchLead(leadId);
+    const notes = await fetchNotes(leadId);
 
     if (!lead) {
         return (
             <div className="p-8 text-red-500">
                 <h1 className="text-2xl font-bold">Debug: Lead Not Found</h1>
-                <p>Lead ID from params: {id}</p>
+                <p>Lead ID from params: {leadId}</p>
                 <pre>Params: {JSON.stringify(await params, null, 2)}</pre>
                 <p>Please report this to the developer.</p>
             </div>
@@ -26,7 +26,7 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
         "use server";
         const content = formData.get('content') as string;
         if (content && content.trim()) {
-            await createNote(id, content);
+            await createNote(leadId, content);
         }
     }
 

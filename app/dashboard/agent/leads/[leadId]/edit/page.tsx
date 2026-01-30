@@ -4,9 +4,9 @@ import LeadForm from '../../LeadForm';
 import { fetchLead } from '@/app/lib/actions/leads';
 import { notFound } from 'next/navigation';
 
-export default async function EditLeadPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-    const lead = await fetchLead(id);
+export default async function EditLeadPage({ params }: { params: Promise<{ leadId: string }> }) {
+    const { leadId } = await params;
+    const lead = await fetchLead(leadId);
 
     if (!lead) {
         notFound();
