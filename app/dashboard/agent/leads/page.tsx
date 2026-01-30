@@ -127,6 +127,7 @@ export default async function LeadsPage() {
                                 <tr className="bg-slate-50 border-b border-slate-200">
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Lead Name</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Score</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Preferences</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact Info</th>
                                     <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -153,6 +154,19 @@ export default async function LeadsPage() {
                                                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_COLORS[lead.status as keyof typeof STATUS_COLORS] || 'text-gray-600 bg-gray-100'}`}>
                                                     {STATUS_LABELS[lead.status as keyof typeof STATUS_LABELS] || lead.status}
                                                 </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className={`
+                                                        w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+                                                        ${(lead.score || 0) >= 80 ? 'bg-green-100 text-green-700' :
+                                                            (lead.score || 0) >= 50 ? 'bg-orange-100 text-orange-700' :
+                                                                'bg-slate-100 text-slate-500'}
+                                                    `}>
+                                                        {lead.score || 0}
+                                                    </div>
+                                                    {(lead.score || 0) >= 80 && <span className="text-xs text-green-600 font-medium">Hot</span>}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="font-medium text-slate-900">{lead.preference_type || 'Any Property'}</div>
@@ -191,7 +205,7 @@ export default async function LeadsPage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Search className="w-8 h-8 opacity-20" />
                                                 <span className="text-sm">No leads added yet.</span>
