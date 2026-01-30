@@ -142,7 +142,9 @@ export default async function LeadsPage() {
                                                         {lead.name.charAt(0)}
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-slate-900">{lead.name}</div>
+                                                        <Link href={`/dashboard/agent/leads/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
+                                                            {lead.name}
+                                                        </Link>
                                                         <div className="text-xs text-slate-500">{lead.source || 'Unknown Source'}</div>
                                                     </div>
                                                 </div>

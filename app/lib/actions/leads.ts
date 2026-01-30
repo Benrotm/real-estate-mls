@@ -133,3 +133,44 @@ export async function fetchLead(leadId: string) {
     if (error) return null;
     return data;
 }
+
+// Notes Actions
+export async function createNote(leadId: string, content: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) throw new Error('Unauthorized');
+
+    const { error } = await supabase.from('lead_notes').insert({
+        lead_id: leadId,
+        created_by: user.id,
+        content
+    });
+
+    if (error) throw new Error('Failed to create note');
+    revalidatePath(`/dashboard/agent/leads/${leadId}`);
+}
+
+export async function fetchNotes(leadId: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) return [];
+
+    const { data, error } = await supabase
+        .from('lead_notes')
+        .select(`
+            *,
+            author:created_by(full_name, avatar_url)
+        `)
+        .eq('lead_id', leadId)
+        // We need to ensure the user owns the lead to view notes, but RLS handles this policy-wise.
+        // However, the join on 'created_by' refers to profiles.
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Fetch Notes Error:', error);
+        return [];
+    }
+    return data;
+}
