@@ -21,6 +21,7 @@ export default function DashboardLayout({
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
         { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' },
         { name: 'Lead Scoring', icon: BarChart2, href: '/dashboard/admin/scoring' },
+        { name: 'Property Scoring', icon: Building, href: '/dashboard/admin/scoring/properties' },
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
     ] : isAgent ? [

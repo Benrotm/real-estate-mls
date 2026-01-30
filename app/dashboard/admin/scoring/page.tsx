@@ -2,7 +2,7 @@ import { fetchScoringRules } from '@/app/lib/actions/scoring';
 import ScoringRulesEditor from './ScoringRulesEditor';
 
 export default async function ScoringPage() {
-    const rules = await fetchScoringRules();
+    const rules = await fetchScoringRules('lead');
 
     return (
         <div className="p-8 max-w-5xl mx-auto">

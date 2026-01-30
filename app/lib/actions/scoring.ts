@@ -2,6 +2,7 @@
 
 import { createClient } from '@/app/lib/supabase/server';
 import { LeadData } from './leads';
+import { Property } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
 
 export interface ScoringRule {
@@ -11,15 +12,22 @@ export interface ScoringRule {
     label: string;
     weight: number;
     is_active: boolean;
+    scope: 'lead' | 'property';
 }
 
-export async function fetchScoringRules() {
+export async function fetchScoringRules(scope?: 'lead' | 'property') {
     const supabase = await createClient();
-    const { data, error } = await supabase
+    let query = supabase
         .from('scoring_rules')
         .select('*')
         .order('category', { ascending: true })
         .order('label', { ascending: true });
+
+    if (scope) {
+        query = query.eq('scope', scope);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching scoring rules:', error);
@@ -42,7 +50,7 @@ export async function updateScoringRule(id: string, weight: number) {
 }
 
 export async function calculateLeadScore(lead: LeadData): Promise<number> {
-    const rules = await fetchScoringRules();
+    const rules = await fetchScoringRules('lead');
     let score = 0;
 
     // Helper to find rule weight
@@ -112,6 +120,49 @@ export async function calculateLeadScore(lead: LeadData): Promise<number> {
     else if (lead.outcome_status === 'Asteapta Credit' || lead.outcome_status === 'Waiting for Credit') score += getWeight('outcome_waiting_credit');
     else if (lead.outcome_status === 'Mai cauta') score += getWeight('outcome_still_searching');
     else if (lead.outcome_status === 'Nu e interesat') score += getWeight('outcome_not_interested');
+
+    return score;
+}
+
+export async function calculatePropertyScore(property: Partial<Property>): Promise<number> {
+    const rules = await fetchScoringRules('property');
+    let score = 0;
+    const getWeight = (key: string) => rules.find(r => r.criteria_key === key && r.is_active)?.weight || 0;
+
+    // Type
+    if (property.type === 'Apartment') score += getWeight('type_apartment');
+    if (property.type === 'House') score += getWeight('type_house');
+    if (property.type === 'Commercial') score += getWeight('type_commercial');
+
+    // Condition / Age
+    if (property.year_built && property.year_built > 2020) score += getWeight('condition_new');
+    if (property.interior_condition === 'Renovated') score += getWeight('condition_renovated');
+    if (property.interior_condition === 'Good') score += getWeight('condition_good');
+    if (property.interior_condition === 'Needs Renovation') score += getWeight('condition_needs_renovation');
+
+    // Features
+    const feats = property.features || [];
+    if (feats.includes('Parking') || feats.includes('Garage')) score += getWeight('feature_parking');
+    if (feats.includes('Elevator')) score += getWeight('feature_elevator');
+    if (feats.includes('Balcony') || feats.includes('Terrace')) score += getWeight('feature_balcony');
+    if (feats.includes('Central Heating')) score += getWeight('feature_central_heating');
+
+    // Media
+    if (property.youtube_video_url || property.video_url) score += getWeight('media_video');
+    if (property.virtual_tour_url) score += getWeight('media_virtual_tour');
+    if (property.images && property.images.length > 5) score += getWeight('media_images_5plus');
+
+    // Location (Simple keyword match for demo)
+    // We could make this smarter with fuzzy matching or area mapping
+    const locationStr = `${property.location_city} ${property.address || ''}`.toLowerCase();
+    if (locationStr.includes('center') || locationStr.includes('old town') || locationStr.includes('central')) {
+        score += getWeight('location_city_center');
+    }
+
+    // Floor
+    if (property.floor === 0) score += getWeight('floor_ground');
+    else if (property.floor === property.total_floors && property.total_floors && property.total_floors > 2) score += getWeight('floor_top');
+    else if (property.floor && property.total_floors && property.floor > 0 && property.floor < property.total_floors) score += getWeight('floor_intermediate');
 
     return score;
 }
