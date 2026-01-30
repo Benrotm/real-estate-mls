@@ -59,14 +59,14 @@ export default async function AdminPropertiesPage() {
                                         </div>
                                         <div className="text-sm">
                                             <div className="font-medium text-slate-900">{property.owner?.full_name || 'Unknown'}</div>
-                                            <div className="text-xs text-slate-500 capitalize">{property.owner?.role?.replace('_', ' ')}</div>
+                                            {/* Role removed from query, so hiding it to prevent errors */}
                                         </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${property.status === 'active' ? 'bg-green-100 text-green-700' :
-                                            property.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                                'bg-slate-100 text-slate-600'
+                                        property.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-slate-100 text-slate-600'
                                         }`}>
                                         {property.status}
                                     </span>
