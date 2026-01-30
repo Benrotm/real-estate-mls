@@ -10,7 +10,13 @@ export default async function LeadDetailsPage({ params }: { params: { id: string
     const notes = await fetchNotes(params.id);
 
     if (!lead) {
-        notFound();
+        return (
+            <div className="p-8 text-red-500">
+                <h1 className="text-2xl font-bold">Debug: Lead Not Found</h1>
+                <p>Lead ID from params: {params.id}</p>
+                <p>Please report this to the developer.</p>
+            </div>
+        );
     }
 
     // Force redeploy - verifying contact page route
