@@ -15,6 +15,7 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ id
             <div className="p-8 text-red-500">
                 <h1 className="text-2xl font-bold">Debug: Lead Not Found</h1>
                 <p>Lead ID from params: {id}</p>
+                <pre>Params: {JSON.stringify(await params, null, 2)}</pre>
                 <p>Please report this to the developer.</p>
             </div>
         );
