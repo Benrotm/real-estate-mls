@@ -17,6 +17,7 @@ interface Lead {
     preference_rooms_min?: number;
     preference_rooms_max?: number;
     preference_surface_min?: number;
+    score?: number;
     // detailed criteria (optional mainly for view)
     search_duration?: string;
     move_urgency?: string;
@@ -76,11 +77,20 @@ export default function PipelineBoard({ initialLeads }: PipelineBoardProps) {
                                 {stageLeads.length > 0 ? (
                                     stageLeads.map(lead => (
                                         <div key={lead.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-all group">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h4 className="font-bold text-slate-900 line-clamp-1">{lead.name}</h4>
-                                                <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap">
-                                                    {lead.budget_max ? formatPrice(lead.budget_max, lead.currency) : 'No Budget'}
-                                                </span>
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h4 className="font-semibold text-slate-900 line-clamp-1">{lead.name}</h4>
+                                                    <span className="text-xs text-slate-400">{new Date(lead.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                                {lead.score !== undefined && (
+                                                    <div className={`
+                                                        px-2 py-1 rounded-full text-xs font-bold
+                                                        ${lead.score >= 80 ? 'bg-green-100 text-green-700' :
+                                                            lead.score >= 50 ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-600'}
+                                                    `}>
+                                                        {lead.score} pts
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="space-y-2 mb-3">

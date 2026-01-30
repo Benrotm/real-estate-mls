@@ -3,6 +3,7 @@
 import { createClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { calculateLeadScore } from './scoring';
 
 export interface LeadData {
     id?: string;
@@ -43,6 +44,7 @@ export interface LeadData {
     last_viewing_date?: string;
     outcome_status?: string;
     next_steps_summary?: string;
+    score?: number;
 }
 
 export async function createLead(data: LeadData) {
@@ -53,8 +55,12 @@ export async function createLead(data: LeadData) {
         throw new Error('Unauthorized');
     }
 
+    // Calculate initial score
+    const score = await calculateLeadScore(data);
+
     const { error } = await supabase.from('leads').insert({
         ...data,
+        score,
         agent_id: user.id
     });
 
@@ -75,10 +81,13 @@ export async function updateLead(leadId: string, data: LeadData) {
         throw new Error('Unauthorized');
     }
 
+    // Recalculate score on update
+    const score = await calculateLeadScore(data);
+
     // Security check handled by RLS, but explicit check is good
     const { error } = await supabase
         .from('leads')
-        .update(data)
+        .update({ ...data, score })
         .eq('id', leadId)
         .eq('agent_id', user.id);
 
