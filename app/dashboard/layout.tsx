@@ -19,15 +19,8 @@ export default function DashboardLayout({
     // Define menu items based on "role" (derived from URL for this demo)
     const menuItems = isAdmin ? [
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
-        { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' }, // We can keep single page or split, user asked for menu entry.
-        // For now, let's keep it all in /admin page but link effectively acts as anchors or we split.
-        // Given user request "Plan Settings for setting plans and syncing", maybe we should point to same page or anchor?
-        // Actually best to strictly follow request and maybe just direct to /dashboard/admin for now,
-        // OR distinct pages. Let's make it single page with anchors or subpages.
-        // User asked for "Plan Settings" entry.
-        // Let's create a visual link, even if it goes to same page or a new one.
-        // For simplicity and existing structure, let's make /dashboard/admin/plans redirect to the section or be a separate page.
-        // Let's stick to /dashboard/admin for Console.
+        { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' },
+        { name: 'Lead Scoring', icon: BarChart2, href: '/dashboard/admin/scoring' },
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
     ] : isAgent ? [
