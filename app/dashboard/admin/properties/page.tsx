@@ -1,5 +1,5 @@
 import { fetchAllPropertiesAdmin, deletePropertyAdmin } from '@/app/lib/actions/admin';
-import { Trash2, MapPin, ExternalLink, User } from 'lucide-react';
+import { Trash2, MapPin, ExternalLink, User, Edit } from 'lucide-react';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -76,8 +76,8 @@ export default async function AdminPropertiesPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${property.status === 'active' ? 'bg-green-100 text-green-700' :
-                                            property.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                                'bg-slate-100 text-slate-600'
+                                        property.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-slate-100 text-slate-600'
                                         }`}>
                                         {property.status || 'Draft'}
                                     </span>
@@ -90,6 +90,13 @@ export default async function AdminPropertiesPage() {
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
+                                        <Link
+                                            href={`/dashboard/admin/properties/${property.id}/edit`}
+                                            className="text-slate-400 hover:text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Edit Property"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </Link>
                                         <Link
                                             href={`/properties/${property.id}`}
                                             target="_blank"

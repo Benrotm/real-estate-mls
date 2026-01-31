@@ -99,3 +99,80 @@ export async function updatePropertyStatusAdmin(propertyId: string, status: stri
     revalidatePath('/dashboard/admin/properties');
     revalidatePath('/properties');
 }
+
+export async function updatePropertyAdmin(propertyId: string, formData: FormData) {
+    const { supabase } = await checkAdmin();
+
+    try {
+        // Parse fields - similar to createProperty but no owner_id override
+        const featuresRaw = formData.get('features');
+        const features = featuresRaw ? JSON.parse(featuresRaw as string) : [];
+        const imagesRaw = formData.get('images');
+        const images = imagesRaw ? JSON.parse(imagesRaw as string) : [];
+
+        const propertyData: any = {
+            title: formData.get('title') as string,
+            listing_type: formData.get('listing_type') as string,
+            type: formData.get('type') as string,
+            price: parseFloat(formData.get('price') as string),
+            currency: formData.get('currency') as string,
+            description: formData.get('description') as string,
+
+            // Location
+            location_county: formData.get('location_county') as string,
+            location_city: formData.get('location_city') as string,
+            location_area: formData.get('location_area') as string,
+            address: formData.get('address') as string,
+
+            // Specs - parse numbers safely
+            rooms: formData.get('rooms') ? parseInt(formData.get('rooms') as string) : null,
+            bedrooms: formData.get('bedrooms') ? parseInt(formData.get('bedrooms') as string) : null,
+            bathrooms: formData.get('bathrooms') ? parseInt(formData.get('bathrooms') as string) : null,
+
+            area_usable: formData.get('area_usable') ? parseFloat(formData.get('area_usable') as string) : null,
+            area_built: formData.get('area_built') ? parseFloat(formData.get('area_built') as string) : null,
+
+            year_built: formData.get('year_built') ? parseInt(formData.get('year_built') as string) : null,
+            floor: formData.get('floor') ? parseInt(formData.get('floor') as string) : null,
+            total_floors: formData.get('total_floors') ? parseInt(formData.get('total_floors') as string) : null,
+
+            partitioning: formData.get('partitioning') as string,
+            comfort: formData.get('comfort') as string,
+
+            // Enhanced
+            building_type: formData.get('building_type') as string,
+            interior_condition: formData.get('interior_condition') as string,
+            furnishing: formData.get('furnishing') as string,
+
+            // Media
+            images: images,
+            youtube_video_url: formData.get('youtube_video_url') as string,
+            virtual_tour_url: formData.get('virtual_tour_url') as string,
+
+            // Social/ID
+            social_media_url: formData.get('social_media_url') as string,
+            personal_property_id: formData.get('personal_property_id') as string,
+
+            features: features,
+            updated_at: new Date().toISOString()
+        };
+
+        // Remove nulls/undefined if needed, or Supabase handles them (sets to null)
+
+        const { error } = await supabase
+            .from('properties')
+            .update(propertyData)
+            .eq('id', propertyId);
+
+        if (error) throw error;
+
+        revalidatePath('/dashboard/admin/properties');
+        revalidatePath('/properties');
+        revalidatePath(`/properties/${propertyId}`);
+
+        return { success: true };
+    } catch (e: any) {
+        console.error('Update Property Error:', e);
+        return { error: e.message };
+    }
+}
