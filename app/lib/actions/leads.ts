@@ -58,15 +58,28 @@ export async function createLead(data: LeadData) {
     // Calculate initial score
     const score = await calculateLeadScore(data);
 
-    const { error } = await supabase.from('leads').insert({
+    const { data: lead, error } = await supabase.from('leads').insert({
         ...data,
         score,
-        agent_id: user.id
-    });
+        agent_id: user.id,
+        created_by: user.id
+    })
+        .select()
+        .single();
 
     if (error) {
         console.error('Create Lead Error:', error);
         throw new Error('Failed to create lead');
+    }
+
+    // Log activity
+    if (lead) {
+        await supabase.from('lead_activities').insert({
+            lead_id: lead.id,
+            type: 'created',
+            description: 'Lead created',
+            created_by: user.id
+        });
     }
 
     revalidatePath('/dashboard/agent/leads');
@@ -138,7 +151,7 @@ export async function fetchLeads() {
 
     const { data, error } = await supabase
         .from('leads')
-        .select('*')
+        .select('*, creator:created_by(full_name)')
         .eq('agent_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -161,7 +174,7 @@ export async function fetchLead(leadId: string) {
 
     let query = supabase
         .from('leads')
-        .select('*')
+        .select('*, creator:created_by(full_name)')
         .eq('id', leadId);
 
     // Only restrict by agent_id if NOT super_admin
@@ -209,8 +222,25 @@ export async function fetchNotes(leadId: string) {
         // However, the join on 'created_by' refers to profiles.
         .order('created_at', { ascending: false });
 
+
+
+    return data;
+}
+
+export async function fetchActivities(leadId: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) return [];
+
+    const { data, error } = await supabase
+        .from('lead_activities')
+        .select('*, creator:created_by(full_name)')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
     if (error) {
-        console.error('Fetch Notes Error:', error);
+        console.error('Fetch Activities Error:', error);
         return [];
     }
     return data;

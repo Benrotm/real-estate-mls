@@ -1,14 +1,16 @@
 import Link from 'next/link';
-import { ArrowLeft, Clock, MessageSquare, Phone, Mail, Trash2, Edit } from 'lucide-react';
-import { fetchLead, fetchNotes, createNote } from '@/app/lib/actions/leads';
+import { ArrowLeft, Phone, Mail, Clock } from 'lucide-react';
+import { fetchLead, fetchNotes, fetchActivities, createNote } from '@/app/lib/actions/leads';
 import { notFound } from 'next/navigation';
 import LeadForm from '../LeadForm';
 import { revalidatePath } from 'next/cache';
+import LeadActivityPanel from './LeadActivityPanel';
 
 export default async function LeadDetailsPage({ params }: { params: Promise<{ leadId: string }> }) {
     const { leadId } = await params;
     const lead = await fetchLead(leadId);
-    const notes = await fetchNotes(leadId);
+    const notes = (await fetchNotes(leadId)) || [];
+    const activities = (await fetchActivities(leadId)) || [];
 
     if (!lead) {
         notFound();
@@ -38,7 +40,9 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
                                 {lead.status}
                             </span>
                         </h1>
-                        <p className="text-slate-500 text-sm">Created on {new Date(lead.created_at).toLocaleDateString()}</p>
+                        <p className="text-slate-500 text-sm">
+                            Created by <span className="font-bold text-slate-700">{lead.creator?.full_name || 'System'}</span> on {new Date(lead.created_at).toLocaleDateString()}
+                        </p>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -67,54 +71,13 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
 
                 {/* Right Column: Notes & Activity */}
                 <div className="space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
-                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                            <h2 className="font-bold text-slate-900">Activity & Notes</h2>
-                        </div>
-
-                        {/* Notes List - Scrollable */}
-                        <div className="p-6 flex-1 max-h-[500px] overflow-y-auto space-y-6">
-                            {notes.length > 0 ? (
-                                notes.map((note: any) => (
-                                    <div key={note.id} className="relative pl-6 border-l-2 border-slate-200 pb-1 last:pb-0">
-                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-200 border-2 border-white"></div>
-                                        <div className="text-sm">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="font-bold text-slate-900 text-xs">{note.author?.full_name || 'Agent'}</span>
-                                                <span className="text-xs text-slate-400">{new Date(note.created_at).toLocaleString()}</span>
-                                            </div>
-                                            <div className="text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                {note.content}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-10 text-slate-400 text-sm">
-                                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                    No notes yet. Start the conversation!
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Add Note Input */}
-                        <div className="p-4 bg-slate-50 border-t border-slate-200">
-                            <form action={handleAddNote} className="relative">
-                                <textarea
-                                    name="content"
-                                    required
-                                    placeholder="Add a note about this client..."
-                                    className="w-full pl-4 pr-12 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm min-h-[80px]"
-                                />
-                                <button
-                                    type="submit"
-                                    className="absolute bottom-3 right-3 p-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors shadow-sm"
-                                    title="Add Note"
-                                >
-                                    <Clock className="w-4 h-4" />
-                                </button>
-                            </form>
-                        </div>
+                    <div className="space-y-6">
+                        <LeadActivityPanel
+                            leadId={leadId}
+                            initialNotes={notes}
+                            initialActivities={activities}
+                            onAddNote={handleAddNote}
+                        />
                     </div>
                 </div>
             </div>
