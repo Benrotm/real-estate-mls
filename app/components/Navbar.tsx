@@ -192,17 +192,17 @@ export default function Navbar({ user }: NavbarProps) {
                               <div className="w-5"><Shield className="w-4 h-4" /></div> Super Admin
                             </Link>
                           )}
-                          {(userRole === 'owner' || isSuperAdmin) && (
+                          {userRole === 'owner' && (
                             <Link href="/dashboard/owner" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                               <div className="w-5"><Home className="w-4 h-4" /></div> Property Owner Dashboard
                             </Link>
                           )}
-                          {(userRole === 'agent' || isSuperAdmin) && (
+                          {userRole === 'agent' && (
                             <Link href="/dashboard/agent" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                               <div className="w-5"><User className="w-4 h-4" /></div> Agent Dashboard
                             </Link>
                           )}
-                          {(userRole === 'developer' || isSuperAdmin) && (
+                          {userRole === 'developer' && (
                             <Link href="/dashboard/developer" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                               <div className="w-5"><Hammer className="w-4 h-4" /></div> Developer Dashboard
                             </Link>
