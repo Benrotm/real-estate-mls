@@ -8,7 +8,7 @@ export default async function TestPage() {
 
     let profile = null;
     let propertiesCount = 0;
-    let propertiesError = null;
+    let propertiesError: any = null;
 
     if (user) {
         const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
