@@ -79,7 +79,7 @@ export default async function AdminLeadsPage() {
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Link
-                                                href={`/dashboard/admin/leads/${lead.id}/edit`}
+                                                href={`/dashboard/agent/leads/${lead.id}`}
                                                 className="text-slate-400 hover:text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition-colors"
                                                 title="Edit Lead"
                                             >

@@ -193,7 +193,7 @@ export default async function LeadsPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <Link href={`/dashboard/agent/leads/${lead.id}/edit`} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-300" title="Edit Lead">
+                                                    <Link href={`/dashboard/agent/leads/${lead.id}`} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-300" title="Edit Lead">
                                                         <Edit className="w-4 h-4" />
                                                     </Link>
                                                     <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Call">
