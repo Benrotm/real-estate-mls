@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings } from 'lucide-react';
 
-import { SYSTEM_FEATURES } from '@/app/lib/auth/features';
+import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 
 export default function DashboardClient({
     children,

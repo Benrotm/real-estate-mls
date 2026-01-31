@@ -1,12 +1,8 @@
 import { createClient } from '../supabase/server';
+import { SYSTEM_FEATURES } from './feature-keys';
 
-export const SYSTEM_FEATURES = {
-    LEADS_ACCESS: 'leads_access',
-    VALUATION_REPORTS: 'valuation_reports',
-    MARKET_INSIGHTS: 'market_insights',
-} as const;
-
-export type SystemFeature = typeof SYSTEM_FEATURES[keyof typeof SYSTEM_FEATURES];
+export { SYSTEM_FEATURES };
+export type { SystemFeature } from './feature-keys';
 
 /**
  * Checks if the current authenticated user has access to a specific feature based on their plan.
