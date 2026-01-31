@@ -1,5 +1,5 @@
 import { fetchAllLeadsAdmin, deleteLeadAdmin } from '@/app/lib/actions/admin';
-import { User, Phone, Mail, Trash2, Calendar } from 'lucide-react';
+import { User, Phone, Mail, Trash2, Calendar, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 
@@ -76,16 +76,27 @@ export default async function AdminLeadsPage() {
                                     {new Date(lead.created_at).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <form action={deleteLead}>
-                                        <input type="hidden" name="id" value={lead.id} />
-                                        <button
-                                            type="submit"
-                                            className="text-slate-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
-                                            title="Delete Lead"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </form>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Link
+                                                href={`/dashboard/admin/leads/${lead.id}/edit`}
+                                                className="text-slate-400 hover:text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Edit Lead"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Link>
+                                            <form action={deleteLead}>
+                                                <input type="hidden" name="id" value={lead.id} />
+                                                <button
+                                                    type="submit"
+                                                    className="text-slate-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                                                    title="Delete Lead"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </td>
                             </tr>
                         ))}

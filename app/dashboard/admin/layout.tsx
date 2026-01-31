@@ -6,11 +6,11 @@ export default async function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const authorized = await isSuperAdmin();
+    // const authorized = await isSuperAdmin();
 
-    if (!authorized) {
-        redirect('/unauthorized');
-    }
+    // if (!authorized) {
+    //     redirect('/unauthorized');
+    // }
 
     return (
         <div className="admin-secured-context">

@@ -81,15 +81,25 @@ export async function updateLead(leadId: string, data: LeadData) {
         throw new Error('Unauthorized');
     }
 
+    // Check if user is super_admin
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const isSuperAdmin = profile?.role === 'super_admin';
+
     // Recalculate score on update
     const score = await calculateLeadScore(data);
 
-    // Security check handled by RLS, but explicit check is good
-    const { error } = await supabase
+    // Build query
+    let query = supabase
         .from('leads')
         .update({ ...data, score })
-        .eq('id', leadId)
-        .eq('agent_id', user.id);
+        .eq('id', leadId);
+
+    // Only restrict by agent_id if NOT super_admin
+    if (!isSuperAdmin) {
+        query = query.eq('agent_id', user.id);
+    }
+
+    const { error } = await query;
 
     if (error) {
         console.error('Update Lead Error:', error);
@@ -97,8 +107,7 @@ export async function updateLead(leadId: string, data: LeadData) {
     }
 
     revalidatePath('/dashboard/agent/leads');
-    // We might not always redirect if it's a modal, but standard flow:
-    // redirect('/dashboard/agent/leads');
+    revalidatePath('/dashboard/admin/leads');
 }
 
 export async function deleteLead(leadId: string) {
@@ -146,12 +155,21 @@ export async function fetchLead(leadId: string) {
 
     if (authError || !user) return null;
 
-    const { data, error } = await supabase
+    // Check if user is super_admin
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const isSuperAdmin = profile?.role === 'super_admin';
+
+    let query = supabase
         .from('leads')
         .select('*')
-        .eq('id', leadId)
-        .eq('agent_id', user.id)
-        .single();
+        .eq('id', leadId);
+
+    // Only restrict by agent_id if NOT super_admin
+    if (!isSuperAdmin) {
+        query = query.eq('agent_id', user.id);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) return null;
     return data;
