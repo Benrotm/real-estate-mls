@@ -1,6 +1,6 @@
 import { useState, useTransition } from 'react';
-import { updateUserBonus, sendNotification, updateUserRoleAndPlan } from '@/app/lib/admin';
-import { Gift, MessageSquare, Check, Edit, UserCog } from 'lucide-react';
+import { updateUserBonus, sendNotification, updateUserRoleAndPlan, deleteUser } from '@/app/lib/admin';
+import { Gift, MessageSquare, Check, Edit, UserCog, Trash2, AlertTriangle } from 'lucide-react';
 
 interface UserActionsProps {
     user: any;
@@ -10,6 +10,7 @@ export default function UserActions({ user }: UserActionsProps) {
     const [showBonusModal, setShowBonusModal] = useState(false);
     const [showMsgModal, setShowMsgModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     const [bonusAmount, setBonusAmount] = useState(user.bonus_listings || 0);
@@ -60,6 +61,19 @@ export default function UserActions({ user }: UserActionsProps) {
         });
     };
 
+    const handleDeleteUser = () => {
+        startTransition(async () => {
+            try {
+                await deleteUser(user.id);
+                // No alert needed if page revalidates and row disappears, but safe to add one.
+                alert('User deleted permanently.');
+                setShowDeleteModal(false);
+            } catch (e: any) {
+                alert('Failed to delete user: ' + e.message);
+            }
+        });
+    };
+
     return (
         <div className="flex gap-2">
             <button
@@ -84,6 +98,14 @@ export default function UserActions({ user }: UserActionsProps) {
                 title="Send Message"
             >
                 <MessageSquare size={16} />
+            </button>
+
+            <button
+                onClick={() => setShowDeleteModal(true)}
+                className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-colors border border-red-500/30"
+                title="Delete User"
+            >
+                <Trash2 size={16} />
             </button>
 
             {/* Edit User Modal */}
@@ -230,6 +252,39 @@ export default function UserActions({ user }: UserActionsProps) {
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2"
                             >
                                 {isPending ? 'Sending...' : <><Check size={16} /> Send Message</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-red-500/30 p-6 rounded-xl w-full max-w-sm shadow-2xl">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+                            <AlertTriangle className="text-red-500" /> Delete User?
+                        </h3>
+                        <p className="text-sm text-slate-400 mb-6">
+                            Are you sure you want to delete <strong>{user.full_name || 'this user'}</strong>? <br />
+                            <span className="text-red-400 block mt-2">
+                                This action is permanent and cannot be undone. All user data will be removed.
+                            </span>
+                        </p>
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="px-4 py-2 text-slate-400 hover:text-white"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteUser}
+                                disabled={isPending}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold flex items-center gap-2"
+                            >
+                                {isPending ? 'Deleting...' : <><Trash2 size={16} /> Delete</>}
                             </button>
                         </div>
                     </div>
