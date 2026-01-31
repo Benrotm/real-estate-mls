@@ -97,17 +97,21 @@ export default function UserActions({ user }: UserActionsProps) {
                         <div className="space-y-4 mb-6">
                             <div>
                                 <label className="block text-xs uppercase text-slate-500 font-bold mb-1">Role</label>
-                                <select
-                                    value={selectedRole}
-                                    onChange={(e) => setSelectedRole(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-blue-500 outline-none"
-                                >
-                                    <option value="client">Client</option>
-                                    <option value="owner">Owner</option>
-                                    <option value="agent">Agent</option>
-                                    <option value="developer">Developer</option>
-                                    <option value="admin">Admin</option>
-                                </select>
+                                <label className="block text-xs uppercase text-slate-500 font-bold mb-2">Role</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['client', 'owner', 'agent', 'developer', 'admin', 'super_admin'].map((role) => (
+                                        <button
+                                            key={role}
+                                            onClick={() => setSelectedRole(role)}
+                                            className={`p-2 rounded-lg text-xs font-bold capitalize border transition-all ${selectedRole === role
+                                                ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20'
+                                                : 'bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                                                }`}
+                                        >
+                                            {role.replace('_', ' ')}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div>

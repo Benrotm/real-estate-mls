@@ -220,7 +220,6 @@ export async function fetchUsers() {
         const supabase = await createClient();
 
         console.log('Fetching users...');
-        // Simplified query first to ensure basic data fetching works
         const { data, error } = await supabase
             .from('profiles')
             .select('*')
@@ -228,20 +227,14 @@ export async function fetchUsers() {
 
         if (error) {
             console.error('❌ DB Error (Users):', error.message);
-            // Return Mock Users if DB fails or is empty
-            return MOCK_USERS;
+            throw new Error(error.message);
         }
 
-        if (!data || data.length === 0) {
-            console.warn('⚠️ No users found in DB. Returning mock users for demo.');
-            return MOCK_USERS;
-        }
-
-        console.log(`✅ Fetched ${data?.length || 0} users.`);
-        return data;
+        return data || [];
     } catch (err) {
         console.error('🔥 Error fetching users:', err);
-        return MOCK_USERS;
+        // Return empty array instead of mock data to avoid confusion
+        return [];
     }
 }
 
