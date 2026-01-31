@@ -45,9 +45,16 @@ export default function PlanManager({ allPlans, featuresByRole }: PlanManagerPro
                             </div>
 
                             <div className="flex-1 space-y-4">
-                                <h5 className="text-sm font-bold text-slate-500 uppercase">Features included</h5>
+                                <h5 className="text-sm font-bold text-slate-500 uppercase">System Features</h5>
+                                <div className="space-y-3 mb-6">
+                                    {planFeatures.filter((f: any) => ['leads_access', 'valuation_reports', 'market_insights'].includes(f.feature_key)).map((feature: any) => (
+                                        <FeatureToggle key={feature.id} feature={feature} />
+                                    ))}
+                                </div>
+
+                                <h5 className="text-sm font-bold text-slate-500 uppercase">Marketing Features</h5>
                                 <div className="space-y-3">
-                                    {planFeatures.map((feature: any) => (
+                                    {planFeatures.filter((f: any) => !['leads_access', 'valuation_reports', 'market_insights'].includes(f.feature_key)).map((feature: any) => (
                                         <FeatureToggle key={feature.id} feature={feature} />
                                     ))}
                                     <NewFeatureForm role={selectedRole} planName={plan.name} />

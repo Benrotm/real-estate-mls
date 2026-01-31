@@ -29,7 +29,14 @@ const STATUS_LABELS = {
 // Ensure page is dynamic to fetch latest data
 export const dynamic = 'force-dynamic';
 
+import { hasFeature, SYSTEM_FEATURES } from '@/app/lib/auth/features';
+import { redirect } from 'next/navigation';
+
 export default async function LeadsPage() {
+    if (!await hasFeature(SYSTEM_FEATURES.LEADS_ACCESS)) {
+        redirect('/dashboard?error=upgrade_required_leads');
+    }
+
     const leads = await fetchLeads();
 
     // Stats Calculations
