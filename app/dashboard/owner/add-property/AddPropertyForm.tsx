@@ -9,7 +9,7 @@ import { supabase } from '@/app/lib/supabase/client';
 import AddressAutocomplete from '@/app/components/AddressAutocomplete';
 import LocationMap from '@/app/components/LocationMap';
 
-export default function AddPropertyForm({ initialData }: { initialData?: Property }) {
+export default function AddPropertyForm({ initialData }: { initialData?: Partial<Property> }) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -20,7 +20,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Propert
         lng: initialData?.longitude || 26.1025
     });
 
-    const isEditing = !!initialData;
+    const isEditing = !!(initialData && initialData.id);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -124,7 +124,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Propert
             submissionData.append('features', JSON.stringify(selectedFeatures));
 
             let result;
-            if (isEditing && initialData) {
+            if (isEditing && initialData?.id) {
                 result = await updateProperty(initialData.id, submissionData);
             } else {
                 result = await createProperty(submissionData);

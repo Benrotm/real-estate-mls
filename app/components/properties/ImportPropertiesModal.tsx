@@ -1,14 +1,21 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, FileSpreadsheet, Database, Rss, X, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, Database, Rss, X, Loader2, AlertCircle, CheckCircle2, Link as LinkIcon, Globe } from 'lucide-react';
 import { importPropertiesFromCSV } from '@/app/lib/actions/import';
+import { scrapeProperty, ScrapedProperty } from '@/app/lib/actions/scrape';
 
-export default function ImportPropertiesModal() {
+interface ImportPropertiesModalProps {
+    onScrapeSuccess?: (data: ScrapedProperty) => void;
+}
+
+export default function ImportPropertiesModal({ onScrapeSuccess }: ImportPropertiesModalProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'csv' | 'xml' | 'crm'>('csv');
+    const [activeTab, setActiveTab] = useState<'csv' | 'link' | 'xml' | 'crm'>('csv');
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [linkUrl, setLinkUrl] = useState('');
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleOpen = () => setIsOpen(true);
@@ -16,6 +23,7 @@ export default function ImportPropertiesModal() {
         setIsOpen(false);
         setResult(null);
         setIsLoading(false);
+        setLinkUrl('');
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,6 +50,35 @@ export default function ImportPropertiesModal() {
         } finally {
             setIsLoading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleLinkScrape = async () => {
+        if (!linkUrl) return;
+
+        setIsLoading(true);
+        setResult(null);
+
+        try {
+            const { data, error } = await scrapeProperty(linkUrl);
+
+            if (error) {
+                setResult({ success: false, message: error });
+            } else if (data) {
+                setResult({ success: true, message: 'Property data scraped successfully! The form will be populated.' });
+                // Pass data back to parent form
+                if (onScrapeSuccess) {
+                    onScrapeSuccess(data);
+                    // Close modal after short delay to show success
+                    setTimeout(() => {
+                        handleClose();
+                    }, 1500);
+                }
+            }
+        } catch (error) {
+            setResult({ success: false, message: 'Failed to scrape URL. Please try again.' });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -72,24 +109,31 @@ export default function ImportPropertiesModal() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-slate-100 px-6">
+                <div className="flex border-b border-slate-100 px-6 overflow-x-auto">
                     <button
                         onClick={() => setActiveTab('csv')}
-                        className={`flex items-center gap-2 py-4 px-4 border-b-2 transition font-medium text-sm ${activeTab === 'csv' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        className={`flex items-center gap-2 py-4 px-4 border-b-2 transition font-medium text-sm whitespace-nowrap ${activeTab === 'csv' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                     >
                         <FileSpreadsheet className="w-4 h-4" />
                         CSV Upload
                     </button>
                     <button
+                        onClick={() => setActiveTab('link')}
+                        className={`flex items-center gap-2 py-4 px-4 border-b-2 transition font-medium text-sm whitespace-nowrap ${activeTab === 'link' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        <LinkIcon className="w-4 h-4" />
+                        From Link
+                    </button>
+                    <button
                         onClick={() => setActiveTab('xml')}
-                        className={`flex items-center gap-2 py-4 px-4 border-b-2 transition font-medium text-sm ${activeTab === 'xml' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        className={`flex items-center gap-2 py-4 px-4 border-b-2 transition font-medium text-sm whitespace-nowrap ${activeTab === 'xml' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                     >
                         <Rss className="w-4 h-4" />
                         XML Feed
                     </button>
                     <button
                         onClick={() => setActiveTab('crm')}
-                        className={`flex items-center gap-2 py-4 px-4 border-b-2 transition font-medium text-sm ${activeTab === 'crm' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        className={`flex items-center gap-2 py-4 px-4 border-b-2 transition font-medium text-sm whitespace-nowrap ${activeTab === 'crm' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                     >
                         <Database className="w-4 h-4" />
                         CRM Sync
@@ -130,41 +174,52 @@ export default function ImportPropertiesModal() {
                                 </div>
                             )}
 
-                            {isLoading && (
-                                <div className="py-12 flex flex-col items-center justify-center">
-                                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-                                    <p className="text-slate-600 font-medium">Processing your file...</p>
-                                </div>
-                            )}
+                            {/* ... Loading and Result states are handled below ... */}
+                        </div>
+                    )}
 
-                            {result && (
-                                <div className={`p-6 rounded-xl border flex flex-col items-center text-center ${result.success ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                                    {result.success ? (
-                                        <CheckCircle2 className="w-12 h-12 text-green-500 mb-3" />
-                                    ) : (
-                                        <AlertCircle className="w-12 h-12 text-red-500 mb-3" />
-                                    )}
-                                    <h3 className={`text-lg font-bold mb-1 ${result.success ? 'text-green-900' : 'text-red-900'}`}>
-                                        {result.success ? 'Import Successful' : 'Import Failed'}
-                                    </h3>
-                                    <p className={`text-sm ${result.success ? 'text-green-700' : 'text-red-700'}`}>
-                                        {result.message}
+                    {activeTab === 'link' && (
+                        <div className="space-y-6">
+                            <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex gap-3 items-start">
+                                <div className="bg-purple-100 p-2 rounded-lg">
+                                    <Globe className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="font-semibold text-purple-900">Import from Web Link</h4>
+                                    <p className="text-sm text-purple-700">
+                                        Paste a URL from a real estate portal. We'll attempt to extract the title, price, description, images, and other details automatically.
                                     </p>
-                                    {result.success && (
-                                        <button onClick={() => window.location.href = '/dashboard/owner/properties'} className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition">
-                                            View Properties
-                                        </button>
-                                    )}
-                                    {!result.success && (
-                                        <button onClick={() => setResult(null)} className="mt-4 px-4 py-2 bg-white border border-red-200 text-red-700 rounded-lg font-medium hover:bg-red-50 transition">
-                                            Try Again
-                                        </button>
-                                    )}
+                                </div>
+                            </div>
+
+                            {!isLoading && !result && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Property URL</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="url"
+                                                value={linkUrl}
+                                                onChange={(e) => setLinkUrl(e.target.value)}
+                                                placeholder="https://example.com/property/123"
+                                                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleLinkScrape}
+                                        disabled={!linkUrl}
+                                        className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        <LinkIcon className="w-4 h-4" />
+                                        Scrape & Import Data
+                                    </button>
                                 </div>
                             )}
                         </div>
                     )}
 
+                    {/* ... XML and CRM tabs ... */}
                     {activeTab === 'xml' && (
                         <div className="flex flex-col items-center justify-center h-full py-10 text-center space-y-4">
                             <div className="bg-slate-100 p-4 rounded-full">
@@ -198,8 +253,46 @@ export default function ImportPropertiesModal() {
                             </div>
                         </div>
                     )}
+
+                    {/* Loading State */}
+                    {isLoading && (
+                        <div className="py-12 flex flex-col items-center justify-center">
+                            <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+                            <p className="text-slate-600 font-medium">Processing...</p>
+                        </div>
+                    )}
+
+                    {/* Result State */}
+                    {result && (
+                        <div className={`p-6 rounded-xl border flex flex-col items-center text-center ${result.success ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                            {result.success ? (
+                                <CheckCircle2 className="w-12 h-12 text-green-500 mb-3" />
+                            ) : (
+                                <AlertCircle className="w-12 h-12 text-red-500 mb-3" />
+                            )}
+                            <h3 className={`text-lg font-bold mb-1 ${result.success ? 'text-green-900' : 'text-red-900'}`}>
+                                {result.success ? 'Success' : 'Failed'}
+                            </h3>
+                            <p className={`text-sm ${result.success ? 'text-green-700' : 'text-red-700'}`}>
+                                {result.message}
+                            </p>
+
+                            {/* Actions for success/failure */}
+                            {result.success && activeTab === 'csv' && (
+                                <button onClick={() => window.location.href = '/dashboard/owner/properties'} className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition">
+                                    View Properties
+                                </button>
+                            )}
+                            {!result.success && (
+                                <button onClick={() => setResult(null)} className="mt-4 px-4 py-2 bg-white border border-red-200 text-red-700 rounded-lg font-medium hover:bg-red-50 transition">
+                                    Try Again
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+
