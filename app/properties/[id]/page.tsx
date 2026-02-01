@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
-import ValuationWidget from '../../components/ValuationWidget';
+import PropertyValuationSection from '../../components/valuation/PropertyValuationSection';
 import ContactForm from '../../components/ContactForm';
 import { supabase } from "@/app/lib/supabase/client";
 
@@ -317,8 +317,10 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                     )}
 
-                    {/* Valuation Widget */}
-                    <ValuationWidget property={property} />
+                    {/* Valuation Widget & Insights */}
+                    <div id="valuation-section">
+                        <PropertyValuationSection property={property} />
+                    </div>
 
                     {/* Location Map */}
                     <div className="space-y-4">
