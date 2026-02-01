@@ -28,7 +28,13 @@ export default function PropertyCard({ property, showEditButton }: PropertyCardP
                 />
 
                 {/* Badges */}
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-4 left-4 flex flex-col gap-2 items-start">
+                    {property.status === 'draft' && (
+                        <span className="bg-slate-700 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md border border-slate-500">
+                            Draft - Private
+                        </span>
+                    )}
+
                     {property.listing_type === 'For Sale' ? (
                         <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                             For Sale
