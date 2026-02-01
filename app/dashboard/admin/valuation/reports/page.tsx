@@ -1,15 +1,13 @@
 import ValuationClient from '@/app/dashboard/agent/valuation/ValuationClient';
+import { getProperties } from '@/app/lib/actions/properties';
 
 export default async function AdminValuationReportsPage() {
-    // Reusing the same client component as agents/clients
-    // Admins can see the same view.
+    // Admin seeing all properties to run valuations
+    const properties = await getProperties({});
+
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Valuation Reports</h1>
-                <p className="text-slate-500">Run smart valuations on any property.</p>
-            </div>
-            <ValuationClient />
+            <ValuationClient properties={properties} />
         </div>
     );
 }
