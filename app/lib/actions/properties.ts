@@ -71,7 +71,7 @@ export async function createProperty(formData: FormData) {
             youtube_video_url: formData.get('youtube_video_url') as string,
             virtual_tour_url: formData.get('virtual_tour_url') as string,
 
-            status: 'active'
+            status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
 
         const { data, error } = await supabase
@@ -346,7 +346,8 @@ export async function updateProperty(id: string, formData: FormData) {
             virtual_tour_url: formData.get('virtual_tour_url') as string,
 
             // updated_at is handled by DB trigger usually, but we can set it if needed
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
 
         const { data, error } = await supabase

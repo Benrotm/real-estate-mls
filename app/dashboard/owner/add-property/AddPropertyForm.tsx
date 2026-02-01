@@ -15,6 +15,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
     const [uploading, setUploading] = useState(false);
     const [images, setImages] = useState<string[]>(initialData?.images || []);
     const [error, setError] = useState<string | null>(null);
+    const [status, setStatus] = useState<'active' | 'draft'>('active');
     const [coordinates, setCoordinates] = useState({
         lat: initialData?.latitude || 44.4268, // Default to Bucharest
         lng: initialData?.longitude || 26.1025
@@ -68,6 +69,9 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         try {
             // Prepare FormData for server action
             const submissionData = new FormData();
+
+            // Append Status
+            submissionData.append('status', status);
 
             // Map and Append Fields (similar to public form)
             submissionData.append('title', formData.get('title') as string);
@@ -463,13 +467,25 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
 
             <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
                 <button type="button" onClick={() => router.back()} className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+
                 <button
-                    type="submit"
+                    type="button"
                     disabled={loading}
+                    onClick={() => setStatus('draft')}
+                    className="px-6 py-3 rounded-xl font-bold text-slate-700 bg-white border-2 border-slate-200 hover:bg-slate-50 transition flex items-center gap-2"
+                >
+                    {loading && status === 'draft' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    Save Internal Draft
+                </button>
+
+                <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => setStatus('active')}
                     className="px-6 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2"
                 >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isEditing ? <Save className="w-5 h-5" /> : <Plus className="w-5 h-5" />)}
-                    {isEditing ? 'Update Listing' : 'Create Listing'}
+                    {loading && status === 'active' ? <Loader2 className="w-5 h-5 animate-spin" /> : (isEditing ? <Save className="w-5 h-5" /> : <Plus className="w-5 h-5" />)}
+                    {isEditing ? 'Update & Publish' : 'Publish Property'}
                 </button>
             </div>
         </form >
