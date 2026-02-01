@@ -1,19 +1,20 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Property } from '../lib/properties';
-import { Bed, Bath, Ruler, MapPin, Heart } from 'lucide-react';
+import { Bed, Bath, Ruler, MapPin, Heart, Award } from 'lucide-react';
 
 interface PropertyCardProps {
     property: Property;
+    showEditButton?: boolean;
 }
 
-export default function PropertyCard({ property }: PropertyCardProps) {
+export default function PropertyCard({ property, showEditButton }: PropertyCardProps) {
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: property.currency,
             maximumFractionDigits: 0,
-        }).format(price) + (property.listing_type === 'For Rent' ? '/mo' : '');
+        }).format(price) + (property.listing_type === 'For Rent' ? '/mo' : property.listing_type === 'Hotel Regime' ? '/night' : '');
     };
 
     return (
@@ -32,6 +33,10 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                         <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                             For Sale
                         </span>
+                    ) : property.listing_type === 'Hotel Regime' ? (
+                        <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                            Hotel Regime
+                        </span>
                     ) : (
                         <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                             For Rent
@@ -47,9 +52,9 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                     )}
                     {(property.score !== undefined && property.score > 0) && (
                         <div className={`text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1 ${property.score >= 80 ? 'bg-red-600' :
-                                property.score >= 50 ? 'bg-orange-500' : 'bg-slate-500'
+                            property.score >= 50 ? 'bg-orange-500' : 'bg-slate-500'
                             }`}>
-                            <span className="text-[10px]">★</span> Score: {property.score}
+                            <Award className="w-3 h-3" /> Score: {property.score}
                         </div>
                     )}
                 </div>
@@ -86,12 +91,22 @@ export default function PropertyCard({ property }: PropertyCardProps) {
                     </div>
                 </div>
 
-                <Link
-                    href={`/properties/${property.id}`}
-                    className="block mt-4 w-full text-center bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 hover:shadow-lg transition-all transform active:scale-95"
-                >
-                    View Details
-                </Link>
+                <div className="flex gap-3 mt-4">
+                    <Link
+                        href={`/properties/${property.id}`}
+                        className="flex-1 text-center bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 hover:shadow-lg transition-all transform active:scale-95"
+                    >
+                        View Details
+                    </Link>
+                    {showEditButton && (
+                        <Link
+                            href={`/dashboard/owner/properties/${property.id}/edit`}
+                            className="flex-1 text-center bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600 hover:shadow-lg transition-all transform active:scale-95"
+                        >
+                            Edit
+                        </Link>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -54,6 +54,11 @@ export default function Navbar({ user }: NavbarProps) {
             <Link href="/properties" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Properties
             </Link>
+            {userRole === 'client' && (
+              <Link href="/dashboard/client" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+                Dashboard
+              </Link>
+            )}
             <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Upgrade Account
             </Link>
@@ -207,7 +212,7 @@ export default function Navbar({ user }: NavbarProps) {
                               <div className="w-5"><Hammer className="w-4 h-4" /></div> Developer Dashboard
                             </Link>
                           )}
-                          <Link href="/properties" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
+                          <Link href={userRole === 'owner' ? "/dashboard/owner/properties" : "/properties"} onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                             <div className="w-5"><Menu className="w-4 h-4" /></div> My Properties
                           </Link>
                           <Link href="/saved" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
@@ -267,6 +272,11 @@ export default function Navbar({ user }: NavbarProps) {
             <Link href="/properties" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
               Properties
             </Link>
+            {userRole === 'client' && (
+              <Link href="/dashboard/client" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
+                Dashboard
+              </Link>
+            )}
             <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
               Upgrade Account
             </Link>

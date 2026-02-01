@@ -239,11 +239,7 @@ export async function fetchUsers() {
     }
 }
 
-const MOCK_USERS = [
-    { id: 'mock-1', full_name: 'Alice Agent', role: 'agent', plan_tier: 'pro', listings_count: 5, listings_limit: 20, bonus_listings: 0, email: { email: 'alice@example.com' } },
-    { id: 'mock-2', full_name: 'Bob Owner', role: 'owner', plan_tier: 'free', listings_count: 1, listings_limit: 1, bonus_listings: 0, email: { email: 'bob@example.com' } },
-    { id: 'mock-3', full_name: 'Charlie Dev', role: 'developer', plan_tier: 'enterprise', listings_count: 12, listings_limit: 50, bonus_listings: 5, email: { email: 'charlie@example.com' } },
-];
+
 
 export async function updateUserBonus(userId: string, bonus: number) {
     await verifyAdmin();

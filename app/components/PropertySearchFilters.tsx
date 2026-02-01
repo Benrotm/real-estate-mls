@@ -403,10 +403,6 @@ export default function PropertySearchFilters() {
                             Luxury
                         </label>
                         <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.hotel_regime} onChange={(e) => handleChange('hotel_regime', e.target.checked)} />
-                            Hotel Regime
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
                             <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
                             Foreclosure
                         </label>

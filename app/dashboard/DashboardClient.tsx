@@ -18,6 +18,7 @@ export default function DashboardClient({
     const isAgent = pathname.includes('/dashboard/agent');
     const isOwner = pathname.includes('/dashboard/owner');
     const isDeveloper = pathname.includes('/dashboard/developer');
+    const isClient = pathname.includes('/dashboard/client');
     const isAdmin = pathname.includes('/dashboard/admin');
 
     const hasFeature = (key: string) => features.includes(key);
@@ -35,15 +36,18 @@ export default function DashboardClient({
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
-        ...(hasFeature(SYSTEM_FEATURES.VALUATION_REPORTS) ? [{ name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' }] : []),
-        ...(hasFeature(SYSTEM_FEATURES.LEADS_ACCESS) ? [{ name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' }] : []),
+        { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
+        { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
+        { name: 'Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
         { name: 'Daily Activities', icon: Calendar, href: '/dashboard/agent/activities' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/agent/chat' },
     ] : isOwner ? [
-        { name: 'My Properties', icon: Home, href: '/dashboard/owner' },
-        ...(hasFeature(SYSTEM_FEATURES.VALUATION_REPORTS) ? [{ name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' }] : []),
-        ...(hasFeature(SYSTEM_FEATURES.MARKET_INSIGHTS) ? [{ name: 'Market Insights', icon: Briefcase, href: '/dashboard/owner/market' }] : []),
+        { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/owner' },
+        { name: 'My Properties', icon: Home, href: '/dashboard/owner/properties' },
+        { name: 'Leads & CRM', icon: Users, href: '/dashboard/owner/leads' }, // Always show for owners to upsell
+        { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
+        { name: 'Market Insights', icon: Briefcase, href: '/dashboard/owner/market' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/owner/chat' },
     ] : isDeveloper ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/developer' },
@@ -51,6 +55,14 @@ export default function DashboardClient({
         ...(hasFeature(SYSTEM_FEATURES.VALUATION_REPORTS) ? [{ name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/developer/valuation' }] : []),
         { name: 'Analytics', icon: BarChart2, href: '/dashboard/developer/analytics' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/developer/chat' },
+    ] : isClient ? [
+        { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/client' },
+        { name: 'Browse Properties', icon: Building, href: '/properties' },
+        { name: 'Saved Properties', icon: Home, href: '/saved' }, // Assuming global /saved page uses correct context or we need to check
+        { name: 'Saved Searches', icon: Briefcase, href: '/dashboard/client/searches' },
+        { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/client/valuation' },
+        { name: 'Market Insights', icon: BarChart2, href: '/dashboard/client/market' },
+        { name: 'Chat', icon: MessageSquare, href: '/dashboard/client/chat' },
     ] : [
         // Default / Selection View
         { name: 'Choose Role', icon: Users, href: '/dashboard' }
@@ -64,7 +76,7 @@ export default function DashboardClient({
                     Dashboard
                 </h2>
                 <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
-                    {isAdmin ? 'Super Admin' : isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : 'Welcome'}
+                    {isAdmin ? 'Super Admin' : isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : isClient ? 'Client Dashboard' : 'Welcome'}
                 </p>
             </div>
 

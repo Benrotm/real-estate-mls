@@ -6,7 +6,7 @@ export interface Property {
     description: string;
 
     type: 'Apartment' | 'House' | 'Commercial' | 'Industrial' | 'Land' | 'Investment' | 'Business' | 'Other';
-    listing_type: 'For Sale' | 'For Rent';
+    listing_type: 'For Sale' | 'For Rent' | 'Hotel Regime';
 
     location_county: string;
     location_city: string;
@@ -70,7 +70,7 @@ export interface Property {
 // or just ignore strict typing for the mock if it causes too much refactor noise right now.
 // I will just define the valid options as constants for reuse
 export const PROPERTY_TYPES = ['Apartment', 'House', 'Commercial', 'Industrial', 'Land', 'Investment', 'Business', 'Other'] as const;
-export const TRANSACTION_TYPES = ['For Sale', 'For Rent'] as const;
+export const TRANSACTION_TYPES = ['For Sale', 'For Rent', 'Hotel Regime'] as const;
 export const CURRENCIES = ['EUR', 'USD', 'RON'] as const;
 export const PARTITIONING_TYPES = ['Decomandat', 'Semidecomandat', 'Nedecomandat', 'Circular', 'Vagon'] as const;
 export const COMFORT_TYPES = ['Lux', '1', '2', '3'] as const;

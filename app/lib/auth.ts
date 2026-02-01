@@ -33,17 +33,8 @@ export async function getUserProfile(): Promise<UserProfile | null> {
         .single();
 
     if (profileError || !profile) {
-        console.warn('Profile not found in DB. Returning Fallback Super Admin (for Demo).');
-        // Fallback for Demo purposes so you don't get locked out
-        return {
-            id: user.id,
-            full_name: user.email?.split('@')[0] || 'Admin User',
-            role: 'super_admin',
-            plan_tier: 'enterprise',
-            listings_limit: 999,
-            listings_count: 0,
-            avatar_url: ''
-        };
+        console.warn('Profile not found in DB for authenticated user.', profileError?.message);
+        return null;
     }
 
     // 3. Check for Impersonation (Super Admin Only)

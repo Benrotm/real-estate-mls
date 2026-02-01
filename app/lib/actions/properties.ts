@@ -33,6 +33,8 @@ export async function createProperty(formData: FormData) {
             location_city: formData.get('location_city') as string,
             location_area: formData.get('location_area') as string,
             address: formData.get('address') as string,
+            latitude: formData.get('latitude') ? parseFloat(formData.get('latitude') as string) : null,
+            longitude: formData.get('longitude') ? parseFloat(formData.get('longitude') as string) : null,
 
             // Specs
             rooms: formData.get('rooms') ? parseInt(formData.get('rooms') as string) : null,
@@ -192,7 +194,7 @@ export async function getProperties(filters?: any) {
         if (filters.commission_0 === 'true' || filters.commission_0 === true) featureTags.push('Commission 0%');
         if (filters.exclusive === 'true' || filters.exclusive === true) featureTags.push('Exclusive');
         if (filters.luxury === 'true' || filters.luxury === true) featureTags.push('Luxury');
-        if (filters.hotel_regime === 'true' || filters.hotel_regime === true) featureTags.push('Hotel Regime');
+        // Hotel Regime moved to listing_type
         if (filters.foreclosure === 'true' || filters.foreclosure === true) featureTags.push('Foreclosure');
 
         if (filters.features) {
@@ -265,4 +267,108 @@ export async function getUserProperties() {
 
     if (error) return [];
     return data as PropertyType[];
+}
+
+export async function updateProperty(id: string, formData: FormData) {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: 'Unauthorized' };
+    }
+
+    // Verify ownership
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', id)
+        .single();
+
+    if (!property || property.owner_id !== user.id) {
+        return { error: 'Unauthorized: You do not own this property' };
+    }
+
+    try {
+        // Extract and parse fields
+        const featuresRaw = formData.get('features');
+        const features = featuresRaw ? JSON.parse(featuresRaw as string) : [];
+
+        // Prepare data matching the DB schema
+        const propertyData = {
+            title: formData.get('title') as string,
+            description: formData.get('description') as string,
+            type: formData.get('type') as string,
+            listing_type: formData.get('listing_type') as string,
+            price: parseFloat(formData.get('price') as string),
+            currency: formData.get('currency') as string,
+
+            // Location
+            location_county: formData.get('location_county') as string,
+            location_city: formData.get('location_city') as string,
+            location_area: formData.get('location_area') as string,
+            address: formData.get('address') as string,
+            latitude: formData.get('latitude') ? parseFloat(formData.get('latitude') as string) : null,
+            longitude: formData.get('longitude') ? parseFloat(formData.get('longitude') as string) : null,
+
+            // Specs
+            rooms: formData.get('rooms') ? parseInt(formData.get('rooms') as string) : null,
+            bedrooms: formData.get('bedrooms') ? parseInt(formData.get('bedrooms') as string) : null,
+            bathrooms: formData.get('bathrooms') ? parseInt(formData.get('bathrooms') as string) : null,
+
+            area_usable: formData.get('area_usable') ? parseFloat(formData.get('area_usable') as string) : null,
+            area_built: formData.get('area_built') ? parseFloat(formData.get('area_built') as string) : null,
+
+            year_built: formData.get('year_built') ? parseInt(formData.get('year_built') as string) : null,
+            floor: formData.get('floor') ? parseInt(formData.get('floor') as string) : null,
+            total_floors: formData.get('total_floors') ? parseInt(formData.get('total_floors') as string) : null,
+
+            partitioning: formData.get('partitioning') as string,
+            comfort: formData.get('comfort') as string,
+
+            // Enhanced
+            building_type: formData.get('building_type') as string,
+            interior_condition: formData.get('interior_condition') as string,
+            furnishing: formData.get('furnishing') as string,
+
+            // New Requests
+            social_media_url: formData.get('social_media_url') as string,
+            personal_property_id: formData.get('personal_property_id') as string,
+
+            // Details
+            features: features,
+
+            // Media
+            // Only update images if provided
+            ...(formData.get('images') ? { images: JSON.parse(formData.get('images') as string) } : {}),
+
+            youtube_video_url: formData.get('youtube_video_url') as string,
+            virtual_tour_url: formData.get('virtual_tour_url') as string,
+
+            // updated_at is handled by DB trigger usually, but we can set it if needed
+            updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+            .from('properties')
+            .update(propertyData)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error updating property:', error);
+            return { error: error.message };
+        }
+
+        revalidatePath('/properties');
+        revalidatePath('/dashboard/owner');
+        revalidatePath(`/properties/${id}`);
+        revalidatePath(`/dashboard/owner/properties`);
+
+        return { success: true, data };
+    } catch (e: any) {
+        console.error('Unexpected error in updateProperty:', e);
+        return { error: e.message || 'Internal Server Error' };
+    }
 }

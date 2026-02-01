@@ -1,6 +1,6 @@
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 import ValuationWidget from '../../components/ValuationWidget';
@@ -130,6 +130,10 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-md uppercase tracking-wide">
                                     For Sale
                                 </span>
+                            ) : property.listing_type === 'Hotel Regime' ? (
+                                <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-md uppercase tracking-wide">
+                                    Hotel Regime
+                                </span>
                             ) : (
                                 <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-md uppercase tracking-wide">
                                     For Rent
@@ -150,7 +154,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 <span className={`text-white text-xs font-bold px-3 py-1.5 rounded-md uppercase tracking-wide flex items-center gap-1 ${property.score >= 80 ? 'bg-red-600' :
                                     property.score >= 50 ? 'bg-orange-500' : 'bg-slate-500'
                                     }`}>
-                                    ★ Quality Score: {property.score}
+                                    <Award className="w-3 h-3" /> Quality Score: {property.score}
                                 </span>
                             )}
                         </div>
@@ -168,6 +172,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         <div className="text-5xl font-extrabold text-slate-900 mb-8">
                             {formatter.format(property.price)}
                             {property.listing_type === 'For Rent' && <span className="text-2xl font-normal text-slate-400">/mo</span>}
+                            {property.listing_type === 'Hotel Regime' && <span className="text-2xl font-normal text-slate-400">/night</span>}
                         </div>
 
                         {/* 4. Specs Widget */}

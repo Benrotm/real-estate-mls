@@ -53,7 +53,7 @@ export default function LoginPage() {
                 else if (role === 'agent') targetPath = '/dashboard/agent';
                 else if (role === 'developer') targetPath = '/dashboard/developer';
                 else if (role === 'super_admin') targetPath = '/dashboard/admin';
-                else if (role === 'client') targetPath = '/properties'; // Redirect clients to properties
+                else if (role === 'client') targetPath = '/dashboard/client';
 
                 console.log('Login successful. Role:', role, 'Redirecting to:', targetPath);
                 // Use window.location.href to force a full page reload.
