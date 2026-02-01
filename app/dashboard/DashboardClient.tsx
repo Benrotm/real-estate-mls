@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 
@@ -28,6 +28,7 @@ export default function DashboardClient({
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
         { name: 'All Leads', icon: Users, href: '/dashboard/admin/leads' },
         { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
+        { name: 'Valuation Engine', icon: TrendingUp, href: '/dashboard/admin/valuation' },
         { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' },
         { name: 'Lead Scoring', icon: BarChart2, href: '/dashboard/admin/scoring' },
         { name: 'Property Scoring', icon: Building, href: '/dashboard/admin/scoring/properties' },
