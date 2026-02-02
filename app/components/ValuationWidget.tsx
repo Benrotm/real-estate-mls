@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { Property } from '@/app/lib/properties'; // Assuming this exists or I should check. Use 'any' if unsure.
 import { getSmartValuation } from '@/app/lib/actions/valuation';
 import { Lock, TrendingUp, Info, CheckCircle, BarChart3, Star, Home, ArrowUpRight, Sofa, Building, Layers, Search, Wind, Sun } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import Link from 'next/link';
+import { format } from 'date-fns';
 
 
 interface ValuationWidgetProps {
@@ -53,6 +55,25 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
         if (aqi <= 100) return 'text-yellow-500';
         return 'text-red-500';
     };
+
+    // Prepare chart data
+    // We want to show the estimated value vs the comparables
+    const chartData = [
+        ...valuation.comparables.map((comp: any) => ({
+            name: 'Comp',
+            price: Number(comp.sold_price),
+            date: new Date(comp.sold_date),
+            label: format(new Date(comp.sold_date), 'MMM yyyy'),
+            type: 'comp'
+        })),
+        {
+            name: 'Subject',
+            price: valuation.estimatedValue,
+            date: new Date(),
+            label: 'Estimated',
+            type: 'subject'
+        }
+    ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden my-8 scroll-mt-24" id="valuation">
@@ -135,17 +156,58 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Breakdown */}
-                        <div className="lg:col-span-2 space-y-6">
-                            <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-indigo-500" />
-                                Value Logic
-                            </h4>
+                        {/* Breakdown & Chart */}
+                        <div className="lg:col-span-2 space-y-8">
+
+                            {/* Chart */}
+                            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                    <TrendingUp className="w-5 h-5 text-indigo-500" />
+                                    Market Trend & Estimate
+                                </h4>
+                                <div className="h-64 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                            <XAxis
+                                                dataKey="label"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: '#64748B', fontSize: 12 }}
+                                                dy={10}
+                                            />
+                                            <YAxis
+                                                hide={true}
+                                            />
+                                            <Tooltip
+                                                cursor={{ fill: '#F1F5F9' }}
+                                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                                formatter={(value: any) => [formatPrice(value), 'Price']}
+                                            />
+                                            <Bar dataKey="price" radius={[4, 4, 0, 0]}>
+                                                {chartData.map((entry, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={entry.type === 'subject' ? '#6366f1' : '#cbd5e1'}
+                                                    />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <p className="text-xs text-slate-400 text-center mt-2">
+                                    Comparables (gray) vs. Your Property Estimate (indigo)
+                                </p>
+                            </div>
 
                             <div className="space-y-3">
+                                <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5 text-indigo-500" />
+                                    Factors
+                                </h4>
                                 {/* Base */}
                                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span className="text-slate-600">Base Market Value (based on size)</span>
+                                    <span className="text-slate-600">Base Market Value (size)</span>
                                     <span className="font-bold text-slate-700">{formatPrice(valuation.baseValue)}</span>
                                 </div>
 
@@ -177,9 +239,9 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                         <div>
                             <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                                 <Home className="w-5 h-5 text-indigo-500" />
-                                Recent Sales (Comps)
+                                Recent Comparables
                             </h4>
-                            <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                 {valuation.comparables.map((comp: any) => (
                                     <div key={comp.id} className="flex flex-col p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors text-sm">
                                         <div className="flex justify-between mb-1">

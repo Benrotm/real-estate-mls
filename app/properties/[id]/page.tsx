@@ -1,4 +1,5 @@
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
+import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
 import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award } from 'lucide-react';
 import { notFound } from 'next/navigation';
@@ -102,21 +103,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 </div>
             </div>
 
-            {/* Hero Images - Dynamic Grid */}
-            <div className="h-[50vh] md:h-[60vh] relative z-0 grid grid-cols-1 md:grid-cols-2 gap-1 text-slate-800 overflow-hidden">
-                <img src={property.images[0] || '/placeholder.jpg'} className="w-full h-full object-cover" alt="Main View" />
-                <div className="hidden md:grid grid-rows-2 gap-1">
-                    <img src={property.images[1] || property.images[0] || '/placeholder.jpg'} className="w-full h-full object-cover" alt="Secondary View" />
-                    <div className="relative">
-                        <img src={property.images[2] || property.images[0] || '/placeholder.jpg'} className="w-full h-full object-cover opacity-80" alt="More" />
-                        {property.images.length > 3 && (
-                            <button className="absolute inset-0 m-auto bg-white/90 text-slate-900 px-6 py-2 h-fit w-fit rounded-lg font-bold shadow-lg hover:scale-105 transition-transform">
-                                View All {property.images.length} Photos
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
+            {/* Hero Images - Property Carousel */}
+            <PropertyCarousel images={property.images} title={property.title} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Main Content */}
