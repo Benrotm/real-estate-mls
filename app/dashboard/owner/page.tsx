@@ -36,7 +36,7 @@ export default async function OwnerDashboard() {
                         <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || 'Owner'}</h1>
                         <p className="text-slate-400 mt-1">Your property dashboard</p>
                     </div>
-                    <Link href="/properties/add" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors">
+                    <Link href="/dashboard/owner/add-property" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors">
                         <Plus className="w-5 h-5" /> Add Property
                     </Link>
                 </div>
