@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { createProperty } from '@/app/lib/actions/properties';
 import LocationMap from '@/app/components/LocationMap';
+import ImportPropertiesModal from '@/app/components/properties/ImportPropertiesModal';
 import {
     PROPERTY_TYPES,
     PARTITIONING_TYPES,
@@ -52,6 +53,7 @@ export default function AddPropertyForm() {
     const [step, setStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -89,6 +91,26 @@ export default function AddPropertyForm() {
         personalId: '',
         features: [] as string[]
     });
+
+    const handleScrapeSuccess = (data: any) => {
+        setFormData(prev => ({
+            ...prev,
+            title: data.title || prev.title,
+            description: data.description || prev.description,
+            price: data.price?.toString() || prev.price,
+            listingType: data.listing_type || prev.listingType,
+            propertyType: data.type || prev.propertyType,
+            address: data.address || prev.address,
+            rooms: data.rooms?.toString() || prev.rooms,
+            beds: data.bedrooms?.toString() || prev.beds,
+            baths: data.bathrooms?.toString() || prev.baths,
+            usableArea: data.area_usable?.toString() || prev.usableArea,
+            builtArea: data.area_built?.toString() || prev.builtArea,
+            yearBuilt: data.year_built?.toString() || prev.yearBuilt,
+            features: (data.features as string[]) || prev.features
+        }));
+        setIsImportModalOpen(false);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -226,13 +248,22 @@ export default function AddPropertyForm() {
                         <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Add New Property</h1>
                         <p className="text-slate-400 text-lg">Create a premium listing for your real estate asset.</p>
                     </div>
-                    <button
-                        type="button"
-                        className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg shadow-white/10"
-                    >
-                        <Upload className="w-4 h-4" />
-                        Import Properties
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg shadow-white/10"
+                        >
+                            <Upload className="w-4 h-4" />
+                            Import Properties
+                        </button>
+                        <ImportPropertiesModal
+                            showDefaultButton={false}
+                            forceOpen={isImportModalOpen}
+                            onClose={() => setIsImportModalOpen(false)}
+                            onScrapeSuccess={handleScrapeSuccess}
+                        />
+                    </div>
                 </div>
 
                 {/* Stepper Navigation */}
