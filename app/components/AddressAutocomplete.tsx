@@ -16,9 +16,10 @@ interface AddressAutocompleteProps {
         lng: number;
     }) => void;
     currentAddress?: string;
+    className?: string;
 }
 
-export default function AddressAutocomplete({ onAddressSelect, currentAddress }: AddressAutocompleteProps) {
+export default function AddressAutocomplete({ onAddressSelect, currentAddress, className }: AddressAutocompleteProps) {
     const { isLoaded } = useLoadScript({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
         libraries: LIBRARIES,
@@ -89,7 +90,7 @@ export default function AddressAutocomplete({ onAddressSelect, currentAddress }:
                         type="text"
                         placeholder="Search for an address..."
                         defaultValue={currentAddress}
-                        className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        className={`w-full pl-10 p-3 outline-none ${className || 'bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500'}`}
                     />
                 </div>
             </Autocomplete>

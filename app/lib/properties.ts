@@ -24,6 +24,9 @@ export interface Property {
 
     area_usable?: number;
     area_built?: number;
+    area_box?: number;
+    area_terrace?: number;
+    area_garden?: number;
 
     year_built?: number;
     floor?: number;
@@ -79,27 +82,81 @@ export const BUILDING_TYPES = ['Apartment Block', 'Individual House', 'Duplex', 
 export const INTERIOR_CONDITIONS = ['Newly Built', 'Renovated', 'Good', 'Fair', 'Needs Renovation'] as const;
 export const FURNISHING_TYPES = ['Unfurnished', 'Semi-furnished', 'Furnished', 'Luxury Furnished'] as const;
 
-export const PROPERTY_FEATURES = [
-    'Pool',
-    'Garage',
-    'Garden',
-    'Gym',
-    'Security',
-    'Elevator',
-    'Parking',
+export const UNIT_FEATURES = [
+    'Air Conditioning',
+    'Central Heating',
     'Balcony',
     'Fireplace',
-    'Air Conditioning',
-    'Furnished',
-    'Pet Friendly',
     'Laundry',
-    'Storage',
     'Smart Home',
+    'Storage',
     'Solar Panels',
-    'Video Intercom',
-    'Central Heating',
-    'Terrace',
-    'Sauna'
+    'Private Pool',
+    'Jacuzzi',
+    'Parking'
+] as const;
+
+export const COMMUNITY_FEATURES = [
+    'Clubhouse',
+    'Park',
+    'Playground',
+    'Jogging Track',
+    'Common Garden',
+    'Party Hall',
+    'Library',
+    'Amphitheatre',
+    'Garage'
+] as const;
+
+export const SPORTS_FEATURES = [
+    'Gym',
+    'Swimming Pool',
+    'Basketball Court',
+    'Tennis Court',
+    'Football Field',
+    'Squash Court',
+    'Yoga Deck'
+] as const;
+
+export const SECURITY_FEATURES = [
+    '24/7 Security',
+    'CCTV Surveillance',
+    'Gated Community',
+    'Intercom',
+    'Fire Safety',
+    'Video Door Phone'
+] as const;
+
+export const SUSTAINABILITY_FEATURES = [
+    'Green Building',
+    'Rainwater Harvesting',
+    'Sewage Treatment',
+    'Power Backup',
+    'Elevator',
+    'Concierge',
+    'Maintenance Staff',
+    'Visitor Parking'
+] as const;
+
+export const LISTING_TAGS = [
+    'Commission 0%',
+    'Exclusive',
+    'Luxury',
+    'Hotel Regime',
+    'Foreclosure'
+] as const;
+
+export const PROPERTY_FEATURES = [
+    ...UNIT_FEATURES,
+    ...COMMUNITY_FEATURES,
+    ...SPORTS_FEATURES,
+    ...SECURITY_FEATURES,
+    ...SUSTAINABILITY_FEATURES,
+    // Note: LISTING_TAGS are usually handled separately or merged depending on UI, 
+    // but adding them here ensures strict typing if we treat them as features.
+    // However, some might be processed as separate flags in the DB.
+    // We will keep them in the main list for now to allow `features` column to store them if needed.
+    ...LISTING_TAGS
 ] as const;
 
 export const MOCK_PROPERTIES: Property[] = [
