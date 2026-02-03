@@ -26,7 +26,8 @@ import {
     BUILDING_TYPES,
     INTERIOR_CONDITIONS,
     FURNISHING_TYPES,
-    TRANSACTION_TYPES
+    TRANSACTION_TYPES,
+    Property
 } from '@/app/lib/properties';
 
 const FEATURE_CATEGORIES = {
@@ -47,47 +48,47 @@ const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: stri
     'Listing Tags': { bg: 'bg-indigo-600', border: 'border-indigo-500', shadow: 'shadow-indigo-600/20', text: 'text-indigo-400', dot: 'bg-indigo-500' }
 };
 
-export default function AddPropertyForm() {
+export default function AddPropertyForm({ initialData }: { initialData?: Partial<Property> }) {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
 
     const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        price: '',
-        listingType: 'For Sale',
-        currency: 'USD',
-        propertyType: 'Apartment',
-        address: '',
-        latitude: 44.4268, // Default to Bucharest
-        longitude: 26.1025,
-        city: '',
-        state: '',
+        title: initialData?.title || '',
+        description: initialData?.description || '',
+        price: initialData?.price?.toString() || '',
+        listingType: initialData?.listing_type || 'For Sale',
+        currency: initialData?.currency || 'USD',
+        propertyType: initialData?.type || 'Apartment',
+        address: initialData?.address || '',
+        latitude: initialData?.latitude || 44.4268, // Default to Bucharest
+        longitude: initialData?.longitude || 26.1025,
+        city: initialData?.location_city || '',
+        state: initialData?.location_county || '',
         zip: '',
-        rooms: '',
-        beds: '',
-        baths: '',
-        usableArea: '',
-        builtArea: '',
+        rooms: initialData?.rooms?.toString() || '',
+        beds: initialData?.bedrooms?.toString() || '',
+        baths: initialData?.bathrooms?.toString() || '',
+        usableArea: initialData?.area_usable?.toString() || '',
+        builtArea: initialData?.area_built?.toString() || '',
         boxArea: '',
         terraceArea: '',
         gardenArea: '',
-        yearBuilt: new Date().getFullYear().toString(),
-        totalFloors: '',
-        floor: '', // For apartment unit floor
-        buildingType: '', // e.g. Detached
-        interiorCondition: '', // e.g. New
-        furnishing: 'Unfurnished',
-        partitioning: '',
-        comfort: '',
-        youtubeVideoUrl: '',
+        yearBuilt: initialData?.year_built?.toString() || new Date().getFullYear().toString(),
+        totalFloors: initialData?.total_floors?.toString() || '',
+        floor: initialData?.floor?.toString() || '', // For apartment unit floor
+        buildingType: initialData?.building_type || '', // e.g. Detached
+        interiorCondition: initialData?.interior_condition || '', // e.g. New
+        furnishing: initialData?.furnishing || 'Unfurnished',
+        partitioning: initialData?.partitioning || '',
+        comfort: initialData?.comfort || '',
+        youtubeVideoUrl: initialData?.youtube_video_url || '',
         virtualTourType: 'No Virtual Tour',
-        virtualTourUrl: '',
-        socialMediaUrl: '',
-        personalId: '',
-        features: [] as string[]
+        virtualTourUrl: initialData?.virtual_tour_url || '',
+        socialMediaUrl: initialData?.social_media_url || '',
+        personalId: initialData?.personal_property_id || '',
+        features: (initialData?.features as string[]) || []
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
