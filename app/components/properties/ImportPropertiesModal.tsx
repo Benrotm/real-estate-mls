@@ -1,16 +1,25 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, FileSpreadsheet, Database, Rss, X, Loader2, AlertCircle, CheckCircle2, Link as LinkIcon, Globe } from 'lucide-react';
 import { importPropertiesFromCSV } from '@/app/lib/actions/import';
 import { scrapeProperty, ScrapedProperty } from '@/app/lib/actions/scrape';
 
 interface ImportPropertiesModalProps {
     onScrapeSuccess?: (data: ScrapedProperty) => void;
+    showDefaultButton?: boolean;
+    forceOpen?: boolean;
+    onClose?: () => void;
 }
 
-export default function ImportPropertiesModal({ onScrapeSuccess }: ImportPropertiesModalProps) {
-    const [isOpen, setIsOpen] = useState(false);
+export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButton = true, forceOpen = false, onClose }: ImportPropertiesModalProps) {
+    const [isOpen, setIsOpen] = useState(forceOpen);
+
+    // Sync with forceOpen prop
+    useEffect(() => {
+        if (forceOpen) setIsOpen(true);
+    }, [forceOpen]);
+
     const [activeTab, setActiveTab] = useState<'csv' | 'link' | 'xml' | 'crm'>('csv');
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -24,6 +33,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess }: ImportPropert
         setResult(null);
         setIsLoading(false);
         setLinkUrl('');
+        if (onClose) onClose();
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,6 +93,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess }: ImportPropert
     };
 
     if (!isOpen) {
+        if (!showDefaultButton) return null;
         return (
             <button
                 onClick={handleOpen}

@@ -15,10 +15,16 @@ import {
     Save,
     Camera,
     Layout,
-    Upload
+    Upload,
+    Sparkles,
+    ChevronRight,
+    ChevronLeft,
+    Loader2,
+    Globe
 } from 'lucide-react';
 import { createProperty } from '@/app/lib/actions/properties';
 import LocationMap from '@/app/components/LocationMap';
+import ImportPropertiesModal from '@/app/components/properties/ImportPropertiesModal';
 import {
     PROPERTY_TYPES,
     PARTITIONING_TYPES,
@@ -53,6 +59,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
     const [step, setStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
@@ -90,6 +97,26 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         personalId: initialData?.personal_property_id || '',
         features: (initialData?.features as string[]) || []
     });
+
+    const handleScrapeSuccess = (data: any) => {
+        setFormData(prev => ({
+            ...prev,
+            title: data.title || prev.title,
+            description: data.description || prev.description,
+            price: data.price?.toString() || prev.price,
+            listingType: data.listing_type || prev.listingType,
+            propertyType: data.type || prev.propertyType,
+            address: data.address || prev.address,
+            rooms: data.rooms?.toString() || prev.rooms,
+            beds: data.bedrooms?.toString() || prev.beds,
+            baths: data.bathrooms?.toString() || prev.baths,
+            usableArea: data.area_usable?.toString() || prev.usableArea,
+            builtArea: data.area_built?.toString() || prev.builtArea,
+            yearBuilt: data.year_built?.toString() || prev.yearBuilt,
+            features: (data.features as string[]) || prev.features
+        }));
+        setIsImportModalOpen(false);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -229,11 +256,18 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                     </div>
                     <button
                         type="button"
+                        onClick={() => setIsImportModalOpen(true)}
                         className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg shadow-white/10"
                     >
                         <Upload className="w-4 h-4" />
                         Import Properties
                     </button>
+                    <ImportPropertiesModal
+                        showDefaultButton={false}
+                        forceOpen={isImportModalOpen}
+                        onClose={() => setIsImportModalOpen(false)}
+                        onScrapeSuccess={handleScrapeSuccess}
+                    />
                 </div>
 
                 {/* Stepper Navigation */}
@@ -742,15 +776,29 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                             {step > 1 ? 'Previous Step' : 'Cancel'}
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={handleSaveDraft}
-                            disabled={submitting}
-                            className="flex items-center gap-2 bg-slate-900/50 border border-violet-500/30 text-violet-300 px-6 py-3 rounded-xl font-bold hover:bg-violet-900/20 hover:text-violet-200 transition-all"
-                        >
-                            <Save className="w-4 h-4" />
-                            Save Draft
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsImportModalOpen(true)}
+                                className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl transition-all border border-slate-700/50"
+                            >
+                                <Upload size={18} />
+                                <span>Import Properties</span>
+                            </button>
+                            <ImportPropertiesModal
+                                showDefaultButton={false}
+                                forceOpen={isImportModalOpen}
+                                onClose={() => setIsImportModalOpen(false)}
+                                onScrapeSuccess={handleScrapeSuccess}
+                            />
+                            <button
+                                onClick={(e) => handleSubmit(e, 'draft')}
+                                disabled={submitting}
+                                className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold hover:text-violet-200 transition-all border border-violet-500/30"
+                            >
+                                <Save size={18} />
+                                <span>Save Draft</span>
+                            </button>
+                        </div>
 
                         {step < 3 ? (
                             <button
