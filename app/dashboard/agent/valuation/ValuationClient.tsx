@@ -89,7 +89,7 @@ export default function ValuationClient({ properties }: ValuationClientProps) {
                         </div>
 
                         <Link
-                            href="/dashboard/owner/add-property"
+                            href="/properties/add"
                             className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 hover:border-orange-500 hover:text-orange-500 transition-colors font-medium group"
                         >
                             <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -100,8 +100,8 @@ export default function ValuationClient({ properties }: ValuationClientProps) {
                             onClick={handleStartValuation}
                             disabled={!selectedPropertyId}
                             className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98] ${selectedPropertyId
-                                    ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-orange-500/25'
-                                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-orange-500/25'
+                                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                 }`}
                         >
                             Run Analysis <ArrowRight className="w-5 h-5" />

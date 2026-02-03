@@ -146,7 +146,7 @@ export default function Navbar({ user }: NavbarProps) {
             {/* Auth State Demo */}
             {isLoggedIn ? (
               <>
-                <Link href={userRole === 'owner' ? '/dashboard/owner/add-property' : '/properties/add'} className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-lg hover:-translate-y-0.5">
+                <Link href="/properties/add" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-lg hover:-translate-y-0.5">
                   <Plus className="w-4 h-4" />
                   <span>List Property</span>
                 </Link>

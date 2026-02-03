@@ -1,5 +1,5 @@
 import { getPropertyById } from '@/app/lib/actions/properties';
-import AddPropertyForm from '@/app/dashboard/owner/add-property/AddPropertyForm';
+import AddPropertyForm from '@/app/properties/add/AddPropertyForm';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/server';
 

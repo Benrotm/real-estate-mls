@@ -11,7 +11,7 @@ export default async function OwnerPropertiesPage() {
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold text-slate-900">My Properties</h1>
                 <Link
-                    href="/dashboard/owner/add-property"
+                    href="/properties/add"
                     className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors text-sm"
                 >
                     <Plus className="w-4 h-4" /> Add Property
@@ -22,7 +22,7 @@ export default async function OwnerPropertiesPage() {
                 <div className="bg-white p-12 text-center rounded-xl border border-dashed border-slate-300">
                     <p className="text-slate-500 mb-4">You haven't listed any properties yet.</p>
                     <Link
-                        href="/dashboard/owner/add-property"
+                        href="/properties/add"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
                     >
                         <Plus className="w-4 h-4" /> List Your First Property

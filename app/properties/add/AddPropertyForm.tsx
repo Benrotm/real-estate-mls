@@ -15,7 +15,12 @@ import {
     Save,
     Camera,
     Layout,
-    Upload
+    Upload,
+    Sparkles,
+    ChevronRight,
+    ChevronLeft,
+    Loader2,
+    Globe
 } from 'lucide-react';
 import { createProperty } from '@/app/lib/actions/properties';
 import LocationMap from '@/app/components/LocationMap';
@@ -27,7 +32,8 @@ import {
     BUILDING_TYPES,
     INTERIOR_CONDITIONS,
     FURNISHING_TYPES,
-    TRANSACTION_TYPES
+    TRANSACTION_TYPES,
+    Property
 } from '@/app/lib/properties';
 
 const FEATURE_CATEGORIES = {
@@ -48,7 +54,7 @@ const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: stri
     'Listing Tags': { bg: 'bg-indigo-600', border: 'border-indigo-500', shadow: 'shadow-indigo-600/20', text: 'text-indigo-400', dot: 'bg-indigo-500' }
 };
 
-export default function AddPropertyForm() {
+export default function AddPropertyForm({ initialData }: { initialData?: Partial<Property> }) {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
@@ -56,40 +62,40 @@ export default function AddPropertyForm() {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        price: '',
-        listingType: 'For Sale',
-        currency: 'USD',
-        propertyType: 'Apartment',
-        address: '',
-        latitude: 44.4268, // Default to Bucharest
-        longitude: 26.1025,
-        city: '',
-        state: '',
+        title: initialData?.title || '',
+        description: initialData?.description || '',
+        price: initialData?.price?.toString() || '',
+        listingType: initialData?.listing_type || 'For Sale',
+        currency: initialData?.currency || 'USD',
+        propertyType: initialData?.type || 'Apartment',
+        address: initialData?.address || '',
+        latitude: initialData?.latitude || 44.4268, // Default to Bucharest
+        longitude: initialData?.longitude || 26.1025,
+        city: initialData?.location_city || '',
+        state: initialData?.location_county || '',
         zip: '',
-        rooms: '',
-        beds: '',
-        baths: '',
-        usableArea: '',
-        builtArea: '',
+        rooms: initialData?.rooms?.toString() || '',
+        beds: initialData?.bedrooms?.toString() || '',
+        baths: initialData?.bathrooms?.toString() || '',
+        usableArea: initialData?.area_usable?.toString() || '',
+        builtArea: initialData?.area_built?.toString() || '',
         boxArea: '',
         terraceArea: '',
         gardenArea: '',
-        yearBuilt: new Date().getFullYear().toString(),
-        totalFloors: '',
-        floor: '', // For apartment unit floor
-        buildingType: '', // e.g. Detached
-        interiorCondition: '', // e.g. New
-        furnishing: 'Unfurnished',
-        partitioning: '',
-        comfort: '',
-        youtubeVideoUrl: '',
+        yearBuilt: initialData?.year_built?.toString() || new Date().getFullYear().toString(),
+        totalFloors: initialData?.total_floors?.toString() || '',
+        floor: initialData?.floor?.toString() || '', // For apartment unit floor
+        buildingType: initialData?.building_type || '', // e.g. Detached
+        interiorCondition: initialData?.interior_condition || '', // e.g. New
+        furnishing: initialData?.furnishing || 'Unfurnished',
+        partitioning: initialData?.partitioning || '',
+        comfort: initialData?.comfort || '',
+        youtubeVideoUrl: initialData?.youtube_video_url || '',
         virtualTourType: 'No Virtual Tour',
-        virtualTourUrl: '',
-        socialMediaUrl: '',
-        personalId: '',
-        features: [] as string[]
+        virtualTourUrl: initialData?.virtual_tour_url || '',
+        socialMediaUrl: initialData?.social_media_url || '',
+        personalId: initialData?.personal_property_id || '',
+        features: (initialData?.features as string[]) || []
     });
 
     const handleScrapeSuccess = (data: any) => {
@@ -248,22 +254,20 @@ export default function AddPropertyForm() {
                         <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Add New Property</h1>
                         <p className="text-slate-400 text-lg">Create a premium listing for your real estate asset.</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setIsImportModalOpen(true)}
-                            className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg shadow-white/10"
-                        >
-                            <Upload className="w-4 h-4" />
-                            Import Properties
-                        </button>
-                        <ImportPropertiesModal
-                            showDefaultButton={false}
-                            forceOpen={isImportModalOpen}
-                            onClose={() => setIsImportModalOpen(false)}
-                            onScrapeSuccess={handleScrapeSuccess}
-                        />
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg shadow-white/10"
+                    >
+                        <Upload className="w-4 h-4" />
+                        Import Properties
+                    </button>
+                    <ImportPropertiesModal
+                        showDefaultButton={false}
+                        forceOpen={isImportModalOpen}
+                        onClose={() => setIsImportModalOpen(false)}
+                        onScrapeSuccess={handleScrapeSuccess}
+                    />
                 </div>
 
                 {/* Stepper Navigation */}
@@ -772,15 +776,29 @@ export default function AddPropertyForm() {
                             {step > 1 ? 'Previous Step' : 'Cancel'}
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={handleSaveDraft}
-                            disabled={submitting}
-                            className="flex items-center gap-2 bg-slate-900/50 border border-violet-500/30 text-violet-300 px-6 py-3 rounded-xl font-bold hover:bg-violet-900/20 hover:text-violet-200 transition-all"
-                        >
-                            <Save className="w-4 h-4" />
-                            Save Draft
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsImportModalOpen(true)}
+                                className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl transition-all border border-slate-700/50"
+                            >
+                                <Upload size={18} />
+                                <span>Import Properties</span>
+                            </button>
+                            <ImportPropertiesModal
+                                showDefaultButton={false}
+                                forceOpen={isImportModalOpen}
+                                onClose={() => setIsImportModalOpen(false)}
+                                onScrapeSuccess={handleScrapeSuccess}
+                            />
+                            <button
+                                onClick={(e) => handleSubmit(e, 'draft')}
+                                disabled={submitting}
+                                className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold hover:text-violet-200 transition-all border border-violet-500/30"
+                            >
+                                <Save size={18} />
+                                <span>Save Draft</span>
+                            </button>
+                        </div>
 
                         {step < 3 ? (
                             <button
