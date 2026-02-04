@@ -6,7 +6,10 @@ import Link from 'next/link';
 export default async function AddPropertyPage() {
     const profile = await getUserProfile();
     const currentUsage = profile ? await getUsageStats(profile.id) : 0;
-    const limit = profile?.listings_limit || 1; // Default fallback
+    // Total limit = base plan limit + bonus listings granted by admin
+    const baseLimit = profile?.listings_limit || 1;
+    const bonusListings = profile?.bonus_listings || 0;
+    const limit = baseLimit + bonusListings;
 
     const hasReachedLimit = currentUsage >= limit;
 

@@ -9,6 +9,7 @@ export interface UserProfile {
     role: UserRole;
     plan_tier: 'free' | 'pro' | 'enterprise';
     listings_limit: number;
+    bonus_listings?: number;
     featured_limit?: number;
     listings_count: number;
     avatar_url?: string;
