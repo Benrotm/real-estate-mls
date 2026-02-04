@@ -13,6 +13,7 @@ export interface ScrapedProperty {
     listing_type?: string;
     url?: string;
     [key: string]: any;
+    debugInfo?: any;
 }
 
 export async function scrapeProperty(url: string): Promise<{ data?: ScrapedProperty; error?: string }> {
@@ -22,6 +23,7 @@ export async function scrapeProperty(url: string): Promise<{ data?: ScrapedPrope
         }
 
         const response = await fetch(url, {
+            cache: 'no-store',
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -40,6 +42,12 @@ export async function scrapeProperty(url: string): Promise<{ data?: ScrapedPrope
         $('script, style, noscript, iframe, svg, nav, footer, header').remove();
 
         const data: ScrapedProperty = { url };
+        data.debugInfo = {
+            htmlLength: html.length,
+            galleryFound: false,
+            galleryItemsCount: 0,
+            casadomiImagesFound: 0
+        };
         const imagesSet = new Set<string>();
 
         // Helper: Resolve and Add Image
@@ -133,14 +141,20 @@ export async function scrapeProperty(url: string): Promise<{ data?: ScrapedPrope
         // 3d. Specific Site Logic (Casadomi)
         const casadomiGallery = $('#property-main-gallery');
         if (casadomiGallery.length > 0) {
+            if (data.debugInfo) data.debugInfo.galleryFound = true;
+            const items = casadomiGallery.find('.property-main-gallery-item');
+            if (data.debugInfo) data.debugInfo.galleryItemsCount = items.length;
+
             // Find both images and anchor links in the gallery items
-            casadomiGallery.find('.property-main-gallery-item').each((_, el) => {
+            items.each((_, el) => {
                 const img = $(el).find('img').attr('src');
                 const link = $(el).find('a').attr('href');
+
 
                 // Prefer link if it looks like an image, mainly looking for 'big__' for high res
                 if (link && /\.(jpg|jpeg|png|webp)$/i.test(link)) {
                     addImage(link);
+                    if (data.debugInfo) data.debugInfo.casadomiImagesFound++;
                 } else if (img) {
                     // Try to construct high-res url if it's a thumbnail (starts with small__)
                     let highRes = img;
@@ -148,6 +162,7 @@ export async function scrapeProperty(url: string): Promise<{ data?: ScrapedPrope
                         highRes = img.replace('small__', 'big__');
                     }
                     addImage(highRes);
+                    if (data.debugInfo) data.debugInfo.casadomiImagesFound++;
                 }
             });
         }
