@@ -966,7 +966,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                             </button>
                         </div>
 
-                        {step < 3 ? (
+                        {step < 4 ? (
                             <button
                                 key="next-step-btn"
                                 type="button"
