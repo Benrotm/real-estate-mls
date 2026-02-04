@@ -8,6 +8,25 @@ import PropertyValuationSection from '../../components/valuation/PropertyValuati
 import ContactForm from '../../components/ContactForm';
 import { supabase } from "@/app/lib/supabase/client";
 
+function getYouTubeEmbedUrl(url: string) {
+    if (!url) return '';
+
+    // Extract Video ID using Regex
+    // Supports:
+    // - youtube.com/watch?v=ID
+    // - youtu.be/ID
+    // - youtube.com/embed/ID
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+
+    if (match && match[2].length === 11) {
+        return `https://www.youtube.com/embed/${match[2]}`;
+    }
+
+    // Fallback if regex fails but it might be an embed link already
+    return url;
+}
+
 export default async function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
@@ -366,7 +385,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                     <iframe
                                         width="100%"
                                         height="100%"
-                                        src={property.youtube_video_url.replace('watch?v=', 'embed/')}
+                                        src={getYouTubeEmbedUrl(property.youtube_video_url)}
                                         title="Property Video"
                                         frameBorder="0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
