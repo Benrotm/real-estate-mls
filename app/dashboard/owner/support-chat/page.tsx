@@ -22,7 +22,7 @@ export default async function SupportChatPage() {
             <ChatWindow
                 conversationId={result.conversationId}
                 currentUser={profile}
-                onBack={() => { }} // No back button needed in full page view
+            // No back button needed in full page view, and passing a function from Server Component is invalid
             />
         </div>
     );

@@ -10,7 +10,7 @@ import Image from 'next/image';
 interface ChatWindowProps {
     conversationId: string;
     currentUser: UserProfile;
-    onBack: () => void;
+    onBack?: () => void;
 }
 
 export default function ChatWindow({ conversationId, currentUser, onBack }: ChatWindowProps) {
@@ -139,9 +139,11 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
         <div className="flex flex-col h-full bg-slate-50">
             {/* Header */}
             <div className="p-4 border-b border-slate-200 bg-white flex items-center gap-3 shadow-sm z-10 sticky top-0">
-                <button onClick={onBack} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg">
-                    <ArrowLeft className="w-5 h-5" />
-                </button>
+                {onBack && (
+                    <button onClick={onBack} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                )}
                 <div className="flex-1">
                     <h3 className="font-bold text-slate-800">Support Chat</h3>
                     <p className="text-xs text-slate-500">Typical reply time: Few hours</p>
