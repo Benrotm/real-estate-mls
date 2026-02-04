@@ -1,7 +1,7 @@
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 import PropertyValuationSection from '../../components/valuation/PropertyValuationSection';
@@ -394,6 +394,45 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                     </div>
                                 </div>
                             )}
+
+                            {/* Social Media Widget */}
+                            {property.social_media_url && (
+                                <div className="mt-6">
+                                    <a
+                                        href={property.social_media_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group block bg-white border border-slate-200 rounded-2xl p-6 hover:border-purple-300 hover:shadow-md transition-all"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                                                    {property.social_media_url.includes('facebook') ? <Facebook className="w-6 h-6" /> :
+                                                        property.social_media_url.includes('instagram') ? <Instagram className="w-6 h-6" /> :
+                                                            property.social_media_url.includes('linkedin') ? <Linkedin className="w-6 h-6" /> :
+                                                                property.social_media_url.includes('twitter') || property.social_media_url.includes('x.com') ? <Twitter className="w-6 h-6" /> :
+                                                                    property.social_media_url.includes('youtube') ? <Youtube className="w-6 h-6" /> :
+                                                                        <ExternalLink className="w-6 h-6" />
+                                                    }
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-slate-900 text-lg group-hover:text-purple-700 transition-colors">
+                                                        {property.social_media_url.includes('facebook') ? 'View on Facebook' :
+                                                            property.social_media_url.includes('instagram') ? 'View on Instagram' :
+                                                                property.social_media_url.includes('linkedin') ? 'View on LinkedIn' :
+                                                                    property.social_media_url.includes('twitter') || property.social_media_url.includes('x.com') ? 'View on X (Twitter)' :
+                                                                        property.social_media_url.includes('youtube') ? 'View on YouTube' :
+                                                                            'View on Social Media'
+                                                        }
+                                                    </div>
+                                                    <div className="text-slate-500 text-sm">Check out this property listing details and updates</div>
+                                                </div>
+                                            </div>
+                                            <ExternalLink className="w-5 h-5 text-slate-400 group-hover:text-purple-500" />
+                                        </div>
+                                    </a>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -443,9 +482,22 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                             href={property.social_media_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-2 rounded-lg hover:opacity-90 transition shadow-sm"
+                                            className="flex items-center justify-center gap-2 w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition shadow-sm"
                                         >
-                                            View on Social Media
+                                            {property.social_media_url.includes('facebook') ? <Facebook className="w-4 h-4" /> :
+                                                property.social_media_url.includes('instagram') ? <Instagram className="w-4 h-4" /> :
+                                                    property.social_media_url.includes('linkedin') ? <Linkedin className="w-4 h-4" /> :
+                                                        property.social_media_url.includes('twitter') || property.social_media_url.includes('x.com') ? <Twitter className="w-4 h-4" /> :
+                                                            property.social_media_url.includes('youtube') ? <Youtube className="w-4 h-4" /> :
+                                                                <ExternalLink className="w-4 h-4" />
+                                            }
+                                            {property.social_media_url.includes('facebook') ? 'Facebook' :
+                                                property.social_media_url.includes('instagram') ? 'Instagram' :
+                                                    property.social_media_url.includes('linkedin') ? 'LinkedIn' :
+                                                        property.social_media_url.includes('twitter') || property.social_media_url.includes('x.com') ? 'X (Twitter)' :
+                                                            property.social_media_url.includes('youtube') ? 'YouTube' :
+                                                                'Social Media'
+                                            }
                                         </a>
                                     </div>
                                 )}
