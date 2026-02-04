@@ -21,7 +21,10 @@ import {
     ChevronLeft,
     Loader2,
     Globe,
-    X
+    X,
+    Lock,
+    AlertCircle,
+    FileText
 } from 'lucide-react';
 import { createProperty } from '@/app/lib/actions/properties';
 import LocationMap from '@/app/components/LocationMap';
@@ -97,6 +100,9 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         virtualTourUrl: initialData?.virtual_tour_url || '',
         socialMediaUrl: initialData?.social_media_url || '',
         personalId: initialData?.personal_property_id || '',
+        // Private Fields
+        privateNotes: initialData?.private_notes || '',
+        documents: (initialData?.documents as string[]) || [], // Documents as array of URLs
         features: (initialData?.features as string[]) || [],
         images: (initialData?.images as string[]) || []
     });
@@ -188,6 +194,10 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         formDataToSend.append('social_media_url', formData.socialMediaUrl);
         formDataToSend.append('personal_property_id', formData.personalId);
 
+        // Private Fields
+        formDataToSend.append('private_notes', formData.privateNotes);
+        formDataToSend.append('documents', JSON.stringify(formData.documents));
+
         // Status
         formDataToSend.append('status', status);
 
@@ -278,7 +288,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                 {/* Stepper Navigation */}
                 <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-2xl p-1 mb-10 shadow-xl flex items-center justify-between relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-                    {[1, 2, 3].map((s) => (
+                    {[1, 2, 3, 4].map((s) => (
                         <div key={s} className="flex-1 relative z-10">
                             <button
                                 type="button"
@@ -303,6 +313,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                                         {s === 1 && 'Details & Location'}
                                         {s === 2 && 'Media'}
                                         {s === 3 && 'Amenities'}
+                                        {s === 4 && 'Private Info'}
                                     </div>
                                 </div>
                             </button>

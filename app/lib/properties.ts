@@ -44,6 +44,10 @@ export interface Property {
     personal_property_id?: string;
     friendly_id?: string;
 
+    // Private Fields (Owner/Admin only)
+    private_notes?: string;
+    documents?: string[];
+
     features: string[]; // checkboxes
 
     images: string[];

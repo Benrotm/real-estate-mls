@@ -43,10 +43,12 @@ ADD COLUMN IF NOT EXISTS smart_valuation_enabled BOOLEAN DEFAULT true;
 ALTER TABLE public.property_sold_history ENABLE ROW LEVEL SECURITY;
 
 -- Everyone can view verified sold history (or all for now?)
+DROP POLICY IF EXISTS "Everyone can view sold history" ON public.property_sold_history;
 CREATE POLICY "Everyone can view sold history" ON public.property_sold_history
     FOR SELECT USING (true);
 
 -- Only authenticated users can insert (maybe restrict to agents later)
+DROP POLICY IF EXISTS "Auth users can insert sold history" ON public.property_sold_history;
 CREATE POLICY "Auth users can insert sold history" ON public.property_sold_history
     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
@@ -54,9 +56,11 @@ CREATE POLICY "Auth users can insert sold history" ON public.property_sold_histo
 ALTER TABLE public.property_environmental_metrics ENABLE ROW LEVEL SECURITY;
 
 -- Everyone can view metrics
+DROP POLICY IF EXISTS "Everyone can view environmental metrics" ON public.property_environmental_metrics;
 CREATE POLICY "Everyone can view environmental metrics" ON public.property_environmental_metrics
     FOR SELECT USING (true);
 
 -- System service role usually updates this, but allow auth users to trigger update if needed (logic handled in server action)
+DROP POLICY IF EXISTS "Service role manages environmental metrics" ON public.property_environmental_metrics;
 CREATE POLICY "Service role manages environmental metrics" ON public.property_environmental_metrics
     FOR ALL USING (auth.role() = 'service_role');

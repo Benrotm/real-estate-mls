@@ -1,7 +1,7 @@
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 import PropertyValuationSection from '../../components/valuation/PropertyValuationSection';
@@ -97,7 +97,11 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             score: dbProperty.score,
             created_at: dbProperty.created_at,
             updated_at: dbProperty.updated_at,
-            friendly_id: dbProperty.friendly_id
+            friendly_id: dbProperty.friendly_id,
+
+            // Private
+            private_notes: dbProperty.private_notes,
+            documents: dbProperty.documents
         };
     } else {
         // Fallback to mock data for demo
@@ -121,6 +125,27 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
         ownerProfile = profile;
     }
 
+    // 3. Fetch Current User & Check Access
+    const { data: { user } } = await supabase.auth.getUser();
+    let hasAccess = false;
+
+    if (user) {
+        if (property.owner_id === user.id) {
+            hasAccess = true;
+        } else {
+            // Check if admin
+            const { data: currentUserProfile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+
+            if (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'superadmin') {
+                hasAccess = true;
+            }
+        }
+    }
+
     // Agent / Owner Display Data
     const agent = {
         name: ownerProfile?.full_name || 'Property Owner',
@@ -140,6 +165,64 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     </Link>
                 </div>
             </div>
+
+            {/* Private Info Section (Owner/Admin Only) */}
+            {hasAccess && (property.private_notes || (property.documents && property.documents.length > 0)) && (
+                <div className="bg-slate-900 text-white border-b border-violet-500/30">
+                    <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-violet-600/20 rounded-xl border border-violet-500/30 shrink-0">
+                                <Lock className="w-6 h-6 text-violet-400" />
+                            </div>
+                            <div className="space-y-4 flex-1">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h2 className="text-xl font-bold text-white">Private Information</h2>
+                                        <span className="bg-violet-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">
+                                            {property.owner_id === user?.id ? 'Owner View' : 'Admin View'}
+                                        </span>
+                                    </div>
+                                    <p className="text-slate-400 text-sm">
+                                        This section is only visible to you and platform administrators.
+                                    </p>
+                                </div>
+
+                                {property.private_notes && (
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+                                        <div className="text-xs font-bold text-slate-500 uppercase mb-2">Private Notes</div>
+                                        <p className="text-slate-200 whitespace-pre-wrap">{property.private_notes}</p>
+                                    </div>
+                                )}
+
+                                {property.documents && property.documents.length > 0 && (
+                                    <div>
+                                        <div className="text-xs font-bold text-slate-500 uppercase mb-3">Private Documents</div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            {property.documents.map((doc, i) => (
+                                                <a
+                                                    key={i}
+                                                    href={doc}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-3 bg-slate-800/80 border border-slate-700/80 p-3 rounded-lg hover:bg-slate-700 transition group"
+                                                >
+                                                    <div className="w-8 h-8 bg-slate-700 rounded flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-slate-600 transition-colors">
+                                                        <FileText className="w-4 h-4" />
+                                                    </div>
+                                                    <span className="text-sm text-slate-300 truncate font-medium group-hover:text-white transition-colors">
+                                                        {doc.split('/').pop() || doc}
+                                                    </span>
+                                                    <ExternalLink className="w-3 h-3 text-slate-500 ml-auto" />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Images - Property Carousel */}
             <PropertyCarousel images={property.images} title={property.title} />

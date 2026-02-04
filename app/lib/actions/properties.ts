@@ -339,6 +339,10 @@ export async function updateProperty(id: string, formData: FormData) {
             social_media_url: formData.get('social_media_url') as string,
             personal_property_id: formData.get('personal_property_id') as string,
 
+            // Private Fields
+            private_notes: formData.get('private_notes') as string,
+            documents: formData.get('documents') ? JSON.parse(formData.get('documents') as string) : [],
+
             // Details
             features: features,
 
