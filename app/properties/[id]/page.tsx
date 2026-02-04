@@ -109,10 +109,24 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
 
     const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: property.currency || 'USD', maximumFractionDigits: 0 });
 
-    // Mock Agent for display (since not in Property interface)
+    // 2. Fetch Owner Profile
+    let ownerProfile = null;
+    if (property && property.owner_id) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, role, avatar_url, phone, email')
+            .eq('id', property.owner_id)
+            .single();
+        ownerProfile = profile;
+    }
+
+    // Agent / Owner Display Data
     const agent = {
-        name: 'Sarah Broker',
-        image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+        name: ownerProfile?.full_name || 'Property Owner',
+        image: ownerProfile?.avatar_url || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        role: ownerProfile?.role ? (ownerProfile.role.charAt(0).toUpperCase() + ownerProfile.role.slice(1)) : 'Realtor',
+        phone: ownerProfile?.phone,
+        email: ownerProfile?.email
     };
 
     return (

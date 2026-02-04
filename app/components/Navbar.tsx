@@ -157,9 +157,17 @@ export default function Navbar({ user }: NavbarProps) {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-2 px-2 py-1 text-white hover:bg-white/10 rounded-lg transition-colors"
                   >
-                    <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 border-2 border-orange-500">
-                      <User className="w-5 h-5" />
-                    </div>
+                    {user?.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.full_name || "User"}
+                        className="w-9 h-9 rounded-full object-cover border-2 border-orange-500"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 border-2 border-orange-500">
+                        <User className="w-5 h-5" />
+                      </div>
+                    )}
                     <span className="hidden md:block text-sm font-bold">{user?.full_name?.split(' ')[0] || "User"}</span>
                   </button>
 
