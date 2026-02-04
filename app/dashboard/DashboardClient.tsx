@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 
@@ -34,6 +34,7 @@ export default function DashboardClient({
         { name: 'Lead Scoring', icon: BarChart2, href: '/dashboard/admin/scoring' },
         { name: 'Property Scoring', icon: Building, href: '/dashboard/admin/scoring/properties' },
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
+        { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
@@ -44,6 +45,8 @@ export default function DashboardClient({
         { name: 'Daily Activities', icon: Calendar, href: '/dashboard/agent/activities' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/agent/chat' },
+        { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/agent/support-chat' },
+        { name: 'Report & Suggest', icon: Flag, href: '/dashboard/agent/report' },
     ] : isOwner ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/owner' },
         { name: 'My Properties', icon: Home, href: '/dashboard/owner/properties' },
@@ -51,12 +54,16 @@ export default function DashboardClient({
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
         { name: 'Market Insights', icon: Briefcase, href: '/dashboard/owner/market' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/owner/chat' },
+        { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/owner/support-chat' },
+        { name: 'Report & Suggest', icon: Flag, href: '/dashboard/owner/report' },
     ] : isDeveloper ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/developer' },
         { name: 'My Projects', icon: Building, href: '/dashboard/developer/projects' },
         ...(hasFeature(SYSTEM_FEATURES.VALUATION_REPORTS) ? [{ name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/developer/valuation' }] : []),
         { name: 'Analytics', icon: BarChart2, href: '/dashboard/developer/analytics' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/developer/chat' },
+        { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/developer/support-chat' },
+        { name: 'Report & Suggest', icon: Flag, href: '/dashboard/developer/report' },
     ] : isClient ? [
         { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/client' },
         { name: 'Browse Properties', icon: Building, href: '/properties' },
@@ -65,6 +72,8 @@ export default function DashboardClient({
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/client/valuation' },
         { name: 'Market Insights', icon: BarChart2, href: '/dashboard/client/market' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/client/chat' },
+        { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/client/support-chat' },
+        { name: 'Report & Suggest', icon: Flag, href: '/dashboard/client/report' },
     ] : [
         // Default / Selection View
         { name: 'Choose Role', icon: Users, href: '/dashboard' }
