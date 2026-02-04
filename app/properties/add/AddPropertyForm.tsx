@@ -816,6 +816,122 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                         )
                     }
 
+                    {/* Step 4: Private Info */}
+                    {
+                        step === 4 && (
+                            <div className="p-8 md:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center border border-amber-500/30 shadow-inner">
+                                        <Lock className="w-6 h-6 text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white">Private Information</h2>
+                                        <p className="text-slate-400 text-sm">Confidential details visible only to you and admins.</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 space-y-6">
+                                        <div className="flex items-center gap-3 text-amber-500 mb-2">
+                                            <AlertCircle className="w-5 h-5" />
+                                            <span className="text-sm font-bold uppercase tracking-wider">Confidential Private Data</span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-slate-300">Owner Name (Private)</label>
+                                                <input
+                                                    type="text"
+                                                    name="ownerName"
+                                                    value={formData.ownerName}
+                                                    onChange={handleChange}
+                                                    placeholder="Full Name"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-slate-300">Owner Phone (Private)</label>
+                                                <input
+                                                    type="text"
+                                                    name="ownerPhone"
+                                                    value={formData.ownerPhone}
+                                                    onChange={handleChange}
+                                                    placeholder="+1 (555) 000-0000"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Private Notes</label>
+                                            <textarea
+                                                name="privateNotes"
+                                                rows={6}
+                                                value={formData.privateNotes}
+                                                onChange={handleChange}
+                                                placeholder="Internal notes, access codes, owner contacts, negotiation details..."
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all resize-none"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Private Documents (URLs)</label>
+                                            <div className="space-y-3">
+                                                {formData.documents.map((doc, idx) => (
+                                                    <div key={idx} className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={doc}
+                                                            readOnly
+                                                            className="flex-1 bg-slate-900/50 border border-slate-700 rounded-lg p-2 text-slate-300 text-sm"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({ ...prev, documents: prev.documents.filter((_, i) => i !== idx) }))}
+                                                            className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="url"
+                                                        placeholder="Paste document URL (Dropbox, Google Drive, etc.)"
+                                                        className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                const input = e.currentTarget;
+                                                                if (input.value) {
+                                                                    setFormData(prev => ({ ...prev, documents: [...prev.documents, input.value] }));
+                                                                    input.value = '';
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="bg-slate-800 hover:bg-slate-700 text-white px-4 rounded-lg text-sm font-medium transition-colors border border-slate-700"
+                                                        onClick={(e) => {
+                                                            const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                                            if (input.value) {
+                                                                setFormData(prev => ({ ...prev, documents: [...prev.documents, input.value] }));
+                                                                input.value = '';
+                                                            }
+                                                        }}
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    }
+
                     <div className="bg-slate-950/30 backdrop-blur-sm px-8 py-6 border-t border-slate-800 flex justify-between items-center relative z-20">
                         <button
                             type="button"

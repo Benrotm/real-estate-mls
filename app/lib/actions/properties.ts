@@ -344,7 +344,6 @@ export async function updateProperty(id: string, formData: FormData) {
             documents: formData.get('documents') ? JSON.parse(formData.get('documents') as string) : [],
             owner_name: formData.get('owner_name') as string,
             owner_phone: formData.get('owner_phone') as string,
-            owner_phone: formData.get('owner_phone') as string,
 
             // Details
             features: features,
