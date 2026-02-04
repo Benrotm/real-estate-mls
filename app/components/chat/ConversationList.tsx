@@ -41,6 +41,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                     id, 
                     updated_at,
                     conversation_participants (
+                        user_id,
                         user:user_id ( full_name, role )
                     )
                 `)
@@ -50,12 +51,11 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             if (data) {
                 // Enhance data to identify "The Other Person" name
                 const enhanced = data.map((c: any) => {
-                    const otherParticipant = c.conversation_participants.find((p: any) => p.user?.full_name && p.user?.full_name !== 'Me');
-                    // Simple logic: find first participant that isn't me, or just display the first one
+                    const otherParticipant = c.conversation_participants.find((p: any) => p.user_id !== userId);
                     return {
                         ...c,
                         title: otherParticipant?.user?.full_name || 'Unknown User',
-                        subtitle: otherParticipant?.user?.role || ''
+                        subtitle: otherParticipant?.user?.role || 'User'
                     };
                 });
                 setConversations(enhanced);
