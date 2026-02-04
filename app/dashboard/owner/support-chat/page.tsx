@@ -18,7 +18,7 @@ export default async function SupportChatPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-120px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="h-[calc(100vh-120px)] max-w-2xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden transform transition-all">
             <ChatWindow
                 conversationId={result.conversationId}
                 currentUser={profile}
