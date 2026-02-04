@@ -129,31 +129,125 @@ export async function calculatePropertyScore(property: Partial<Property>): Promi
     let score = 0;
     const getWeight = (key: string) => rules.find(r => r.criteria_key === key && r.is_active)?.weight || 0;
 
-    // Type
+    // Transaction Type
+    if (property.listing_type === 'For Sale') score += getWeight('transaction_sale');
+    if (property.listing_type === 'For Rent') score += getWeight('transaction_rent');
+    if (property.listing_type === 'Hotel Regime') score += getWeight('transaction_hotel');
+
+    // Property Type
     if (property.type === 'Apartment') score += getWeight('type_apartment');
     if (property.type === 'House') score += getWeight('type_house');
     if (property.type === 'Commercial') score += getWeight('type_commercial');
+    if (property.type === 'Industrial') score += getWeight('type_industrial');
+    if (property.type === 'Land') score += getWeight('type_land');
+    if (property.type === 'Investment') score += getWeight('type_investment');
+    if (property.type === 'Business') score += getWeight('type_business');
+    if (property.type === 'Other') score += getWeight('type_other');
 
     // Condition / Age
     if (property.year_built && property.year_built > 2020) score += getWeight('condition_new');
+    if (property.interior_condition === 'Newly Built') score += getWeight('condition_new');
     if (property.interior_condition === 'Renovated') score += getWeight('condition_renovated');
     if (property.interior_condition === 'Good') score += getWeight('condition_good');
+    if (property.interior_condition === 'Fair') score += getWeight('cond_fair');
     if (property.interior_condition === 'Needs Renovation') score += getWeight('condition_needs_renovation');
 
-    // Features
+    // Partitioning
+    if (property.partitioning === 'Decomandat') score += getWeight('part_decomandat');
+    if (property.partitioning === 'Semidecomandat') score += getWeight('part_semidecomandat');
+    if (property.partitioning === 'Nedecomandat') score += getWeight('part_nedecomandat');
+    if (property.partitioning === 'Circular') score += getWeight('part_circular');
+    if (property.partitioning === 'Vagon') score += getWeight('part_vagon');
+
+    // Comfort
+    if (property.comfort === 'Lux') score += getWeight('comfort_lux');
+    if (property.comfort === '1') score += getWeight('comfort_1');
+    if (property.comfort === '2') score += getWeight('comfort_2');
+    if (property.comfort === '3') score += getWeight('comfort_3');
+
+    // Building Type
+    if (property.building_type === 'Apartment Block') score += getWeight('build_apt_block');
+    if (property.building_type === 'Individual House') score += getWeight('build_house');
+    if (property.building_type === 'Duplex') score += getWeight('build_duplex');
+    if (property.building_type === 'Villa') score += getWeight('build_villa');
+    if (property.building_type === 'Office Building') score += getWeight('build_office');
+    if (property.building_type === 'Mixed Use') score += getWeight('build_mixed');
+
+    // Furnishing
+    if (property.furnishing === 'Unfurnished') score += getWeight('furn_unfurnished');
+    if (property.furnishing === 'Semi-furnished') score += getWeight('furn_semi');
+    if (property.furnishing === 'Furnished') score += getWeight('furn_furnished');
+    if (property.furnishing === 'Luxury Furnished') score += getWeight('furn_luxury');
+
+    // Features array
     const feats = property.features || [];
+
+    // Original Features
     if (feats.includes('Parking') || feats.includes('Garage')) score += getWeight('feature_parking');
     if (feats.includes('Elevator')) score += getWeight('feature_elevator');
     if (feats.includes('Balcony') || feats.includes('Terrace')) score += getWeight('feature_balcony');
     if (feats.includes('Central Heating')) score += getWeight('feature_central_heating');
+
+    // Unit Features
+    if (feats.includes('Air Conditioning')) score += getWeight('feat_air_cond');
+    if (feats.includes('Fireplace')) score += getWeight('feat_fireplace');
+    if (feats.includes('Jacuzzi')) score += getWeight('feat_jacuzzi');
+    if (feats.includes('Laundry')) score += getWeight('feat_laundry');
+    if (feats.includes('Private Pool')) score += getWeight('feat_pool_priv');
+    if (feats.includes('Sauna')) score += getWeight('feat_sauna');
+    if (feats.includes('Storage')) score += getWeight('feat_storage');
+    if (feats.includes('Smart Home')) score += getWeight('sust_smart');
+    if (feats.includes('Solar Panels')) score += getWeight('sust_solar');
+
+    // Community Features
+    if (feats.includes('Amphitheatre')) score += getWeight('comm_amphi');
+    if (feats.includes('Clubhouse')) score += getWeight('comm_club');
+    if (feats.includes('Common Garden')) score += getWeight('comm_garden');
+    if (feats.includes('Jogging Track')) score += getWeight('comm_jog');
+    if (feats.includes('Library')) score += getWeight('comm_lib');
+    if (feats.includes('Park')) score += getWeight('comm_park');
+    if (feats.includes('Party Hall')) score += getWeight('comm_party');
+    if (feats.includes('Playground')) score += getWeight('comm_play');
+
+    // Sports Features
+    if (feats.includes('Basketball Court')) score += getWeight('sport_basket');
+    if (feats.includes('Football Field')) score += getWeight('sport_foot');
+    if (feats.includes('Gym')) score += getWeight('sport_gym');
+    if (feats.includes('Squash Court')) score += getWeight('sport_squash');
+    if (feats.includes('Swimming Pool')) score += getWeight('sport_swim');
+    if (feats.includes('Tennis Court')) score += getWeight('sport_tennis');
+    if (feats.includes('Yoga Deck')) score += getWeight('sport_yoga');
+
+    // Security Features
+    if (feats.includes('24/7 Security')) score += getWeight('sec_24_7');
+    if (feats.includes('CCTV Surveillance')) score += getWeight('sec_cctv');
+    if (feats.includes('Fire Safety')) score += getWeight('sec_fire');
+    if (feats.includes('Gated Community')) score += getWeight('sec_gated');
+    if (feats.includes('Intercom')) score += getWeight('sec_intercom');
+    if (feats.includes('Video Door Phone')) score += getWeight('sec_video_door');
+
+    // Sustainability Features
+    if (feats.includes('Concierge')) score += getWeight('sust_concierge');
+    if (feats.includes('Green Building')) score += getWeight('sust_green');
+    if (feats.includes('Maintenance Staff')) score += getWeight('sust_aint');
+    if (feats.includes('Power Backup')) score += getWeight('sust_power');
+    if (feats.includes('Rainwater Harvesting')) score += getWeight('sust_rain');
+    if (feats.includes('Sewage Treatment')) score += getWeight('sust_sewage');
+    if (feats.includes('Visitor Parking')) score += getWeight('sust_visitor');
+
+    // Listing Tags (stored in features array)
+    if (feats.includes('Commission 0%')) score += getWeight('tag_commission_0');
+    if (feats.includes('Exclusive')) score += getWeight('tag_exclusive');
+    if (feats.includes('Foreclosure')) score += getWeight('tag_foreclosure');
+    if (feats.includes('Hotel Regime')) score += getWeight('tag_hotel_regime');
+    if (feats.includes('Luxury')) score += getWeight('tag_luxury');
 
     // Media
     if (property.youtube_video_url || property.video_url) score += getWeight('media_video');
     if (property.virtual_tour_url) score += getWeight('media_virtual_tour');
     if (property.images && property.images.length > 5) score += getWeight('media_images_5plus');
 
-    // Location (Simple keyword match for demo)
-    // We could make this smarter with fuzzy matching or area mapping
+    // Location (Simple keyword match)
     const locationStr = `${property.location_city} ${property.address || ''}`.toLowerCase();
     if (locationStr.includes('center') || locationStr.includes('old town') || locationStr.includes('central')) {
         score += getWeight('location_city_center');
