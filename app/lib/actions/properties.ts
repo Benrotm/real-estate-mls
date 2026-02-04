@@ -342,6 +342,9 @@ export async function updateProperty(id: string, formData: FormData) {
             // Private Fields
             private_notes: formData.get('private_notes') as string,
             documents: formData.get('documents') ? JSON.parse(formData.get('documents') as string) : [],
+            owner_name: formData.get('owner_name') as string,
+            owner_phone: formData.get('owner_phone') as string,
+            owner_phone: formData.get('owner_phone') as string,
 
             // Details
             features: features,

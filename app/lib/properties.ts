@@ -47,6 +47,8 @@ export interface Property {
     // Private Fields (Owner/Admin only)
     private_notes?: string;
     documents?: string[];
+    owner_name?: string;
+    owner_phone?: string;
 
     features: string[]; // checkboxes
 

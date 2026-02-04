@@ -128,20 +128,38 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
     // 3. Fetch Current User & Check Access
     const { data: { user } } = await supabase.auth.getUser();
     let hasAccess = false;
+    let canViewContact = false;
 
     if (user) {
         if (property.owner_id === user.id) {
             hasAccess = true;
+            canViewContact = true; // Owner can always view their own contact info
         } else {
             // Check if admin
             const { data: currentUserProfile } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('role, plan_tier')
                 .eq('id', user.id)
                 .single();
 
             if (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'superadmin') {
                 hasAccess = true;
+                canViewContact = true;
+            }
+
+            // Check Plan Feature for Contact View
+            if (!hasAccess && currentUserProfile) {
+                const { data: feature } = await supabase
+                    .from('plan_features')
+                    .select('is_included')
+                    .eq('role', currentUserProfile.role)
+                    .eq('plan_name', currentUserProfile.plan_tier)
+                    .eq('feature_key', 'view_owner_contact')
+                    .single();
+
+                if (feature?.is_included) {
+                    canViewContact = true;
+                }
             }
         }
     }
@@ -166,8 +184,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 </div>
             </div>
 
-            {/* Private Info Section (Owner/Admin Only) */}
-            {hasAccess && (property.private_notes || (property.documents && property.documents.length > 0)) && (
+            {/* Private Info Section (Owner/Admin/Premium) */}
+            {(hasAccess || canViewContact) && (
                 <div className="bg-slate-900 text-white border-b border-violet-500/30">
                     <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
                         <div className="flex items-start gap-4">
@@ -179,22 +197,41 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                     <div className="flex items-center gap-2 mb-1">
                                         <h2 className="text-xl font-bold text-white">Private Information</h2>
                                         <span className="bg-violet-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">
-                                            {property.owner_id === user?.id ? 'Owner View' : 'Admin View'}
+                                            {property.owner_id === user?.id ? 'Owner View' : hasAccess ? 'Admin View' : 'Premium View'}
                                         </span>
                                     </div>
                                     <p className="text-slate-400 text-sm">
-                                        This section is only visible to you and platform administrators.
+                                        {hasAccess ? 'This section contains private notes, documents, and contact info.' : 'You have access to view private owner contact details.'}
                                     </p>
                                 </div>
 
-                                {property.private_notes && (
+                                {/* Owner Contact (Visible if canViewContact) */}
+                                {canViewContact && (property.owner_name || property.owner_phone) && (
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {property.owner_name && (
+                                            <div>
+                                                <div className="text-xs font-bold text-slate-500 uppercase mb-1">Owner Name</div>
+                                                <div className="text-lg font-bold text-white">{property.owner_name}</div>
+                                            </div>
+                                        )}
+                                        {property.owner_phone && (
+                                            <div>
+                                                <div className="text-xs font-bold text-slate-500 uppercase mb-1">Owner Phone</div>
+                                                <div className="text-lg font-bold text-white font-mono">{property.owner_phone}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Notes & Docs (Restricted to Owner/Admin) */}
+                                {hasAccess && property.private_notes && (
                                     <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
                                         <div className="text-xs font-bold text-slate-500 uppercase mb-2">Private Notes</div>
                                         <p className="text-slate-200 whitespace-pre-wrap">{property.private_notes}</p>
                                     </div>
                                 )}
 
-                                {property.documents && property.documents.length > 0 && (
+                                {hasAccess && property.documents && property.documents.length > 0 && (
                                     <div>
                                         <div className="text-xs font-bold text-slate-500 uppercase mb-3">Private Documents</div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

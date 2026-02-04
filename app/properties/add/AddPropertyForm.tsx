@@ -103,6 +103,8 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         // Private Fields
         privateNotes: initialData?.private_notes || '',
         documents: (initialData?.documents as string[]) || [], // Documents as array of URLs
+        ownerName: initialData?.owner_name || '',
+        ownerPhone: initialData?.owner_phone || '',
         features: (initialData?.features as string[]) || [],
         images: (initialData?.images as string[]) || []
     });
@@ -197,6 +199,8 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         // Private Fields
         formDataToSend.append('private_notes', formData.privateNotes);
         formDataToSend.append('documents', JSON.stringify(formData.documents));
+        formDataToSend.append('owner_name', formData.ownerName);
+        formDataToSend.append('owner_phone', formData.ownerPhone);
 
         // Status
         formDataToSend.append('status', status);
