@@ -79,11 +79,12 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                 // Pass data back to parent form
                 if (onScrapeSuccess) {
                     onScrapeSuccess(data);
-                    // Close modal after short delay to show success
-                    setTimeout(() => {
-                        handleClose();
-                    }, 1500);
                 }
+
+                // Close modal after short delay to show success
+                setTimeout(() => {
+                    handleClose();
+                }, 1500);
             }
         } catch (error) {
             setResult({ success: false, message: 'Failed to scrape URL. Please try again.' });
@@ -213,7 +214,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                                                 value={linkUrl}
                                                 onChange={(e) => setLinkUrl(e.target.value)}
                                                 placeholder="https://example.com/property/123"
-                                                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-slate-900"
                                             />
                                         </div>
                                     </div>

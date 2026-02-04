@@ -100,10 +100,33 @@ export async function scrapeProperty(url: string): Promise<{ data?: ScrapedPrope
             const gallerySelectors = [
                 '.gallery img', '.slider img', '.carousel img', '.swiper-wrapper img',
                 '.property-images img', '.listing-photos img', '[data-fancybox] img',
-                'figure img', '.photo-grid img'
+                'figure img', '.photo-grid img', '.images img', '#gallery img',
+                '.main-image img', '.detail-images img'
             ];
             $(gallerySelectors.join(', ')).each((_, el) => {
                 addImage($(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy'));
+            });
+
+            // 3b. Try to find links to images (common in lightboxes like Facnybox/Lightbox)
+            $('a[href]').each((_, el) => {
+                const href = $(el).attr('href');
+                if (href && /\.(jpg|jpeg|png|webp)$/i.test(href)) {
+                    // Heuristic: Check if parent has "gallery" or "photo" class or if it's a direct valid image link
+                    if ($(el).closest('[class*="gallery"], [class*="photo"], [class*="image"], [id*="gallery"]').length > 0) {
+                        addImage(href);
+                    }
+                }
+            });
+
+            // 3c. Try Background Images
+            $('[style*="background-image"]').each((_, el) => {
+                const style = $(el).attr('style');
+                if (style) {
+                    const match = style.match(/url\(['"]?(.*?)['"]?\)/);
+                    if (match && match[1]) {
+                        addImage(match[1]);
+                    }
+                }
             });
         }
 
