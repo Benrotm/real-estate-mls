@@ -16,9 +16,7 @@ export default function ChatLayout({ user }: ChatLayoutProps) {
         <div className="flex h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
             {/* Sidebar / Conversation List */}
             <div className={`${selectedConversationId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-slate-100`}>
-                <div className="p-4 border-b border-slate-100 bg-slate-50">
-                    <h2 className="font-bold text-slate-800">Messages</h2>
-                </div>
+
                 <ConversationList
                     userId={user.id}
                     selectedId={selectedConversationId}

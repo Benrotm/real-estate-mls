@@ -18,7 +18,7 @@ export default async function SupportChatPage() {
     }
 
     return (
-        <div className="h-[75vh] min-h-[500px] max-w-5xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden transform transition-all my-8">
+        <div className="h-[650px] max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden transform transition-all my-8">
             <ChatLayout user={profile} />
         </div>
     );
