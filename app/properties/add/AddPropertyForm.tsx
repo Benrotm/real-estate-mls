@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { createProperty } from '@/app/lib/actions/properties';
 import LocationMap from '@/app/components/LocationMap';
+import AddressAutocomplete from '@/app/components/AddressAutocomplete';
 import ImportPropertiesModal from '@/app/components/properties/ImportPropertiesModal';
 import {
     PROPERTY_TYPES,
@@ -438,14 +439,21 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
 
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Street Address</label>
-                                        <input
-                                            type="text"
-                                            name="address"
-                                            required
-                                            value={formData.address}
-                                            onChange={handleChange}
+                                        <AddressAutocomplete
+                                            currentAddress={formData.address}
                                             className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            onAddressSelect={(address) => {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    address: address.formattedAddress,
+                                                    city: address.city || prev.city,
+                                                    state: address.county || prev.state,
+                                                    latitude: address.lat,
+                                                    longitude: address.lng
+                                                }));
+                                            }}
                                         />
+                                        <p className="text-xs text-slate-500 mt-2">Start typing to search with Google Maps</p>
                                     </div>
 
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
