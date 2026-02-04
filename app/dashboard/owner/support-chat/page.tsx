@@ -1,5 +1,5 @@
 import { getOrCreateSupportConversation } from '@/app/lib/actions/chat';
-import ChatWindow from '@/app/components/chat/ChatWindow';
+import ChatLayout from '@/app/components/chat/ChatLayout';
 import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
 
@@ -18,12 +18,8 @@ export default async function SupportChatPage() {
     }
 
     return (
-        <div className="h-[75vh] min-h-[500px] max-w-2xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden transform transition-all my-8">
-            <ChatWindow
-                conversationId={result.conversationId}
-                currentUser={profile}
-            // No back button needed in full page view, and passing a function from Server Component is invalid
-            />
+        <div className="h-[75vh] min-h-[500px] max-w-5xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden transform transition-all my-8">
+            <ChatLayout user={profile} />
         </div>
     );
 }
