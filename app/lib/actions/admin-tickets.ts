@@ -1,11 +1,10 @@
 'use server';
 
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 export async function getTickets() {
-    const supabase = createServerActionClient({ cookies });
+    const supabase = await createClient();
 
     // Check admin role
     const { data: { user } } = await supabase.auth.getUser();
@@ -17,7 +16,7 @@ export async function getTickets() {
         .eq('id', user.id)
         .single();
 
-    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+    if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
         return { error: 'Unauthorized' };
     }
 
@@ -38,7 +37,7 @@ export async function getTickets() {
 }
 
 export async function updateTicketStatus(ticketId: string, status: string, adminNotes?: string) {
-    const supabase = createServerActionClient({ cookies });
+    const supabase = await createClient();
 
     // Verify Admin
     const { data: { user } } = await supabase.auth.getUser();
@@ -50,7 +49,7 @@ export async function updateTicketStatus(ticketId: string, status: string, admin
         .eq('id', user.id)
         .single();
 
-    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+    if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
         return { success: false, error: 'Unauthorized' };
     }
 

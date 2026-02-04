@@ -1,10 +1,9 @@
 'use server';
 
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/app/lib/supabase/server';
 
 export async function getOrCreateSupportConversation() {
-    const supabase = createServerActionClient({ cookies });
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return { error: 'Unauthorized' };
@@ -13,7 +12,7 @@ export async function getOrCreateSupportConversation() {
     const { data: superAdmins } = await supabase
         .from('profiles')
         .select('id')
-        .eq('role', 'superadmin')
+        .eq('role', 'super_admin')
         .limit(1);
 
     if (!superAdmins || superAdmins.length === 0) {

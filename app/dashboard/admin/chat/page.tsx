@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 export default async function AdminChatPage() {
     const profile = await getUserProfile();
 
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
         redirect('/dashboard');
     }
 
