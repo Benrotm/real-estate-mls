@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 
 export async function getOrCreateSupportConversation() {
     const supabase = await createClient();
@@ -50,21 +51,31 @@ export async function getOrCreateSupportConversation() {
     }
 
     // Create new conversation
-    const { data: newConv, error: createError } = await supabase
+    // Use admin client to bypass RLS policies that typically prevent users from creating
+    // conversations or adding other users (like the admin) to them.
+    const supabaseAdmin = createAdminClient();
+
+    const { data: newConv, error: createError } = await supabaseAdmin
         .from('conversations')
         .insert({})
         .select()
         .single();
 
     if (createError || !newConv) {
+        console.error('Create conversation error:', createError);
         return { error: 'Failed to create conversation' };
     }
 
     // Add participants
-    await supabase.from('conversation_participants').insert([
+    const { error: partError } = await supabaseAdmin.from('conversation_participants').insert([
         { conversation_id: newConv.id, user_id: user.id },
         { conversation_id: newConv.id, user_id: supportAgentId }
     ]);
+
+    if (partError) {
+        console.error('Sample participant error:', partError);
+        return { error: 'Failed to add participants' };
+    }
 
     return { conversationId: newConv.id };
 }
