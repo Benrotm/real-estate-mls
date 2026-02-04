@@ -76,6 +76,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
             if (error) {
                 setResult({ success: false, message: error });
             } else if (data) {
+                console.log('Scraped Data Debug:', data);
                 setResult({ success: true, message: 'Property data scraped successfully! The form will be populated.' });
                 // Pass data back to parent form
                 if (onScrapeSuccess) {
