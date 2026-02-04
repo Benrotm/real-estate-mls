@@ -473,7 +473,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
 
                                     {/* Google Map Widget */}
                                     <div className="pt-2">
-                                        <label className="block text-sm font-medium mb-4 text-slate-300">Pin Location</label>
+                                        <label className="block text-sm font-medium mb-4 text-slate-300">Drag Pin to Location</label>
                                         <div className="rounded-xl overflow-hidden border border-slate-700/80 shadow-lg shadow-black/20">
                                             <LocationMap
                                                 lat={Number(formData.latitude)}
