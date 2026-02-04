@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from '@/app/lib/supabase/server';
-import { Property, Property as PropertyType } from '@/app/lib/properties'; // Alias to avoid confusion if needed
+import { Property, Property as PropertyType } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
+import { calculatePropertyScore } from './scoring';
 
 export async function createProperty(formData: FormData) {
     const supabase = await createClient();
@@ -74,9 +75,12 @@ export async function createProperty(formData: FormData) {
             status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
 
+        // Calculate property score
+        const score = await calculatePropertyScore(propertyData as Partial<Property>);
+
         const { data, error } = await supabase
             .from('properties')
-            .insert(propertyData)
+            .insert({ ...propertyData, score })
             .select(`
             *,
             owner:profiles(full_name)
@@ -350,9 +354,12 @@ export async function updateProperty(id: string, formData: FormData) {
             status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
 
+        // Calculate property score
+        const score = await calculatePropertyScore(propertyData as Partial<Property>);
+
         const { data, error } = await supabase
             .from('properties')
-            .update(propertyData)
+            .update({ ...propertyData, score })
             .eq('id', id)
             .select()
             .single();
