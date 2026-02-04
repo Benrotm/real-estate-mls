@@ -16,8 +16,9 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
     const [isOpen, setIsOpen] = useState(forceOpen);
 
     // Sync with forceOpen prop
+    // Sync with forceOpen prop
     useEffect(() => {
-        if (forceOpen) setIsOpen(true);
+        setIsOpen(forceOpen);
     }, [forceOpen]);
 
     const [activeTab, setActiveTab] = useState<'csv' | 'link' | 'xml' | 'crm'>('csv');

@@ -130,6 +130,28 @@ export async function scrapeProperty(url: string): Promise<{ data?: ScrapedPrope
             });
         }
 
+        // 3d. Specific Site Logic (Casadomi)
+        const casadomiGallery = $('#property-main-gallery');
+        if (casadomiGallery.length > 0) {
+            // Find both images and anchor links in the gallery items
+            casadomiGallery.find('.property-main-gallery-item').each((_, el) => {
+                const img = $(el).find('img').attr('src');
+                const link = $(el).find('a').attr('href');
+
+                // Prefer link if it looks like an image, mainly looking for 'big__' for high res
+                if (link && /\.(jpg|jpeg|png|webp)$/i.test(link)) {
+                    addImage(link);
+                } else if (img) {
+                    // Try to construct high-res url if it's a thumbnail (starts with small__)
+                    let highRes = img;
+                    if (img.includes('small__')) {
+                        highRes = img.replace('small__', 'big__');
+                    }
+                    addImage(highRes);
+                }
+            });
+        }
+
         // 4. Last Resort: Big Images in Body
         if (imagesSet.size < 3) {
             $('img').each((_, el) => {
