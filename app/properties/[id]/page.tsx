@@ -1,7 +1,7 @@
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 import PropertyValuationSection from '../../components/valuation/PropertyValuationSection';
@@ -40,10 +40,14 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             price: dbProperty.price,
 
             // Specs
+            rooms: dbProperty.rooms,
             bedrooms: dbProperty.bedrooms,
             bathrooms: dbProperty.bathrooms,
             area_usable: dbProperty.area_usable,
             area_built: dbProperty.area_built,
+            area_box: dbProperty.area_box,
+            area_terrace: dbProperty.area_terrace,
+            area_garden: dbProperty.area_garden,
             year_built: dbProperty.year_built,
 
             type: dbProperty.type,
@@ -166,6 +170,18 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         {/* 4. Specs Widget */}
                         <div className="border border-slate-200 rounded-2xl p-6 flex flex-wrap gap-8 items-center bg-white shadow-sm">
                             <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                                    <Home className="w-7 h-7" />
+                                </div>
+                                <div className="leading-tight">
+                                    <div className="font-extrabold text-2xl text-slate-900">{property.rooms || 0}</div>
+                                    <div className="text-slate-500 font-bold text-sm">Rooms</div>
+                                </div>
+                            </div>
+
+                            <div className="w-px h-12 bg-slate-100 hidden sm:block"></div>
+
+                            <div className="flex items-center gap-4">
                                 <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
                                     <Bed className="w-7 h-7" />
                                 </div>
@@ -235,6 +251,49 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 </div>
                             </div>
                         </div>
+
+                        {/* Areas & Measurements */}
+                        <div className="mt-8">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4">Areas & Measurements</h3>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-500 shadow-sm">
+                                        <Maximize2 className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-slate-400 uppercase">Built Area</div>
+                                        <div className="font-bold text-slate-900">{property.area_built ? `${property.area_built} m²` : 'N/A'}</div>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-500 shadow-sm">
+                                        <Sun className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-slate-400 uppercase">Terrace/Balcony</div>
+                                        <div className="font-bold text-slate-900">{property.area_terrace ? `${property.area_terrace} m²` : 'N/A'}</div>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-500 shadow-sm">
+                                        <Trees className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-slate-400 uppercase">Garden</div>
+                                        <div className="font-bold text-slate-900">{property.area_garden ? `${property.area_garden} m²` : 'N/A'}</div>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-500 shadow-sm">
+                                        <Box className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-slate-400 uppercase">Box/Storage</div>
+                                        <div className="font-bold text-slate-900">{property.area_box ? `${property.area_box} m²` : 'N/A'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* 5. Description */}
@@ -247,20 +306,53 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                     </div>
 
-                    {/* 6. Features & Amenities */}
+                    {/* 6. Features & Amenities - Organized by Category */}
                     <div className="space-y-4">
                         <h2 className="text-2xl font-bold text-slate-900">Features & Amenities</h2>
-                        <div className="border border-slate-200 rounded-2xl p-8 bg-white shadow-sm">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
-                                {property.features.map((feature, i) => (
-                                    <div key={i} className="flex items-center gap-3 text-slate-600 group">
-                                        <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                                            <Check className="w-3 h-3 text-orange-600 stroke-[3]" />
+                        <div className="space-y-6">
+                            {/* Category-based Feature Display */}
+                            {(() => {
+                                const FEATURE_CATEGORIES: Record<string, string[]> = {
+                                    'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
+                                    'Unit Features': ['Air Conditioning', 'Balcony', 'Central Heating', 'Fireplace', 'Garage', 'Jacuzzi', 'Laundry', 'Parking', 'Private Pool', 'Sauna', 'Storage'],
+                                    'Community & Recreation': ['Amphitheatre', 'Clubhouse', 'Common Garden', 'Jogging Track', 'Library', 'Park', 'Party Hall', 'Playground'],
+                                    'Sports & Fitness': ['Basketball Court', 'Football Field', 'Gym', 'Squash Court', 'Swimming Pool', 'Tennis Court', 'Yoga Deck'],
+                                    'Security & Safety': ['24/7 Security', 'CCTV Surveillance', 'Fire Safety', 'Gated Community', 'Intercom', 'Shelter', 'Video Door Phone'],
+                                    'Sustainability & Services': ['Concierge', 'Elevator', 'Green Building', 'Maintenance Staff', 'Power Backup', 'Rainwater Harvesting', 'Sewage Treatment', 'Smart Home', 'Solar Panels', 'Visitor Parking']
+                                };
+
+                                const CATEGORY_COLORS: Record<string, { bg: string, border: string, iconBg: string, iconColor: string }> = {
+                                    'Listing Tags': { bg: 'bg-indigo-50', border: 'border-indigo-200', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' },
+                                    'Unit Features': { bg: 'bg-violet-50', border: 'border-violet-200', iconBg: 'bg-violet-100', iconColor: 'text-violet-600' },
+                                    'Community & Recreation': { bg: 'bg-emerald-50', border: 'border-emerald-200', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+                                    'Sports & Fitness': { bg: 'bg-orange-50', border: 'border-orange-200', iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
+                                    'Security & Safety': { bg: 'bg-red-50', border: 'border-red-200', iconBg: 'bg-red-100', iconColor: 'text-red-600' },
+                                    'Sustainability & Services': { bg: 'bg-teal-50', border: 'border-teal-200', iconBg: 'bg-teal-100', iconColor: 'text-teal-600' }
+                                };
+
+                                return Object.entries(FEATURE_CATEGORIES).map(([category, categoryFeatures]) => {
+                                    const matchedFeatures = categoryFeatures.filter(f => property.features.includes(f));
+                                    if (matchedFeatures.length === 0) return null;
+
+                                    const colors = CATEGORY_COLORS[category] || { bg: 'bg-slate-50', border: 'border-slate-200', iconBg: 'bg-slate-100', iconColor: 'text-slate-600' };
+
+                                    return (
+                                        <div key={category} className={`border ${colors.border} rounded-2xl p-6 ${colors.bg}`}>
+                                            <h3 className="text-lg font-bold text-slate-800 mb-4">{category}</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {matchedFeatures.map((feature, i) => (
+                                                    <div key={i} className="flex items-center gap-3 text-slate-700">
+                                                        <div className={`w-6 h-6 rounded-full ${colors.iconBg} flex items-center justify-center shrink-0`}>
+                                                            <Check className={`w-3.5 h-3.5 ${colors.iconColor} stroke-[3]`} />
+                                                        </div>
+                                                        <span className="font-medium">{feature}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <span className="group-hover:text-slate-900 transition-colors font-medium">{feature}</span>
-                                    </div>
-                                ))}
-                            </div>
+                                    );
+                                });
+                            })()}
                         </div>
                     </div>
 
