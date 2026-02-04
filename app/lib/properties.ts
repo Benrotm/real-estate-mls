@@ -42,6 +42,7 @@ export interface Property {
     youtube_video_url?: string;
     social_media_url?: string;
     personal_property_id?: string;
+    friendly_id?: string;
 
     features: string[]; // checkboxes
 

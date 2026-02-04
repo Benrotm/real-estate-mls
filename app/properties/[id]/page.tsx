@@ -96,7 +96,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             status: dbProperty.status,
             score: dbProperty.score,
             created_at: dbProperty.created_at,
-            updated_at: dbProperty.updated_at
+            updated_at: dbProperty.updated_at,
+            friendly_id: dbProperty.friendly_id
         };
     } else {
         // Fallback to mock data for demo
@@ -501,11 +502,17 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
 
                         {/* Social & ID */}
-                        {(property.personal_property_id || property.social_media_url) && (
+                        {(property.personal_property_id || property.social_media_url || property.friendly_id) && (
                             <div className="mb-6 space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                {property.friendly_id && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-slate-500 font-medium">Ref ID:</span>
+                                        <span className="font-mono font-bold text-slate-900 bg-white px-2 py-1 rounded border border-slate-200">#{property.friendly_id}</span>
+                                    </div>
+                                )}
                                 {property.personal_property_id && (
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-500 font-medium">Property ID:</span>
+                                        <span className="text-slate-500 font-medium">Internal ID:</span>
                                         <span className="font-mono font-bold text-slate-900 bg-white px-2 py-1 rounded border border-slate-200">{property.personal_property_id}</span>
                                     </div>
                                 )}

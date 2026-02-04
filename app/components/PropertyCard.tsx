@@ -35,6 +35,12 @@ export default function PropertyCard({ property, showEditButton }: PropertyCardP
                         </span>
                     )}
 
+                    {property.friendly_id && (
+                        <span className="bg-slate-900/80 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md border border-slate-700">
+                            #{property.friendly_id}
+                        </span>
+                    )}
+
                     {property.listing_type === 'For Sale' ? (
                         <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                             For Sale
