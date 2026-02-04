@@ -20,7 +20,8 @@ import {
     ChevronRight,
     ChevronLeft,
     Loader2,
-    Globe
+    Globe,
+    X
 } from 'lucide-react';
 import { createProperty } from '@/app/lib/actions/properties';
 import LocationMap from '@/app/components/LocationMap';
@@ -96,7 +97,8 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         virtualTourUrl: initialData?.virtual_tour_url || '',
         socialMediaUrl: initialData?.social_media_url || '',
         personalId: initialData?.personal_property_id || '',
-        features: (initialData?.features as string[]) || []
+        features: (initialData?.features as string[]) || [],
+        images: (initialData?.images as string[]) || []
     });
 
     const handleScrapeSuccess = (data: any) => {
@@ -114,7 +116,8 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
             usableArea: data.area_usable?.toString() || prev.usableArea,
             builtArea: data.area_built?.toString() || prev.builtArea,
             yearBuilt: data.year_built?.toString() || prev.yearBuilt,
-            features: (data.features as string[]) || prev.features
+            features: (data.features as string[]) || prev.features,
+            images: (data.images as string[]) || prev.images
         }));
         setIsImportModalOpen(false);
     };
@@ -188,7 +191,8 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         // Status
         formDataToSend.append('status', status);
 
-        // images skipped for now
+        // Images
+        formDataToSend.append('images', JSON.stringify(formData.images));
 
         try {
             const result = await createProperty(formDataToSend);
@@ -708,16 +712,39 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div className="border-2 border-dashed border-slate-800 bg-slate-950/30 rounded-2xl p-12 text-center hover:bg-slate-900/50 hover:border-violet-500/50 transition-all cursor-pointer group relative overflow-hidden">
-                                        <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 border border-slate-800 group-hover:border-violet-500/30 z-10 relative">
-                                            <ImageIcon className="w-8 h-8 text-slate-500 group-hover:text-violet-400 transition-colors" />
+                                    {formData.images.length > 0 ? (
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {formData.images.map((img, index) => (
+                                                <div key={index} className="relative aspect-[4/3] group rounded-xl overflow-hidden border border-slate-700">
+                                                    <img src={img} alt={`Property ${index + 1}`} className="w-full h-full object-cover" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }))}
+                                                        className="absolute top-2 right-2 bg-red-500/80 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <div className="border-2 border-dashed border-slate-800 bg-slate-950/30 rounded-xl flex items-center justify-center aspect-[4/3] hover:bg-slate-900/50 hover:border-violet-500/50 transition-all cursor-pointer">
+                                                <div className="text-center">
+                                                    <Upload className="w-6 h-6 text-slate-500 mx-auto mb-2" />
+                                                    <span className="text-xs text-slate-500">Add More</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <p className="text-slate-400 font-medium z-10 relative group-hover:text-white transition-colors">Click to upload or drag and drop photos</p>
-                                        <p className="text-xs text-slate-600 mt-2 z-10 relative">Up to 10 images, max 5MB each</p>
+                                    ) : (
+                                        <div className="border-2 border-dashed border-slate-800 bg-slate-950/30 rounded-2xl p-12 text-center hover:bg-slate-900/50 hover:border-violet-500/50 transition-all cursor-pointer group relative overflow-hidden">
+                                            <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 border border-slate-800 group-hover:border-violet-500/30 z-10 relative">
+                                                <ImageIcon className="w-8 h-8 text-slate-500 group-hover:text-violet-400 transition-colors" />
+                                            </div>
+                                            <p className="text-slate-400 font-medium z-10 relative group-hover:text-white transition-colors">Click to upload or drag and drop photos</p>
+                                            <p className="text-xs text-slate-600 mt-2 z-10 relative">Up to 10 images, max 5MB each</p>
 
-                                        {/* Hover Glow */}
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-violet-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
+                                            {/* Hover Glow */}
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-violet-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )
