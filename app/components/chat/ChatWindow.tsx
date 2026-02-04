@@ -135,63 +135,105 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
         }
     };
 
+    // CSS for the background pattern (subtle geometric)
+    const backgroundStyle = {
+        backgroundColor: '#e5ddd5',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239c92ac' fill-opacity='0.12'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+    };
+
     return (
-        <div className="flex flex-col h-full bg-slate-50">
-            {/* Header */}
-            <div className="p-4 border-b border-slate-200 bg-white flex items-center gap-3 shadow-sm z-10 sticky top-0">
+        <div className="flex flex-col h-full relative" style={backgroundStyle}>
+            {/* Glassmorphic Header */}
+            <div className="px-4 py-3 bg-white/80 backdrop-blur-md border-b border-white/20 flex items-center gap-3 shadow-sm z-20 sticky top-0 transition-all duration-300">
                 {onBack && (
-                    <button onClick={onBack} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+                    <button onClick={onBack} className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-black/5 rounded-full transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                 )}
+                <div className="relative">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold shadow-sm">
+                        S
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                </div>
                 <div className="flex-1">
-                    <h3 className="font-bold text-slate-800">Support Chat</h3>
-                    <p className="text-xs text-slate-500">Typical reply time: Few hours</p>
+                    <h3 className="font-bold text-slate-800 leading-tight">Support Team</h3>
+                    <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Typically replies in minutes</p>
                 </div>
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 scroll-smooth">
                 {loading && <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-400" /></div>}
 
                 {!loading && messages.length === 0 && (
-                    <div className="text-center text-sm text-slate-400 py-10 flex flex-col items-center gap-3">
-                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-2xl">👋</div>
-                        <p>How can we help you today?</p>
+                    <div className="text-center py-10 flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl mb-2">👋</div>
+                        <div className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm border border-white/50">
+                            <p className="text-sm text-slate-600 font-medium">How can we help you today?</p>
+                        </div>
                     </div>
                 )}
 
-                {messages.map((msg) => {
+                {messages.map((msg, index) => {
                     const isMe = msg.sender_id === currentUser.id;
                     const hasAttachments = msg.attachments && Array.isArray(msg.attachments) && msg.attachments.length > 0;
 
+                    // Grouping logic: check if previous message was same sender
+                    const isSequence = index > 0 && messages[index - 1].sender_id === msg.sender_id;
+                    const isLastInSequence = index === messages.length - 1 || messages[index + 1].sender_id !== msg.sender_id;
+
                     return (
-                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`flex flex-col gap-1 max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
-                                <div className={`px-4 py-3 shadow-sm text-sm ${isMe
-                                    ? 'bg-violet-600 text-white rounded-2xl rounded-tr-none'
-                                    : 'bg-white text-slate-800 border border-slate-200 rounded-2xl rounded-tl-none'
-                                    }`}>
+                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group mb-1`}>
+                            <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] relative ${isMe ? 'items-end' : 'items-start'}`}>
+
+                                <div className={`
+                                    relative px-3 py-2 sm:px-4 sm:py-2 text-[15px] shadow-sm
+                                    ${isMe
+                                        ? 'bg-violet-600 text-white rounded-2xl rounded-tr-sm'
+                                        : 'bg-white text-slate-800 rounded-2xl rounded-tl-sm'
+                                    }
+                                    ${!isLastInSequence && isMe ? 'rounded-br-md mb-[2px]' : ''}
+                                    ${!isLastInSequence && !isMe ? 'rounded-bl-md mb-[2px]' : ''}
+                                `}>
+
+                                    {/* Tail SVG for visual flair on the first message of a sequence, or standalone */}
+                                    {!isSequence && (
+                                        <svg
+                                            className={`absolute top-0 w-3 h-3 ${isMe ? '-right-[8px] fill-violet-600' : '-left-[8px] fill-white'}`}
+                                            viewBox="0 0 10 10" preserveAspectRatio="none">
+                                            <path d={isMe ? "M0,0 L10,0 L0,10 Z" : "M0,0 L10,0 L10,10 Z"} />
+                                        </svg>
+                                    )}
 
                                     {hasAttachments && (
-                                        <div className="flex flex-wrap gap-2 mb-2">
+                                        <div className="flex flex-wrap gap-1 mb-2">
                                             {msg.attachments.map((url: string, idx: number) => (
-                                                <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="relative block h-32 w-full rounded-lg overflow-hidden border border-white/20">
+                                                <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="relative block h-40 w-full sm:w-64 rounded-lg overflow-hidden border border-black/5">
                                                     <Image
                                                         src={url}
                                                         alt="Attachment"
                                                         fill
-                                                        className="object-cover hover:scale-105 transition-transform"
+                                                        className="object-cover hover:scale-105 transition-transform duration-500"
                                                     />
                                                 </a>
                                             ))}
                                         </div>
                                     )}
 
-                                    {msg.content && <p className="whitespace-pre-wrap">{msg.content}</p>}
-                                </div>
-                                <div className={`text-[10px] px-1 ${isMe ? 'text-slate-400' : 'text-slate-400'}`}>
-                                    {format(new Date(msg.created_at), 'h:mm a')}
+                                    {msg.content && (
+                                        <p className="whitespace-pre-wrap leading-relaxed break-words pb-1 pr-2 relative z-10">{msg.content}</p>
+                                    )}
+
+                                    <div className={`text-[10px] flex items-center justify-end gap-1 opacity-70 ${isMe ? 'text-violet-100' : 'text-slate-400'} mt-1`}>
+                                        <span>{format(new Date(msg.created_at), 'h:mm a')}</span>
+                                        {isMe && (
+                                            <span className="font-bold tracking-tighter text-[11px]">
+                                                {/* Simulate read receipt - in real app check msg.is_read */}
+                                                ✓✓
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -201,67 +243,75 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white border-t border-slate-200">
-                {/* File Preview */}
-                {uploadedAttachments.length > 0 && (
-                    <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
-                        {uploadedAttachments.map((url, idx) => (
-                            <div key={idx} className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden border border-slate-200 group">
-                                <Image src={url} alt="Upload preview" fill className="object-cover" />
-                                <button
-                                    onClick={() => removeAttachment(idx)}
-                                    className="absolute top-1 right-1 bg-black/50 p-1 rounded-full text-white hover:bg-red-500 transition-colors"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+            <div className="p-3 sm:p-4 bg-transparent sticky bottom-0 z-20">
+                <div className="max-w-4xl mx-auto flex flex-col gap-2">
 
-                <form onSubmit={handleSend} className="flex gap-2 items-end">
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleFileSelect}
-                        disabled={isUploading}
-                    />
+                    {/* File Preview */}
+                    {uploadedAttachments.length > 0 && (
+                        <div className="flex gap-2 mx-2 p-2 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 overflow-x-auto w-fit max-w-full">
+                            {uploadedAttachments.map((url, idx) => (
+                                <div key={idx} className="relative h-16 w-16 flex-shrink-0 rounded-xl overflow-hidden border border-slate-200 group">
+                                    <Image src={url} alt="Upload preview" fill className="object-cover" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button
+                                            onClick={() => removeAttachment(idx)}
+                                            className="bg-red-500 p-1 rounded-full text-white hover:bg-red-600 transition-colors"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                    <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-3 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-colors"
-                        disabled={isUploading}
-                    >
-                        {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
-                    </button>
+                    <form onSubmit={handleSend} className="flex gap-2 items-end">
 
-                    <div className="flex-1 relative">
-                        <textarea
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSend(e);
-                                }
-                            }}
-                            placeholder="Type a message..."
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all text-sm resize-none max-h-32"
-                            rows={1}
-                        />
-                    </div>
+                        <div className="flex-1 flex gap-2 items-end bg-white rounded-[26px] shadow-lg border border-slate-100 px-2 py-2 relative z-20">
 
-                    <button
-                        type="submit"
-                        disabled={(!newMessage.trim() && uploadedAttachments.length === 0) || isUploading}
-                        className="p-3 bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                    >
-                        <Send className="w-5 h-5" />
-                    </button>
-                </form>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleFileSelect}
+                                disabled={isUploading}
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-2.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-full transition-all duration-200"
+                                disabled={isUploading}
+                            >
+                                {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+                            </button>
+
+                            <textarea
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSend(e);
+                                    }
+                                }}
+                                placeholder="Message support..."
+                                className="w-full py-2.5 max-h-32 bg-transparent border-none focus:ring-0 text-slate-700 placeholder:text-slate-400 resize-none"
+                                rows={1}
+                                style={{ minHeight: '44px' }}
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={(!newMessage.trim() && uploadedAttachments.length === 0) || isUploading}
+                            className="p-3 bg-violet-600 text-white rounded-full shadow-lg hover:bg-violet-700 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200 flex items-center justify-center w-12 h-12"
+                        >
+                            <Send className="w-5 h-5 ml-0.5" />
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     );
