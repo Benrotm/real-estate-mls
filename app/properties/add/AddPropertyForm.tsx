@@ -313,7 +313,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                         Your property has been successfully listed and is now pending review.
                     </p>
                     <button
-                        onClick={() => router.push('/properties')}
+                        onClick={() => router.push(initialData?.owner_id || propertyId ? '/dashboard/agent' : '/dashboard/owner')}
                         className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg shadow-violet-600/25 border border-violet-500/20"
                     >
                         Return to Dashboard
