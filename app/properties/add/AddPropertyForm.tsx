@@ -27,7 +27,7 @@ import {
     FileText,
     RefreshCw
 } from 'lucide-react';
-import { createProperty } from '@/app/lib/actions/properties';
+import { createProperty, updateProperty } from '@/app/lib/actions/properties';
 import { supabase } from '@/app/lib/supabase/client';
 import LocationMap from '@/app/components/LocationMap';
 import AddressAutocomplete from '@/app/components/AddressAutocomplete';
@@ -64,6 +64,7 @@ const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: stri
 export default function AddPropertyForm({ initialData }: { initialData?: Partial<Property> }) {
     const router = useRouter();
     const [step, setStep] = useState(1);
+    const [propertyId, setPropertyId] = useState<string | null>(initialData?.id || null);
     const [submitting, setSubmitting] = useState(false);
     const [savingDraft, setSavingDraft] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -266,8 +267,19 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         formDataToSend.append('images', JSON.stringify(formData.images));
 
         try {
-            const result = await createProperty(formDataToSend);
+            let result;
+            if (propertyId) {
+                // Update existing draft
+                result = await updateProperty(propertyId, formDataToSend);
+            } else {
+                // Create new property
+                result = await createProperty(formDataToSend);
+            }
+
             if (result.success) {
+                if (!propertyId && result.data?.id) {
+                    setPropertyId(result.data.id);
+                }
                 if (!silent) setSuccess(true);
             } else {
                 if (!silent) alert(`Error: ${result.error}`);
