@@ -7,10 +7,11 @@ import { UserProfile } from '@/app/lib/auth';
 
 interface ChatLayoutProps {
     user: UserProfile;
+    initialConversationId?: string;
 }
 
-export default function ChatLayout({ user }: ChatLayoutProps) {
-    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+export default function ChatLayout({ user, initialConversationId }: ChatLayoutProps) {
+    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(initialConversationId || null);
 
     return (
         <div className="flex h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
