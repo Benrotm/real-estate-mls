@@ -150,6 +150,60 @@ export async function fetchAllFeatures() {
     }
 }
 
+export async function syncPlanFeatures() {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    // 1. Get all unique features that SHOULD exist (source of truth)
+    const { data: allFeatures } = await supabase.from('plan_features').select('*');
+    if (!allFeatures) return;
+
+    const uniqueDefs = new Map<string, { label: string, sort: number }>();
+    allFeatures.forEach(f => {
+        if (!uniqueDefs.has(f.feature_key)) {
+            uniqueDefs.set(f.feature_key, { label: f.feature_label, sort: f.sort_order });
+        }
+    });
+
+    // 2. Get all plans
+    const { data: plans } = await supabase.from('plans').select('*');
+    if (!plans) return;
+
+    // 3. Iterate and Fix
+    let ops = 0;
+    for (const plan of plans) {
+        for (const [key, def] of uniqueDefs.entries()) {
+            // Check if plan has this feature (filter in-memory from allFeatures to avoid N+1 queries)
+            // Note: We need to re-fetch/filter carefully if we want to be atomic, but looking at 'allFeatures' snapshot is mostly okay for admin actions.
+            // Actually, let's filter the 'allFeatures' array we fetched at the start.
+            const planFeats = allFeatures.filter(f => f.role === plan.role && f.plan_name === plan.name && f.feature_key === key);
+
+            if (planFeats.length === 0) {
+                // Missing: Insert
+                await supabase.from('plan_features').insert({
+                    role: plan.role,
+                    plan_name: plan.name,
+                    feature_key: key,
+                    feature_label: def.label,
+                    is_included: false,
+                    sort_order: def.sort
+                });
+                ops++;
+            } else if (planFeats.length > 1) {
+                // Duplicate: Delete all but first
+                const [keep, ...remove] = planFeats;
+                const removeIds = remove.map(r => r.id);
+                await supabase.from('plan_features').delete().in('id', removeIds);
+                ops++;
+            }
+        }
+    }
+
+    console.log(`Sync completed with ${ops} operations.`);
+    revalidatePath('/dashboard/admin');
+    revalidatePath('/pricing');
+}
+
 // Helper to verify admin access (bypassed in Development for Mock scenarios)
 async function verifyAdmin() {
     const supabase = await createClient();

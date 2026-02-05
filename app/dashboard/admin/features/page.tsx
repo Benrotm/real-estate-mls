@@ -3,6 +3,7 @@ import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
 import { Check, Trash2, List, AppWindow, Shield } from 'lucide-react';
 import AddGlobalFeatureForm from './AddGlobalFeatureForm';
+import SyncFeaturesButton from './SyncFeaturesButton';
 
 export default async function FeaturesPage() {
     const profile = await getUserProfile();
@@ -33,10 +34,13 @@ export default async function FeaturesPage() {
             <div className="max-w-7xl mx-auto">
                 <header className="flex justify-between items-center mb-12 border-b border-slate-800 pb-8">
                     <div>
-                        <h1 className="text-3xl font-bold flex items-center gap-3">
-                            <List className="w-8 h-8 text-purple-500" />
-                            System Features
-                        </h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-3xl font-bold flex items-center gap-3">
+                                <List className="w-8 h-8 text-purple-500" />
+                                System Features
+                            </h1>
+                            <SyncFeaturesButton />
+                        </div>
                         <p className="text-slate-400 mt-2">Manage all available features across the platform.</p>
                     </div>
                     <AddGlobalFeatureForm />
