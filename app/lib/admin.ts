@@ -59,6 +59,58 @@ export async function addPlanFeature(planFeature: { role: string, plan_name: str
     revalidatePath('/dashboard/admin/plans');
 }
 
+export async function createGlobalFeature(label: string) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    // 1. Generate key
+    const key = label.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+    // 2. Fetch all plans to know what to insert
+    const { data: plans } = await supabase.from('plans').select('role, name');
+
+    if (!plans || plans.length === 0) throw new Error('No plans found to add feature to.');
+
+    // 3. Prepare inserts
+    const inserts = plans.map(p => ({
+        role: p.role,
+        plan_name: p.name,
+        feature_key: key,
+        feature_label: label,
+        is_included: false, // Default to disabled
+        sort_order: 99
+    }));
+
+    // 4. Insert
+    const { error } = await supabase.from('plan_features').insert(inserts);
+
+    if (error) {
+        // Handle duplicate key error gracefully?
+        if (error.code === '23505') throw new Error('Feature already exists (key collision).');
+        throw new Error(error.message);
+    }
+
+    revalidatePath('/dashboard/admin/features');
+    revalidatePath('/dashboard/admin/plans');
+    revalidatePath('/pricing');
+}
+
+export async function deleteGlobalFeature(key: string) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('plan_features')
+        .delete()
+        .eq('feature_key', key);
+
+    if (error) throw new Error(error.message);
+
+    revalidatePath('/dashboard/admin/features');
+    revalidatePath('/dashboard/admin/plans');
+    revalidatePath('/pricing');
+}
+
 // Fallback Data for when DB tables are missing
 const FALLBACK_FEATURES = [
     { role: 'owner', plan_name: 'Free', feature_label: 'Basic Listings', is_included: true, sort_order: 1 },
