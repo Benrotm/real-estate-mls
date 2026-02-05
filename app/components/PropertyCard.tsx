@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Property } from '../lib/properties';
 import { Bed, Bath, Ruler, MapPin, Heart, Award } from 'lucide-react';
+import PropertyManageButtons from './PropertyManageButtons';
 
 interface PropertyCardProps {
     property: Property;
@@ -117,6 +118,9 @@ export default function PropertyCard({ property, showEditButton }: PropertyCardP
                         >
                             Edit
                         </Link>
+                    )}
+                    {showEditButton && (
+                        <PropertyManageButtons propertyId={property.id} status={property.status as 'active' | 'draft'} />
                     )}
                 </div>
             </div>

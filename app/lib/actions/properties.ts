@@ -386,3 +386,44 @@ export async function updateProperty(id: string, formData: FormData) {
         return { error: e.message || 'Internal Server Error' };
     }
 }
+
+export async function togglePropertyStatus(id: string, currentStatus: 'active' | 'draft') {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: 'Unauthorized' };
+    }
+
+    // Verify ownership
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', id)
+        .single();
+
+    if (!property || property.owner_id !== user.id) {
+        return { error: 'Unauthorized' };
+    }
+
+    const newStatus = currentStatus === 'active' ? 'draft' : 'active';
+
+    const { error } = await supabase
+        .from('properties')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    revalidatePath('/properties');
+    revalidatePath('/dashboard/owner');
+    revalidatePath('/dashboard/agent');
+    revalidatePath(`/dashboard/owner/properties`);
+    revalidatePath(`/dashboard/agent/listings`);
+    revalidatePath(`/properties/${id}`);
+
+    return { success: true, status: newStatus };
+}
