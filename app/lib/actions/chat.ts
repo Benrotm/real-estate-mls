@@ -120,8 +120,82 @@ export async function createNewSupportConversation() {
         if (partError) throw partError;
 
         return { conversationId: newConv.id };
+        return { conversationId: newConv.id };
     } catch (e: any) {
         console.error('Create specific conversation error:', e);
+        return { error: 'Failed to create conversation' };
+    }
+}
+
+export async function startConversationByEmail(email: string) {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return { error: 'Unauthorized' };
+
+        // 1. Find target user by email
+        const { data: targetUser, error: findError } = await supabase
+            .from('profiles')
+            .select('id, email, full_name')
+            .eq('email', email)
+            .single();
+
+        if (findError || !targetUser) {
+            return { error: 'User not found with that email.' };
+        }
+
+        if (targetUser.id === user.id) {
+            return { error: 'You cannot chat with yourself.' };
+        }
+
+        // 2. Check if conversation already exists
+        const { data: myConvos } = await supabase
+            .from('conversation_participants')
+            .select('conversation_id')
+            .eq('user_id', user.id);
+
+        const myConvoIds = myConvos?.map(c => c.conversation_id) || [];
+
+        if (myConvoIds.length > 0) {
+            const { data: existing } = await supabase
+                .from('conversation_participants')
+                .select('conversation_id')
+                .in('conversation_id', myConvoIds)
+                .eq('user_id', targetUser.id)
+                .limit(1)
+                .single();
+
+            if (existing) {
+                return { conversationId: existing.conversation_id };
+            }
+        }
+
+        // 3. Create new conversation using ADMIN client (bypass RLS for participants)
+        const supabaseAdmin = createAdminClient();
+
+        const { data: newConv, error: createError } = await supabaseAdmin
+            .from('conversations')
+            .insert({})
+            .select()
+            .single();
+
+        if (createError) throw createError;
+
+        // 4. Add both participants
+        const { error: partError } = await supabaseAdmin
+            .from('conversation_participants')
+            .insert([
+                { conversation_id: newConv.id, user_id: user.id },
+                { conversation_id: newConv.id, user_id: targetUser.id }
+            ]);
+
+        if (partError) throw partError;
+
+        return { conversationId: newConv.id };
+
+    } catch (e: any) {
+        console.error('startConversationByEmail error:', e);
         return { error: e.message };
     }
 }
