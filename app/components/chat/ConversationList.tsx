@@ -13,6 +13,8 @@ interface ConversationListProps {
 
 export default function ConversationList({ userId, selectedId, onSelect }: ConversationListProps) {
     const [creating, setCreating] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [conversations, setConversations] = useState<any[]>([]);
 
     const fetchConversations = async () => {
         setLoading(true);

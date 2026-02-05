@@ -81,3 +81,47 @@ export async function getOrCreateSupportConversation() {
         return { error: 'Unexpected error: ' + e.message };
     }
 }
+
+export async function createNewSupportConversation() {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return { error: 'Unauthorized' };
+
+        // Find a Super Admin
+        const { data: superAdmins } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'super_admin')
+            .limit(1);
+
+        if (!superAdmins || superAdmins.length === 0) {
+            return { error: 'No support staff available.' };
+        }
+        const supportAgentId = superAdmins[0].id;
+
+        // Create NEW conversation ALWAYS (do not check existing)
+        const supabaseAdmin = createAdminClient();
+        const { data: newConv, error: createError } = await supabaseAdmin
+            .from('conversations')
+            .insert({})
+            .select()
+            .single();
+
+        if (createError) throw createError;
+
+        // Add participants
+        const { error: partError } = await supabaseAdmin.from('conversation_participants').insert([
+            { conversation_id: newConv.id, user_id: user.id },
+            { conversation_id: newConv.id, user_id: supportAgentId }
+        ]);
+
+        if (partError) throw partError;
+
+        return { conversationId: newConv.id };
+    } catch (e: any) {
+        console.error('Create specific conversation error:', e);
+        return { error: e.message };
+    }
+}
