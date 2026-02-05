@@ -9,8 +9,8 @@ import {
     Check,
     ArrowRight,
     ArrowLeft,
-    Image as ImageIcon,
     Building2,
+    Image as ImageIcon,
     CheckCircle2,
     Save,
     Camera,
@@ -24,9 +24,11 @@ import {
     X,
     Lock,
     AlertCircle,
-    FileText
+    FileText,
+    RefreshCw
 } from 'lucide-react';
 import { createProperty } from '@/app/lib/actions/properties';
+import { supabase } from '@/app/lib/supabase/client';
 import LocationMap from '@/app/components/LocationMap';
 import AddressAutocomplete from '@/app/components/AddressAutocomplete';
 import ImportPropertiesModal from '@/app/components/properties/ImportPropertiesModal';
@@ -63,6 +65,8 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
+    const [savingDraft, setSavingDraft] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -148,59 +152,112 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         }));
     };
 
-    const handleSubmit = async (e: React.FormEvent, status: 'active' | 'draft' = 'active') => {
-        e.preventDefault();
-        setSubmitting(true);
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        setUploading(true);
+        const files = Array.from(e.target.files);
+        const newUrls: string[] = [];
+
+        try {
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `property_${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                const filePath = `listings/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('property-images')
+                    .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('property-images')
+                    .getPublicUrl(filePath);
+
+                newUrls.push(publicUrl);
+            }
+
+            setFormData(prev => ({ ...prev, images: [...prev.images, ...newUrls] }));
+        } catch (err: any) {
+            console.error('Upload failed:', err);
+            alert('Failed to upload images. Please try again.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleSaveDraft = async (e?: React.MouseEvent, silent = false) => {
+        if (e) e.preventDefault();
+        setSavingDraft(true);
+        await handleSubmit(e as any, 'draft', true);
+        setSavingDraft(false);
+    };
+
+    const nextStep = async () => {
+        if (step < 4) {
+            // Auto-save draft logic if needed, currently manual only or we can trigger it
+            // For better UX, let's just move next. 
+            // The user requested "logic to save the property by default when pressing the NEXT STEP".
+            await handleSaveDraft(undefined, true);
+            setStep(step + 1);
+        }
+    };
+
+    // Modified Submit to support silent mode
+    const handleSubmit = async (e: React.FormEvent, status: 'active' | 'draft' = 'active', silent = false) => {
+        if (e) e.preventDefault();
+        if (!silent) setSubmitting(true);
 
         const formDataToSend = new FormData();
         // Core fields
-        formDataToSend.append('title', formData.title);
-        formDataToSend.append('description', formData.description);
+        formDataToSend.append('title', formData.title || 'Untitled Draft'); // Fallback for draft
+        formDataToSend.append('description', formData.description || '');
         formDataToSend.append('type', formData.propertyType); // Mapped from propertyType
         formDataToSend.append('listing_type', formData.listingType); // Mapped from listingType
 
-        formDataToSend.append('price', formData.price);
+        formDataToSend.append('price', formData.price || '0');
         formDataToSend.append('currency', formData.currency);
 
         // Location
-        formDataToSend.append('address', formData.address);
-        formDataToSend.append('location_city', formData.city);
-        formDataToSend.append('location_county', formData.state); // Using state input for county
+        formDataToSend.append('address', formData.address || '');
+        formDataToSend.append('location_city', formData.city || '');
+        formDataToSend.append('location_county', formData.state || ''); // Using state input for county
         formDataToSend.append('location_area', ''); // Not in form yet, empty for now
         formDataToSend.append('latitude', formData.latitude.toString());
         formDataToSend.append('longitude', formData.longitude.toString());
 
         // Specs
-        formDataToSend.append('rooms', formData.rooms);
-        formDataToSend.append('bedrooms', formData.beds);
-        formDataToSend.append('bathrooms', formData.baths);
-        formDataToSend.append('area_usable', formData.usableArea);
-        formDataToSend.append('area_built', formData.builtArea);
-        formDataToSend.append('area_box', formData.boxArea);
-        formDataToSend.append('area_terrace', formData.terraceArea);
-        formDataToSend.append('area_garden', formData.gardenArea);
+        formDataToSend.append('rooms', formData.rooms || '0');
+        formDataToSend.append('bedrooms', formData.beds || '0');
+        formDataToSend.append('bathrooms', formData.baths || '0');
+        formDataToSend.append('area_usable', formData.usableArea || '0');
+        formDataToSend.append('area_built', formData.builtArea || '0');
+        formDataToSend.append('area_box', formData.boxArea || '0');
+        formDataToSend.append('area_terrace', formData.terraceArea || '0');
+        formDataToSend.append('area_garden', formData.gardenArea || '0');
 
-        formDataToSend.append('year_built', formData.yearBuilt);
-        formDataToSend.append('floor', formData.floor);
-        formDataToSend.append('total_floors', formData.totalFloors);
-        formDataToSend.append('partitioning', formData.partitioning);
-        formDataToSend.append('comfort', formData.comfort);
-        formDataToSend.append('building_type', formData.buildingType);
-        formDataToSend.append('interior_condition', formData.interiorCondition);
-        formDataToSend.append('furnishing', formData.furnishing);
+        formDataToSend.append('year_built', formData.yearBuilt || '0');
+        formDataToSend.append('floor', formData.floor || '0');
+        formDataToSend.append('total_floors', formData.totalFloors || '0');
+        formDataToSend.append('partitioning', formData.partitioning || '');
+        formDataToSend.append('comfort', formData.comfort || '');
+        formDataToSend.append('building_type', formData.buildingType || '');
+        formDataToSend.append('interior_condition', formData.interiorCondition || '');
+        formDataToSend.append('furnishing', formData.furnishing || '');
 
         // Features & Media
         formDataToSend.append('features', JSON.stringify(formData.features));
-        formDataToSend.append('youtube_video_url', formData.youtubeVideoUrl);
-        formDataToSend.append('virtual_tour_url', formData.virtualTourUrl);
-        formDataToSend.append('social_media_url', formData.socialMediaUrl);
-        formDataToSend.append('personal_property_id', formData.personalId);
+        formDataToSend.append('youtube_video_url', formData.youtubeVideoUrl || '');
+        formDataToSend.append('virtual_tour_url', formData.virtualTourUrl || '');
+        formDataToSend.append('social_media_url', formData.socialMediaUrl || '');
+        formDataToSend.append('personal_property_id', formData.personalId || '');
 
         // Private Fields
-        formDataToSend.append('private_notes', formData.privateNotes);
+        formDataToSend.append('private_notes', formData.privateNotes || '');
         formDataToSend.append('documents', JSON.stringify(formData.documents));
-        formDataToSend.append('owner_name', formData.ownerName);
-        formDataToSend.append('owner_phone', formData.ownerPhone);
+        formDataToSend.append('owner_name', formData.ownerName || '');
+        formDataToSend.append('owner_phone', formData.ownerPhone || '');
 
         // Status
         formDataToSend.append('status', status);
@@ -211,20 +268,17 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
         try {
             const result = await createProperty(formDataToSend);
             if (result.success) {
-                setSuccess(true);
+                if (!silent) setSuccess(true);
             } else {
-                alert(`Error: ${result.error}`);
+                if (!silent) alert(`Error: ${result.error}`);
+                console.error('Submission error:', result.error);
             }
         } catch (error) {
             console.error(error);
-            alert('An unexpected error occurred.');
+            if (!silent) alert('An unexpected error occurred.');
         } finally {
-            setSubmitting(false);
+            if (!silent) setSubmitting(false);
         }
-    };
-
-    const handleSaveDraft = (e: React.MouseEvent) => {
-        handleSubmit(e as unknown as React.FormEvent, 'draft');
     };
 
     const checkKeyDown = (e: React.KeyboardEvent) => {
@@ -296,7 +350,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                         <div key={s} className="flex-1 relative z-10">
                             <button
                                 type="button"
-                                onClick={() => setStep(s)}
+                                onClick={() => setStep(s)} // Allow skipping for now, or restrict if needed
                                 className={`flex items-center justify-center gap-3 w-full py-4 px-2 rounded-xl transition-all duration-300 ${step === s
                                     ? 'bg-slate-800/80 shadow-lg shadow-black/20 border border-slate-700/50'
                                     : 'hover:bg-slate-800/40'
@@ -741,24 +795,50 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                                                     </button>
                                                 </div>
                                             ))}
-                                            <div className="border-2 border-dashed border-slate-800 bg-slate-950/30 rounded-xl flex items-center justify-center aspect-[4/3] hover:bg-slate-900/50 hover:border-violet-500/50 transition-all cursor-pointer">
+                                            <label className="border-2 border-dashed border-slate-800 bg-slate-950/30 rounded-xl flex items-center justify-center aspect-[4/3] hover:bg-slate-900/50 hover:border-violet-500/50 transition-all cursor-pointer">
                                                 <div className="text-center">
-                                                    <Upload className="w-6 h-6 text-slate-500 mx-auto mb-2" />
-                                                    <span className="text-xs text-slate-500">Add More</span>
+                                                    <input
+                                                        type="file"
+                                                        multiple
+                                                        accept="image/*"
+                                                        onChange={handleImageUpload}
+                                                        className="hidden"
+                                                        disabled={uploading}
+                                                    />
+                                                    {uploading ? (
+                                                        <Loader2 className="w-6 h-6 text-violet-500 animate-spin mx-auto mb-2" />
+                                                    ) : (
+                                                        <Upload className="w-6 h-6 text-slate-500 mx-auto mb-2" />
+                                                    )}
+                                                    <span className="text-xs text-slate-500">{uploading ? '...' : 'Add More'}</span>
                                                 </div>
-                                            </div>
+                                            </label>
                                         </div>
                                     ) : (
-                                        <div className="border-2 border-dashed border-slate-800 bg-slate-950/30 rounded-2xl p-12 text-center hover:bg-slate-900/50 hover:border-violet-500/50 transition-all cursor-pointer group relative overflow-hidden">
+                                        <label className="border-2 border-dashed border-slate-800 bg-slate-950/30 rounded-2xl p-12 text-center hover:bg-slate-900/50 hover:border-violet-500/50 transition-all cursor-pointer group relative overflow-hidden block">
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                className="hidden"
+                                                disabled={uploading}
+                                            />
                                             <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 border border-slate-800 group-hover:border-violet-500/30 z-10 relative">
-                                                <ImageIcon className="w-8 h-8 text-slate-500 group-hover:text-violet-400 transition-colors" />
+                                                {uploading ? (
+                                                    <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+                                                ) : (
+                                                    <ImageIcon className="w-8 h-8 text-slate-500 group-hover:text-violet-400 transition-colors" />
+                                                )}
                                             </div>
-                                            <p className="text-slate-400 font-medium z-10 relative group-hover:text-white transition-colors">Click to upload or drag and drop photos</p>
+                                            <p className="text-slate-400 font-medium z-10 relative group-hover:text-white transition-colors">
+                                                {uploading ? 'Uploading...' : 'Click to upload or drag and drop photos'}
+                                            </p>
                                             <p className="text-xs text-slate-600 mt-2 z-10 relative">Up to 10 images, max 5MB each</p>
 
                                             {/* Hover Glow */}
                                             <div className="absolute inset-0 bg-gradient-to-tr from-violet-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        </div>
+                                        </label>
                                     )}
                                 </div>
                             </div>
@@ -948,7 +1028,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                                 className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl transition-all border border-slate-700/50"
                             >
                                 <Upload size={18} />
-                                <span>Import Properties</span>
+                                <span>Import</span>
                             </button>
                             <ImportPropertiesModal
                                 showDefaultButton={false}
@@ -957,12 +1037,12 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                                 onScrapeSuccess={handleScrapeSuccess}
                             />
                             <button
-                                onClick={(e) => handleSubmit(e, 'draft')}
-                                disabled={submitting}
+                                onClick={(e) => handleSaveDraft(e)} // Explicitly save draft
+                                disabled={submitting || savingDraft}
                                 className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold hover:text-violet-200 transition-all border border-violet-500/30"
                             >
-                                <Save size={18} />
-                                <span>Save Draft</span>
+                                {savingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={18} />}
+                                <span>{savingDraft ? 'Saving...' : 'Save Draft'}</span>
                             </button>
                         </div>
 
@@ -970,8 +1050,9 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                             <button
                                 key="next-step-btn"
                                 type="button"
-                                onClick={() => setStep(step + 1)}
-                                className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-500/25 transition-all shadow-lg shadow-violet-900/20 group relative overflow-hidden"
+                                onClick={nextStep}
+                                disabled={savingDraft}
+                                className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-500/25 transition-all shadow-lg shadow-violet-900/20 group relative overflow-hidden disabled:opacity-70"
                             >
                                 <span className="relative z-10 flex items-center gap-2">
                                     Next Step
