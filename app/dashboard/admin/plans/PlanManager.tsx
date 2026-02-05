@@ -4,7 +4,6 @@ import { useState } from 'react';
 import RoleSelector from '@/app/components/RoleSelector';
 import PlanEditor from '../PlanEditor';
 import { FeatureToggle } from '../FeatureToggle';
-import NewFeatureForm from '../NewFeatureForm';
 import NewPlanForm from './NewPlanForm';
 
 interface PlanManagerProps {
@@ -57,7 +56,12 @@ export default function PlanManager({ allPlans, featuresByRole }: PlanManagerPro
                                     {planFeatures.filter((f: any) => !['leads_access', 'valuation_reports', 'market_insights'].includes(f.feature_key)).map((feature: any) => (
                                         <FeatureToggle key={feature.id} feature={feature} />
                                     ))}
-                                    <NewFeatureForm role={selectedRole} planName={plan.name} />
+
+                                    <div className="pt-2">
+                                        <a href="/dashboard/admin/features" className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 hover:underline">
+                                            + Manage Global Features
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

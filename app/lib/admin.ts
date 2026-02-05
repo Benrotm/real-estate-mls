@@ -81,13 +81,26 @@ export async function createGlobalFeature(label: string) {
         sort_order: 99
     }));
 
-    // 4. Insert
-    const { error } = await supabase.from('plan_features').insert(inserts);
+    // 4. Insert with ignoreDuplicates (upsert nothing)
+    // Supabase upsert requires primary key or unique constraint. 
+    // We don't have a unique constraint on (role, plan_name, feature_key) by default unless migration added it.
+    // If we assume no constraint, we must check existence?
+    // Let's rely on `onConflict` if constraint exists, or just manual check.
+    // The previous error handler suggests we rely on DB constraint. 
+    // Let's do a safe check first if we can't trust constraints.
 
-    if (error) {
-        // Handle duplicate key error gracefully?
-        if (error.code === '23505') throw new Error('Feature already exists (key collision).');
-        throw new Error(error.message);
+    // Better: Select existing for this key, filter out plans that already have it.
+    const { data: existing } = await supabase
+        .from('plan_features')
+        .select('role, plan_name')
+        .eq('feature_key', key);
+
+    const existingSet = new Set(existing?.map(e => `${e.role}:${e.plan_name}`));
+    const finalInserts = inserts.filter(i => !existingSet.has(`${i.role}:${i.plan_name}`));
+
+    if (finalInserts.length > 0) {
+        const { error } = await supabase.from('plan_features').insert(finalInserts);
+        if (error) throw new Error(error.message);
     }
 
     revalidatePath('/dashboard/admin/features');
@@ -203,6 +216,39 @@ export async function createPlan(plan: { role: string, name: string, price: numb
         .insert([{ ...plan, is_popular: false }]);
 
     if (error) throw new Error(error.message);
+
+    // Backfill features for the new plan
+    // 1. Get all unique feature keys from existing plans (or fallback to defaults)
+    const { data: existingFeatures } = await supabase
+        .from('plan_features')
+        .select('feature_key, feature_label, sort_order')
+        .order('sort_order');
+
+    if (existingFeatures && existingFeatures.length > 0) {
+        // Deduplicate by key
+        const uniqueFeatures = new Map();
+        existingFeatures.forEach(f => {
+            if (!uniqueFeatures.has(f.feature_key)) {
+                uniqueFeatures.set(f.feature_key, f);
+            }
+        });
+
+        // Prepare inserts for the new plan
+        const featuresToInsert = Array.from(uniqueFeatures.values()).map((f: any) => ({
+            role: plan.role,
+            plan_name: plan.name,
+            feature_key: f.feature_key,
+            feature_label: f.feature_label,
+            is_included: false, // Default to disabled
+            sort_order: f.sort_order
+        }));
+
+        if (featuresToInsert.length > 0) {
+            const { error: insertError } = await supabase.from('plan_features').insert(featuresToInsert);
+            if (insertError) console.warn('Error backfilling features:', insertError.message);
+        }
+    }
+
     revalidatePath('/pricing');
     revalidatePath('/dashboard/admin');
     revalidatePath('/dashboard/admin/plans');
