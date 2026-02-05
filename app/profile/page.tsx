@@ -1,6 +1,7 @@
 import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
 import { User, Mail, Shield, Building } from 'lucide-react';
+import AvatarUpload from '../components/AvatarUpload';
 
 export default async function ProfilePage() {
     const profile = await getUserProfile();
@@ -14,9 +15,11 @@ export default async function ProfilePage() {
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
                 <div className="bg-slate-900 px-6 py-8 sm:p-10">
                     <div className="flex items-center gap-6">
-                        <div className="h-24 w-24 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white/20">
-                            <span className="text-3xl font-bold">{profile.full_name?.[0]?.toUpperCase() || 'U'}</span>
-                        </div>
+                        <AvatarUpload
+                            userId={profile.id}
+                            currentAvatarUrl={profile.avatar_url}
+                            fullName={profile.full_name}
+                        />
                         <div>
                             <h1 className="text-3xl font-bold text-white">{profile.full_name || 'User'}</h1>
                             <div className="flex items-center gap-2 mt-2">
