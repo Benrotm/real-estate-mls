@@ -1,11 +1,17 @@
 import { getUserProfile, getUsageStats } from '../../lib/auth';
 import AddPropertyForm from './AddPropertyForm';
 import { ShieldAlert, ArrowLeft, Crown } from 'lucide-react';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 export default async function AddPropertyPage() {
     const profile = await getUserProfile();
-    const currentUsage = profile ? await getUsageStats(profile.id) : 0;
+
+    if (!profile) {
+        redirect('/auth/login');
+    }
+
+    const currentUsage = await getUsageStats(profile.id);
     // Total limit = base plan limit + bonus listings granted by admin
     const baseLimit = profile?.listings_limit || 1;
     const bonusListings = profile?.bonus_listings || 0;
