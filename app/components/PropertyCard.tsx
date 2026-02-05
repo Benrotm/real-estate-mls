@@ -109,7 +109,7 @@ export default function PropertyCard({ property, showEditButton }: PropertyCardP
                         href={`/properties/${property.id}`}
                         className="flex-1 text-center bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 hover:shadow-lg transition-all transform active:scale-95"
                     >
-                        View Details
+                        View
                     </Link>
                     {showEditButton && (
                         <Link
