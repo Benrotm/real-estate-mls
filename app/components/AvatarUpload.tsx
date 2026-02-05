@@ -24,13 +24,13 @@ export default function AvatarUpload({ userId, currentAvatarUrl, fullName }: Ava
             const file = event.target.files?.[0];
             if (!file) return;
 
-            // 1. Upload to Supabase Storage
+            // 1. Upload to Supabase Storage (Reuse property-images bucket since manual migration is hard)
             const fileExt = file.name.split('.').pop();
-            const fileName = `avatar_${userId}_${Date.now()}.${fileExt}`;
+            const fileName = `avatars/avatar_${userId}_${Date.now()}.${fileExt}`;
             const filePath = `${fileName}`;
 
             const { error: uploadError } = await supabase.storage
-                .from('avatars')
+                .from('property-images')
                 .upload(filePath, file, { upsert: true });
 
             if (uploadError) {
@@ -39,7 +39,7 @@ export default function AvatarUpload({ userId, currentAvatarUrl, fullName }: Ava
 
             // 2. Get Public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('avatars')
+                .from('property-images')
                 .getPublicUrl(filePath);
 
             // 3. Update Profile in DB
