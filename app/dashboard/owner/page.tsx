@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Building, Check, Eye, Clock, ArrowUpRight, Plus, BarChart, TrendingUp, MessageSquare } from 'lucide-react';
 import HomeValuationWidget from '../../components/HomeValuationWidget';
-import { getUserProfile, getUsageStats, getFeaturedStats } from '../../lib/auth';
+import { getUserProfile, getUsageStats, getActiveUsageStats, getFeaturedStats } from '../../lib/auth';
 
 export default async function OwnerDashboard() {
     const profile = await getUserProfile();
@@ -15,10 +15,13 @@ export default async function OwnerDashboard() {
         return null;
     }
 
-    const usageCount = await getUsageStats(profile.id);
+    const usageCount = await getActiveUsageStats(profile.id);
     const featuredCount = await getFeaturedStats(profile.id);
 
-    const limit = profile.listings_limit || 1;
+    const baseLimit = profile.listings_limit || 1;
+    const bonus = profile.bonus_listings || 0;
+    const limit = baseLimit + bonus;
+
     const featuredLimit = profile.featured_limit || 0;
 
     const usagePercent = Math.min(100, Math.round((usageCount / limit) * 100));
@@ -174,7 +177,7 @@ export default async function OwnerDashboard() {
                             {/* Listings Progress */}
                             <div className="mb-6">
                                 <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                                    <span>Listings Used</span>
+                                    <span>Active Listings Used</span>
                                     <span>{usageCount} / {limit}</span>
                                 </div>
                                 <div className="w-full bg-slate-100 rounded-full h-2 mb-1">
@@ -183,7 +186,10 @@ export default async function OwnerDashboard() {
                                         style={{ width: `${usagePercent}%` }}
                                     ></div>
                                 </div>
-                                <p className="text-xs text-slate-400 text-right">{availableListings} available</p>
+                                <div className="flex justify-between text-xs text-slate-400">
+                                    <span>{availableListings} available</span>
+                                    {bonus > 0 && <span className="text-emerald-600 font-bold">+{bonus} Bonus included</span>}
+                                </div>
                             </div>
 
                             {/* Featured Progress */}

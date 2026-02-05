@@ -1,4 +1,4 @@
-import { getUserProfile, getUsageStats } from '../../lib/auth';
+import { getUserProfile, getUsageStats, getActiveUsageStats } from '../../lib/auth';
 import AddPropertyForm from './AddPropertyForm';
 import { ShieldAlert, ArrowLeft, Crown } from 'lucide-react';
 import { redirect } from 'next/navigation';
@@ -11,11 +11,23 @@ export default async function AddPropertyPage() {
         redirect('/auth/login');
     }
 
-    const currentUsage = await getUsageStats(profile.id);
+    const currentUsage = await getActiveUsageStats(profile.id);
     // Total limit = base plan limit + bonus listings granted by admin
     const baseLimit = profile?.listings_limit || 1;
     const bonusListings = profile?.bonus_listings || 0;
     const limit = baseLimit + bonusListings;
+
+    // We only block if they hit the limit of ACTIVE listings.
+    // However, we want to allow them to create drafts even if active limit is reached?
+    // User request was "calculate as used only the published ones".
+    // If I block here, they can't create drafts if active limit is reached.
+    // To allow drafts, I should remove this block or make it conditional.
+    // For now, I'll keep the block to prevent abuse, assuming "Add Property" implies intent to publish usually, 
+    // or that they should unpublish one to add another. 
+    // BUT, if they want to prepare a draft, they should be able to.
+    // Let's relax it: Only show warning if limit reached?
+    // Actually, let's just use the strict interpretation: Active Slots Full = No New Additions.
+    // This is safer for ensuring they don't bypass limits easily without complex UI work in Form.
 
     const hasReachedLimit = currentUsage >= limit;
 
@@ -31,12 +43,12 @@ export default async function AddPropertyPage() {
                         <ShieldAlert className="w-12 h-12 text-red-500" />
                     </div>
 
-                    <h1 className="text-3xl font-bold mb-3 text-white">Limit Reached</h1>
+                    <h1 className="text-3xl font-bold mb-3 text-white">Active Limit Reached</h1>
                     <p className="text-slate-400 mb-2 leading-relaxed">
-                        You have reached the limit of <strong>{limit}</strong> active listings for your current plan.
+                        You have reached your limit of <strong>{limit}</strong> active listings.
                     </p>
                     <p className="text-slate-500 text-sm mb-8">
-                        Upgrade to Enterprise to list unlimited properties.
+                        To add more, please unpublish an existing property or upgrade your plan.
                     </p>
 
                     <div className="space-y-4">

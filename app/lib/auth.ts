@@ -97,3 +97,18 @@ export async function getFeaturedStats(userId: string) {
     }
     return count || 0;
 }
+
+export async function getActiveUsageStats(userId: string) {
+    const supabase = await createClient();
+    const { count, error } = await supabase
+        .from('properties')
+        .select('*', { count: 'exact', head: true })
+        .eq('owner_id', userId)
+        .eq('status', 'active');
+
+    if (error) {
+        console.error('Error fetching active usage stats:', error);
+        return 0;
+    }
+    return count || 0;
+}

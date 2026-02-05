@@ -4,6 +4,7 @@ import { createClient } from '@/app/lib/supabase/server';
 import { Property, Property as PropertyType } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
 import { calculatePropertyScore } from './scoring';
+import { getUserProfile, getActiveUsageStats } from '../auth';
 
 export async function createProperty(formData: FormData) {
     const supabase = await createClient();
@@ -77,6 +78,18 @@ export async function createProperty(formData: FormData) {
 
         // Calculate property score
         const score = await calculatePropertyScore(propertyData as Partial<Property>);
+
+        // Check limits if status is active
+        if (propertyData.status === 'active') {
+            const profile = await getUserProfile();
+            if (profile) {
+                const currentUsage = await getActiveUsageStats(profile.id);
+                const limit = (profile.listings_limit || 1) + (profile.bonus_listings || 0);
+                if (currentUsage >= limit) {
+                    return { error: `Active listing limit reached (${limit}). Please save as draft.` };
+                }
+            }
+        }
 
         const { data, error } = await supabase
             .from('properties')
@@ -408,6 +421,17 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
     }
 
     const newStatus = currentStatus === 'active' ? 'draft' : 'active';
+
+    if (newStatus === 'active') {
+        const profile = await getUserProfile();
+        if (profile) {
+            const currentUsage = await getActiveUsageStats(profile.id);
+            const limit = (profile.listings_limit || 1) + (profile.bonus_listings || 0);
+            if (currentUsage >= limit) {
+                return { error: `Active listing limit reached (${limit}). Cannot publish.` };
+            }
+        }
+    }
 
     const { error } = await supabase
         .from('properties')
