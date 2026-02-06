@@ -20,7 +20,7 @@ export default function CreateTourPage() {
         if (result.success && result.data) {
             router.push(`/dashboard/owner/tours/${result.data.id}/edit`);
         } else {
-            alert('Error creating tour');
+            alert(`Error creating tour: ${result.error || 'Unknown error'}`);
             setLoading(false);
         }
     }
@@ -42,7 +42,7 @@ export default function CreateTourPage() {
                             name="title"
                             required
                             placeholder="e.g. Ocean View Penthouse"
-                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-slate-900 placeholder:text-slate-400"
                         />
                     </div>
 
@@ -52,7 +52,7 @@ export default function CreateTourPage() {
                             name="description"
                             rows={3}
                             placeholder="Brief description of the tour..."
-                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-slate-900 placeholder:text-slate-400"
                         />
                     </div>
 
