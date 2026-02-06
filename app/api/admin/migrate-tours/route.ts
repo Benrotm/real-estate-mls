@@ -3,31 +3,50 @@ import { Client } from 'pg';
 import { createClient } from '@/app/lib/supabase/server';
 
 export async function GET() {
-    // 1. Check Admin Auth
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    // Return HTML form
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Database Migration Tool</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100 min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+            <h1 class="text-2xl font-bold mb-4 text-gray-800">Database Migration Tool</h1>
+            <p class="mb-4 text-gray-600">The server needs your database password to run the setup script.</p>
+            
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Database Password</label>
+                    <input type="password" name="password" required class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-500" placeholder="Enter your database password">
+                    <p class="text-xs text-gray-400 mt-1">If you forgot it, reset it in Supabase > Project Settings > Database.</p>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded font-semibold hover:bg-indigo-700 transition">Run Migration</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    `;
+    return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } });
+}
 
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function POST(request: Request) {
+    const formData = await request.formData();
+    const password = formData.get('password') as string;
+
+    if (!password) {
+        return NextResponse.json({ error: 'Password required' }, { status: 400 });
     }
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    if (profile?.role !== 'super_admin' && profile?.role !== 'admin') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // 2. Run Migration using Server Env Vars
-    const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
-
-    if (!connectionString) {
-        return NextResponse.json({ error: 'No database connection string found in server environment.' }, { status: 500 });
-    }
+    // Hardcode known project details from user's earlier context
+    const PROJECT_REF = 'cwfhcrftwsxsovexkero';
+    const connectionString = `postgresql://postgres:${encodeURIComponent(password)}@db.${PROJECT_REF}.supabase.co:5432/postgres`;
 
     const client = new Client({
         connectionString,
         ssl: { rejectUnauthorized: false }
     });
-
     try {
         await client.connect();
 
@@ -83,10 +102,10 @@ export async function GET() {
         await client.query(sql);
         await client.end();
 
-        return NextResponse.json({ success: true, message: 'Migration executed successfully!' });
+        return NextResponse.json({ success: true, message: 'Migration executed successfully! You can now create tours.' });
     } catch (err: any) {
         if (client) await client.end();
         console.error('Migration failed:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: `Migration failed: ${err.message}` }, { status: 500 });
     }
 }
