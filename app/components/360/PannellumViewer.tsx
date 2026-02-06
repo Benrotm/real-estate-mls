@@ -38,7 +38,7 @@ export default function PannellumViewer({
     image,
     pitch = 0,
     yaw = 0,
-    hfov = 110,
+    hfov = 100,
     hotspots = [],
     onLoad,
     onSceneChange,
@@ -82,6 +82,8 @@ export default function PannellumViewer({
             pitch,
             yaw,
             hfov,
+            minHfov: 50,
+            maxHfov: 120,
             hotSpots: hotspots.map(h => ({
                 ...h,
                 clickHandlerFunc: h.type === 'scene' ? (e: any, args: any) => {

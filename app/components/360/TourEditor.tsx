@@ -105,61 +105,100 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
         if (currentSceneId === sceneId) setCurrentSceneId(newScenes[0]?.id);
     };
 
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+
     return (
-        <div className="flex h-[calc(100vh-64px)]">
-            {/* Sidebar */}
-            <div className="w-80 bg-white border-r border-slate-200 flex flex-col">
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center">
-                    <h2 className="font-bold text-slate-800">Scenes</h2>
-                    <label className="cursor-pointer bg-indigo-50 text-indigo-600 p-2 rounded-lg hover:bg-indigo-100 transition-colors">
-                        <Plus className="w-5 h-5" />
-                        <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploading} />
-                    </label>
+        <div className="relative h-[calc(100vh-64px)] w-full bg-slate-900 overflow-hidden font-sans">
+
+            {/* Top Bar (Floating) */}
+            <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center pointer-events-none">
+                <div className="pointer-events-auto bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full border border-white/10 shadow-xl flex items-center gap-3">
+                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 hover:bg-white/20 rounded-full transition">
+                        <ArrowRight className={`w-5 h-5 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    <span className="font-semibold text-sm tracking-wide">
+                        {currentScene ? currentScene.title : 'No Scene Selected'}
+                    </span>
+                    {saving && <span className="text-xs text-blue-400 animate-pulse">Saving...</span>}
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                    {tourData.scenes.map(scene => (
-                        <div
-                            key={scene.id}
-                            onClick={() => setCurrentSceneId(scene.id)}
-                            className={`p-3 rounded-xl cursor-pointer flex items-center gap-3 transition-colors ${scene.id === currentSceneId ? 'bg-indigo-50 border-indigo-200 border' : 'hover:bg-slate-50 border border-transparent'
-                                }`}
-                        >
-                            <img src={scene.image_url} alt="" className="w-12 h-8 object-cover rounded bg-slate-200" />
-                            <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{scene.title}</p>
-                                <p className="text-xs text-slate-400">{scene.hotspots.length} hotspots</p>
-                            </div>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handleDeleteScene(scene.id); }}
-                                className="text-slate-400 hover:text-red-500 p-1"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))}
-
-                    {tourData.scenes.length === 0 && (
-                        <div className="text-center py-8 text-slate-400 text-sm">
-                            <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                            No scenes yet. Upload a panorama.
-                        </div>
-                    )}
-                </div>
-
-                <div className="p-4 border-t border-slate-100">
+                <div className="pointer-events-auto flex gap-2">
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-indigo-900/40 transition-all flex items-center gap-2"
                     >
-                        {saving ? 'Saving...' : <><Save className="w-4 h-4" /> Save Tour</>}
+                        <Save className="w-4 h-4" />
+                        Save Changes
                     </button>
                 </div>
             </div>
 
-            {/* Main Viewer Area */}
-            <div className="flex-1 relative bg-slate-100">
+            {/* Scenes Drawer (Left) */}
+            <div
+                className={`absolute top-20 bottom-8 left-4 w-72 z-20 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-[110%]'} pointer-events-none`}
+            >
+                <div className="pointer-events-auto h-full bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+                    <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+                        <h2 className="font-bold text-white text-sm uppercase tracking-wider">Scenes</h2>
+                        <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white p-1.5 rounded-lg transition-colors shadow-lg">
+                            <Plus className="w-4 h-4" />
+                            <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+                        </label>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                        {tourData.scenes.map(scene => (
+                            <div
+                                key={scene.id}
+                                onClick={() => setCurrentSceneId(scene.id)}
+                                className={`group p-2 rounded-xl cursor-pointer flex items-center gap-3 transition-all border ${scene.id === currentSceneId
+                                        ? 'bg-indigo-600/20 border-indigo-500/50 shadow-inner'
+                                        : 'hover:bg-white/5 border-transparent'
+                                    }`}
+                            >
+                                <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 shadow-sm shrink-0">
+                                    <img src={scene.image_url} alt="" className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className={`font-medium text-sm truncate ${scene.id === currentSceneId ? 'text-white' : 'text-slate-300'}`}>
+                                        {scene.title}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-[10px] text-slate-500 bg-white/5 px-1.5 py-0.5 rounded-md">
+                                            {scene.hotspots.length} hotspots
+                                        </span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteScene(scene.id); }}
+                                    className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-1.5 rounded-md hover:bg-white/5 transition-all"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+
+                        {tourData.scenes.length === 0 && (
+                            <div className="text-center py-12 text-slate-500 text-sm flex flex-col items-center">
+                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                                    <ImageIcon className="w-6 h-6 opacity-30" />
+                                </div>
+                                <span className="opacity-60">No scenes uploaded</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {uploading && (
+                        <div className="p-3 bg-indigo-900/30 border-t border-indigo-500/30">
+                            <p className="text-xs text-indigo-300 text-center animate-pulse">Uploading panorama...</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Main Viewer Area (Full Screen) */}
+            <div className="absolute inset-0 z-0 bg-slate-900">
                 {currentScene ? (
                     <>
                         <PannellumViewer
@@ -176,63 +215,72 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
                             }}
                         />
 
-                        {/* Editor Controls Overlay */}
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md p-2 rounded-full shadow-lg flex gap-2">
-                            <button
-                                onClick={() => setLinkingMode(!linkingMode)}
-                                className={`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 transition-colors ${linkingMode ? 'bg-indigo-600 text-white' : 'bg-transparent text-slate-700 hover:bg-slate-100'
-                                    }`}
-                            >
-                                <MapPin className="w-4 h-4" />
-                                {linkingMode ? 'Click to Place Hotspot' : 'Add Hotspot'}
-                            </button>
+                        {/* Bottom Actions Floating Bar */}
+                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
+                            <div className="bg-black/70 backdrop-blur-xl border border-white/10 p-1.5 rounded-full shadow-2xl flex gap-1">
+                                <button
+                                    onClick={() => setLinkingMode(!linkingMode)}
+                                    className={`px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2.5 transition-all ${linkingMode
+                                            ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20 scale-105'
+                                            : 'bg-white/10 text-white hover:bg-white/20'
+                                        }`}
+                                >
+                                    <MapPin className={`w-4 h-4 ${linkingMode ? 'fill-black' : ''}`} />
+                                    {linkingMode ? 'Click Scene to Place' : 'Add Hotspot'}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Custom Centered Modal */}
                         {hotspotModal && (
-                            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setHotspotModal(null)}>
-                                <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-full m-4 animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4">Add Hotspot</h3>
+                            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setHotspotModal(null)}>
+                                <div className="bg-slate-900 border border-white/10 text-white rounded-2xl shadow-2xl p-6 w-96 max-w-full m-4 scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                                    <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-6">New Hotspot</h3>
 
-                                    <div className="space-y-4">
+                                    <div className="space-y-5">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1">Label Text</label>
+                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Label Text</label>
                                             <input
                                                 autoFocus
                                                 type="text"
                                                 value={hotspotText}
                                                 onChange={e => setHotspotText(e.target.value)}
-                                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                placeholder="e.g. Kitchen, Exit..."
+                                                className="w-full p-3 bg-black/40 border border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-600"
+                                                placeholder="e.g. Living Room"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1">Target Scene (Optional)</label>
-                                            <select
-                                                value={hotspotTarget}
-                                                onChange={e => setHotspotTarget(e.target.value)}
-                                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            >
-                                                <option value="">(Info Only - No Link)</option>
-                                                {tourData.scenes.filter(s => s.id !== currentSceneId).map(s => (
-                                                    <option key={s.id} value={s.id}>{s.title}</option>
-                                                ))}
-                                            </select>
+                                            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Scene</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={hotspotTarget}
+                                                    onChange={e => setHotspotTarget(e.target.value)}
+                                                    className="w-full p-3 bg-black/40 border border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none appearance-none text-slate-200"
+                                                >
+                                                    <option value="" className="bg-slate-800 text-slate-400">Info Only (No Navigation)</option>
+                                                    {tourData.scenes.filter(s => s.id !== currentSceneId).map(s => (
+                                                        <option key={s.id} value={s.id} className="bg-slate-800">{s.title}</option>
+                                                    ))}
+                                                </select>
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                    <ArrowRight className="w-4 h-4 rotate-90" />
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="flex gap-2 pt-2">
+                                        <div className="flex gap-3 pt-4">
                                             <button
                                                 onClick={() => setHotspotModal(null)}
-                                                className="flex-1 px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg"
+                                                className="flex-1 px-4 py-3 text-slate-400 font-medium hover:bg-white/5 rounded-xl transition-colors"
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 onClick={confirmAddHotspot}
-                                                className="flex-1 px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700"
+                                                className="flex-1 px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-500 shadow-lg shadow-indigo-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
                                             >
-                                                Add
+                                                Save Hotspot
                                             </button>
                                         </div>
                                     </div>
@@ -241,8 +289,14 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
                         )}
                     </>
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                        <p>Select or upload a scene to begin editing</p>
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
+                        <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center animate-pulse">
+                            <ImageIcon className="w-10 h-10 opacity-50" />
+                        </div>
+                        <div className="text-center">
+                            <p className="text-xl font-medium text-white mb-2">No Scene Selected</p>
+                            <p className="text-slate-500">Upload a 360° panorama on the left to get started.</p>
+                        </div>
                     </div>
                 )}
             </div>
