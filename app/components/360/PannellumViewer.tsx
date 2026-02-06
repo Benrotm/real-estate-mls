@@ -131,6 +131,17 @@ export default function PannellumViewer({
     }, [libLoaded, sceneId, image, hotspots]); // Re-init on hotspot change to force render
 
     return (
-        <div ref={viewerContainer} className="w-full h-full bg-slate-100" />
+        <>
+            <style jsx global>{`
+                .pnlm-hotspot-base {
+                    transform: scale(2.5) !important;
+                    margin-top: -30px !important; /* Adjust default offset slightly */
+                }
+                .pnlm-hotspot:hover {
+                    z-index: 1000 !important;
+                }
+            `}</style>
+            <div ref={viewerContainer} className="w-full h-full bg-slate-900 text-white" />
+        </>
     );
 }

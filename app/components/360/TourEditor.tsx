@@ -52,7 +52,7 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
 
         const newScene: Scene = {
             id: crypto.randomUUID(),
-            title: file.name.split('.')[0],
+            title: file.name,
             image_url: publicUrl,
             hotspots: []
         };
@@ -153,8 +153,8 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
                                 key={scene.id}
                                 onClick={() => setCurrentSceneId(scene.id)}
                                 className={`group p-2 rounded-xl cursor-pointer flex items-center gap-3 transition-all border ${scene.id === currentSceneId
-                                        ? 'bg-indigo-600/20 border-indigo-500/50 shadow-inner'
-                                        : 'hover:bg-white/5 border-transparent'
+                                    ? 'bg-indigo-600/20 border-indigo-500/50 shadow-inner'
+                                    : 'hover:bg-white/5 border-transparent'
                                     }`}
                             >
                                 <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 shadow-sm shrink-0">
@@ -221,8 +221,8 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
                                 <button
                                     onClick={() => setLinkingMode(!linkingMode)}
                                     className={`px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2.5 transition-all ${linkingMode
-                                            ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20 scale-105'
-                                            : 'bg-white/10 text-white hover:bg-white/20'
+                                        ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20 scale-105'
+                                        : 'bg-white/10 text-white hover:bg-white/20'
                                         }`}
                                 >
                                     <MapPin className={`w-4 h-4 ${linkingMode ? 'fill-black' : ''}`} />
