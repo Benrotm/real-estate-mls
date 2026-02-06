@@ -14,13 +14,13 @@ export async function GET() {
     <body class="bg-gray-100 min-h-screen flex items-center justify-center">
         <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
             <h1 class="text-2xl font-bold mb-4 text-gray-800">Database Migration Tool</h1>
-            <p class="mb-4 text-gray-600">The server needs your database password to run the setup script.</p>
+            <p class="mb-4 text-gray-600">Please paste your full <strong>Connection String</strong> (URI) below.</p>
             
             <form method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Database Password</label>
-                    <input type="password" name="password" required class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-500" placeholder="Enter your database password">
-                    <p class="text-xs text-gray-400 mt-1">If you forgot it, reset it in Supabase > Project Settings > Database.</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Connection String (URI)</label>
+                    <input type="text" name="connectionString" required class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-500" placeholder="postgresql://postgres:password@db.ref.supabase.co:5432/postgres">
+                    <p class="text-xs text-gray-400 mt-1">Copy this from Vercel Env Vars or Supabase > Settings > Database > Connection String > URI.</p>
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded font-semibold hover:bg-indigo-700 transition">Run Migration</button>
             </form>
@@ -33,15 +33,21 @@ export async function GET() {
 
 export async function POST(request: Request) {
     const formData = await request.formData();
-    const password = formData.get('password') as string;
+    let connectionString = formData.get('connectionString') as string;
 
-    if (!password) {
-        return NextResponse.json({ error: 'Password required' }, { status: 400 });
+    // Fallback to Env Var if empty input (though required in form)
+    if (!connectionString) {
+        connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL || '';
     }
 
-    // Hardcode known project details from user's earlier context
-    const PROJECT_REF = 'cwfhcrftwsxsovexkero';
-    const connectionString = `postgresql://postgres:${encodeURIComponent(password)}@db.${PROJECT_REF}.supabase.co:5432/postgres`;
+    if (!connectionString) {
+        return NextResponse.json({ error: 'Connection string is required' }, { status: 400 });
+    }
+
+    // Ensure it's a valid string format generally
+    if (!connectionString.includes('postgres')) {
+        return NextResponse.json({ error: 'Invalid connection string format. Should start with postgres:// or postgresql://' }, { status: 400 });
+    }
 
     const client = new Client({
         connectionString,
