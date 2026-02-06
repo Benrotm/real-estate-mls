@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 
@@ -28,7 +28,8 @@ export default function DashboardClient({
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
         { name: 'All Leads', icon: Users, href: '/dashboard/admin/leads' },
         { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
-        { name: 'Virtual Tours', icon: Globe, href: '/dashboard/admin/tours' },
+        { name: 'All Virtual Tours', icon: Globe, href: '/dashboard/admin/tours' },
+        { name: 'Tour Maker', icon: Camera, href: '/dashboard/owner/tours' },
         { name: 'Valuation Settings', icon: TrendingUp, href: '/dashboard/admin/valuation' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/admin/valuation/reports' },
         { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' },
