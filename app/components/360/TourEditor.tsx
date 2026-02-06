@@ -16,6 +16,15 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
     const [uploading, setUploading] = useState(false);
     const [linkingMode, setLinkingMode] = useState(false); // If true, next click creates a hotspot
 
+    // Modal State
+    const [hotspotModal, setHotspotModal] = useState<{
+        isOpen: boolean;
+        pitch: number;
+        yaw: number;
+    } | null>(null);
+    const [hotspotText, setHotspotText] = useState('');
+    const [hotspotTarget, setHotspotTarget] = useState('');
+
     const currentScene = tourData.scenes.find(s => s.id === currentSceneId);
 
     const handleSave = async () => {
@@ -59,22 +68,23 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
         setUploading(false);
     };
 
-    const handleAddHotspot = (pitch: number, yaw: number) => {
-        if (!currentScene) return;
+    const onMapClick = (pitch: number, yaw: number) => {
+        setHotspotText('');
+        setHotspotTarget('');
+        setHotspotModal({ isOpen: true, pitch, yaw });
+        setLinkingMode(false);
+    };
 
-        const text = prompt('Enter text for this hotspot (or leave empty for scene link only):');
-        if (text === null) return; // Cancelled
-
-        const targetSceneId = prompt('Enter Target Scene ID (optional, temporary flow):');
-        // In a real UI we'd show a modal to select target scene
+    const confirmAddHotspot = () => {
+        if (!hotspotModal || !currentScene) return;
 
         const newHotspot: Hotspot = {
             id: crypto.randomUUID(),
-            pitch,
-            yaw,
-            type: targetSceneId ? 'scene' : 'info',
-            text: text || 'Info',
-            targetSceneId: targetSceneId || undefined
+            pitch: hotspotModal.pitch,
+            yaw: hotspotModal.yaw,
+            type: hotspotTarget ? 'scene' : 'info',
+            text: hotspotText || 'Info',
+            targetSceneId: hotspotTarget || undefined
         };
 
         const updatedScenes = tourData.scenes.map(s => {
@@ -85,7 +95,7 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
         });
 
         setTourData({ ...tourData, scenes: updatedScenes });
-        setLinkingMode(false);
+        setHotspotModal(null);
     };
 
     const handleDeleteScene = (sceneId: string) => {
@@ -161,7 +171,7 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
                             }))}
                             onClick={(e, coords) => {
                                 if (linkingMode) {
-                                    handleAddHotspot(coords.pitch, coords.yaw);
+                                    onMapClick(coords.pitch, coords.yaw);
                                 }
                             }}
                         />
@@ -177,6 +187,58 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
                                 {linkingMode ? 'Click to Place Hotspot' : 'Add Hotspot'}
                             </button>
                         </div>
+
+                        {/* Custom Centered Modal */}
+                        {hotspotModal && (
+                            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setHotspotModal(null)}>
+                                <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-full m-4 animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+                                    <h3 className="text-lg font-bold text-slate-800 mb-4">Add Hotspot</h3>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Label Text</label>
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                value={hotspotText}
+                                                onChange={e => setHotspotText(e.target.value)}
+                                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                placeholder="e.g. Kitchen, Exit..."
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Target Scene (Optional)</label>
+                                            <select
+                                                value={hotspotTarget}
+                                                onChange={e => setHotspotTarget(e.target.value)}
+                                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            >
+                                                <option value="">(Info Only - No Link)</option>
+                                                {tourData.scenes.filter(s => s.id !== currentSceneId).map(s => (
+                                                    <option key={s.id} value={s.id}>{s.title}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex gap-2 pt-2">
+                                            <button
+                                                onClick={() => setHotspotModal(null)}
+                                                className="flex-1 px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={confirmAddHotspot}
+                                                className="flex-1 px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700"
+                                            >
+                                                Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400">

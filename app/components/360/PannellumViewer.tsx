@@ -126,7 +126,7 @@ export default function PannellumViewer({
                 viewerInstance.current = null;
             }
         };
-    }, [libLoaded, sceneId, image]); // Re-init if scene/image changes for now. Optimally we'd use loadScene but re-init is safer for simple wrapper.
+    }, [libLoaded, sceneId, image, hotspots]); // Re-init on hotspot change to force render
 
     return (
         <div ref={viewerContainer} className="w-full h-full bg-slate-100" />
