@@ -15,7 +15,7 @@ async function runMigration() {
     const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
 
     if (!connectionString) {
-        console.error('❌ No database connection string found in environment variables (checked DATABASE_URL, POSTGRES_URL, SUPABASE_DB_URL).');
+        console.error('❌ No database connection string found.');
         process.exit(1);
     }
 
