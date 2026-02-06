@@ -295,14 +295,22 @@ export async function updateProperty(id: string, formData: FormData) {
         return { error: 'Unauthorized' };
     }
 
-    // Verify ownership
+    // Verify ownership or admin status
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    const isAdmin = profile?.role === 'super_admin';
+
     const { data: property } = await supabase
         .from('properties')
         .select('owner_id')
         .eq('id', id)
         .single();
 
-    if (!property || property.owner_id !== user.id) {
+    if (!property || (property.owner_id !== user.id && !isAdmin)) {
         return { error: 'Unauthorized: You do not own this property' };
     }
 

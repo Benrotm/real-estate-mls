@@ -265,6 +265,19 @@ export async function createPlan(plan: { role: string, name: string, price: numb
     await verifyAdmin(); // Verify Admin with Dev Bypass
 
     const supabase = await createClient();
+
+    // Check for existing plan with same name/role to prevent duplicates/feature mixing
+    const { data: existingPlan } = await supabase
+        .from('plans')
+        .select('id')
+        .eq('role', plan.role)
+        .eq('name', plan.name)
+        .single();
+
+    if (existingPlan) {
+        throw new Error(`A plan named "${plan.name}" already exists for this role.`);
+    }
+
     const { error } = await supabase
         .from('plans')
         .insert([{ ...plan, is_popular: false }]);

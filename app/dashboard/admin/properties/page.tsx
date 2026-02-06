@@ -52,13 +52,28 @@ export default async function AdminPropertiesPage() {
                         {properties.map((property: any) => (
                             <tr key={property.id} className="hover:bg-slate-50 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="flex flex-col">
-                                        <div className="font-bold text-slate-900 truncate max-w-xs" title={property.title}>
-                                            {property.title}
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-16 h-12 rounded-lg bg-slate-100 overflow-hidden relative shrink-0 border border-slate-200">
+                                            {property.images && property.images.length > 0 ? (
+                                                <img
+                                                    src={property.images[0]}
+                                                    alt={property.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                    <MapPin className="w-4 h-4" />
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                                            <MapPin className="w-3 h-3" />
-                                            {property.location_city || 'N/A'}, {property.location_county || 'N/A'}
+                                        <div className="flex flex-col">
+                                            <div className="font-bold text-slate-900 truncate max-w-xs" title={property.title}>
+                                                {property.title}
+                                            </div>
+                                            <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                                <MapPin className="w-3 h-3" />
+                                                {property.location_city || 'N/A'}, {property.location_county || 'N/A'}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>

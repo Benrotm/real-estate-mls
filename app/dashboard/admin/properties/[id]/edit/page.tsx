@@ -1,6 +1,6 @@
 import { getPropertyById } from '@/app/lib/actions/properties';
 import { notFound } from 'next/navigation';
-import PropertyAdminForm from '../../PropertyAdminForm';
+import AddPropertyForm from '@/app/properties/add/AddPropertyForm';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -23,7 +23,7 @@ export default async function AdminEditPropertyPage({ params }: { params: Promis
                 <p className="text-slate-500 mt-1">Super Admin Mode: Editing {property.title}</p>
             </div>
 
-            <PropertyAdminForm initialData={property} propertyId={property.id} />
+            <AddPropertyForm initialData={property} />
         </div>
     );
 }
