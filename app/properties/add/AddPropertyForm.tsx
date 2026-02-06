@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Home,
@@ -42,6 +42,8 @@ import {
     TRANSACTION_TYPES,
     Property
 } from '@/app/lib/properties';
+import { getVirtualTours } from '@/app/lib/actions/tours';
+import { VirtualTour } from '@/app/lib/tours';
 
 const FEATURE_CATEGORIES = {
     'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
@@ -70,6 +72,13 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
     const [uploading, setUploading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [availableTours, setAvailableTours] = useState<VirtualTour[]>([]);
+
+    useEffect(() => {
+        getVirtualTours().then(tours => {
+            if (tours) setAvailableTours(tours);
+        });
+    }, []);
 
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
@@ -734,14 +743,50 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium mb-2 text-slate-300">Virtual Tour</label>
-                                            <input
-                                                type="url"
-                                                name="virtualTourUrl"
-                                                value={formData.virtualTourUrl}
-                                                onChange={handleChange}
-                                                placeholder="https://my.matterport.com/show/?m=..."
-                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
-                                            />
+                                            <div className="space-y-3">
+                                                <input
+                                                    type="url"
+                                                    name="virtualTourUrl"
+                                                    value={formData.virtualTourUrl}
+                                                    onChange={handleChange}
+                                                    placeholder="https://my.matterport.com/show/?m=..."
+                                                    className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                />
+                                                {availableTours.length > 0 && (
+                                                    <div className="relative">
+                                                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                                            <div className="w-full border-t border-slate-800"></div>
+                                                        </div>
+                                                        <div className="relative flex justify-center text-xs uppercase">
+                                                            <span className="bg-slate-950 px-2 text-slate-500">Or select internal tour</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {availableTours.length > 0 && (
+                                                    <select
+                                                        onChange={(e) => {
+                                                            if (e.target.value) {
+                                                                const url = `${window.location.origin}/tours/${e.target.value}`;
+                                                                setFormData(prev => ({ ...prev, virtualTourUrl: url }));
+                                                            } else {
+                                                                // Clears it if they choose the placeholder, essentially "Manual" mode
+                                                                // But maybe better to just leave it as is if they switch to placeholder? 
+                                                                // Let's just set it to empty if they explicitly pick the "Select" prompt if we convert it to a value.
+                                                                // Actually let's just update if value exists.
+                                                            }
+                                                        }}
+                                                        value={availableTours.find(t => formData.virtualTourUrl.includes(t.id))?.id || ''}
+                                                        className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-slate-300 focus:ring-2 focus:ring-pink-500/30 outline-none"
+                                                    >
+                                                        <option value="">-- Choose from My Tours --</option>
+                                                        {availableTours.map(tour => (
+                                                            <option key={tour.id} value={tour.id}>
+                                                                {tour.title}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
