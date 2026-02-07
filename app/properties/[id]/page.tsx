@@ -10,6 +10,7 @@ import PropertyMap from '../../components/PropertyMap';
 
 import PropertyFeatures from '@/app/components/PropertyFeatures';
 import ContactForm from '../../components/ContactForm';
+import OpenHouseWidget from '@/app/components/events/OpenHouseWidget';
 import { supabase } from "@/app/lib/supabase/client";
 
 function getYouTubeEmbedUrl(url: string) {
@@ -180,6 +181,13 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
     // Check Feature Access for specific components
     const showMakeOffer = await checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.MAKE_AN_OFFER);
     const showVirtualTour = await checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.VIRTUAL_TOUR);
+
+    // Fetch Property Events (Open House)
+    const { data: propertyEvents } = await supabase
+        .from('property_events')
+        .select('*')
+        .eq('property_id', property.id)
+        .order('start_time', { ascending: true });
 
     return (
         <div className="min-h-screen pb-20 bg-gray-50">
@@ -625,6 +633,17 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             propertyAddress={`${property.address}, ${property.location_city}`}
                             agentName={agent.name}
                         />
+
+                        {/* Open House Events Widget */}
+                        {propertyEvents && propertyEvents.length > 0 && (
+                            <div className="mt-6">
+                                <OpenHouseWidget
+                                    events={propertyEvents}
+                                    propertyTitle={property.title}
+                                    propertyAddress={`${property.address}, ${property.location_city}`}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

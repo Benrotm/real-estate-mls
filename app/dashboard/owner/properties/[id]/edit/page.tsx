@@ -1,6 +1,7 @@
 import { getPropertyById } from '@/app/lib/actions/properties';
 import AddPropertyForm from '@/app/properties/add/AddPropertyForm';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
+import EventClient from '@/app/components/events/EventClient';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/server';
 
@@ -31,6 +32,11 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
 
             <div className="mt-12 pt-12 border-t border-slate-200">
                 <PropertyValuationSection property={property} showMakeOffer={false} />
+            </div>
+
+            {/* Event Management Section */}
+            <div className="mt-12 pt-12 border-t border-slate-200">
+                <EventClient propertyId={property.id} />
             </div>
         </div>
     );

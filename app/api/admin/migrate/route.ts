@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 
         const existingSet = new Set(existing?.map(e => `${e.role}:${e.plan_name}`));
 
-        // 3. Prepare inserts
+        // 3. Prepare inserts for "Direct Message"
         const inserts = plans
             .filter(p => !existingSet.has(`${p.role}:${p.name}`))
             .map(p => ({
@@ -52,16 +52,40 @@ export async function GET(req: NextRequest) {
                 plan_name: p.name,
                 feature_key: featureKey,
                 feature_label: featureLabel,
-                is_included: true, // Default to ENABLED for visibility, user can toggle off
-                sort_order: 10 // Arbitrary sort order
+                is_included: true,
+                sort_order: 10
             }));
 
-        if (inserts.length > 0) {
-            const { error: insertError } = await supabase.from('plan_features').insert(inserts);
+        // 4. Also Seed "Calendar Events" feature
+        const calendarKey = "calendar_events";
+        const calendarLabel = "Calendar Events";
+
+        const { data: existingCal } = await supabase
+            .from('plan_features')
+            .select('role, plan_name')
+            .eq('feature_key', calendarKey);
+
+        const existingCalSet = new Set(existingCal?.map(e => `${e.role}:${e.plan_name}`));
+
+        const calendarInserts = plans
+            .filter(p => !existingCalSet.has(`${p.role}:${p.name}`))
+            .map(p => ({
+                role: p.role,
+                plan_name: p.name,
+                feature_key: calendarKey,
+                feature_label: calendarLabel,
+                is_included: true,
+                sort_order: 11
+            }));
+
+        const allInserts = [...inserts, ...calendarInserts];
+
+        if (allInserts.length > 0) {
+            const { error: insertError } = await supabase.from('plan_features').insert(allInserts);
             if (insertError) throw insertError;
-            return NextResponse.json({ success: true, message: `Added ${inserts.length} 'Direct Message' feature entries.` });
+            return NextResponse.json({ success: true, message: `Added ${allInserts.length} feature entries.` });
         } else {
-            return NextResponse.json({ success: true, message: "'Direct Message' feature already exists for all plans." });
+            return NextResponse.json({ success: true, message: "Features already exist for all plans." });
         }
 
     } catch (e: any) {
