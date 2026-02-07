@@ -6,6 +6,7 @@ import PropertyCard from "./components/PropertyCard";
 import RoleSelector from "./components/RoleSelector";
 import TrustStats from "./components/TrustStats";
 import { getProperties } from "./lib/actions/properties";
+import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 
 export default async function Home({
   searchParams,
@@ -22,6 +23,10 @@ export default async function Home({
 
   // Fetch real properties
   const allProperties = await getProperties();
+
+  // Bulk check for "Make an Offer" feature for all property owners
+  const ownerIds = Array.from(new Set(allProperties.map(p => p.owner_id).filter(Boolean)));
+  const makeOfferAccessMap = await bulkCheckUserFeatureAccess(ownerIds, SYSTEM_FEATURES.MAKE_AN_OFFER);
 
   // Filter for featured/promoted (if we had a promoted flag, otherwise just take some)
   // For now, let's say "Best Price" = cheapest or just the first few
@@ -56,7 +61,11 @@ export default async function Home({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {featuredProperties.slice(0, 3).map((property) => (
             <div key={property.id} className="h-full">
-              <PropertyCard property={property} />
+              <PropertyCard
+                property={property}
+                showMakeOffer={true}
+                isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
+              />
             </div>
           ))}
           {featuredProperties.length === 0 && (
@@ -86,7 +95,11 @@ export default async function Home({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {recentProperties.slice(0, 3).map((property) => (
             <div key={`recent-${property.id}`} className="h-full">
-              <PropertyCard property={property} />
+              <PropertyCard
+                property={property}
+                showMakeOffer={true}
+                isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
+              />
             </div>
           ))}
           {recentProperties.length === 0 && (

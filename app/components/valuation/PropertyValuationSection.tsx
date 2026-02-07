@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import ValuationWidget from '@/app/components/ValuationWidget';
-import SoldPriceModal from '@/app/components/valuation/SoldPriceModal';
+import SoldPriceModal from './SoldPriceModal';
+import OfferModal from '../OfferModal';
 import UpgradeModal from '@/app/components/UpgradeModal';
 import { BadgeDollarSign, Lock } from 'lucide-react';
 
 export default function PropertyValuationSection({ property, showMakeOffer, isMakeOfferLocked }: { property: any, showMakeOffer?: boolean, isMakeOfferLocked?: boolean }) {
     const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 
     return (
         <div id="valuation-section" className="mt-12">
@@ -27,7 +29,7 @@ export default function PropertyValuationSection({ property, showMakeOffer, isMa
                             </button>
                         ) : (
                             <button
-                                onClick={() => document.getElementById('offer-trigger-btn')?.click()}
+                                onClick={() => setIsOfferModalOpen(true)}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95 transform"
                             >
                                 <BadgeDollarSign className="w-4 h-4" />
@@ -46,7 +48,7 @@ export default function PropertyValuationSection({ property, showMakeOffer, isMa
                 </div>
             </div>
 
-            <ValuationWidget property={property} showMakeOffer={showMakeOffer && !isMakeOfferLocked} />
+            <ValuationWidget property={property} showMakeOffer={false} />
 
             <SoldPriceModal
                 propertyId={property.id}
@@ -59,6 +61,14 @@ export default function PropertyValuationSection({ property, showMakeOffer, isMa
                 onClose={() => setIsUpgradeModalOpen(false)}
                 featureName="Make an Offer"
                 description="This property cannot receive offers because the owner's plan does not support this feature."
+            />
+
+            <OfferModal
+                isOpen={isOfferModalOpen}
+                onClose={() => setIsOfferModalOpen(false)}
+                propertyId={property.id}
+                propertyTitle={property.title}
+                currencySymbol={property.currency === 'USD' ? '$' : '€'}
             />
         </div>
     );
