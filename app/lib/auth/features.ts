@@ -7,6 +7,41 @@ export type { SystemFeature } from './feature-keys';
 /**
  * Checks if the current authenticated user has access to a specific feature based on their plan.
  */
+
+/**
+ * Helper to map simplified plan tiers (slugs) to possible Database Plan Names.
+ * This handles mismatches where profiles store 'free' but plan_features stores 'Free Plan'.
+ */
+function getEquivalentPlanNames(role: string, tier: string): string[] {
+    const t = tier.toLowerCase();
+    const names = new Set<string>([tier]);
+
+    // 1. Basic Capitalization
+    names.add(tier.charAt(0).toUpperCase() + tier.slice(1)); // "Free", "Pro"
+    names.add(tier.charAt(0).toUpperCase() + tier.slice(1) + ' Plan'); // "Free Plan", "Pro Plan"
+
+    // 2. Role-specific mappings based on observed DB data
+    if (role === 'agent') {
+        if (t === 'pro') { names.add('Pro Real'); names.add('Professional'); }
+        if (t === 'enterprise') { names.add('Full House Agency'); }
+    }
+    else if (role === 'owner') {
+        if (t === 'pro') { names.add('Pro'); } // Redundant but safe
+        if (t === 'enterprise') { names.add('Ultra Plan'); names.add('Premium'); }
+    }
+    else if (role === 'client') {
+        if (t === 'pro') { names.add('Pro Client'); }
+    }
+    else if (role === 'developer') {
+        if (t === 'pro') { names.add('Pro Plan'); }
+    }
+
+    return Array.from(names);
+}
+
+/**
+ * Checks if the current authenticated user has access to a specific feature based on their plan.
+ */
 export async function hasFeature(featureKey: string): Promise<boolean> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -26,15 +61,18 @@ export async function hasFeature(featureKey: string): Promise<boolean> {
     if (profile.role === 'super_admin') return true;
 
     // 2. Check if the feature is included in their plan
-    const { data: feature } = await supabase
+    const planNames = getEquivalentPlanNames(profile.role, profile.plan_tier || 'free');
+
+    const { data: features } = await supabase
         .from('plan_features')
         .select('is_included')
         .eq('role', profile.role)
-        .eq('plan_name', profile.plan_tier)
-        .eq('feature_key', featureKey)
-        .single();
+        .in('plan_name', planNames)
+        .eq('feature_key', featureKey);
 
-    return feature?.is_included ?? false;
+    // If ANY of the matching plan names allows the feature, return true.
+    // Usually there should only be one match, but this makes it robust.
+    return features?.some(f => f.is_included) ?? false;
 }
 
 /**
@@ -56,15 +94,16 @@ export async function checkUserFeatureAccess(userId: string, featureKey: string)
     if (profile.role === 'super_admin') return true;
 
     // 2. Check if the feature is included in their plan
-    const { data: feature } = await supabase
+    const planNames = getEquivalentPlanNames(profile.role, profile.plan_tier || 'free');
+
+    const { data: features } = await supabase
         .from('plan_features')
         .select('is_included')
         .eq('role', profile.role)
-        .eq('plan_name', profile.plan_tier)
-        .eq('feature_key', featureKey)
-        .single();
+        .in('plan_name', planNames)
+        .eq('feature_key', featureKey);
 
-    return feature?.is_included ?? false;
+    return features?.some(f => f.is_included) ?? false;
 }
 
 export async function getUserFeatures(): Promise<string[]> {
@@ -85,14 +124,17 @@ export async function getUserFeatures(): Promise<string[]> {
         return Object.values(SYSTEM_FEATURES);
     }
 
+    const planNames = getEquivalentPlanNames(profile.role, profile.plan_tier || 'free');
+
     const { data: features } = await supabase
         .from('plan_features')
         .select('feature_key')
         .eq('role', profile.role)
-        .eq('plan_name', profile.plan_tier)
+        .in('plan_name', planNames)
         .eq('is_included', true);
 
-    return features?.map(f => f.feature_key) || [];
+    // Dedup features just in case
+    return Array.from(new Set(features?.map(f => f.feature_key) || []));
 }
 
 /**
@@ -111,20 +153,7 @@ export async function bulkCheckUserFeatureAccess(userIds: string[], featureKey: 
 
     if (!profiles) return {};
 
-    // 2. Identify unique role+plan combinations
-    const uniquePlans = Array.from(new Set(profiles.map(p => `${p.role}:${p.plan_tier}`)));
-
-    // 3. Fetch feature status for these combinations
-    // We can't easily do a complex OR in one query for (role, plan) pairs without RPC or raw SQL.
-    // However, unique plans will be few (Free, Pro, Premium * Agent, Owner).
-    // Let's fetch relevant entries.
-    const plansSplit = uniquePlans.map(s => {
-        const [role, plan_tier] = s.split(':');
-        return { role, plan_tier };
-    });
-
-    // To avoid N queries, we can just fetch ALL entries for this featureKey 
-    // and filter in memory, assuming the table isn't huge (it is small).
+    // 2. Fetch ALL features for this key (optimization: filtering in memory is cheaper than complex OR query)
     const { data: features } = await supabase
         .from('plan_features')
         .select('role, plan_name, is_included')
@@ -132,7 +161,7 @@ export async function bulkCheckUserFeatureAccess(userIds: string[], featureKey: 
 
     if (!features) return {};
 
-    // 4. Map back to users
+    // 3. Map back to users
     const result: Record<string, boolean> = {};
 
     profiles.forEach(profile => {
@@ -141,9 +170,18 @@ export async function bulkCheckUserFeatureAccess(userIds: string[], featureKey: 
             return;
         }
 
-        const feature = features.find(f => f.role === profile.role && f.plan_name === profile.plan_tier);
-        result[profile.id] = feature?.is_included ?? false;
+        const planNames = getEquivalentPlanNames(profile.role, profile.plan_tier || 'free');
+
+        // Find if any of the possible plan names has this feature enabled
+        const hasAccess = features.some(f =>
+            f.role === profile.role &&
+            planNames.includes(f.plan_name) &&
+            f.is_included
+        );
+
+        result[profile.id] = hasAccess;
     });
 
     return result;
 }
+
