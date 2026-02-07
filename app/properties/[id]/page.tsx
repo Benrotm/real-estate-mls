@@ -493,7 +493,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 </div>
                             )}
 
-                            {showVirtualTour && property.virtual_tour_url && (
+                            {property.virtual_tour_url && (
                                 <div className="bg-zinc-950 rounded-2xl overflow-hidden shadow-2xl mt-6">
                                     <div className="p-4 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center">
                                         <h3 className="text-white font-bold flex items-center gap-2">
@@ -501,14 +501,27 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                         </h3>
                                         <span className="text-xs text-zinc-400">Interactive Walkthrough</span>
                                     </div>
-                                    <div className="w-full h-[400px]">
-                                        <iframe
-                                            src={property.virtual_tour_url}
-                                            width="100%"
-                                            height="100%"
-                                            frameBorder="0"
-                                            allowFullScreen
-                                        ></iframe>
+                                    <div className="w-full h-[400px] relative">
+                                        {!showVirtualTour ? (
+                                            <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 backdrop-blur-sm">
+                                                <div className="text-center p-6">
+                                                    <Lock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                                                    <h3 className="text-xl font-bold text-white mb-2">Virtual Tour Locked</h3>
+                                                    <p className="text-slate-400 max-w-xs mx-auto">
+                                                        This property has a virtual tour, but the owner's plan does not include this feature.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <iframe
+                                                src={property.virtual_tour_url}
+                                                width="100%"
+                                                height="100%"
+                                                frameBorder="0"
+                                                allowFullScreen
+                                                className="w-full h-full"
+                                            ></iframe>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -530,6 +543,25 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                     )}
 
+                </div>
+
+                {/* Property Map */}
+                <div className="mt-10">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Location</h2>
+                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm h-[400px]">
+                        <PropertyMap
+                            center={{ lat: property.latitude || 44.4268, lng: property.longitude || 26.1025 }}
+                            zoom={15}
+                            markers={[
+                                {
+                                    id: property.id,
+                                    lat: property.latitude || 44.4268,
+                                    lng: property.longitude || 26.1025,
+                                    title: property.title
+                                }
+                            ]}
+                        />
+                    </div>
                 </div>
 
                 {/* Sidebar */}
