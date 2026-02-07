@@ -39,7 +39,51 @@ export default function ValuationWidget({ property, showMakeOffer = false }: Val
     }, [property]);
 
     if (loading) return <div className="p-8 text-center text-gray-500 animate-pulse">Loading Smart Valuation...</div>;
-    if (!valuation) return null; // No valuation available
+
+    // Show empty state if no valuation available
+    if (!valuation) {
+        return (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden my-8 scroll-mt-24" id="valuation">
+                {/* Header */}
+                <div className="bg-slate-900 p-6 flex justify-between items-center text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-lg shadow-indigo-500/20">
+                            <TrendingUp className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-xl">Smart Valuation Engine</h3>
+                            <p className="text-sm text-gray-300">Lifestyle-Adjusted Market Estimate</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Empty State Content */}
+                <div className="p-12 text-center">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <TrendingUp className="w-10 h-10 text-slate-400" />
+                    </div>
+                    <h4 className="text-2xl font-bold text-slate-900 mb-3">No Valuation Available Yet</h4>
+                    <p className="text-slate-600 mb-6 max-w-md mx-auto">
+                        Start a smart valuation to see AI-powered property estimates based on comparable sales, air quality, solar potential, and market trends.
+                    </p>
+                    <Link
+                        href="/dashboard/admin/valuation/reports"
+                        className="inline-flex items-center gap-2 bg-indigo-600 text-white py-3 px-8 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20"
+                    >
+                        <TrendingUp className="w-5 h-5" />
+                        Start New Valuation
+                    </Link>
+                </div>
+
+                {/* Footer */}
+                <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
+                    <p className="text-xs text-slate-500">
+                        Powered by AI • Includes Air Quality, Solar Potential & Market Data
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     const currencySymbol = property.currency === 'USD' ? '$' : '€';
 
