@@ -59,32 +59,34 @@ export default function ValuationWidget({ property, showMakeOffer = false }: Val
                     {/* View As Toggle */}
                     <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs">
                         <span className="text-gray-400 uppercase tracking-widest font-semibold">View As:</span>
-                        <button className="px-2 py-0.5 rounded bg-indigo-500 text-white">Guest</button>
-                        <button className="px-2 py-0.5 rounded text-gray-300">Pro</button>
+                        <button type="button" onClick={() => setUserPlan('free')} className={`px-2 py-0.5 rounded ${userPlan === 'free' ? 'bg-indigo-500 text-white' : 'text-gray-300'}`}>Guest</button>
+                        <button type="button" onClick={() => setUserPlan('paid')} className={`px-2 py-0.5 rounded ${userPlan === 'paid' ? 'bg-indigo-500 text-white' : 'text-gray-300'}`}>Pro</button>
                     </div>
                 </div>
 
                 {/* Content Body with Blur Overlay */}
                 <div className="p-0 relative">
-                    {/* Blur Overlay */}
-                    <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center text-center p-8">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                            <Lock className="w-8 h-8 text-slate-400" />
+                    {/* Blur Overlay - only show when userPlan is 'free' (Guest) */}
+                    {userPlan === 'free' && (
+                        <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center text-center p-8">
+                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                                <Lock className="w-8 h-8 text-slate-400" />
+                            </div>
+                            <h4 className="text-2xl font-bold text-slate-900 mb-2">Unlock Smart Valuation</h4>
+                            <p className="text-lg text-slate-600 mb-8 max-w-md mx-auto">
+                                See how Air Quality, Solar Potential, and Comp Sales affect this property's true value.
+                            </p>
+                            <Link
+                                href="/dashboard/admin/valuation/reports"
+                                className="bg-indigo-600 text-white py-3 px-8 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20"
+                            >
+                                Unlock Full Report
+                            </Link>
                         </div>
-                        <h4 className="text-2xl font-bold text-slate-900 mb-2">Unlock Smart Valuation</h4>
-                        <p className="text-lg text-slate-600 mb-8 max-w-md mx-auto">
-                            See how Air Quality, Solar Potential, and Comp Sales affect this property's true value.
-                        </p>
-                        <Link
-                            href="/dashboard/admin/valuation/reports"
-                            className="bg-indigo-600 text-white py-3 px-8 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20"
-                        >
-                            Unlock Full Report
-                        </Link>
-                    </div>
+                    )}
 
-                    {/* Blurred Mock Data */}
-                    <div className="filter blur-sm select-none opacity-50 p-6">
+                    {/* Mock Data - blur only when Guest (free) is selected */}
+                    <div className={`p-6 ${userPlan === 'free' ? 'filter blur-sm select-none opacity-50' : ''}`}>
                         {/* Top Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div className="bg-indigo-50/50 p-5 rounded-xl border border-indigo-100 flex flex-col justify-center">
