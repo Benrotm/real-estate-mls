@@ -1,45 +1,62 @@
 
-import { Pool } from 'pg';
+import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const secret = searchParams.get('secret');
+    const tourId = searchParams.get('id');
+
     if (secret !== 'force_migration_2026') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!connectionString) {
-        return NextResponse.json({ error: 'Missing DATABASE_URL' }, { status: 500 });
+    if (!supabaseUrl || !supabaseServiceKey) {
+        return NextResponse.json({ error: 'Missing env vars' }, { status: 500 });
     }
 
-    const pool = new Pool({
-        connectionString,
-        ssl: { rejectUnauthorized: false } // Required for Supabase/Vercel mostly
+    // Initialize Supabase with Service Role Key (Admin access)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
     });
 
     try {
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        if (tourId) {
+            // Specific Tour Fix
+            const { data, error } = await supabase
+                .from('virtual_tours')
+                .select('*')
+                .eq('id', tourId)
+                .single();
 
-            // Allow public SELECT on virtual_tours
-            await client.query(`DROP POLICY IF EXISTS "Public tours are viewable by everyone" ON public.virtual_tours;`);
-            await client.query(`CREATE POLICY "Public tours are viewable by everyone" ON public.virtual_tours FOR SELECT USING (true);`);
+            if (error) {
+                return NextResponse.json({ error: 'Tour not found or DB error: ' + error.message }, { status: 404 });
+            }
 
-            await client.query('COMMIT');
-            return NextResponse.json({ success: true, message: 'Migration applied' });
-        } catch (e: any) {
-            await client.query('ROLLBACK');
-            return NextResponse.json({ error: e.message }, { status: 500 });
-        } finally {
-            client.release();
+            // Force update to active
+            const { error: updateError } = await supabase
+                .from('virtual_tours')
+                .update({ status: 'active' })
+                .eq('id', tourId);
+
+            if (updateError) {
+                return NextResponse.json({ error: 'Update failed: ' + updateError.message }, { status: 500 });
+            }
+
+            return NextResponse.json({ success: true, message: `Tour ${tourId} set to active`, tour: data });
+        } else {
+            // Bulk Fix: Set ALL drafts to active?
+            // Safer to do one by one, but for "Recover Visibility" task, maybe just fix the one.
+            return NextResponse.json({ error: 'Please provide tour id' }, { status: 400 });
         }
+
     } catch (e: any) {
-        return NextResponse.json({ error: 'Connection failed: ' + e.message }, { status: 500 });
-    } finally {
-        await pool.end();
+        return NextResponse.json({ error: 'Unexpected error: ' + e.message }, { status: 500 });
     }
 }
