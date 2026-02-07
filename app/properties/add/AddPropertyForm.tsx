@@ -25,7 +25,8 @@ import {
     Lock,
     AlertCircle,
     FileText,
-    RefreshCw
+    RefreshCw,
+    Calendar
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
 import { supabase } from '@/app/lib/supabase/client';
@@ -1098,15 +1099,28 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     </div>
                                 </div>
 
-                                {/* Event Management - Only for existing properties */}
-                                {propertyId && (
-                                    <div className="mt-8 pt-8 border-t border-slate-800">
+                                {/* Event Management Section */}
+                                <div className="mt-8 pt-8 border-t border-slate-800">
+                                    {propertyId ? (
                                         <EventClient propertyId={propertyId} />
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="p-2 bg-violet-500/20 rounded-lg">
+                                                    <Calendar className="w-5 h-5 text-violet-400" />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-white">Property Events (Open House)</h3>
+                                            </div>
+                                            <p className="text-slate-400 text-sm">
+                                                Save the property first to schedule open house events and manage your calendar.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
 
-                                {propertyId && (
-                                    <div className="mt-8 pt-8 border-t border-slate-800">
+                                {/* Valuation Section */}
+                                <div className="mt-8 pt-8 border-t border-slate-800">
+                                    {propertyId ? (
                                         <PropertyValuationSection
                                             property={{
                                                 id: propertyId,
@@ -1118,8 +1132,20 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             showMakeOffer={false}
                                             isMakeOfferLocked={false}
                                         />
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                                    <DollarSign className="w-5 h-5 text-emerald-400" />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-white">Contribute to Price / Market Valuation</h3>
+                                            </div>
+                                            <p className="text-slate-400 text-sm">
+                                                Save the property first to enable market valuation and price contribution features.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )
                     }
