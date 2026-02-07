@@ -40,7 +40,7 @@ export default function ValuationWidget({ property, showMakeOffer = false }: Val
 
     if (loading) return <div className="p-8 text-center text-gray-500 animate-pulse">Loading Smart Valuation...</div>;
 
-    // Show empty state if no valuation available
+    // Show full widget structure with blur overlay if no valuation available
     if (!valuation) {
         return (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden my-8 scroll-mt-24" id="valuation">
@@ -55,30 +55,106 @@ export default function ValuationWidget({ property, showMakeOffer = false }: Val
                             <p className="text-sm text-gray-300">Lifestyle-Adjusted Market Estimate</p>
                         </div>
                     </div>
+
+                    {/* View As Toggle */}
+                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs">
+                        <span className="text-gray-400 uppercase tracking-widest font-semibold">View As:</span>
+                        <button className="px-2 py-0.5 rounded bg-indigo-500 text-white">Guest</button>
+                        <button className="px-2 py-0.5 rounded text-gray-300">Pro</button>
+                    </div>
                 </div>
 
-                {/* Empty State Content */}
-                <div className="p-12 text-center">
-                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <TrendingUp className="w-10 h-10 text-slate-400" />
+                {/* Content Body with Blur Overlay */}
+                <div className="p-0 relative">
+                    {/* Blur Overlay */}
+                    <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center text-center p-8">
+                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                            <Lock className="w-8 h-8 text-slate-400" />
+                        </div>
+                        <h4 className="text-2xl font-bold text-slate-900 mb-2">Unlock Smart Valuation</h4>
+                        <p className="text-lg text-slate-600 mb-8 max-w-md mx-auto">
+                            See how Air Quality, Solar Potential, and Comp Sales affect this property's true value.
+                        </p>
+                        <Link
+                            href="/dashboard/admin/valuation/reports"
+                            className="bg-indigo-600 text-white py-3 px-8 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20"
+                        >
+                            Unlock Full Report
+                        </Link>
                     </div>
-                    <h4 className="text-2xl font-bold text-slate-900 mb-3">No Valuation Available Yet</h4>
-                    <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                        Start a smart valuation to see AI-powered property estimates based on comparable sales, air quality, solar potential, and market trends.
-                    </p>
-                    <Link
-                        href="/dashboard/admin/valuation/reports"
-                        className="inline-flex items-center gap-2 bg-indigo-600 text-white py-3 px-8 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20"
-                    >
-                        <TrendingUp className="w-5 h-5" />
-                        Start New Valuation
-                    </Link>
+
+                    {/* Blurred Mock Data */}
+                    <div className="filter blur-sm select-none opacity-50 p-6">
+                        {/* Top Stats */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div className="bg-indigo-50/50 p-5 rounded-xl border border-indigo-100 flex flex-col justify-center">
+                                <p className="text-sm text-indigo-900 font-bold uppercase tracking-wider mb-1">Estimated Value</p>
+                                <p className="text-4xl font-extrabold text-slate-900">$425,000</p>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                                    <span className="text-xs font-bold text-slate-500">High Confidence</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm col-span-2 grid grid-cols-2 gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 rounded-full bg-emerald-50 border border-emerald-100">
+                                        <Wind className="w-6 h-6 text-emerald-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 font-medium">Air Quality</p>
+                                        <p className="text-lg font-bold text-slate-800">Good</p>
+                                        <p className="text-xs text-slate-400">AQI: 42</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 rounded-full bg-orange-50 border border-orange-100">
+                                        <Sun className="w-6 h-6 text-orange-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 font-medium">Solar Potential</p>
+                                        <p className="text-lg font-bold text-slate-800">85/100</p>
+                                        <p className="text-xs text-slate-400">1,850 kWh/yr</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Mock Chart Area */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6">
+                            <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <TrendingUp className="w-5 h-5 text-indigo-500" />
+                                Market Trend & Estimate
+                            </h4>
+                            <div className="h-48 bg-slate-100 rounded-lg flex items-center justify-center">
+                                <div className="flex gap-4">
+                                    <div className="w-12 h-24 bg-slate-300 rounded"></div>
+                                    <div className="w-12 h-32 bg-slate-300 rounded"></div>
+                                    <div className="w-12 h-28 bg-slate-300 rounded"></div>
+                                    <div className="w-12 h-36 bg-indigo-400 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Mock Comparables */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <h4 className="font-bold text-slate-900 mb-4">Comparable Sales</h4>
+                            <div className="space-y-2">
+                                <div className="h-12 bg-slate-100 rounded-lg"></div>
+                                <div className="h-12 bg-slate-100 rounded-lg"></div>
+                                <div className="h-12 bg-slate-100 rounded-lg"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Footer */}
                 <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
                     <p className="text-xs text-slate-500">
-                        Powered by AI • Includes Air Quality, Solar Potential & Market Data
+                        Value computed based on {property.area_usable || 0} m² in {property.location_city || 'Unknown'}.
+                    </p>
+                    <p className="text-xs text-slate-400">
+                        Includes adjustments for AQI, Solar Potential, and Market Trends.
                     </p>
                 </div>
             </div>
