@@ -61,8 +61,20 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
     }
 
     if (!property.latitude || !property.longitude || !property.area_usable) {
-        // Cannot value without location and size
-        return null;
+        // Return fallback valuation using listing price when location/size data is missing
+        const listingPrice = Number(property.price) || 0;
+        return {
+            estimatedValue: listingPrice,
+            confidenceScore: 30, // Low confidence due to missing data
+            baseValue: listingPrice,
+            pricePerSqm: property.area_usable ? Math.round(listingPrice / property.area_usable) : 0,
+            comparablesCount: 0,
+            lifestyleFactors: {
+                aqi: { value: 0, category: 'N/A', impact: 0 },
+                solar: { score: 0, kwh: 0, impact: 0 }
+            },
+            comparables: []
+        };
     }
 
     // 2. Fetch/Update Environmental Metrics (Cache Strategy)
