@@ -5,7 +5,7 @@ import ValuationWidget from '@/app/components/ValuationWidget';
 import SoldPriceModal from '@/app/components/valuation/SoldPriceModal';
 import { BadgeDollarSign } from 'lucide-react';
 
-export default function PropertyValuationSection({ property }: { property: any }) {
+export default function PropertyValuationSection({ property, showMakeOffer }: { property: any, showMakeOffer?: boolean }) {
     const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
 
     return (
@@ -22,7 +22,7 @@ export default function PropertyValuationSection({ property }: { property: any }
                 </button>
             </div>
 
-            <ValuationWidget property={property} />
+            <ValuationWidget property={property} showMakeOffer={showMakeOffer} />
 
             <SoldPriceModal
                 propertyId={property.id}

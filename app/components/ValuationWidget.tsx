@@ -3,20 +3,23 @@
 import { useState, useEffect } from 'react';
 import { Property } from '@/app/lib/properties'; // Assuming this exists or I should check. Use 'any' if unsure.
 import { getSmartValuation } from '@/app/lib/actions/valuation';
-import { Lock, TrendingUp, Info, CheckCircle, BarChart3, Star, Home, ArrowUpRight, Sofa, Building, Layers, Search, Wind, Sun } from 'lucide-react';
+import { Lock, TrendingUp, Info, CheckCircle, BarChart3, Star, Home, ArrowUpRight, Sofa, Building, Layers, Search, Wind, Sun, DollarSign } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import OfferModal from './OfferModal';
 
 
 interface ValuationWidgetProps {
     property: any; // Using any to avoid strict type issues if Property definition mismatches
+    showMakeOffer?: boolean;
 }
 
-export default function ValuationWidget({ property }: ValuationWidgetProps) {
+export default function ValuationWidget({ property, showMakeOffer = false }: ValuationWidgetProps) {
     const [valuation, setValuation] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [userPlan, setUserPlan] = useState<'free' | 'paid'>('free'); // Can fetch real plan later based on requirements
+    const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 
     useEffect(() => {
         async function loadValuation() {
@@ -95,7 +98,26 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                     <button onClick={() => setUserPlan('free')} className={`px-2 py-0.5 rounded ${userPlan === 'free' ? 'bg-indigo-500 text-white' : 'text-gray-300'}`}>Guest</button>
                     <button onClick={() => setUserPlan('paid')} className={`px-2 py-0.5 rounded ${userPlan === 'paid' ? 'bg-indigo-500 text-white' : 'text-gray-300'}`}>Pro</button>
                 </div>
+
+                {/* Make an Offer Button */}
+                {showMakeOffer && (
+                    <button
+                        onClick={() => setIsOfferModalOpen(true)}
+                        className="ml-4 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-lg shadow-emerald-500/20"
+                    >
+                        <DollarSign className="w-4 h-4" />
+                        Make an Offer
+                    </button>
+                )}
             </div>
+
+            <OfferModal
+                isOpen={isOfferModalOpen}
+                onClose={() => setIsOfferModalOpen(false)}
+                propertyId={property.id}
+                propertyTitle={property.title}
+                currencySymbol={property.currency === 'USD' ? '$' : '€'}
+            />
 
             {/* Content Body */}
             <div className="p-0 relative">

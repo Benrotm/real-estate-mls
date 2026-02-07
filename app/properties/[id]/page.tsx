@@ -1,4 +1,7 @@
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
+import { checkUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
+
+export const dynamic = 'force-dynamic';
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
 import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText } from 'lucide-react';
@@ -172,6 +175,10 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
         phone: ownerProfile?.phone,
         email: ownerProfile?.email
     };
+
+    // Check Feature Access for specific components
+    const showMakeOffer = await checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.MAKE_AN_OFFER);
+    const showVirtualTour = await checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.VIRTUAL_TOUR);
 
     return (
         <div className="min-h-screen pb-20 bg-gray-50">
@@ -511,7 +518,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     </div>
 
                     {/* Media: Video & Virtual Tour */}
-                    {(property.youtube_video_url || property.virtual_tour_url) && (
+                    {(property.youtube_video_url || (showVirtualTour && property.virtual_tour_url)) && (
                         <div className="space-y-4">
                             <h2 className="text-2xl font-bold text-slate-900">Media & Tours</h2>
 
@@ -529,7 +536,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 </div>
                             )}
 
-                            {property.virtual_tour_url && (
+                            {showVirtualTour && property.virtual_tour_url && (
                                 <div className="bg-zinc-950 rounded-2xl overflow-hidden shadow-2xl mt-6">
                                     <div className="p-4 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center">
                                         <h3 className="text-white font-bold flex items-center gap-2">
@@ -592,7 +599,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
 
                     {/* Valuation Widget & Insights */}
                     <div id="valuation-section">
-                        <PropertyValuationSection property={property} />
+                        <PropertyValuationSection property={property} showMakeOffer={showMakeOffer} />
                     </div>
 
                     {/* Location Map */}

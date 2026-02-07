@@ -1,0 +1,53 @@
+'use server';
+
+import { createClient } from './supabase/server';
+import { revalidatePath } from 'next/cache';
+
+export async function submitOffer(propertyId: string, amount: number) {
+    const supabase = await createClient();
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            throw new Error('You must be logged in to make an offer.');
+        }
+
+        const { error } = await supabase
+            .from('offers')
+            .insert([
+                {
+                    property_id: propertyId,
+                    user_id: user.id,
+                    amount: amount,
+                    status: 'pending'
+                }
+            ]);
+
+        if (error) throw error;
+
+        revalidatePath(`/properties/${propertyId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Submit offer error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function getOfferCount(propertyId: string) {
+    const supabase = await createClient();
+
+    try {
+        const { count, error } = await supabase
+            .from('offers')
+            .select('*', { count: 'exact', head: true })
+            .eq('property_id', propertyId);
+
+        if (error) throw error;
+
+        return count || 0;
+    } catch (error) {
+        console.error('Get offer count error:', error);
+        return 0;
+    }
+}
