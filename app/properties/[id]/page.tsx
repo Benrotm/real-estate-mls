@@ -475,7 +475,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     </div>
 
                     {/* Media: Video & Virtual Tour */}
-                    {(property.youtube_video_url || (showVirtualTour && property.virtual_tour_url)) && (
+                    {(property.youtube_video_url || property.video_url || property.virtual_tour_url) && (
                         <div className="space-y-4">
                             <h2 className="text-2xl font-bold text-slate-900">Media & Tours</h2>
 
