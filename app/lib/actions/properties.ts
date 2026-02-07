@@ -373,6 +373,7 @@ export async function updateProperty(id: string, formData: FormData) {
             // Only update images if provided
             ...(formData.get('images') ? { images: JSON.parse(formData.get('images') as string) } : {}),
 
+            video_url: formData.get('video_url') as string,
             youtube_video_url: formData.get('youtube_video_url') as string,
             virtual_tour_url: formData.get('virtual_tour_url') as string,
 
