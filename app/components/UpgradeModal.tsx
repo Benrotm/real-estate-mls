@@ -2,8 +2,8 @@
 
 import { X, Sparkles, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { createClient } from '@/app/lib/supabase/client';
+
+
 
 interface UpgradeModalProps {
     isOpen: boolean;
