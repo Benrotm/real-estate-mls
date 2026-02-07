@@ -64,6 +64,7 @@ const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: stri
 };
 
 import UpgradeModal from '@/app/components/UpgradeModal';
+import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
 
 export default function AddPropertyForm({ initialData, canUseVirtualTours = true }: { initialData?: Partial<Property>, canUseVirtualTours?: boolean }) {
     const router = useRouter();
@@ -1082,6 +1083,22 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         </div>
                                     </div>
                                 </div>
+
+                                {propertyId && (
+                                    <div className="mt-8 pt-8 border-t border-slate-800">
+                                        <PropertyValuationSection
+                                            property={{
+                                                id: propertyId,
+                                                currency: formData.currency,
+                                                title: formData.title,
+                                                address: formData.address,
+                                                location_city: formData.city
+                                            }}
+                                            showMakeOffer={false}
+                                            isMakeOfferLocked={false}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         )
                     }

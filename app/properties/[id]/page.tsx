@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
-import PropertyValuationSection from '../../components/valuation/PropertyValuationSection';
+
 import PropertyFeatures from '@/app/components/PropertyFeatures';
 import ContactForm from '../../components/ContactForm';
 import { supabase } from "@/app/lib/supabase/client";
@@ -277,11 +277,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 <div className="lg:col-span-2 space-y-10">
 
                     {/* MARKET INSIGHTS (Valuation) - Moved to Top */}
-                    <PropertyValuationSection
-                        property={property}
-                        showMakeOffer={false} // Hidden here, accessed via Features
-                        isMakeOfferLocked={false}
-                    />
+
 
                     {/* Info Header */}
                     <div>
