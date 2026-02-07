@@ -598,8 +598,13 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     )}
 
                     {/* Valuation Widget & Insights */}
+                    {/* Valuation Widget & Insights */}
                     <div id="valuation-section">
-                        <PropertyValuationSection property={property} showMakeOffer={showMakeOffer} />
+                        <PropertyValuationSection
+                            property={property}
+                            showMakeOffer={true}
+                            isMakeOfferLocked={property.owner_id ? !showMakeOffer : true}
+                        />
                     </div>
 
                     {/* Location Map */}

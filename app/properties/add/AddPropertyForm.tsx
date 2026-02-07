@@ -63,7 +63,9 @@ const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: stri
     'Listing Tags': { bg: 'bg-indigo-600', border: 'border-indigo-500', shadow: 'shadow-indigo-600/20', text: 'text-indigo-400', dot: 'bg-indigo-500' }
 };
 
-export default function AddPropertyForm({ initialData }: { initialData?: Partial<Property> }) {
+import UpgradeModal from '@/app/components/UpgradeModal';
+
+export default function AddPropertyForm({ initialData, canUseVirtualTours = true }: { initialData?: Partial<Property>, canUseVirtualTours?: boolean }) {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [propertyId, setPropertyId] = useState<string | null>(initialData?.id || null);
@@ -72,6 +74,7 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
     const [uploading, setUploading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [availableTours, setAvailableTours] = useState<VirtualTour[]>([]);
 
     useEffect(() => {
@@ -741,52 +744,66 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                                                 className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2 text-slate-300">Virtual Tour</label>
-                                            <div className="space-y-3">
-                                                <input
-                                                    type="url"
-                                                    name="virtualTourUrl"
-                                                    value={formData.virtualTourUrl}
-                                                    onChange={handleChange}
-                                                    placeholder="https://my.matterport.com/show/?m=..."
-                                                    className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
-                                                />
-                                                {availableTours.length > 0 && (
-                                                    <div className="relative">
-                                                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                                            <div className="w-full border-t border-slate-800"></div>
-                                                        </div>
-                                                        <div className="relative flex justify-center text-xs uppercase">
-                                                            <span className="bg-slate-950 px-2 text-slate-500">Or select internal tour</span>
-                                                        </div>
+                                        <div className="relative">
+                                            <label className="block text-sm font-medium mb-2 text-slate-300 flex items-center gap-2">
+                                                Virtual Tour
+                                                {!canUseVirtualTours && <Lock className="w-3 h-3 text-amber-500" />}
+                                            </label>
+
+                                            {!canUseVirtualTours ? (
+                                                <div
+                                                    onClick={() => setIsUpgradeModalOpen(true)}
+                                                    className="border border-slate-800 bg-slate-900/50 rounded-xl p-6 text-center cursor-pointer hover:bg-slate-800 transition-colors group"
+                                                >
+                                                    <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                                                        <Lock className="w-5 h-5 text-slate-400" />
                                                     </div>
-                                                )}
-                                                {availableTours.length > 0 && (
-                                                    <select
-                                                        onChange={(e) => {
-                                                            if (e.target.value) {
-                                                                const url = `${window.location.origin}/tours/${e.target.value}`;
-                                                                setFormData(prev => ({ ...prev, virtualTourUrl: url }));
-                                                            } else {
-                                                                // Clears it if they choose the placeholder, essentially "Manual" mode
-                                                                // But maybe better to just leave it as is if they switch to placeholder? 
-                                                                // Let's just set it to empty if they explicitly pick the "Select" prompt if we convert it to a value.
-                                                                // Actually let's just update if value exists.
-                                                            }
-                                                        }}
-                                                        value={availableTours.find(t => formData.virtualTourUrl.includes(t.id))?.id || ''}
-                                                        className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-slate-300 focus:ring-2 focus:ring-pink-500/30 outline-none"
-                                                    >
-                                                        <option value="">-- Choose from My Tours --</option>
-                                                        {availableTours.map(tour => (
-                                                            <option key={tour.id} value={tour.id}>
-                                                                {tour.title}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                )}
-                                            </div>
+                                                    <h4 className="text-white font-bold mb-1">Feature Locked</h4>
+                                                    <p className="text-sm text-slate-400">Upgrade your plan to add Virtual Tours</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    <input
+                                                        type="url"
+                                                        name="virtualTourUrl"
+                                                        value={formData.virtualTourUrl}
+                                                        onChange={handleChange}
+                                                        placeholder="https://my.matterport.com/show/?m=..."
+                                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                    />
+                                                    {availableTours.length > 0 && (
+                                                        <div className="relative">
+                                                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                                                <div className="w-full border-t border-slate-800"></div>
+                                                            </div>
+                                                            <div className="relative flex justify-center text-xs uppercase">
+                                                                <span className="bg-slate-950 px-2 text-slate-500">Or select internal tour</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {availableTours.length > 0 && (
+                                                        <select
+                                                            onChange={(e) => {
+                                                                if (e.target.value) {
+                                                                    // Use window.location.origin to construct full URL or just relative?
+                                                                    // Backend expects full URL usually.
+                                                                    const url = `${window.location.origin}/tours/${e.target.value}`;
+                                                                    setFormData(prev => ({ ...prev, virtualTourUrl: url }));
+                                                                }
+                                                            }}
+                                                            value={availableTours.find(t => formData.virtualTourUrl.includes(t.id))?.id || ''}
+                                                            className="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-slate-300 focus:ring-2 focus:ring-pink-500/30 outline-none"
+                                                        >
+                                                            <option value="">-- Choose from My Tours --</option>
+                                                            {availableTours.map(tour => (
+                                                                <option key={tour.id} value={tour.id}>
+                                                                    {tour.title}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1142,7 +1159,14 @@ export default function AddPropertyForm({ initialData }: { initialData?: Partial
                         )}
                     </div>
                 </form >
-            </div >
+            </div>
+
+            <UpgradeModal
+                isOpen={isUpgradeModalOpen}
+                onClose={() => setIsUpgradeModalOpen(false)}
+                featureName="Virtual Tours"
+                description="Upload and manage 360° Virtual Tours to view interactive walkthroughs of your property."
+            />
         </div >
     );
 }

@@ -4,6 +4,9 @@ import { ShieldAlert, ArrowLeft, Crown } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
+import { hasFeature } from '../../lib/auth/features';
+import { SYSTEM_FEATURES } from '../../lib/auth/feature-keys';
+
 export default async function AddPropertyPage() {
     const profile = await getUserProfile();
 
@@ -69,5 +72,7 @@ export default async function AddPropertyPage() {
         );
     }
 
-    return <AddPropertyForm />;
+    const canUseVirtualTours = await hasFeature(SYSTEM_FEATURES.VIRTUAL_TOUR);
+
+    return <AddPropertyForm canUseVirtualTours={canUseVirtualTours} />;
 }
