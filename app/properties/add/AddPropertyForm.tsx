@@ -65,6 +65,7 @@ const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: stri
 
 import UpgradeModal from '@/app/components/UpgradeModal';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
+import EventClient from '@/app/components/events/EventClient';
 
 export default function AddPropertyForm({ initialData, canUseVirtualTours = true }: { initialData?: Partial<Property>, canUseVirtualTours?: boolean }) {
     const router = useRouter();
@@ -1096,6 +1097,13 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Event Management - Only for existing properties */}
+                                {propertyId && (
+                                    <div className="mt-8 pt-8 border-t border-slate-800">
+                                        <EventClient propertyId={propertyId} />
+                                    </div>
+                                )}
 
                                 {propertyId && (
                                     <div className="mt-8 pt-8 border-t border-slate-800">
