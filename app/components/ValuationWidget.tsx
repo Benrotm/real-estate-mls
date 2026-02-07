@@ -215,8 +215,8 @@ export default function ValuationWidget({ property, showMakeOffer = false }: Val
                 {/* Demo Control */}
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs">
                     <span className="text-gray-400 uppercase tracking-widest font-semibold">View As:</span>
-                    <button onClick={() => setUserPlan('free')} className={`px-2 py-0.5 rounded ${userPlan === 'free' ? 'bg-indigo-500 text-white' : 'text-gray-300'}`}>Guest</button>
-                    <button onClick={() => setUserPlan('paid')} className={`px-2 py-0.5 rounded ${userPlan === 'paid' ? 'bg-indigo-500 text-white' : 'text-gray-300'}`}>Pro</button>
+                    <button type="button" onClick={() => setUserPlan('free')} className={`px-2 py-0.5 rounded ${userPlan === 'free' ? 'bg-indigo-500 text-white' : 'text-gray-300'}`}>Guest</button>
+                    <button type="button" onClick={() => setUserPlan('paid')} className={`px-2 py-0.5 rounded ${userPlan === 'paid' ? 'bg-indigo-500 text-white' : 'text-gray-300'}`}>Pro</button>
                 </div>
             </div>
 
@@ -233,7 +233,7 @@ export default function ValuationWidget({ property, showMakeOffer = false }: Val
                         <p className="text-lg text-slate-600 mb-8 max-w-md mx-auto">
                             See how Air Quality, Solar Potential, and Comp Sales affect this property's true value.
                         </p>
-                        <button onClick={() => setUserPlan('paid')} className="bg-indigo-600 text-white py-3 px-8 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20">
+                        <button type="button" onClick={() => setUserPlan('paid')} className="bg-indigo-600 text-white py-3 px-8 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20">
                             Unlock Full Report
                         </button>
                     </div>
