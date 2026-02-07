@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const secret = searchParams.get('secret');
-    const tourId = searchParams.get('id');
 
     if (secret !== 'force_migration_2026') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -27,33 +26,42 @@ export async function GET(req: NextRequest) {
     });
 
     try {
-        if (tourId) {
-            // Specific Tour Fix
-            const { data, error } = await supabase
-                .from('virtual_tours')
-                .select('*')
-                .eq('id', tourId)
-                .single();
+        const featureLabel = "Direct Message";
+        const featureKey = "direct_message";
 
-            if (error) {
-                return NextResponse.json({ error: 'Tour not found or DB error: ' + error.message }, { status: 404 });
-            }
+        // 1. Get all plans
+        const { data: plans, error: plansError } = await supabase.from('plans').select('role, name');
+        if (plansError) throw plansError;
+        if (!plans || plans.length === 0) return NextResponse.json({ message: "No plans found" });
 
-            // Force update to active
-            const { error: updateError } = await supabase
-                .from('virtual_tours')
-                .update({ status: 'active' })
-                .eq('id', tourId);
+        // 2. Check for existing features
+        const { data: existing, error: existingError } = await supabase
+            .from('plan_features')
+            .select('role, plan_name')
+            .eq('feature_key', featureKey);
 
-            if (updateError) {
-                return NextResponse.json({ error: 'Update failed: ' + updateError.message }, { status: 500 });
-            }
+        if (existingError) throw existingError;
 
-            return NextResponse.json({ success: true, message: `Tour ${tourId} set to active`, tour: data });
+        const existingSet = new Set(existing?.map(e => `${e.role}:${e.plan_name}`));
+
+        // 3. Prepare inserts
+        const inserts = plans
+            .filter(p => !existingSet.has(`${p.role}:${p.name}`))
+            .map(p => ({
+                role: p.role,
+                plan_name: p.name,
+                feature_key: featureKey,
+                feature_label: featureLabel,
+                is_included: true, // Default to ENABLED for visibility, user can toggle off
+                sort_order: 10 // Arbitrary sort order
+            }));
+
+        if (inserts.length > 0) {
+            const { error: insertError } = await supabase.from('plan_features').insert(inserts);
+            if (insertError) throw insertError;
+            return NextResponse.json({ success: true, message: `Added ${inserts.length} 'Direct Message' feature entries.` });
         } else {
-            // Bulk Fix: Set ALL drafts to active?
-            // Safer to do one by one, but for "Recover Visibility" task, maybe just fix the one.
-            return NextResponse.json({ error: 'Please provide tour id' }, { status: 400 });
+            return NextResponse.json({ success: true, message: "'Direct Message' feature already exists for all plans." });
         }
 
     } catch (e: any) {
