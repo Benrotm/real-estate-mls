@@ -98,6 +98,7 @@ export default function EventClient({ propertyId }: { propertyId: string }) {
                     Property Events aka "Open House"
                 </h3>
                 <button
+                    type="button"
                     onClick={() => setIsAdding(!isAdding)}
                     className="text-sm bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-100 transition-colors flex items-center gap-1"
                 >
@@ -139,12 +140,14 @@ export default function EventClient({ propertyId }: { propertyId: string }) {
                     </div>
                     <div className="flex justify-end gap-2">
                         <button
+                            type="button"
                             onClick={() => setIsAdding(false)}
                             className="text-slate-500 text-sm font-medium px-3 py-1.5 hover:text-slate-700"
                         >
                             Cancel
                         </button>
                         <button
+                            type="button"
                             onClick={handleAdd}
                             className="bg-indigo-600 text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-indigo-700"
                         >
@@ -174,6 +177,7 @@ export default function EventClient({ propertyId }: { propertyId: string }) {
                                 </div>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => handleDelete(event.id)}
                                 className="text-slate-400 hover:text-red-500 p-2 rounded-md hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
                                 title="Delete Event"
