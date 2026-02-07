@@ -136,7 +136,7 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
 
             {/* Scenes Drawer (Left) */}
             <div
-                className={`absolute top-20 bottom-8 left-4 w-72 z-20 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-[110%]'} pointer-events-none`}
+                className={`absolute top-20 bottom-8 left-4 w-64 z-20 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-[110%]'} pointer-events-none`}
             >
                 <div className="pointer-events-auto h-full bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col shadow-2xl overflow-hidden">
                     <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
@@ -234,7 +234,7 @@ export default function TourEditor({ tour }: { tour: VirtualTour }) {
                         {/* Custom Centered Modal */}
                         {hotspotModal && (
                             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setHotspotModal(null)}>
-                                <div className="bg-slate-900 border border-white/10 text-white rounded-2xl shadow-2xl p-6 w-96 max-w-full m-4 scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                                <div className="bg-slate-900 border border-white/10 text-white rounded-2xl shadow-2xl p-6 w-72 max-w-full m-4 scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                                     <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-6">New Hotspot</h3>
 
                                     <div className="space-y-5">
