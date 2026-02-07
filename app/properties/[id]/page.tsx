@@ -493,6 +493,20 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 </div>
                             )}
 
+                            {property.video_url && (
+                                <div className="bg-black rounded-2xl overflow-hidden shadow-lg aspect-video mt-6">
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        src={getYouTubeEmbedUrl(property.video_url)}
+                                        title="Property Video / Tour"
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    ></iframe>
+                                </div>
+                            )}
+
                             {property.virtual_tour_url && (
                                 <div className="bg-zinc-950 rounded-2xl overflow-hidden shadow-2xl mt-6">
                                     <div className="p-4 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center">
