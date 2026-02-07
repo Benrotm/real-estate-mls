@@ -102,6 +102,7 @@ export default function ValuationWidget({ property, showMakeOffer = false }: Val
                 {/* Make an Offer Button */}
                 {showMakeOffer && (
                     <button
+                        id="offer-trigger-btn"
                         onClick={() => setIsOfferModalOpen(true)}
                         className="ml-4 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-lg shadow-emerald-500/20"
                     >

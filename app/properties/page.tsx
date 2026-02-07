@@ -3,12 +3,17 @@ import { getProperties } from '@/app/lib/actions/properties';
 import PropertySearchFilters from '@/app/components/PropertySearchFilters';
 import PropertyCard from '@/app/components/PropertyCard';
 import { Suspense } from 'react';
+import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 import { Loader2 } from 'lucide-react';
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
     // Await searchParams in case it's a promise (Next.js 15+ compat)
     const filters = await searchParams;
     const properties = await getProperties(filters);
+
+    // Bulk check for "Make an Offer" feature for all property owners
+    const ownerIds = Array.from(new Set(properties.map(p => p.owner_id).filter(Boolean)));
+    const makeOfferAccessMap = await bulkCheckUserFeatureAccess(ownerIds, SYSTEM_FEATURES.MAKE_AN_OFFER);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
@@ -36,7 +41,11 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {properties.map((property: any) => (
-                            <PropertyCard key={property.id} property={property} />
+                            <PropertyCard
+                                key={property.id}
+                                property={property}
+                                showMakeOffer={property.owner_id ? makeOfferAccessMap[property.owner_id] : false}
+                            />
                         ))}
                     </div>
                 )}

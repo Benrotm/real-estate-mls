@@ -19,9 +19,18 @@ export async function getVirtualTours(ownerId?: string) {
     if (ownerId) {
         query = query.eq('owner_id', ownerId);
     } else {
-        // If no ownerId, assume admin or public active check? 
-        // For admin dashboard, we might want all.
-        // Let's rely on RLS, but if calling this for public list, we filter status='active'.
+        // If no ownerId is passed, default to the current authenticated user (My Tours)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            query = query.eq('owner_id', user.id);
+        } else {
+            // If checking public/all tours (e.g. admin), we might want to skip this filter,
+            // but for the "Add Property" dropdown, we definitely want "My Tours".
+            // Let's assume this action is primarily for the user context.
+            // If we need "All Tours" for admin, we should pass a flag or handle differently.
+            // For now, returning empty if not logged in is safer than returning all.
+            return [];
+        }
     }
 
     const { data, error } = await query;

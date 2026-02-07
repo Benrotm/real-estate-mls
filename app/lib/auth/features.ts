@@ -94,3 +94,56 @@ export async function getUserFeatures(): Promise<string[]> {
 
     return features?.map(f => f.feature_key) || [];
 }
+
+/**
+ * Bulk checks if multiple users have access to a specific feature.
+ * Returns a map of userId -> boolean.
+ */
+export async function bulkCheckUserFeatureAccess(userIds: string[], featureKey: string): Promise<Record<string, boolean>> {
+    const supabase = await createClient();
+    if (!userIds || userIds.length === 0) return {};
+
+    // 1. Get unique profiles
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, role, plan_tier')
+        .in('id', userIds);
+
+    if (!profiles) return {};
+
+    // 2. Identify unique role+plan combinations
+    const uniquePlans = Array.from(new Set(profiles.map(p => `${p.role}:${p.plan_tier}`)));
+
+    // 3. Fetch feature status for these combinations
+    // We can't easily do a complex OR in one query for (role, plan) pairs without RPC or raw SQL.
+    // However, unique plans will be few (Free, Pro, Premium * Agent, Owner).
+    // Let's fetch relevant entries.
+    const plansSplit = uniquePlans.map(s => {
+        const [role, plan_tier] = s.split(':');
+        return { role, plan_tier };
+    });
+
+    // To avoid N queries, we can just fetch ALL entries for this featureKey 
+    // and filter in memory, assuming the table isn't huge (it is small).
+    const { data: features } = await supabase
+        .from('plan_features')
+        .select('role, plan_name, is_included')
+        .eq('feature_key', featureKey);
+
+    if (!features) return {};
+
+    // 4. Map back to users
+    const result: Record<string, boolean> = {};
+
+    profiles.forEach(profile => {
+        if (profile.role === 'super_admin') {
+            result[profile.id] = true;
+            return;
+        }
+
+        const feature = features.find(f => f.role === profile.role && f.plan_name === profile.plan_tier);
+        result[profile.id] = feature?.is_included ?? false;
+    });
+
+    return result;
+}

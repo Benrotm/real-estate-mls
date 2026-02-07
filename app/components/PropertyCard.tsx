@@ -7,9 +7,10 @@ import PropertyManageButtons from './PropertyManageButtons';
 interface PropertyCardProps {
     property: Property;
     showEditButton?: boolean;
+    showMakeOffer?: boolean;
 }
 
-export default function PropertyCard({ property, showEditButton }: PropertyCardProps) {
+export default function PropertyCard({ property, showEditButton, showMakeOffer }: PropertyCardProps) {
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -111,6 +112,14 @@ export default function PropertyCard({ property, showEditButton }: PropertyCardP
                     >
                         View
                     </Link>
+                    {showMakeOffer && (
+                        <Link
+                            href={`/properties/${property.id}#valuation-section`}
+                            className="flex-1 text-center bg-emerald-500 text-white font-bold py-3 rounded-xl hover:bg-emerald-600 hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-1"
+                        >
+                            <span className="text-sm">Make Offer</span>
+                        </Link>
+                    )}
                     {showEditButton && (
                         <Link
                             href={`/dashboard/owner/properties/${property.id}/edit`}

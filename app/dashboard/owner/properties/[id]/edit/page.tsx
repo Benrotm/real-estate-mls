@@ -1,5 +1,6 @@
 import { getPropertyById } from '@/app/lib/actions/properties';
 import AddPropertyForm from '@/app/properties/add/AddPropertyForm';
+import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/server';
 
@@ -27,6 +28,10 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
         <div className="max-w-4xl mx-auto py-8">
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Edit Property</h1>
             <AddPropertyForm initialData={property} />
+
+            <div className="mt-12 pt-12 border-t border-slate-200">
+                <PropertyValuationSection property={property} showMakeOffer={false} />
+            </div>
         </div>
     );
 }
