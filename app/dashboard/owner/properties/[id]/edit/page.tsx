@@ -30,13 +30,13 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Edit Property</h1>
             <AddPropertyForm initialData={property} />
 
-            <div className="mt-12 pt-12 border-t border-slate-200">
-                <PropertyValuationSection property={property} showMakeOffer={false} />
-            </div>
-
             {/* Event Management Section */}
             <div className="mt-12 pt-12 border-t border-slate-200">
                 <EventClient propertyId={property.id} />
+            </div>
+
+            <div className="mt-12 pt-12 border-t border-slate-200">
+                <PropertyValuationSection property={property} showMakeOffer={false} />
             </div>
         </div>
     );

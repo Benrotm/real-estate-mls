@@ -277,6 +277,17 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 </div>
             )}
 
+            {/* Open House Events - Full Width Section */}
+            {propertyEvents && propertyEvents.length > 0 && (
+                <div className="max-w-7xl mx-auto px-4 py-6">
+                    <OpenHouseWidget
+                        events={propertyEvents}
+                        propertyTitle={property.title}
+                        propertyAddress={`${property.address}, ${property.location_city}`}
+                    />
+                </div>
+            )}
+
             {/* Hero Images - Property Carousel */}
             <PropertyCarousel images={property.images} title={property.title} />
 
@@ -633,17 +644,6 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             propertyAddress={`${property.address}, ${property.location_city}`}
                             agentName={agent.name}
                         />
-
-                        {/* Open House Events Widget */}
-                        {propertyEvents && propertyEvents.length > 0 && (
-                            <div className="mt-6">
-                                <OpenHouseWidget
-                                    events={propertyEvents}
-                                    propertyTitle={property.title}
-                                    propertyAddress={`${property.address}, ${property.location_city}`}
-                                />
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
