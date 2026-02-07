@@ -114,6 +114,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         partitioning: initialData?.partitioning || '',
         comfort: initialData?.comfort || '',
         youtubeVideoUrl: initialData?.youtube_video_url || '',
+        videoUrl: initialData?.video_url || '',
         virtualTourType: 'No Virtual Tour',
         virtualTourUrl: initialData?.virtual_tour_url || '',
         socialMediaUrl: initialData?.social_media_url || '',
@@ -263,6 +264,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         // Features & Media
         formDataToSend.append('features', JSON.stringify(formData.features));
         formDataToSend.append('youtube_video_url', formData.youtubeVideoUrl || '');
+        formDataToSend.append('video_url', formData.videoUrl || '');
         formDataToSend.append('virtual_tour_url', formData.virtualTourUrl || '');
         formDataToSend.append('social_media_url', formData.socialMediaUrl || '');
         formDataToSend.append('personal_property_id', formData.personalId || '');
@@ -742,6 +744,17 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 value={formData.youtubeVideoUrl}
                                                 onChange={handleChange}
                                                 placeholder="https://youtube.com/watch?v=..."
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Other Video URL</label>
+                                            <input
+                                                type="url"
+                                                name="videoUrl"
+                                                value={formData.videoUrl}
+                                                onChange={handleChange}
+                                                placeholder="https://vimeo.com/... or https://matterport.com/..."
                                                 className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                             />
                                         </div>
