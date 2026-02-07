@@ -543,25 +543,25 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                     )}
 
-                </div>
-
-                {/* Property Map */}
-                <div className="mt-10">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Location</h2>
-                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm h-[400px]">
-                        <PropertyMap
-                            center={{ lat: property.latitude || 44.4268, lng: property.longitude || 26.1025 }}
-                            zoom={15}
-                            markers={[
-                                {
-                                    id: property.id,
-                                    lat: property.latitude || 44.4268,
-                                    lng: property.longitude || 26.1025,
-                                    title: property.title
-                                }
-                            ]}
-                        />
+                    {/* Property Map */}
+                    <div className="mt-10">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-6">Location</h2>
+                        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm h-[400px]">
+                            <PropertyMap
+                                center={{ lat: property.latitude || 44.4268, lng: property.longitude || 26.1025 }}
+                                zoom={15}
+                                markers={[
+                                    {
+                                        id: property.id,
+                                        lat: property.latitude || 44.4268,
+                                        lng: property.longitude || 26.1025,
+                                        title: property.title
+                                    }
+                                ]}
+                            />
+                        </div>
                     </div>
+
                 </div>
 
                 {/* Sidebar */}
