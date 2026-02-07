@@ -114,7 +114,7 @@ export default function EventClient({ propertyId }: { propertyId: string }) {
                             type="text"
                             value={newEvent.title}
                             onChange={e => setNewEvent({ ...newEvent, title: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white"
                             placeholder="e.g. Weekend Open House"
                         />
                     </div>
@@ -125,7 +125,7 @@ export default function EventClient({ propertyId }: { propertyId: string }) {
                                 type="datetime-local"
                                 value={newEvent.start_time}
                                 onChange={e => setNewEvent({ ...newEvent, start_time: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white"
                             />
                         </div>
                         <div>
@@ -134,7 +134,7 @@ export default function EventClient({ propertyId }: { propertyId: string }) {
                                 type="datetime-local"
                                 value={newEvent.end_time}
                                 onChange={e => setNewEvent({ ...newEvent, end_time: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white"
                             />
                         </div>
                     </div>
