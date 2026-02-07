@@ -2,7 +2,7 @@
 -- Create property_events table
 CREATE TABLE IF NOT EXISTS public.property_events (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    property_id UUID REFERENCES public.properties(id) ON DELETE CASCADE NOT NULL,
+    property_id TEXT REFERENCES public.properties(id) ON DELETE CASCADE NOT NULL,
     title TEXT NOT NULL, -- e.g. "Open House", "Virtual Tour Event"
     description TEXT,
     start_time TIMESTAMPTZ NOT NULL,
