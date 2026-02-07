@@ -11,6 +11,7 @@ import PropertyMap from '../../components/PropertyMap';
 import PropertyFeatures from '@/app/components/PropertyFeatures';
 import ContactForm from '../../components/ContactForm';
 import OpenHouseWidget from '@/app/components/events/OpenHouseWidget';
+import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
 import { supabase } from "@/app/lib/supabase/client";
 
 function getYouTubeEmbedUrl(url: string) {
@@ -646,6 +647,14 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         />
                     </div>
                 </div>
+            </div>
+
+            {/* Valuation Reports Section */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <PropertyValuationSection
+                    property={property}
+                    showMakeOffer={showMakeOffer}
+                />
             </div>
         </div>
     );
