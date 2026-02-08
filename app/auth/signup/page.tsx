@@ -11,6 +11,7 @@ export default function SignUpPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const initialRole = searchParams.get('role') as 'client' | 'agent' | 'owner' | 'developer' | null;
+    const initialPlan = searchParams.get('plan');
     const [role, setRole] = useState<'client' | 'agent' | 'owner' | 'developer'>(initialRole && ['client', 'agent', 'owner', 'developer'].includes(initialRole) ? initialRole : 'client');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -26,6 +27,14 @@ export default function SignUpPage() {
         const firstName = formData.get('first-name') as string;
         const lastName = formData.get('last-name') as string;
 
+        // Determine plan tier
+        let planTier = 'free';
+        if (initialPlan) {
+            const lowerPlan = initialPlan.toLowerCase();
+            if (lowerPlan.includes('premium') || lowerPlan.includes('pro') || lowerPlan.includes('growth')) planTier = 'pro';
+            else if (lowerPlan.includes('enterprise') || lowerPlan.includes('scale')) planTier = 'enterprise';
+        }
+
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
@@ -35,6 +44,7 @@ export default function SignUpPage() {
                         first_name: firstName,
                         last_name: lastName,
                         role: role,
+                        plan_tier: planTier
                     },
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
