@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import FavoriteButton from '../property/FavoriteButton';
 
 interface PropertyCarouselProps {
     images: string[];
     title: string;
+    propertyId?: string;
 }
 
-export default function PropertyCarousel({ images, title }: PropertyCarouselProps) {
+export default function PropertyCarousel({ images, title, propertyId }: PropertyCarouselProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // Filter out invalid images if necessary
@@ -39,6 +41,13 @@ export default function PropertyCarousel({ images, title }: PropertyCarouselProp
 
             {/* Overlay Gradient */}
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+
+            {/* Favorite Button Overlay */}
+            {propertyId && (
+                <div className="absolute top-6 right-6 z-10">
+                    <FavoriteButton propertyId={propertyId} />
+                </div>
+            )}
 
             {/* Navigation Arrows */}
             {validImages.length > 1 && (

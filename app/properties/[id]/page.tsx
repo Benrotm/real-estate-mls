@@ -13,6 +13,7 @@ import ContactForm from '../../components/ContactForm';
 import OpenHouseWidget from '@/app/components/events/OpenHouseWidget';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
 import ShareButton from '@/app/components/property/ShareButton';
+import FavoriteButton from '@/app/components/property/FavoriteButton';
 import { createClient } from "@/app/lib/supabase/server";
 import PropertyAnalyticsWidget from '@/app/components/analytics/PropertyAnalyticsWidget';
 import PropertyViewTracker from '@/app/components/analytics/PropertyViewTracker';
@@ -229,6 +230,9 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             {/* Track Page View */}
             <PropertyViewTracker propertyId={property.id} />
 
+            {/* Property Images Carousel */}
+            <PropertyCarousel images={property.images} title={property.title} propertyId={property.id} />
+
             {/* Breadcrumb / Back */}
             <div className="bg-white border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 py-4">
@@ -315,8 +319,6 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 </div>
             )}
 
-            {/* Hero Images - Property Carousel */}
-            <PropertyCarousel images={property.images} title={property.title} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Main Content */}
@@ -366,13 +368,17 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 </div>
                             </div>
 
-                            {/* Share Button */}
-                            <ShareButton
-                                propertyId={property.id}
-                                title={property.title}
-                                description={`Check out ${property.title} on Imobum!`}
-                                className="shrink-0"
-                            />
+                            <div className="flex items-center gap-3 shrink-0">
+                                {/* Favorite Button */}
+                                <FavoriteButton propertyId={property.id} />
+
+                                {/* Share Button */}
+                                <ShareButton
+                                    propertyId={property.id}
+                                    title={property.title}
+                                    description={`Check out ${property.title} on Imobum!`}
+                                />
+                            </div>
                         </div>
                     </div>
 

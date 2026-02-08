@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/app/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 // Record a property page view
 export async function recordPropertyView(propertyId: string, sessionHash?: string) {
@@ -94,6 +95,7 @@ export async function togglePropertyFavorite(propertyId: string) {
             user_id: user.id
         });
 
+        if (!error) revalidatePath(`/properties/${propertyId}`);
         return { success: !error, isFavorited: true };
     }
 }
@@ -154,5 +156,7 @@ export async function recordPropertyShare(propertyId: string, shareMethod?: stri
 
     if (error) {
         console.error('Error recording share:', error);
+    } else {
+        revalidatePath(`/properties/${propertyId}`);
     }
 }
