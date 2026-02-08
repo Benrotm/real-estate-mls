@@ -17,10 +17,9 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
-            <div className="bg-white border-b border-slate-200 py-8 mb-8">
+            <div className="bg-white border-b border-slate-200 py-6 mb-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-bold text-slate-900 mb-4">Properties for Sale & Rent</h1>
-                    <p className="text-slate-500 max-w-2xl">Browse our extensive inventory of properties including apartments, houses, commercial spaces, and investment opportunities.</p>
+                    <h1 className="text-3xl font-bold text-slate-900">Properties for Sale & Rent</h1>
                 </div>
             </div>
 
