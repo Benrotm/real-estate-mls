@@ -255,12 +255,17 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
             offers: { count: offersCount, avgPrice: safeNumber(avgOfferPrice), impact: safeNumber(marketInterestImpact) }
         },
         comparables: validComps.map(comp => ({
-            ...comp,
-            sold_date: comp.sold_date instanceof Date ? comp.sold_date.toISOString() : comp.sold_date,
+            id: comp.id,
+            property_id: comp.property_id,
             sold_price: safeNumber(comp.sold_price),
+            sold_date: comp.sold_date instanceof Date ? comp.sold_date.toISOString() : comp.sold_date,
+            source: comp.source,
             properties: comp.properties ? {
-                ...comp.properties,
-                area_usable: safeNumber(comp.properties.area_usable)
+                title: comp.properties.title,
+                type: comp.properties.type,
+                location_city: comp.properties.location_city,
+                area_usable: safeNumber(comp.properties.area_usable),
+                images: comp.properties.images
             } : null
         }))
     };

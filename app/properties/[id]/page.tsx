@@ -132,7 +132,10 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
         if (analyticsData.status === 'fulfilled') analytics = analyticsData.value;
         if (eventsData.status === 'fulfilled' && eventsData.value.data) {
             propertyEvents = eventsData.value.data.map(event => ({
-                ...event,
+                id: event.id,
+                title: event.title,
+                description: event.description,
+                event_type: event.event_type,
                 start_time: event.start_time instanceof Date ? event.start_time.toISOString() : event.start_time,
                 end_time: event.end_time instanceof Date ? event.end_time.toISOString() : event.end_time,
                 created_at: event.created_at instanceof Date ? event.created_at.toISOString() : event.created_at
