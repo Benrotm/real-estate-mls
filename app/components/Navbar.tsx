@@ -254,9 +254,9 @@ export default function Navbar({ user }: NavbarProps) {
                 {/* Sign In - Orange to green gradient, subdued on signup page */}
                 <Link
                   href="/auth/login"
-                  className={`hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${pathname === '/auth/signup'
-                      ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
-                      : 'bg-gradient-to-r from-orange-500 to-emerald-500 text-white hover:from-orange-400 hover:to-emerald-400 shadow-lg shadow-orange-500/30'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all text-sm md:text-base md:px-5 md:py-2.5 ${pathname === '/auth/signup'
+                    ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
+                    : 'bg-gradient-to-r from-orange-500 to-emerald-500 text-white hover:from-orange-400 hover:to-emerald-400 shadow-lg shadow-orange-500/30'
                     }`}
                 >
                   Sign In
