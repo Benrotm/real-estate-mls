@@ -62,9 +62,9 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             if (dbProperty) {
                 property = {
                     id: dbProperty.id,
-                    listing_type: dbProperty.listing_type,
-                    currency: dbProperty.currency,
-                    title: dbProperty.title,
+                    listing_type: dbProperty.listing_type || 'For Sale',
+                    currency: dbProperty.currency || 'EUR',
+                    title: dbProperty.title || '',
                     description: dbProperty.description || '',
                     address: dbProperty.address || '',
                     location_city: dbProperty.location_city || '',
@@ -82,7 +82,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     area_terrace: dbProperty.area_terrace || null,
                     area_garden: dbProperty.area_garden || null,
                     year_built: dbProperty.year_built || null,
-                    type: dbProperty.type,
+                    type: dbProperty.type || 'Other',
                     floor: dbProperty.floor || null,
                     total_floors: dbProperty.total_floors || null,
                     partitioning: dbProperty.partitioning || null,
@@ -92,17 +92,17 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     furnishing: dbProperty.furnishing || null,
                     features: dbProperty.features || [],
                     images: dbProperty.images || [],
-                    owner_id: dbProperty.owner_id,
+                    owner_id: dbProperty.owner_id || '',
                     video_url: dbProperty.video_url || null,
                     youtube_video_url: dbProperty.youtube_video_url || null,
                     virtual_tour_url: dbProperty.virtual_tour_url || null,
                     social_media_url: dbProperty.social_media_url || null,
                     personal_property_id: dbProperty.personal_property_id || null,
-                    promoted: dbProperty.promoted || false,
-                    status: dbProperty.status,
+                    promoted: !!dbProperty.promoted,
+                    status: dbProperty.status || 'draft',
                     score: dbProperty.score || 0,
-                    created_at: dbProperty.created_at instanceof Date ? dbProperty.created_at.toISOString() : (dbProperty.created_at || null),
-                    updated_at: dbProperty.updated_at instanceof Date ? dbProperty.updated_at.toISOString() : (dbProperty.updated_at || null),
+                    created_at: dbProperty.created_at instanceof Date ? (dbProperty.created_at as Date).toISOString() : (dbProperty.created_at || null),
+                    updated_at: dbProperty.updated_at instanceof Date ? (dbProperty.updated_at as Date).toISOString() : (dbProperty.updated_at || null),
                     friendly_id: dbProperty.friendly_id || null,
                     private_notes: dbProperty.private_notes || null,
                     documents: dbProperty.documents || [],
@@ -121,28 +121,31 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             return notFound();
         }
 
-        // 3. Parallel fetching for the rest - all wrapped to prevent single-point failure
-        const [userData, analyticsData, eventsData] = await Promise.allSettled([
-            supabase.auth.getUser(),
-            getPropertyAnalytics(property.id),
-            supabase.from('property_events').select('*').eq('property_id', property.id).order('start_time', { ascending: true })
-        ]);
+        // 3. Fetch data - sequential for maximum stability
+        const userRes = await supabase.auth.getUser();
+        user = userRes.data.user;
 
-        if (userData.status === 'fulfilled') user = userData.value.data.user;
-        if (analyticsData.status === 'fulfilled') analytics = analyticsData.value;
-        if (eventsData.status === 'fulfilled' && eventsData.value.data) {
-            propertyEvents = eventsData.value.data.map(event => ({
+        analytics = await getPropertyAnalytics(property.id);
+
+        const { data: events } = await supabase
+            .from('property_events')
+            .select('id, title, description, event_type, start_time, end_time, created_at')
+            .eq('property_id', property.id)
+            .order('start_time', { ascending: true });
+
+        if (events) {
+            propertyEvents = events.map(event => ({
                 id: event.id,
-                title: event.title,
-                description: event.description,
-                event_type: event.event_type,
-                start_time: event.start_time instanceof Date ? event.start_time.toISOString() : event.start_time,
-                end_time: event.end_time instanceof Date ? event.end_time.toISOString() : event.end_time,
-                created_at: event.created_at instanceof Date ? event.created_at.toISOString() : event.created_at
+                title: event.title || '',
+                description: event.description || null,
+                event_type: event.event_type || 'other',
+                start_time: event.start_time instanceof Date ? (event.start_time as Date).toISOString() : (event.start_time || null),
+                end_time: event.end_time instanceof Date ? (event.end_time as Date).toISOString() : (event.end_time || null),
+                created_at: event.created_at instanceof Date ? (event.created_at as Date).toISOString() : (event.created_at || null)
             }));
         }
 
-        // 4. Owner & Access Logic
+        // 4. Owner & Access Logic - Serialized
         if (property.owner_id && isUuid) {
             const { data: profile } = await supabase
                 .from('profiles')
@@ -151,11 +154,9 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 .single();
             ownerProfile = profile;
 
-            // Check Feature Access
-            [showMakeOffer, showVirtualTour] = await Promise.all([
-                checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.MAKE_AN_OFFER).catch(() => false),
-                checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.VIRTUAL_TOUR).catch(() => false)
-            ]);
+            // Check Feature Access sequentially
+            showMakeOffer = await checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.MAKE_AN_OFFER).catch(() => false);
+            showVirtualTour = await checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.VIRTUAL_TOUR).catch(() => false);
         }
 
         if (user) {
