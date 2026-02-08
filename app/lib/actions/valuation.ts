@@ -256,6 +256,7 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
         },
         comparables: validComps.map(comp => ({
             ...comp,
+            sold_date: comp.sold_date instanceof Date ? comp.sold_date.toISOString() : comp.sold_date,
             sold_price: safeNumber(comp.sold_price),
             properties: comp.properties ? {
                 ...comp.properties,

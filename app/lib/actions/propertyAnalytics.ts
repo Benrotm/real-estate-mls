@@ -36,13 +36,18 @@ export async function getPropertyAnalytics(propertyId: string) {
         const getCount = (res: any) => (res.status === 'fulfilled' && res.value?.count) ? res.value.count : 0;
         const getPropData = (res: any) => (res.status === 'fulfilled' && res.value?.data) ? res.value.data : null;
 
+        const rawCreatedAt = getPropData(results[5])?.created_at || null;
+        const sanitizedCreatedAt = rawCreatedAt instanceof Date
+            ? rawCreatedAt.toISOString()
+            : (typeof rawCreatedAt === 'string' ? rawCreatedAt : null);
+
         return {
             views: getCount(results[0]),
             favorites: getCount(results[1]),
             inquiries: getCount(results[2]),
             offers: getCount(results[3]),
             shares: getCount(results[4]),
-            createdAt: getPropData(results[5])?.created_at || null
+            createdAt: sanitizedCreatedAt
         };
     } catch (error) {
         console.error('Error fetching property analytics:', error);

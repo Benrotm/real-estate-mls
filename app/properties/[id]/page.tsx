@@ -43,7 +43,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
     let property: Property | undefined;
     let ownerProfile = null;
     let user = null;
-    let analytics = { views: 0, favorites: 0, inquiries: 0, offers: 0, shares: 0, createdAt: null };
+    let analytics: { views: number; favorites: number; inquiries: number; offers: number; shares: number; createdAt: string | null } = { views: 0, favorites: 0, inquiries: 0, offers: 0, shares: 0, createdAt: null };
     let propertyEvents: any[] = [];
     let showMakeOffer = false;
     let showVirtualTour = false;
@@ -101,8 +101,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     promoted: dbProperty.promoted,
                     status: dbProperty.status,
                     score: dbProperty.score,
-                    created_at: dbProperty.created_at,
-                    updated_at: dbProperty.updated_at,
+                    created_at: dbProperty.created_at instanceof Date ? dbProperty.created_at.toISOString() : dbProperty.created_at,
+                    updated_at: dbProperty.updated_at instanceof Date ? dbProperty.updated_at.toISOString() : dbProperty.updated_at,
                     friendly_id: dbProperty.friendly_id,
                     private_notes: dbProperty.private_notes,
                     documents: dbProperty.documents,
@@ -130,7 +130,14 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
 
         if (userData.status === 'fulfilled') user = userData.value.data.user;
         if (analyticsData.status === 'fulfilled') analytics = analyticsData.value;
-        if (eventsData.status === 'fulfilled' && eventsData.value.data) propertyEvents = eventsData.value.data;
+        if (eventsData.status === 'fulfilled' && eventsData.value.data) {
+            propertyEvents = eventsData.value.data.map(event => ({
+                ...event,
+                start_time: event.start_time instanceof Date ? event.start_time.toISOString() : event.start_time,
+                end_time: event.end_time instanceof Date ? event.end_time.toISOString() : event.end_time,
+                created_at: event.created_at instanceof Date ? event.created_at.toISOString() : event.created_at
+            }));
+        }
 
         // 4. Owner & Access Logic
         if (property.owner_id && isUuid) {
