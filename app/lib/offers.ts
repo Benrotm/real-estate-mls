@@ -13,13 +13,24 @@ export async function submitOffer(propertyId: string, amount: number) {
             throw new Error('You must be logged in to make an offer.');
         }
 
+        // Get user profile for name/email
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, email, phone')
+            .eq('id', user.id)
+            .single();
+
         const { error } = await supabase
-            .from('offers')
+            .from('property_offers')
             .insert([
                 {
                     property_id: propertyId,
                     user_id: user.id,
-                    amount: amount,
+                    offer_amount: amount,
+                    currency: 'EUR',
+                    name: profile?.full_name || null,
+                    email: profile?.email || user.email || null,
+                    phone: profile?.phone || null,
                     status: 'pending'
                 }
             ]);
@@ -39,7 +50,7 @@ export async function getOfferCount(propertyId: string) {
 
     try {
         const { count, error } = await supabase
-            .from('offers')
+            .from('property_offers')
             .select('*', { count: 'exact', head: true })
             .eq('property_id', propertyId);
 
@@ -51,3 +62,4 @@ export async function getOfferCount(propertyId: string) {
         return 0;
     }
 }
+

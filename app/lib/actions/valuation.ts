@@ -13,6 +13,7 @@ interface ValuationResult {
     lifestyleFactors: {
         aqi: { value: number; category: string; impact: number };
         solar: { score: number; kwh: number; impact: number };
+        offers?: { count: number; avgPrice: number; impact: number };
     };
     comparables: any[];
 }
@@ -158,7 +159,19 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
         comparables = soldHistory || [];
     }
 
-    // 4. Calculate Base Value
+    // 4. Find Offers
+    const { data: offers } = await supabase
+        .from('property_offers')
+        .select('offer_amount')
+        .eq('property_id', propertyId)
+        .in('status', ['pending', 'accepted']);
+
+    const offersCount = offers?.length || 0;
+    const avgOfferPrice = (offersCount > 0 && offers)
+        ? offers.reduce((sum, o) => sum + Number(o.offer_amount), 0) / offersCount
+        : 0;
+
+    // 5. Calculate Base Value
     // Filter comps by size similarity (+/- 20%)
     const validComps = comparables.filter(c => {
         const size = c.properties?.area_usable;
@@ -184,16 +197,16 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
         pricePerSqm = baseValue / (property.area_usable || 1);
     }
 
-    // 5. Apply Lifestyle Modifiers
+    // 6. Apply Lifestyle & Market Modifiers
     let metricsImpact = 0; // percentage
     let aqiImpact = 0;
     let solarImpact = 0;
+    let marketInterestImpact = 0;
 
     const aqi = envMetrics?.air_quality_index;
     if (aqi) {
         if (aqi <= 50) { aqiImpact = 0.02; } // +2% for great air
         else if (aqi > 100) { aqiImpact = -0.02; } // -2% for bad air
-        // else 0
     }
 
     const solar = envMetrics?.solar_potential_score;
@@ -201,18 +214,31 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
         if (solar > 80) { solarImpact = 0.01; } // +1% for great solar potential
     }
 
-    metricsImpact = aqiImpact + solarImpact;
+    // Market interest impact (offers)
+    // If average offer is higher than listing price, it indicates strong market demand
+    if (avgOfferPrice > 0 && property.price > 0) {
+        const offerVsListing = (avgOfferPrice - property.price) / property.price;
+        // Limit the impact to +/- 5% to avoid extreme swings
+        marketInterestImpact = Math.max(-0.05, Math.min(0.05, offerVsListing * 0.5));
+    } else if (offersCount > 3) {
+        // High volume of offers even without price data gives a small boost
+        marketInterestImpact = 0.01;
+    }
+
+    metricsImpact = aqiImpact + solarImpact + marketInterestImpact;
     const finalValue = baseValue * (1 + metricsImpact);
 
     return {
         estimatedValue: Math.round(finalValue),
-        confidenceScore: validComps.length >= 3 ? 90 : (validComps.length > 0 ? 60 : 30), // Simple confidence
+        // Confidence boost from offers
+        confidenceScore: Math.min(100, (validComps.length >= 3 ? 90 : (validComps.length > 0 ? 60 : 30)) + (offersCount > 0 ? 5 : 0)),
         baseValue: Math.round(baseValue),
         pricePerSqm: Math.round(pricePerSqm),
         comparablesCount: validComps.length,
         lifestyleFactors: {
             aqi: { value: aqi || 0, category: envMetrics?.air_quality_category || 'N/A', impact: aqiImpact },
-            solar: { score: solar || 0, kwh: envMetrics?.solar_yearly_potential_kwh || 0, impact: solarImpact }
+            solar: { score: solar || 0, kwh: envMetrics?.solar_yearly_potential_kwh || 0, impact: solarImpact },
+            offers: { count: offersCount, avgPrice: avgOfferPrice, impact: marketInterestImpact }
         },
         comparables: validComps
     };

@@ -355,7 +355,26 @@ export default function ValuationWidget({ property, showMakeOffer = false }: Val
                                         {valuation.lifestyleFactors.solar.impact > 0 ? '+' : ''}{(valuation.lifestyleFactors.solar.impact * 100).toFixed(1)}%
                                     </span>
                                 </div>
+
+                                {/* Offers/Market Interest Impact */}
+                                {valuation.lifestyleFactors.offers && (
+                                    <div className="flex justify-between items-center p-3 bg-indigo-50/30 rounded-lg border border-indigo-100/50">
+                                        <span className="text-slate-700 flex items-center gap-2">
+                                            <DollarSign className="w-4 h-4 text-indigo-500" />
+                                            Market Interest Adjustment
+                                            {valuation.lifestyleFactors.offers.count > 0 && (
+                                                <span className="text-xs text-slate-400 font-normal">
+                                                    ({valuation.lifestyleFactors.offers.count} offer{valuation.lifestyleFactors.offers.count !== 1 ? 's' : ''})
+                                                </span>
+                                            )}
+                                        </span>
+                                        <span className={`font-bold ${valuation.lifestyleFactors.offers.impact >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>
+                                            {valuation.lifestyleFactors.offers.impact > 0 ? '+' : ''}{(valuation.lifestyleFactors.offers.impact * 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                )}
                             </div>
+
                         </div>
 
                         {/* Comps List */}
