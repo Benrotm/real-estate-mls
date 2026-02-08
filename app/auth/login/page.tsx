@@ -24,16 +24,20 @@ export default function LoginPage() {
         const formData = new FormData(e.currentTarget);
         const password = formData.get('password') as string;
 
-        let credentials: { email?: string; phone?: string; password: string } = { password };
-
-        if (authMethod === 'email') {
-            credentials.email = formData.get('email') as string;
-        } else {
-            credentials.phone = formData.get('phone') as string;
-        }
-
         try {
-            const { data, error } = await supabase.auth.signInWithPassword(credentials);
+            let result;
+            if (authMethod === 'email') {
+                result = await supabase.auth.signInWithPassword({
+                    email: formData.get('email') as string,
+                    password,
+                });
+            } else {
+                result = await supabase.auth.signInWithPassword({
+                    phone: formData.get('phone') as string,
+                    password,
+                });
+            }
+            const { data, error } = result;
 
             if (error) throw error;
 
