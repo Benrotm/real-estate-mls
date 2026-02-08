@@ -21,11 +21,11 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT 
-        (SELECT COUNT(*) FROM property_views WHERE property_id = p_id),
-        (SELECT COUNT(*) FROM property_favorites WHERE property_id = p_id),
-        (SELECT COUNT(*) FROM property_inquiries WHERE property_id = p_id),
-        (SELECT COUNT(*) FROM property_offers WHERE property_id = p_id),
-        (SELECT COUNT(*) FROM property_shares WHERE property_id = p_id);
+        (SELECT COUNT(*) FROM property_views WHERE property_id::text = p_id::text),
+        (SELECT COUNT(*) FROM property_favorites WHERE property_id::text = p_id::text),
+        (SELECT COUNT(*) FROM property_inquiries WHERE property_id::text = p_id::text),
+        (SELECT COUNT(*) FROM property_offers WHERE property_id::text = p_id::text),
+        (SELECT COUNT(*) FROM property_shares WHERE property_id::text = p_id::text);
 END;
 $$;
 
