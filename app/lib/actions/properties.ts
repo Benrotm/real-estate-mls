@@ -45,6 +45,9 @@ export async function createProperty(formData: FormData) {
 
             area_usable: formData.get('area_usable') ? parseFloat(formData.get('area_usable') as string) : null,
             area_built: formData.get('area_built') ? parseFloat(formData.get('area_built') as string) : null,
+            area_box: formData.get('area_box') ? parseFloat(formData.get('area_box') as string) : null,
+            area_terrace: formData.get('area_terrace') ? parseFloat(formData.get('area_terrace') as string) : null,
+            area_garden: formData.get('area_garden') ? parseFloat(formData.get('area_garden') as string) : null,
 
             year_built: formData.get('year_built') ? parseInt(formData.get('year_built') as string) : null,
             floor: formData.get('floor') ? parseInt(formData.get('floor') as string) : null,
@@ -343,6 +346,9 @@ export async function updateProperty(id: string, formData: FormData) {
 
             area_usable: formData.get('area_usable') ? parseFloat(formData.get('area_usable') as string) : null,
             area_built: formData.get('area_built') ? parseFloat(formData.get('area_built') as string) : null,
+            area_box: formData.get('area_box') ? parseFloat(formData.get('area_box') as string) : null,
+            area_terrace: formData.get('area_terrace') ? parseFloat(formData.get('area_terrace') as string) : null,
+            area_garden: formData.get('area_garden') ? parseFloat(formData.get('area_garden') as string) : null,
 
             year_built: formData.get('year_built') ? parseInt(formData.get('year_built') as string) : null,
             floor: formData.get('floor') ? parseInt(formData.get('floor') as string) : null,

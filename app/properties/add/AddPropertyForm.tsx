@@ -104,9 +104,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         baths: initialData?.bathrooms?.toString() || '',
         usableArea: initialData?.area_usable?.toString() || '',
         builtArea: initialData?.area_built?.toString() || '',
-        boxArea: '',
-        terraceArea: '',
-        gardenArea: '',
+        boxArea: initialData?.area_box?.toString() || '',
+        terraceArea: initialData?.area_terrace?.toString() || '',
+        gardenArea: initialData?.area_garden?.toString() || '',
         yearBuilt: initialData?.year_built?.toString() || new Date().getFullYear().toString(),
         totalFloors: initialData?.total_floors?.toString() || '',
         floor: initialData?.floor?.toString() || '', // For apartment unit floor
@@ -334,6 +334,12 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                         className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg shadow-violet-600/25 border border-violet-500/20"
                     >
                         Return to Dashboard
+                    </button>
+                    <button
+                        onClick={() => router.push(initialData?.owner_id || propertyId ? '/dashboard/agent/listings' : '/dashboard/owner/properties')}
+                        className="w-full mt-3 bg-slate-800 text-white py-4 rounded-xl font-bold hover:bg-slate-700 transition-all border border-slate-700 hover:border-slate-600 shadow-lg shadow-black/20"
+                    >
+                        Return to My Listings
                     </button>
                 </div>
             </div>
