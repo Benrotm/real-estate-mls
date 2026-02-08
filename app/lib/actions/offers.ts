@@ -28,6 +28,10 @@ export interface PropertyWithOffers {
     images: string[];
     city: string;
     county: string;
+    status: string;
+    friendly_id?: string;
+    promoted?: boolean;
+    score?: number;
     is_published: boolean;
     created_at: string;
     views_count: number;
@@ -103,7 +107,11 @@ export async function getUserPropertiesWithOffers(): Promise<PropertyWithOffers[
         images: property.images || [],
         city: property.location_city,
         county: property.location_county,
-        is_published: property.is_published,
+        status: property.status,
+        friendly_id: property.friendly_id,
+        promoted: property.promoted,
+        score: property.score,
+        is_published: property.status === 'active',
         created_at: property.created_at,
         views_count: viewsCount[property.id] || 0,
         favorites_count: favoritesCount[property.id] || 0,
@@ -111,6 +119,7 @@ export async function getUserPropertiesWithOffers(): Promise<PropertyWithOffers[
         offers: (offers || []).filter(o => o.property_id === property.id)
     }));
 }
+
 
 // Get offers for a specific property
 export async function getPropertyOffers(propertyId: string): Promise<PropertyOffer[]> {

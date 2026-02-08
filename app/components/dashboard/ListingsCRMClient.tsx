@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { PropertyWithOffers, PropertyOffer, updateOfferStatus } from '@/app/lib/actions/offers';
-import { Eye, Heart, MessageCircle, DollarSign, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar } from 'lucide-react';
+import { Eye, Heart, MessageCircle, DollarSign, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award } from 'lucide-react';
 import Link from 'next/link';
+import PropertyManageButtons from '../PropertyManageButtons';
 
 interface ListingsCRMClientProps {
     properties: PropertyWithOffers[];
@@ -141,10 +142,27 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                                     <span>{property.city}, {property.county}</span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 text-xs font-bold rounded-full ${property.is_published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                    {property.is_published ? 'Published' : 'Draft'}
-                                </span>
+                            <div className="flex flex-wrap gap-2 justify-end">
+                                {property.status === 'draft' && (
+                                    <span className="bg-slate-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-slate-500 shrink-0">
+                                        Draft - Private
+                                    </span>
+                                )}
+                                {property.friendly_id && (
+                                    <span className="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-slate-700 shrink-0">
+                                        #{property.friendly_id}
+                                    </span>
+                                )}
+                                {property.promoted && (
+                                    <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                                        Featured
+                                    </span>
+                                )}
+                                {property.score && property.score > 0 && (
+                                    <span className={`text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shrink-0 ${property.score >= 80 ? 'bg-red-600' : property.score >= 50 ? 'bg-orange-500' : 'bg-slate-500'}`}>
+                                        <Award className="w-2.5 h-2.5" /> Score: {property.score}
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center gap-4 mt-3">
@@ -189,13 +207,22 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                         </Link>
                         <Link
                             href={`/dashboard/owner/properties/${property.id}/edit`}
-                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors mr-2"
                             title="Edit property"
                         >
                             <Edit className="w-4 h-4" />
                         </Link>
+
+                        <div className="w-32 scale-90 origin-right">
+                            {/* Wrap PropertyManageButtons to match size */}
+                            <PropertyManageButtons
+                                propertyId={property.id}
+                                status={property.status as 'active' | 'draft'}
+                            />
+                        </div>
                     </div>
                 </div>
+
             </div>
 
             {/* Offers Section */}
