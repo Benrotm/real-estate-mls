@@ -251,24 +251,29 @@ export default function Navbar({ user }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-3">
+                {/* Sign In - Cyan color, subdued on signup page */}
                 <Link
                   href="/auth/login"
-                  className={`hidden md:flex items-center gap-2 font-bold transition-colors ${pathname === '/auth/login' ? 'text-cyan-400' : 'text-white hover:text-cyan-300'}`}
+                  className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${pathname === '/auth/signup'
+                      ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
+                      : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10'
+                    }`}
                 >
                   Sign In
                 </Link>
+
+                {/* Sign Up - Green gradient, subdued on login page */}
                 <Link
                   href="/auth/signup"
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${pathname === '/auth/signup'
-                      ? 'bg-gradient-to-r from-lime-500 to-emerald-600 text-white shadow-lg shadow-lime-500/50'
-                      : pathname === '/auth/login'
-                        ? 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                        : 'bg-gradient-to-r from-lime-500 to-emerald-600 text-white hover:from-lime-400 hover:to-emerald-500 shadow-lg shadow-lime-500/50'
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${pathname === '/auth/login'
+                      ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
+                      : 'bg-gradient-to-r from-lime-500 to-emerald-600 text-white hover:from-lime-400 hover:to-emerald-500 shadow-lg shadow-lime-500/50'
                     }`}
                 >
                   Sign Up
                 </Link>
 
+                {/* List Property - Always highlighted cyan */}
                 <Link href="/properties/add" className="hidden lg:flex items-center gap-2 text-cyan-400 font-bold hover:text-cyan-300 ml-2">
                   <Plus className="w-5 h-5" />
                   <span>List Property</span>
