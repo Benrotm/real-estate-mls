@@ -12,6 +12,7 @@ import PropertyFeatures from '@/app/components/PropertyFeatures';
 import ContactForm from '../../components/ContactForm';
 import OpenHouseWidget from '@/app/components/events/OpenHouseWidget';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
+import ShareButton from '@/app/components/property/ShareButton';
 import { supabase } from "@/app/lib/supabase/client";
 
 function getYouTubeEmbedUrl(url: string) {
@@ -322,13 +323,24 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             )}
                         </div>
 
-                        {/* 2. Title */}
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2 leading-tight">
-                            {property.title}
-                        </h1>
-                        <div className="leading-tight">
-                            <div className="font-extrabold text-2xl text-slate-900">{formatter.format(property.area_usable || 0).replace('$', '')}</div>
-                            <div className="text-slate-500 font-bold text-sm">Sq m</div>
+                        {/* 2. Title & Share */}
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div>
+                                <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2 leading-tight">
+                                    {property.title}
+                                </h1>
+                                <div className="leading-tight">
+                                    <div className="font-extrabold text-2xl text-slate-900">{formatter.format(property.area_usable || 0).replace('$', '')}</div>
+                                    <div className="text-slate-500 font-bold text-sm">Sq m</div>
+                                </div>
+                            </div>
+
+                            {/* Share Button */}
+                            <ShareButton
+                                title={property.title}
+                                description={`Check out ${property.title} on Imobum!`}
+                                className="shrink-0"
+                            />
                         </div>
                     </div>
 
