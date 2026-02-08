@@ -188,7 +188,7 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                             <ExternalLink className="w-4 h-4" />
                         </Link>
                         <Link
-                            href={`/properties/edit/${property.id}`}
+                            href={`/dashboard/owner/properties/${property.id}/edit`}
                             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                             title="Edit property"
                         >
