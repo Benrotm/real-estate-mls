@@ -258,14 +258,14 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
             id: comp.id,
             property_id: comp.property_id,
             sold_price: safeNumber(comp.sold_price),
-            sold_date: comp.sold_date instanceof Date ? comp.sold_date.toISOString() : comp.sold_date,
-            source: comp.source,
+            sold_date: comp.sold_date instanceof Date ? comp.sold_date.toISOString() : (comp.sold_date || null),
+            source: comp.source || null,
             properties: comp.properties ? {
-                title: comp.properties.title,
-                type: comp.properties.type,
-                location_city: comp.properties.location_city,
+                title: comp.properties.title || '',
+                type: comp.properties.type || 'Other',
+                location_city: comp.properties.location_city || '',
                 area_usable: safeNumber(comp.properties.area_usable),
-                images: comp.properties.images
+                images: comp.properties.images || []
             } : null
         }))
     };
