@@ -8,6 +8,20 @@ export async function recordPropertyView(propertyId: string, sessionHash?: strin
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Deduplication check: if sessionHash is provided, don't record if already exists in last 24h
+    if (sessionHash) {
+        const { data: existing } = await supabase
+            .from('property_views')
+            .select('id')
+            .eq('property_id', propertyId)
+            .eq('session_hash', sessionHash)
+            .gte('viewed_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            .limit(1)
+            .single();
+
+        if (existing) return;
+    }
+
     const { error } = await supabase.from('property_views').insert({
         property_id: propertyId,
         viewer_id: user?.id || null,
@@ -16,6 +30,8 @@ export async function recordPropertyView(propertyId: string, sessionHash?: strin
 
     if (error) {
         console.error('Error recording property view:', error);
+    } else {
+        revalidatePath(`/properties/${propertyId}`);
     }
 }
 
@@ -24,31 +40,29 @@ export async function getPropertyAnalytics(propertyId: string) {
     try {
         const supabase = await createClient();
 
-        // Get counts in parallel - wrap each in case one table fails or ID is invalid
-        const results = await Promise.allSettled([
-            supabase.from('property_views').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
-            supabase.from('property_favorites').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
-            supabase.from('property_inquiries').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
-            supabase.from('property_offers').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
-            supabase.from('property_shares').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
-            supabase.from('properties').select('created_at').eq('id', propertyId).single()
-        ]);
+        // Use RPC to get counts securely (bypasses RLS SELECT restrictions for aggregates)
+        const { data, error } = await supabase.rpc('get_property_analytics_counts', { p_id: propertyId });
 
-        const getCount = (res: any) => (res.status === 'fulfilled' && res.value?.count) ? res.value.count : 0;
-        const getPropData = (res: any) => (res.status === 'fulfilled' && res.value?.data) ? res.value.data : null;
+        if (error) throw error;
 
-        const rawCreatedAt = getPropData(results[5])?.created_at || null;
-        const sanitizedCreatedAt = rawCreatedAt instanceof Date
-            ? rawCreatedAt.toISOString()
-            : (typeof rawCreatedAt === 'string' ? rawCreatedAt : null);
+        // Get property created_at for the listed date
+        const { data: propData } = await supabase.from('properties').select('created_at').eq('id', propertyId).single();
+
+        const counts = data?.[0] || {
+            views_count: 0,
+            favorites_count: 0,
+            inquiries_count: 0,
+            offers_count: 0,
+            shares_count: 0
+        };
 
         return {
-            views: getCount(results[0]),
-            favorites: getCount(results[1]),
-            inquiries: getCount(results[2]),
-            offers: getCount(results[3]),
-            shares: getCount(results[4]),
-            createdAt: sanitizedCreatedAt
+            views: Number(counts.views_count),
+            favorites: Number(counts.favorites_count),
+            inquiries: Number(counts.inquiries_count),
+            offers: Number(counts.offers_count),
+            shares: Number(counts.shares_count),
+            createdAt: propData?.created_at || null
         };
     } catch (error) {
         console.error('Error fetching property analytics:', error);

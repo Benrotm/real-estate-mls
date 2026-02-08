@@ -40,8 +40,12 @@ export default function FavoriteButton({ propertyId, className = '' }: FavoriteB
             if (result.success) {
                 setIsFavorited(result.isFavorited || false);
             } else if (result.error) {
-                // You might want to show a toast message here
-                alert(result.error);
+                // If the error indicates not logged in, we can show a more specific message
+                if (result.error.toLowerCase().includes('logged in')) {
+                    alert('Please log in to save properties to your favorites.');
+                } else {
+                    alert(result.error);
+                }
             }
         } catch (error) {
             console.error('Error toggling favorite:', error);
@@ -63,8 +67,8 @@ export default function FavoriteButton({ propertyId, className = '' }: FavoriteB
             onClick={handleToggle}
             disabled={isActionLoading}
             className={`w-10 h-10 rounded-full shadow-md flex items-center justify-center transition-all group ${isFavorited
-                    ? 'bg-pink-500 text-white hover:bg-pink-600 scale-110'
-                    : 'bg-white/90 backdrop-blur-sm text-slate-400 hover:text-pink-500 hover:bg-white scale-100'
+                ? 'bg-pink-500 text-white hover:bg-pink-600 scale-110'
+                : 'bg-white/90 backdrop-blur-sm text-slate-400 hover:text-pink-500 hover:bg-white scale-100'
                 } ${isActionLoading ? 'opacity-70 animate-pulse' : 'hover:scale-110 active:scale-95'} ${className}`}
             title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
         >
