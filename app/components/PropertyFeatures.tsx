@@ -14,9 +14,11 @@ interface PropertyFeaturesProps {
         virtualTour: boolean;
         directMessage: boolean;
     };
+    propertyTitle?: string;
+    currency?: string;
 }
 
-export default function PropertyFeatures({ propertyId, ownerId, features }: PropertyFeaturesProps) {
+export default function PropertyFeatures({ propertyId, ownerId, features, propertyTitle = '', currency = 'USD' }: PropertyFeaturesProps) {
     const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
     const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 
@@ -138,11 +140,10 @@ export default function PropertyFeatures({ propertyId, ownerId, features }: Prop
                 isOpen={isOfferModalOpen}
                 onClose={() => setIsOfferModalOpen(false)}
                 propertyId={propertyId}
-                propertyTitle=""
-                currencySymbol="$"
+                propertyTitle={propertyTitle}
+                currencySymbol={currency === 'USD' ? '$' : '€'}
             />
         </div>
     );
 }
 
-// Need to fix imports in the file content below.

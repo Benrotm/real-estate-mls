@@ -13,7 +13,7 @@ import ContactForm from '../../components/ContactForm';
 import OpenHouseWidget from '@/app/components/events/OpenHouseWidget';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
 import ShareButton from '@/app/components/property/ShareButton';
-import { supabase } from "@/app/lib/supabase/client";
+import { createClient } from "@/app/lib/supabase/server";
 import PropertyAnalyticsWidget from '@/app/components/analytics/PropertyAnalyticsWidget';
 import PropertyViewTracker from '@/app/components/analytics/PropertyViewTracker';
 import { getPropertyAnalytics } from '@/app/lib/actions/propertyAnalytics';
@@ -22,10 +22,6 @@ function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
 
     // Extract Video ID using Regex
-    // Supports:
-    // - youtube.com/watch?v=ID
-    // - youtu.be/ID
-    // - youtube.com/embed/ID
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
 
@@ -33,12 +29,12 @@ function getYouTubeEmbedUrl(url: string) {
         return `https://www.youtube.com/embed/${match[2]}`;
     }
 
-    // Fallback if regex fails but it might be an embed link already
     return url;
 }
 
 export default async function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
+    const supabase = await createClient();
 
     // 1. Try to fetch from Supabase
     const { data: dbProperty, error } = await supabase
@@ -509,6 +505,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         <PropertyFeatures
                             propertyId={property.id}
                             ownerId={property.owner_id}
+                            propertyTitle={property.title}
+                            currency={property.currency}
                             features={{
                                 makeOffer: showMakeOffer,
                                 virtualTour: !!(showVirtualTour && property.virtual_tour_url),

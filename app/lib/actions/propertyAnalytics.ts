@@ -120,36 +120,6 @@ export async function submitPropertyInquiry(propertyId: string, data: {
     return { success: true };
 }
 
-// Submit property offer
-export async function submitPropertyOffer(propertyId: string, data: {
-    offerAmount: number;
-    currency?: string;
-    name?: string;
-    email?: string;
-    phone?: string;
-    message?: string;
-}) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { error } = await supabase.from('property_offers').insert({
-        property_id: propertyId,
-        user_id: user?.id || null,
-        offer_amount: data.offerAmount,
-        currency: data.currency || 'EUR',
-        name: data.name || null,
-        email: data.email || null,
-        phone: data.phone || null,
-        message: data.message || null
-    });
-
-    if (error) {
-        console.error('Error submitting offer:', error);
-        return { success: false, error: error.message };
-    }
-
-    return { success: true };
-}
 
 // Record property share
 export async function recordPropertyShare(propertyId: string, shareMethod?: string) {

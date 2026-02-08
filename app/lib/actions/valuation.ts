@@ -168,7 +168,10 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
 
     const offersCount = offers?.length || 0;
     const avgOfferPrice = (offersCount > 0 && offers)
-        ? offers.reduce((sum, o) => sum + Number(o.offer_amount), 0) / offersCount
+        ? offers.reduce((sum, o) => {
+            const val = Number(o.offer_amount);
+            return sum + (isNaN(val) ? 0 : val);
+        }, 0) / offersCount
         : 0;
 
     // 5. Calculate Base Value
@@ -218,8 +221,10 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
     // If average offer is higher than listing price, it indicates strong market demand
     if (avgOfferPrice > 0 && property.price > 0) {
         const offerVsListing = (avgOfferPrice - property.price) / property.price;
-        // Limit the impact to +/- 5% to avoid extreme swings
-        marketInterestImpact = Math.max(-0.05, Math.min(0.05, offerVsListing * 0.5));
+        if (!isNaN(offerVsListing)) {
+            // Limit the impact to +/- 5% to avoid extreme swings
+            marketInterestImpact = Math.max(-0.05, Math.min(0.05, offerVsListing * 0.5));
+        }
     } else if (offersCount > 3) {
         // High volume of offers even without price data gives a small boost
         marketInterestImpact = 0.01;
