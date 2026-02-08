@@ -14,6 +14,9 @@ import OpenHouseWidget from '@/app/components/events/OpenHouseWidget';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
 import ShareButton from '@/app/components/property/ShareButton';
 import { supabase } from "@/app/lib/supabase/client";
+import PropertyAnalyticsWidget from '@/app/components/analytics/PropertyAnalyticsWidget';
+import PropertyViewTracker from '@/app/components/analytics/PropertyViewTracker';
+import { getPropertyAnalytics } from '@/app/lib/actions/propertyAnalytics';
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
@@ -191,8 +194,14 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
         .eq('property_id', property.id)
         .order('start_time', { ascending: true });
 
+    // Fetch Property Analytics
+    const analytics = await getPropertyAnalytics(property.id);
+
     return (
         <div className="min-h-screen pb-20 bg-gray-50">
+            {/* Track Page View */}
+            <PropertyViewTracker propertyId={property.id} />
+
             {/* Breadcrumb / Back */}
             <div className="bg-white border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 py-4">
@@ -612,7 +621,16 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 </div>
 
                 {/* Sidebar */}
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 space-y-6">
+                    {/* Property Insights Widget */}
+                    <PropertyAnalyticsWidget
+                        views={analytics.views}
+                        favorites={analytics.favorites}
+                        inquiries={analytics.inquiries}
+                        offers={analytics.offers}
+                        createdAt={analytics.createdAt}
+                    />
+
                     <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-lg sticky top-24 z-0">
                         <h3 className="text-xl font-bold mb-6 text-slate-900">Contact</h3>
                         <div className="flex items-center gap-4 mb-6">
@@ -654,6 +672,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         )}
 
                         <ContactForm
+                            propertyId={property.id}
                             propertyTitle={property.title}
                             propertyAddress={`${property.address}, ${property.location_city}`}
                             agentName={agent.name}

@@ -46,5 +46,5 @@ async function restoreAdmin(email: string) {
     }
 }
 
-const targetEmail = 'ben.smarthub@example.com';
+const targetEmail = 'bensilion@gmail.com';
 restoreAdmin(targetEmail);

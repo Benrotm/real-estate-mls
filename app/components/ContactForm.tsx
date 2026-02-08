@@ -3,14 +3,16 @@
 import { useState } from 'react';
 import { Mail, Calendar, Loader2, Check } from 'lucide-react';
 import { scheduleAppointment } from '../lib/actions';
+import { submitPropertyInquiry } from '../lib/actions/propertyAnalytics';
 
 interface ContactFormProps {
+    propertyId: string;
     propertyTitle: string;
     propertyAddress: string;
     agentName: string;
 }
 
-export default function ContactForm({ propertyTitle, propertyAddress, agentName }: ContactFormProps) {
+export default function ContactForm({ propertyId, propertyTitle, propertyAddress, agentName }: ContactFormProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -21,14 +23,22 @@ export default function ContactForm({ propertyTitle, propertyAddress, agentName 
         setError(null);
 
         const formData = new FormData(e.currentTarget);
-        // Ensure required fields for the acton
-        formData.append('propertyId', '1');
+        const name = formData.get('name') as string;
+        const email = formData.get('email') as string;
+        const phone = formData.get('phone') as string;
+        const message = formData.get('message') as string;
+
+        // Record the inquiry in analytics
+        await submitPropertyInquiry(propertyId, { name, email, phone, message });
+
+        // Ensure required fields for the action
+        formData.append('propertyId', propertyId);
         formData.append('propertyTitle', propertyTitle);
         // adapt fields to what action likely expects or just rely on generic handling
-        formData.append('notes', formData.get('message') as string);
-        formData.append('clientName', formData.get('name') as string);
-        formData.append('clientEmail', formData.get('email') as string);
-        formData.append('clientPhone', formData.get('phone') as string);
+        formData.append('notes', message);
+        formData.append('clientName', name);
+        formData.append('clientEmail', email);
+        formData.append('clientPhone', phone);
 
         try {
             const result = await scheduleAppointment(formData);
