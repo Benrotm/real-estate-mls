@@ -251,12 +251,12 @@ export default function Navbar({ user }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                {/* Sign In - Cyan bordered button, subdued on signup page */}
+                {/* Sign In - Orange to green gradient, subdued on signup page */}
                 <Link
                   href="/auth/login"
-                  className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${pathname === '/auth/signup'
+                  className={`hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${pathname === '/auth/signup'
                       ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
-                      : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/30 hover:border-cyan-400'
+                      : 'bg-gradient-to-r from-orange-500 to-emerald-500 text-white hover:from-orange-400 hover:to-emerald-400 shadow-lg shadow-orange-500/30'
                     }`}
                 >
                   Sign In
@@ -266,8 +266,8 @@ export default function Navbar({ user }: NavbarProps) {
                 <Link
                   href="/auth/signup"
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${pathname === '/auth/login'
-                      ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
-                      : 'bg-gradient-to-r from-lime-500 to-emerald-600 text-white hover:from-lime-400 hover:to-emerald-500 shadow-lg shadow-lime-500/50'
+                    ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
+                    : 'bg-gradient-to-r from-lime-500 to-emerald-600 text-white hover:from-lime-400 hover:to-emerald-500 shadow-lg shadow-lime-500/50'
                     }`}
                 >
                   Sign Up
