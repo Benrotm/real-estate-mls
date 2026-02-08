@@ -257,7 +257,15 @@ export default function Navbar({ user }: NavbarProps) {
                 >
                   Sign In
                 </Link>
-                <Link href="/auth/signup" className="flex items-center gap-2 bg-gradient-to-r from-lime-500 to-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:from-lime-400 hover:to-emerald-500 transition-all shadow-lg shadow-lime-500/50">
+                <Link
+                  href="/auth/signup"
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${pathname === '/auth/signup'
+                      ? 'bg-gradient-to-r from-lime-500 to-emerald-600 text-white shadow-lg shadow-lime-500/50'
+                      : pathname === '/auth/login'
+                        ? 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                        : 'bg-gradient-to-r from-lime-500 to-emerald-600 text-white hover:from-lime-400 hover:to-emerald-500 shadow-lg shadow-lime-500/50'
+                    }`}
+                >
                   Sign Up
                 </Link>
 
