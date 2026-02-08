@@ -185,7 +185,24 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
 
     if (!property) return notFound();
 
-    const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: property.currency || 'USD', maximumFractionDigits: 0 });
+    // Safe formatter factory
+    const getSafeFormatter = (currencyCode: string) => {
+        try {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currencyCode || 'USD',
+                maximumFractionDigits: 0
+            });
+        } catch (e) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            });
+        }
+    };
+
+    const formatter = getSafeFormatter(property.currency || 'USD');
 
     // Agent / Owner Display Data
     const agent = {
@@ -333,7 +350,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                     {property.title}
                                 </h1>
                                 <div className="leading-tight">
-                                    <div className="font-extrabold text-2xl text-slate-900">{formatter.format(property.area_usable || 0).replace('$', '')}</div>
+                                    <div className="font-extrabold text-2xl text-slate-900">{formatter.format(property.area_usable || 0).replace('$', '').replace('€', '')}</div>
                                     <div className="text-slate-500 font-bold text-sm">Sq m</div>
                                 </div>
                             </div>

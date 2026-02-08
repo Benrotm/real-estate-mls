@@ -233,18 +233,34 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
     metricsImpact = aqiImpact + solarImpact + marketInterestImpact;
     const finalValue = baseValue * (1 + metricsImpact);
 
+    // Helper to ensure numbers are serializable (no NaN, no Infinity)
+    const safeNumber = (val: any, fallback = 0) => {
+        if (typeof val !== 'number' || isNaN(val) || !Number.isFinite(val)) {
+            return fallback;
+        }
+        return val;
+    };
+
     return {
-        estimatedValue: Math.round(finalValue),
-        // Confidence boost from offers
-        confidenceScore: Math.min(100, (validComps.length >= 3 ? 90 : (validComps.length > 0 ? 60 : 30)) + (offersCount > 0 ? 5 : 0)),
-        baseValue: Math.round(baseValue),
-        pricePerSqm: Math.round(pricePerSqm),
+        estimatedValue: Math.round(safeNumber(finalValue, Number(property.price) || 0)),
+        confidenceScore: Math.min(100, Math.max(0, Math.round(
+            (validComps.length >= 3 ? 90 : (validComps.length > 0 ? 60 : 30)) + (offersCount > 0 ? 5 : 0)
+        ))),
+        baseValue: Math.round(safeNumber(baseValue, Number(property.price) || 0)),
+        pricePerSqm: Math.round(safeNumber(pricePerSqm)),
         comparablesCount: validComps.length,
         lifestyleFactors: {
-            aqi: { value: aqi || 0, category: envMetrics?.air_quality_category || 'N/A', impact: aqiImpact },
-            solar: { score: solar || 0, kwh: envMetrics?.solar_yearly_potential_kwh || 0, impact: solarImpact },
-            offers: { count: offersCount, avgPrice: avgOfferPrice, impact: marketInterestImpact }
+            aqi: { value: safeNumber(aqi), category: envMetrics?.air_quality_category || 'N/A', impact: safeNumber(aqiImpact) },
+            solar: { score: safeNumber(solar), kwh: safeNumber(envMetrics?.solar_yearly_potential_kwh), impact: safeNumber(solarImpact) },
+            offers: { count: offersCount, avgPrice: safeNumber(avgOfferPrice), impact: safeNumber(marketInterestImpact) }
         },
-        comparables: validComps
+        comparables: validComps.map(comp => ({
+            ...comp,
+            sold_price: safeNumber(comp.sold_price),
+            properties: comp.properties ? {
+                ...comp.properties,
+                area_usable: safeNumber(comp.properties.area_usable)
+            } : null
+        }))
     };
 }
