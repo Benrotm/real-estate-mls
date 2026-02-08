@@ -433,6 +433,17 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                     </div>
 
+                    {/* Open House Events - After Description */}
+                    {propertyEvents && propertyEvents.length > 0 && (
+                        <div className="space-y-4">
+                            <OpenHouseWidget
+                                events={propertyEvents}
+                                propertyTitle={property.title}
+                                propertyAddress={`${property.address}, ${property.location_city}`}
+                            />
+                        </div>
+                    )}
+
                     {/* 6. Features & Amenities - Organized by Category */}
                     <div className="space-y-4">
                         <h2 className="text-2xl font-bold text-slate-900">Features & Amenities</h2>
@@ -597,17 +608,6 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             />
                         </div>
                     </div>
-
-                    {/* Open House Events - After Location */}
-                    {propertyEvents && propertyEvents.length > 0 && (
-                        <div className="mt-10">
-                            <OpenHouseWidget
-                                events={propertyEvents}
-                                propertyTitle={property.title}
-                                propertyAddress={`${property.address}, ${property.location_city}`}
-                            />
-                        </div>
-                    )}
 
                 </div>
 
