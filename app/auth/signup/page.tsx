@@ -252,7 +252,7 @@ export default function SignUpPage() {
                     <div>
                         <label htmlFor="email-address" className="sr-only">Email address</label>
                         <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-20">
                                 <Mail className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
@@ -261,7 +261,7 @@ export default function SignUpPage() {
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm bg-transparent"
                                 placeholder="Email address"
                             />
                         </div>
@@ -270,7 +270,7 @@ export default function SignUpPage() {
                     <div>
                         <label htmlFor="phone-number" className="sr-only">Phone Number</label>
                         <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-20">
                                 <Phone className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
@@ -279,7 +279,7 @@ export default function SignUpPage() {
                                 type="tel"
                                 autoComplete="tel"
                                 required
-                                className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm bg-transparent"
                                 placeholder="Phone Number"
                             />
                         </div>
@@ -288,7 +288,7 @@ export default function SignUpPage() {
                     <div>
                         <label htmlFor="password" className="sr-only">Password</label>
                         <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-20">
                                 <Lock className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
@@ -297,7 +297,7 @@ export default function SignUpPage() {
                                 type="password"
                                 autoComplete="new-password"
                                 required
-                                className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm bg-transparent"
                                 placeholder="Create Password"
                             />
                         </div>

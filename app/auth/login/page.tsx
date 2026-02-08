@@ -22,14 +22,18 @@ export default function LoginPage() {
         setError(null);
 
         const formData = new FormData(e.currentTarget);
-        const email = formData.get('email') as string;
         const password = formData.get('password') as string;
 
+        let credentials: { email?: string; phone?: string; password: string } = { password };
+
+        if (authMethod === 'email') {
+            credentials.email = formData.get('email') as string;
+        } else {
+            credentials.phone = formData.get('phone') as string;
+        }
+
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+            const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
             if (error) throw error;
 
@@ -207,10 +211,10 @@ export default function LoginPage() {
                     )}
 
                     {authMethod === 'email' ? (
-                        <div>
+                        <div key="email-input-group">
                             <label htmlFor="email" className="sr-only">Email address</label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-20">
                                     <Mail className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input
@@ -219,35 +223,35 @@ export default function LoginPage() {
                                     type="email"
                                     autoComplete="email"
                                     required
-                                    className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                                    className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm bg-transparent"
                                     placeholder="Email address"
                                 />
                             </div>
                         </div>
                     ) : (
-                        <div>
+                        <div key="phone-input-group">
                             <label htmlFor="phone" className="sr-only">Phone Number</label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-20">
                                     <Phone className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input
                                     id="phone"
-                                    name="email" // Using 'email' name for 'phone' input because signInWithPassword expects 'email' or 'phone' as identifier
+                                    name="phone"
                                     type="tel"
                                     autoComplete="tel"
                                     required
-                                    className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                                    className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm bg-transparent"
                                     placeholder="Phone Number"
                                 />
                             </div>
                         </div>
                     )}
 
-                    <div>
+                    <div key="password-group">
                         <label htmlFor="password" className="sr-only">Password</label>
                         <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-20">
                                 <Lock className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
@@ -256,7 +260,7 @@ export default function LoginPage() {
                                 type="password"
                                 autoComplete="current-password"
                                 required
-                                className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-xl relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm bg-transparent"
                                 placeholder="Password"
                             />
                         </div>

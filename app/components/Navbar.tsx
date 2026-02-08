@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useLanguage } from '../context/LanguageContext';
 import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X, Hammer } from 'lucide-react';
 import { SERVICES } from '../lib/services';
@@ -16,6 +17,7 @@ export default function Navbar({ user }: NavbarProps) {
   const userEmail = user?.full_name || "User";
   const userRole = user?.role;
   const isSuperAdmin = userRole === 'super_admin';
+  const pathname = usePathname();
 
   const { language, setLanguage } = useLanguage();
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -249,7 +251,10 @@ export default function Navbar({ user }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                <Link href="/auth/login" className="hidden md:flex items-center gap-2 text-white font-bold hover:text-cyan-300 transition-colors">
+                <Link
+                  href="/auth/login"
+                  className={`hidden md:flex items-center gap-2 font-bold transition-colors ${pathname === '/auth/login' ? 'text-cyan-400' : 'text-white hover:text-cyan-300'}`}
+                >
                   Sign In
                 </Link>
                 <Link href="/auth/signup" className="flex items-center gap-2 bg-gradient-to-r from-lime-500 to-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:from-lime-400 hover:to-emerald-500 transition-all shadow-lg shadow-lime-500/50">
