@@ -251,12 +251,12 @@ export default function Navbar({ user }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                {/* Sign In - Cyan color, subdued on signup page */}
+                {/* Sign In - Cyan bordered button, subdued on signup page */}
                 <Link
                   href="/auth/login"
                   className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${pathname === '/auth/signup'
                       ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
-                      : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10'
+                      : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/30 hover:border-cyan-400'
                     }`}
                 >
                   Sign In
@@ -273,8 +273,11 @@ export default function Navbar({ user }: NavbarProps) {
                   Sign Up
                 </Link>
 
-                {/* List Property - Always highlighted cyan */}
-                <Link href="/properties/add" className="hidden lg:flex items-center gap-2 text-cyan-400 font-bold hover:text-cyan-300 ml-2">
+                {/* List Property - Cyan bordered button with icon */}
+                <Link
+                  href="/properties/add"
+                  className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 font-bold hover:bg-cyan-500/30 hover:border-cyan-400 transition-all"
+                >
                   <Plus className="w-5 h-5" />
                   <span>List Property</span>
                 </Link>
