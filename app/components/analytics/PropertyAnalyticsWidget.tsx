@@ -1,12 +1,13 @@
 'use client';
 
-import { Eye, Calendar, Heart, MessageCircle, DollarSign } from 'lucide-react';
+import { Eye, Calendar, Heart, MessageCircle, DollarSign, Share2 } from 'lucide-react';
 
 interface PropertyAnalyticsWidgetProps {
     views: number;
     favorites: number;
     inquiries: number;
     offers: number;
+    shares: number;
     createdAt: string | null;
 }
 
@@ -15,6 +16,7 @@ export default function PropertyAnalyticsWidget({
     favorites,
     inquiries,
     offers,
+    shares,
     createdAt
 }: PropertyAnalyticsWidgetProps) {
     const formatDate = (dateStr: string | null) => {
@@ -34,6 +36,7 @@ export default function PropertyAnalyticsWidget({
         { icon: Heart, label: 'Favorites', value: favorites, color: 'text-pink-500', bg: 'bg-pink-500/10' },
         { icon: MessageCircle, label: 'Inquiries', value: inquiries, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { icon: DollarSign, label: 'Offers', value: offers, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { icon: Share2, label: 'Shares', value: shares, color: 'text-purple-500', bg: 'bg-purple-500/10' },
     ];
 
     return (

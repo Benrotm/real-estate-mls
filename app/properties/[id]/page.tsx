@@ -346,6 +346,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
 
                             {/* Share Button */}
                             <ShareButton
+                                propertyId={property.id}
                                 title={property.title}
                                 description={`Check out ${property.title} on Imobum!`}
                                 className="shrink-0"
@@ -628,6 +629,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         favorites={analytics.favorites}
                         inquiries={analytics.inquiries}
                         offers={analytics.offers}
+                        shares={analytics.shares}
                         createdAt={analytics.createdAt}
                     />
 

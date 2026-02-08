@@ -23,11 +23,12 @@ export async function getPropertyAnalytics(propertyId: string) {
     const supabase = await createClient();
 
     // Get counts in parallel
-    const [viewsResult, favoritesResult, inquiriesResult, offersResult, propertyResult] = await Promise.all([
+    const [viewsResult, favoritesResult, inquiriesResult, offersResult, sharesResult, propertyResult] = await Promise.all([
         supabase.from('property_views').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
         supabase.from('property_favorites').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
         supabase.from('property_inquiries').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
         supabase.from('property_offers').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
+        supabase.from('property_shares').select('id', { count: 'exact', head: true }).eq('property_id', propertyId),
         supabase.from('properties').select('created_at').eq('id', propertyId).single()
     ]);
 
@@ -36,6 +37,7 @@ export async function getPropertyAnalytics(propertyId: string) {
         favorites: favoritesResult.count || 0,
         inquiries: inquiriesResult.count || 0,
         offers: offersResult.count || 0,
+        shares: sharesResult.count || 0,
         createdAt: propertyResult.data?.created_at || null
     };
 }
@@ -147,4 +149,20 @@ export async function submitPropertyOffer(propertyId: string, data: {
     }
 
     return { success: true };
+}
+
+// Record property share
+export async function recordPropertyShare(propertyId: string, shareMethod?: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { error } = await supabase.from('property_shares').insert({
+        property_id: propertyId,
+        user_id: user?.id || null,
+        share_method: shareMethod || null
+    });
+
+    if (error) {
+        console.error('Error recording share:', error);
+    }
 }

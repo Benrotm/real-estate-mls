@@ -4,15 +4,17 @@
 import { useState } from 'react';
 import { Share2, Copy, Check, Facebook, Twitter, Mail, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import { recordPropertyShare } from '@/app/lib/actions/propertyAnalytics';
 
 interface ShareButtonProps {
+    propertyId?: string;
     title: string;
     description?: string;
     url?: string;
     className?: string;
 }
 
-export default function ShareButton({ title, description, url, className = '' }: ShareButtonProps) {
+export default function ShareButton({ propertyId, title, description, url, className = '' }: ShareButtonProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [copied, setCopied] = useState(false);
 
@@ -20,6 +22,11 @@ export default function ShareButton({ title, description, url, className = '' }:
     const shareText = description || `Check out this property: ${title}`;
 
     const handleShare = async () => {
+        // Record the share
+        if (propertyId) {
+            recordPropertyShare(propertyId, 'native');
+        }
+
         if (navigator.share) {
             try {
                 await navigator.share({
@@ -35,10 +42,20 @@ export default function ShareButton({ title, description, url, className = '' }:
         }
     };
 
+    const handleShareClick = (method: string) => {
+        if (propertyId) {
+            recordPropertyShare(propertyId, method);
+        }
+        setIsOpen(false);
+    };
+
     const copyToClipboard = async () => {
         try {
             await navigator.clipboard.writeText(shareUrl);
             setCopied(true);
+            if (propertyId) {
+                recordPropertyShare(propertyId, 'copy');
+            }
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy:', err);
@@ -75,7 +92,7 @@ export default function ShareButton({ title, description, url, className = '' }:
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-green-600 rounded-lg transition-colors w-full"
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => handleShareClick('whatsapp')}
                             >
                                 <MessageCircle className="w-4 h-4" />
                                 <span>WhatsApp</span>
@@ -87,7 +104,7 @@ export default function ShareButton({ title, description, url, className = '' }:
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-lg transition-colors w-full"
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => handleShareClick('facebook')}
                             >
                                 <Facebook className="w-4 h-4" />
                                 <span>Facebook</span>
@@ -99,7 +116,7 @@ export default function ShareButton({ title, description, url, className = '' }:
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-sky-500 rounded-lg transition-colors w-full"
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => handleShareClick('twitter')}
                             >
                                 <Twitter className="w-4 h-4" />
                                 <span>Twitter</span>
@@ -109,7 +126,7 @@ export default function ShareButton({ title, description, url, className = '' }:
                             <a
                                 href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`}
                                 className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors w-full"
-                                onClick={() => setIsOpen(false)}
+                                onClick={() => handleShareClick('email')}
                             >
                                 <Mail className="w-4 h-4" />
                                 <span>Email</span>
