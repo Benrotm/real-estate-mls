@@ -14,7 +14,7 @@ export default function ChatLayout({ user, initialConversationId }: ChatLayoutPr
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(initialConversationId || null);
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+        <div className="flex h-full bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
             {/* Sidebar / Conversation List */}
             <div className={`${selectedConversationId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-slate-100`}>
 

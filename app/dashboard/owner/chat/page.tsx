@@ -15,12 +15,14 @@ export default async function OwnerChatPage({ searchParams }: { searchParams: { 
     }
 
     return (
-        <div className="h-full">
-            <div className="mb-6">
+        <div className="h-[calc(100vh-140px)] flex flex-col">
+            <div className="mb-4 shrink-0">
                 <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
                 <p className="text-slate-500">Chat with interested tenants and buyers.</p>
             </div>
-            <ChatLayout user={user} initialConversationId={initialConversationId} />
+            <div className="flex-1 min-h-0">
+                <ChatLayout user={user} initialConversationId={initialConversationId} />
+            </div>
         </div>
     );
 }

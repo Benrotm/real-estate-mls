@@ -184,87 +184,89 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 scroll-smooth">
-                {loading && <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-400" /></div>}
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 scroll-smooth flex flex-col justify-end">
+                <div className="space-y-2 sm:space-y-4 pb-4">
+                    {loading && <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-400" /></div>}
 
-                {!loading && messages.length === 0 && (
-                    <div className="text-center py-10 flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl mb-2">👋</div>
-                        <div className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm border border-white/50">
-                            <p className="text-sm text-slate-600 font-medium">How can we help you today?</p>
+                    {!loading && messages.length === 0 && (
+                        <div className="text-center py-10 flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl mb-2">👋</div>
+                            <div className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm border border-white/50">
+                                <p className="text-sm text-slate-600 font-medium">How can we help you today?</p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {messages.map((msg, index) => {
-                    const isMe = msg.sender_id === currentUser.id;
-                    const hasAttachments = msg.attachments && Array.isArray(msg.attachments) && msg.attachments.length > 0;
+                    {messages.map((msg, index) => {
+                        const isMe = msg.sender_id === currentUser.id;
+                        const hasAttachments = msg.attachments && Array.isArray(msg.attachments) && msg.attachments.length > 0;
 
-                    // Grouping logic: check if previous message was same sender
-                    const isSequence = index > 0 && messages[index - 1].sender_id === msg.sender_id;
-                    const isLastInSequence = index === messages.length - 1 || messages[index + 1].sender_id !== msg.sender_id;
+                        // Grouping logic: check if previous message was same sender
+                        const isSequence = index > 0 && messages[index - 1].sender_id === msg.sender_id;
+                        const isLastInSequence = index === messages.length - 1 || messages[index + 1].sender_id !== msg.sender_id;
 
-                    return (
-                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group mb-1`}>
-                            <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] relative ${isMe ? 'items-end' : 'items-start'}`}>
+                        return (
+                            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group mb-1`}>
+                                <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] relative ${isMe ? 'items-end' : 'items-start'}`}>
 
-                                <div className={`
+                                    <div className={`
                                     relative px-3 py-2 sm:px-4 sm:py-2 text-[15px] shadow-sm
                                     ${isMe
-                                        ? 'bg-violet-600 text-white rounded-2xl rounded-tr-sm'
-                                        : 'bg-white text-slate-800 rounded-2xl rounded-tl-sm'
-                                    }
+                                            ? 'bg-violet-600 text-white rounded-2xl rounded-tr-sm'
+                                            : 'bg-white text-slate-800 rounded-2xl rounded-tl-sm'
+                                        }
                                     ${!isLastInSequence && isMe ? 'rounded-br-md mb-[2px]' : ''}
                                     ${!isLastInSequence && !isMe ? 'rounded-bl-md mb-[2px]' : ''}
                                 `}>
 
-                                    {/* Tail SVG for visual flair on the first message of a sequence, or standalone */}
-                                    {!isSequence && (
-                                        <svg
-                                            className={`absolute top-0 w-3 h-3 ${isMe ? '-right-[8px] fill-violet-600' : '-left-[8px] fill-white'}`}
-                                            viewBox="0 0 10 10" preserveAspectRatio="none">
-                                            <path d={isMe ? "M0,0 L10,0 L0,10 Z" : "M0,0 L10,0 L10,10 Z"} />
-                                        </svg>
-                                    )}
-
-                                    {hasAttachments && (
-                                        <div className="flex flex-wrap gap-1 mb-2">
-                                            {msg.attachments.map((url: string, idx: number) => (
-                                                <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="relative block h-40 w-full sm:w-64 rounded-lg overflow-hidden border border-black/5">
-                                                    <Image
-                                                        src={url}
-                                                        alt="Attachment"
-                                                        fill
-                                                        className="object-cover hover:scale-105 transition-transform duration-500"
-                                                    />
-                                                </a>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {msg.content && (
-                                        <p className="whitespace-pre-wrap leading-relaxed break-words pb-1 pr-2 relative z-10">{msg.content}</p>
-                                    )}
-
-                                    <div className={`text-[10px] flex items-center justify-end gap-1 opacity-70 ${isMe ? 'text-violet-100' : 'text-slate-400'} mt-1`}>
-                                        <span>{format(new Date(msg.created_at), 'h:mm a')}</span>
-                                        {isMe && (
-                                            <span className="font-bold tracking-tighter text-[11px]">
-                                                {/* Simulate read receipt - in real app check msg.is_read */}
-                                                ✓✓
-                                            </span>
+                                        {/* Tail SVG for visual flair on the first message of a sequence, or standalone */}
+                                        {!isSequence && (
+                                            <svg
+                                                className={`absolute top-0 w-3 h-3 ${isMe ? '-right-[8px] fill-violet-600' : '-left-[8px] fill-white'}`}
+                                                viewBox="0 0 10 10" preserveAspectRatio="none">
+                                                <path d={isMe ? "M0,0 L10,0 L0,10 Z" : "M0,0 L10,0 L10,10 Z"} />
+                                            </svg>
                                         )}
+
+                                        {hasAttachments && (
+                                            <div className="flex flex-wrap gap-1 mb-2">
+                                                {msg.attachments.map((url: string, idx: number) => (
+                                                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="relative block h-40 w-full sm:w-64 rounded-lg overflow-hidden border border-black/5">
+                                                        <Image
+                                                            src={url}
+                                                            alt="Attachment"
+                                                            fill
+                                                            className="object-cover hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {msg.content && (
+                                            <p className="whitespace-pre-wrap leading-relaxed break-words pb-1 pr-2 relative z-10">{msg.content}</p>
+                                        )}
+
+                                        <div className={`text-[10px] flex items-center justify-end gap-1 opacity-70 ${isMe ? 'text-violet-100' : 'text-slate-400'} mt-1`}>
+                                            <span>{format(new Date(msg.created_at), 'h:mm a')}</span>
+                                            {isMe && (
+                                                <span className="font-bold tracking-tighter text-[11px]">
+                                                    {/* Simulate read receipt - in real app check msg.is_read */}
+                                                    ✓✓
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
                 <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
-            <div className="p-3 sm:p-4 bg-transparent sticky bottom-0 z-20">
+            <div className="p-2 sm:p-4 bg-white/40 backdrop-blur-sm border-t border-white/20 sticky bottom-0 z-20">
                 <div className="max-w-4xl mx-auto flex flex-col gap-2">
 
                     {/* File Preview */}
@@ -275,6 +277,7 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
                                     <Image src={url} alt="Upload preview" fill className="object-cover" />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                         <button
+                                            type="button"
                                             onClick={() => removeAttachment(idx)}
                                             className="bg-red-500 p-1 rounded-full text-white hover:bg-red-600 transition-colors"
                                         >
@@ -317,7 +320,7 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
                                         handleSend(e);
                                     }
                                 }}
-                                placeholder="Message support..."
+                                placeholder="Type a message..."
                                 className="w-full py-2.5 max-h-32 bg-transparent border-none focus:ring-0 text-slate-700 placeholder:text-slate-400 resize-none"
                                 rows={1}
                                 style={{ minHeight: '44px' }}
