@@ -37,6 +37,7 @@ export interface PropertyWithOffers {
     views_count: number;
     favorites_count: number;
     inquiries_count: number;
+    shares_count: number;
     offers: PropertyOffer[];
 }
 
@@ -75,16 +76,18 @@ export async function getUserPropertiesWithOffers(): Promise<PropertyWithOffers[
     }
 
     // Get analytics counts for each property
-    const [viewsData, favoritesData, inquiriesData] = await Promise.all([
+    const [viewsData, favoritesData, inquiriesData, sharesData] = await Promise.all([
         supabase.from('property_views').select('property_id').in('property_id', propertyIds),
         supabase.from('property_favorites').select('property_id').in('property_id', propertyIds),
         supabase.from('property_inquiries').select('property_id').in('property_id', propertyIds),
+        supabase.from('property_shares').select('property_id').in('property_id', propertyIds),
     ]);
 
     // Build count maps
     const viewsCount: Record<string, number> = {};
     const favoritesCount: Record<string, number> = {};
     const inquiriesCount: Record<string, number> = {};
+    const sharesCount: Record<string, number> = {};
 
     viewsData.data?.forEach(v => {
         viewsCount[v.property_id] = (viewsCount[v.property_id] || 0) + 1;
@@ -94,6 +97,9 @@ export async function getUserPropertiesWithOffers(): Promise<PropertyWithOffers[
     });
     inquiriesData.data?.forEach(i => {
         inquiriesCount[i.property_id] = (inquiriesCount[i.property_id] || 0) + 1;
+    });
+    sharesData.data?.forEach(s => {
+        sharesCount[s.property_id] = (sharesCount[s.property_id] || 0) + 1;
     });
 
     // Combine properties with their offers
@@ -116,6 +122,7 @@ export async function getUserPropertiesWithOffers(): Promise<PropertyWithOffers[
         views_count: viewsCount[property.id] || 0,
         favorites_count: favoritesCount[property.id] || 0,
         inquiries_count: inquiriesCount[property.id] || 0,
+        shares_count: sharesCount[property.id] || 0,
         offers: (offers || []).filter(o => o.property_id === property.id)
     }));
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PropertyWithOffers, PropertyOffer, updateOfferStatus } from '@/app/lib/actions/offers';
-import { Eye, Heart, MessageCircle, DollarSign, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award } from 'lucide-react';
+import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award } from 'lucide-react';
 import Link from 'next/link';
 import PropertyManageButtons from '../PropertyManageButtons';
 
@@ -197,6 +197,11 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                             <span className="px-1.5 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full">{pendingOffers} new</span>
                         )}
                     </div>
+                    <div className="flex items-center gap-2 text-slate-600">
+                        <Share2 className="w-4 h-4 text-indigo-500" />
+                        <span className="font-bold">{property.shares_count || 0}</span>
+                        <span className="text-xs text-slate-400">shares</span>
+                    </div>
                     <div className="ml-auto flex items-center gap-2">
                         <Link
                             href={`/properties/${property.id}`}
@@ -275,7 +280,7 @@ export default function ListingsCRMClient({ properties }: ListingsCRMClientProps
             </div>
 
             {/* Stats Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
                 <div className="bg-white rounded-xl p-4 border border-slate-200">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -317,6 +322,17 @@ export default function ListingsCRMClient({ properties }: ListingsCRMClientProps
                         <div>
                             <div className="text-2xl font-bold text-slate-900">{properties.reduce((acc, p) => acc + p.offers.length, 0)}</div>
                             <div className="text-xs text-slate-500">Total Offers</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <Share2 className="w-5 h-5 text-indigo-500" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-slate-900">{properties.reduce((acc, p) => acc + p.shares_count, 0)}</div>
+                            <div className="text-xs text-slate-500">Total Shares</div>
                         </div>
                     </div>
                 </div>
