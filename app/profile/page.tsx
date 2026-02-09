@@ -1,6 +1,7 @@
 import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
-import { Shield, Building } from 'lucide-react';
+import { Shield, Building, X, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import AvatarUpload from '../components/AvatarUpload';
 import ProfileForm from '../components/profile/ProfileForm';
 
@@ -13,7 +14,16 @@ export default async function ProfilePage() {
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8 mt-16">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 relative">
+                {/* Close Button */}
+                <Link
+                    href="/dashboard"
+                    className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors z-10"
+                    title="Close settings"
+                >
+                    <X className="w-6 h-6" />
+                </Link>
+
                 <div className="bg-slate-900 px-6 py-8 sm:p-10">
                     <div className="flex items-center gap-6">
                         <AvatarUpload
@@ -70,7 +80,14 @@ export default async function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="border-t border-slate-100 pt-8 flex justify-end">
+                    <div className="border-t border-slate-100 pt-8 flex justify-between items-center">
+                        <Link
+                            href="/dashboard"
+                            className="flex items-center gap-2 px-6 py-2 text-slate-600 font-bold hover:text-slate-900 transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to Dashboard
+                        </Link>
                         <form action="/auth/signout" method="post">
                             <button className="px-6 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors">
                                 Sign Out
