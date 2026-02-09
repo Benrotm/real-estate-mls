@@ -15,7 +15,7 @@ export default async function AgentChatPage({ searchParams }: { searchParams: { 
     }
 
     return (
-        <div className="h-[calc(100vh-140px)] flex flex-col">
+        <div className="h-[600px] flex flex-col">
             <div className="mb-4 shrink-0">
                 <h1 className="text-2xl font-bold text-slate-900">Agent Messages</h1>
                 <p className="text-slate-500">Communicate with clients and leads.</p>
