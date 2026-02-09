@@ -26,6 +26,7 @@ function formatDate(dateStr: string) {
 }
 
 function StatusBadge({ status }: { status: string }) {
+    const s = status || 'pending';
     const styles: Record<string, string> = {
         pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
         viewed: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -36,8 +37,8 @@ function StatusBadge({ status }: { status: string }) {
         expired: 'bg-gray-100 text-gray-500 border-gray-200'
     };
     return (
-        <span className={`px-2 py-1 text-xs font-bold rounded-full border ${styles[status] || styles.pending}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+        <span className={`px-2 py-1 text-xs font-bold rounded-full border ${styles[s] || styles.pending}`}>
+            {s.charAt(0).toUpperCase() + s.slice(1)}
         </span>
     );
 }
