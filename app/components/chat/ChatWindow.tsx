@@ -20,11 +20,16 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
     const [loading, setLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedAttachments, setUploadedAttachments] = useState<string[]>([]);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToBottom = (instant = false) => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTo({
+                top: messagesContainerRef.current.scrollHeight,
+                behavior: instant ? 'instant' as any : 'smooth'
+            });
+        }
     };
 
     useEffect(() => {
@@ -50,7 +55,7 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
 
             if (data) setMessages(data);
             setLoading(false);
-            scrollToBottom();
+            setTimeout(() => scrollToBottom(true), 100);
         };
 
         fetchData();
@@ -184,7 +189,10 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-2 sm:p-4 scroll-smooth">
+            <div
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto p-2 sm:p-4 scroll-smooth"
+            >
                 <div className="flex flex-col min-h-full justify-end space-y-1 pb-4">
                     {loading && <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-400" /></div>}
 
@@ -262,7 +270,6 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
                         );
                     })}
                 </div>
-                <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}
