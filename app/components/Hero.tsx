@@ -27,20 +27,12 @@ export default function Hero() {
                     <span className="text-orange-500 font-bold">Buy</span>, <span className="text-emerald-500 font-bold">Sell</span>, or <span className="text-blue-500 font-bold">Rent</span>. Virtual Tours, AI, Market Insights, plus other smart features like <span className="text-purple-400 font-bold">Real Market Price Value</span> for all Properties.
                 </p>
 
-                {/* Search Bar */}
-                <div className="max-w-3xl mx-auto flex flex-col md:flex-row gap-4 mb-8">
-                    <Link href="/properties" className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white p-4 rounded-xl font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-2xl shadow-cyan-500/50 border-2 border-cyan-300">
+                {/* Action Button */}
+                <div className="max-w-xs mx-auto mb-8">
+                    <Link href="/properties" className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white p-4 rounded-xl font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-2xl shadow-cyan-500/50 border-2 border-cyan-300">
                         <Search className="w-5 h-5" />
                         Find Properties
                     </Link>
-                    <div className="flex-[2] bg-white rounded-xl p-2 flex items-center shadow-2xl border-2 border-white">
-                        <MapPin className="w-5 h-5 text-gray-600 ml-3" />
-                        <input
-                            type="text"
-                            placeholder="Search by location, property type, or price..."
-                            className="w-full px-4 py-2 text-gray-900 focus:outline-none placeholder-gray-500 font-semibold"
-                        />
-                    </div>
                 </div>
 
                 <div className="mb-0">
