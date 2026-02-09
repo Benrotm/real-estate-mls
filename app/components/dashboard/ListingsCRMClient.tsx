@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PropertyWithOffers, PropertyOffer, updateOfferStatus } from '@/app/lib/actions/offers';
+import { PropertyWithOffers, PropertyOffer, PropertyInquiry, updateOfferStatus, updateInquiryStatus, deleteInquiry } from '@/app/lib/actions/offers';
 import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award } from 'lucide-react';
 import Link from 'next/link';
 import PropertyManageButtons from '../PropertyManageButtons';
@@ -30,7 +30,9 @@ function StatusBadge({ status }: { status: string }) {
         pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
         viewed: 'bg-blue-100 text-blue-700 border-blue-200',
         accepted: 'bg-green-100 text-green-700 border-green-200',
+        contacted: 'bg-emerald-100 text-emerald-700 border-emerald-200',
         rejected: 'bg-red-100 text-red-700 border-red-200',
+        spam: 'bg-slate-100 text-slate-500 border-slate-200',
         expired: 'bg-gray-100 text-gray-500 border-gray-200'
     };
     return (
@@ -109,8 +111,80 @@ function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpd
     );
 }
 
+function InquiryRow({ inquiry, onStatusUpdate }: { inquiry: PropertyInquiry; onStatusUpdate: () => void }) {
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const handleStatusChange = async (newStatus: 'viewed' | 'contacted' | 'spam') => {
+        setIsUpdating(true);
+        await updateInquiryStatus(inquiry.id, newStatus);
+        setIsUpdating(false);
+        onStatusUpdate();
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete this inquiry?')) return;
+        setIsUpdating(true);
+        await deleteInquiry(inquiry.id);
+        setIsUpdating(false);
+        onStatusUpdate();
+    };
+
+    return (
+        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        {inquiry.name?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                        <div className="font-bold text-slate-900">{inquiry.name}</div>
+                        <div className="text-sm text-slate-500">{inquiry.email} {inquiry.phone && `• ${inquiry.phone}`}</div>
+                    </div>
+                </div>
+                <div className="mt-2 text-sm text-slate-600 bg-white p-3 rounded-lg border border-slate-100 italic">
+                    "{inquiry.message}"
+                </div>
+                <div className="mt-2 text-xs text-slate-400 flex items-center gap-2">
+                    <Clock className="w-3 h-3" />
+                    {formatDate(inquiry.created_at)}
+                </div>
+            </div>
+            <div className="flex items-center gap-2 ml-4">
+                <StatusBadge status={inquiry.status} />
+                <div className="flex gap-1 ml-3">
+                    <button
+                        onClick={() => handleStatusChange('viewed')}
+                        disabled={isUpdating}
+                        className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                        title="Mark as viewed"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => handleStatusChange('contacted')}
+                        disabled={isUpdating}
+                        className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                        title="Mark as contacted"
+                    >
+                        <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={handleDelete}
+                        disabled={isUpdating}
+                        className="p-2 bg-slate-200 text-slate-500 rounded-lg hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+                        title="Delete inquiry"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isInquiriesExpanded, setIsInquiriesExpanded] = useState(false);
     const [_, forceUpdate] = useState(0);
 
     const pendingOffers = property.offers.filter(o => o.status === 'pending').length;
@@ -252,6 +326,38 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                                 <OfferRow
                                     key={offer.id}
                                     offer={offer}
+                                    onStatusUpdate={() => forceUpdate(n => n + 1)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+            {/* Inquiries Section */}
+            {property.inquiries.length > 0 && (
+                <div className="border-t border-slate-100">
+                    <button
+                        onClick={() => setIsInquiriesExpanded(!isInquiriesExpanded)}
+                        className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                        <span className="flex items-center gap-2">
+                            <MessageCircle className="w-4 h-4 text-emerald-500" />
+                            {property.inquiries.length} Inquir{property.inquiries.length !== 1 ? 'ies' : 'y'}
+                            {property.inquiries.some(i => i.status === 'pending') && (
+                                <span className="text-orange-500">
+                                    ({property.inquiries.filter(i => i.status === 'pending').length} pending)
+                                </span>
+                            )}
+                        </span>
+                        {isInquiriesExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+
+                    {isInquiriesExpanded && (
+                        <div className="px-5 pb-5 space-y-3">
+                            {property.inquiries.map(inquiry => (
+                                <InquiryRow
+                                    key={inquiry.id}
+                                    inquiry={inquiry}
                                     onStatusUpdate={() => forceUpdate(n => n + 1)}
                                 />
                             ))}

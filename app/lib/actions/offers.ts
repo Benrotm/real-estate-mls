@@ -18,6 +18,18 @@ export interface PropertyOffer {
     updated_at: string;
 }
 
+export interface PropertyInquiry {
+    id: string;
+    property_id: string;
+    name: string;
+    email: string;
+    phone: string | null;
+    message: string | null;
+    status: 'pending' | 'viewed' | 'contacted' | 'spam';
+    created_at: string;
+    updated_at: string;
+}
+
 export interface PropertyWithOffers {
     id: string;
     title: string;
@@ -39,6 +51,7 @@ export interface PropertyWithOffers {
     inquiries_count: number;
     shares_count: number;
     offers: PropertyOffer[];
+    inquiries: PropertyInquiry[];
 }
 
 // Get all properties with their offers for the current user (owner/agent)
@@ -83,6 +96,17 @@ export async function getUserPropertiesWithOffers(): Promise<PropertyWithOffers[
         supabase.from('property_shares').select('property_id').in('property_id', propertyIds),
     ]);
 
+    // Get inquiries for all properties
+    const { data: detailInquiries, error: inquiriesError } = await supabase
+        .from('property_inquiries')
+        .select('*')
+        .in('property_id', propertyIds)
+        .order('created_at', { ascending: false });
+
+    if (inquiriesError) {
+        console.error('Error fetching inquiries:', inquiriesError);
+    }
+
     // Build count maps
     const viewsCount: Record<string, number> = {};
     const favoritesCount: Record<string, number> = {};
@@ -123,7 +147,8 @@ export async function getUserPropertiesWithOffers(): Promise<PropertyWithOffers[
         favorites_count: favoritesCount[property.id] || 0,
         inquiries_count: inquiriesCount[property.id] || 0,
         shares_count: sharesCount[property.id] || 0,
-        offers: (offers || []).filter(o => o.property_id === property.id)
+        offers: (offers || []).filter(o => o.property_id === property.id),
+        inquiries: (detailInquiries || []).filter(i => i.property_id === property.id)
     }));
 }
 
@@ -228,6 +253,96 @@ export async function deleteOffer(offerId: string) {
 
     if (error) {
         console.error('Error deleting offer:', error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath('/dashboard/agent/listings');
+    revalidatePath('/dashboard/owner/properties');
+    return { success: true };
+}
+
+// Update inquiry status
+export async function updateInquiryStatus(inquiryId: string, status: 'pending' | 'viewed' | 'contacted' | 'spam') {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Not authenticated' };
+    }
+
+    // Verify user owns the property
+    const { data: inquiry } = await supabase
+        .from('property_inquiries')
+        .select('property_id')
+        .eq('id', inquiryId)
+        .single();
+
+    if (!inquiry) {
+        return { success: false, error: 'Inquiry not found' };
+    }
+
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', inquiry.property_id)
+        .single();
+
+    if (!property || property.owner_id !== user.id) {
+        return { success: false, error: 'Not authorized' };
+    }
+
+    const { error } = await supabase
+        .from('property_inquiries')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', inquiryId);
+
+    if (error) {
+        console.error('Error updating inquiry status:', error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath('/dashboard/agent/listings');
+    revalidatePath('/dashboard/owner/properties');
+    return { success: true };
+}
+
+// Delete an inquiry
+export async function deleteInquiry(inquiryId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Not authenticated' };
+    }
+
+    // Verify user owns the property
+    const { data: inquiry } = await supabase
+        .from('property_inquiries')
+        .select('property_id')
+        .eq('id', inquiryId)
+        .single();
+
+    if (!inquiry) {
+        return { success: false, error: 'Inquiry not found' };
+    }
+
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', inquiry.property_id)
+        .single();
+
+    if (!property || property.owner_id !== user.id) {
+        return { success: false, error: 'Not authorized' };
+    }
+
+    const { error } = await supabase
+        .from('property_inquiries')
+        .delete()
+        .eq('id', inquiryId);
+
+    if (error) {
+        console.error('Error deleting inquiry:', error);
         return { success: false, error: error.message };
     }
 
