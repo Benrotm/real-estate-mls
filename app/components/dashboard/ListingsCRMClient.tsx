@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PropertyWithOffers, PropertyOffer, PropertyInquiry, updateOfferStatus, updateInquiryStatus, deleteInquiry } from '@/app/lib/actions/offers';
 import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import PropertyManageButtons from '../PropertyManageButtons';
 
 interface ListingsCRMClientProps {
@@ -114,6 +115,9 @@ function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpd
 
 function InquiryRow({ inquiry, onStatusUpdate }: { inquiry: PropertyInquiry; onStatusUpdate: () => void }) {
     const [isUpdating, setIsUpdating] = useState(false);
+    const pathname = usePathname();
+    const isAgent = pathname?.includes('/agent/');
+    const chatBasePath = isAgent ? '/dashboard/agent/chat' : '/dashboard/owner/chat';
 
     const handleStatusChange = async (newStatus: 'viewed' | 'contacted' | 'spam') => {
         setIsUpdating(true);
@@ -153,7 +157,7 @@ function InquiryRow({ inquiry, onStatusUpdate }: { inquiry: PropertyInquiry; onS
             <div className="flex items-center gap-2 ml-4">
                 {inquiry.conversation_id && (
                     <Link
-                        href={`/dashboard/owner/chat?id=${inquiry.conversation_id}`}
+                        href={`${chatBasePath}?id=${inquiry.conversation_id}`}
                         className="p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-2 text-xs font-bold mr-2 whitespace-nowrap"
                         title="Open Chat"
                     >
