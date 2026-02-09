@@ -20,6 +20,22 @@ export async function submitOffer(propertyId: string, amount: number) {
             .eq('id', user.id)
             .single();
 
+        // Server-Side Deduplication: Check for identical offer in last minute
+        const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+        const { data: existingOffer } = await supabase
+            .from('property_offers')
+            .select('id')
+            .eq('property_id', propertyId)
+            .eq('user_id', user.id)
+            .eq('offer_amount', amount)
+            .gte('created_at', oneMinuteAgo)
+            .single();
+
+        if (existingOffer) {
+            // Idempotent success: If it already exists, just return success
+            return { success: true };
+        }
+
         const { error } = await supabase
             .from('property_offers')
             .insert([

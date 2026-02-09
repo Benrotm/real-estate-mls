@@ -153,6 +153,28 @@ export async function submitPropertyInquiry(propertyId: string, data: {
         return { success: false, error: 'Property not found' };
     }
 
+    // Server-Side Deduplication: Check for identical inquiry in last minute
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+
+    let duplicateQuery = supabase
+        .from('property_inquiries')
+        .select('id')
+        .eq('property_id', propertyId)
+        .gte('created_at', oneMinuteAgo)
+        .eq('message', data.message || ''); // Also match message to be sure it's same intent
+
+    if (user) {
+        duplicateQuery = duplicateQuery.eq('user_id', user.id);
+    } else {
+        duplicateQuery = duplicateQuery.eq('email', data.email);
+    }
+
+    const { data: existingInquiry } = await duplicateQuery.maybeSingle();
+
+    if (existingInquiry) {
+        return { success: true };
+    }
+
     let conversationId = null;
 
     // 2. If user is logged in, create/link chat conversation
