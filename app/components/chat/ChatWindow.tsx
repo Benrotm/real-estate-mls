@@ -256,7 +256,7 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
                                         )}
 
                                         <div className={`text-[10px] flex items-center justify-end gap-1 opacity-70 ${isMe ? 'text-violet-100' : 'text-slate-400'} mt-1`}>
-                                            <span>{format(new Date(msg.created_at), 'h:mm a')}</span>
+                                            <span>{format(new Date(msg.created_at), 'MMM d, h:mm a')}</span>
                                             {isMe && (
                                                 <span className="font-bold tracking-tighter text-[11px]">
                                                     {/* Simulate read receipt - in real app check msg.is_read */}

@@ -22,6 +22,7 @@ export default function OfferModal({ isOpen, onClose, propertyId, propertyTitle,
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isLoading) return;
         setIsLoading(true);
         setError('');
 
