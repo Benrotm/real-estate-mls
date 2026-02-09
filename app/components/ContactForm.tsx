@@ -48,36 +48,51 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (isLoading) return;
+
         setIsLoading(true);
         setError(null);
 
-        const formData = new FormData(e.currentTarget);
-        const name = userProfile?.full_name || formData.get('name') as string;
-        const email = userProfile?.email || formData.get('email') as string;
-        const phone = userProfile?.phone || formData.get('phone') as string;
-        const message = formData.get('message') as string;
-
-        // Record the inquiry in analytics
-        await submitPropertyInquiry(propertyId, { name, email, phone, message });
-
-        // Ensure required fields for the action
-        formData.append('propertyId', propertyId);
-        formData.append('propertyTitle', propertyTitle);
-        // adapt fields to what action likely expects or just rely on generic handling
-        formData.append('notes', message);
-        formData.append('clientName', name);
-        formData.append('clientEmail', email);
-        formData.append('clientPhone', phone);
-
         try {
-            const result = await scheduleAppointment(formData);
-            if (result.success) {
-                setIsSuccess(true);
-            } else {
-                setError(result.error || 'Failed to send inquiry');
+            const formData = new FormData(e.currentTarget);
+
+            // Resolve contact info (profile vs form input)
+            const name = userProfile?.full_name || formData.get('name') as string;
+            const email = userProfile?.email || formData.get('email') as string;
+            const phone = userProfile?.phone || formData.get('phone') as string;
+
+            const message = formData.get('message') as string;
+            const date = formData.get('date') as string;
+
+            // 1. Submit Inquiry (Primary Action - Chat & Analytics)
+            const inquiryResult = await submitPropertyInquiry(propertyId, {
+                name,
+                email,
+                phone,
+                message
+            });
+
+            if (!inquiryResult.success) {
+                throw new Error(inquiryResult.error || 'Failed to send inquiry');
             }
-        } catch (err) {
-            setError('An unexpected error occurred');
+
+            // 2. Schedule Appointment (Optional - Only if date selected)
+            if (date) {
+                const appointmentData = new FormData();
+                appointmentData.append('clientName', name);
+                appointmentData.append('clientPhone', phone);
+                appointmentData.append('clientEmail', email);
+                appointmentData.append('notes', message);
+                appointmentData.append('date', date);
+                appointmentData.append('propertyId', propertyId);
+
+                await scheduleAppointment(appointmentData);
+            }
+
+            setIsSuccess(true);
+        } catch (err: any) {
+            console.error('Inquiry submission error:', err);
+            setError(err.message || 'An unexpected error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
