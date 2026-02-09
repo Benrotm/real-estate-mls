@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 
@@ -42,6 +42,7 @@ export default function DashboardClient({
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
+        { name: 'My Favorites', icon: Heart, href: '/dashboard/agent/favorites' }, // New
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
         { name: 'Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
@@ -53,6 +54,7 @@ export default function DashboardClient({
     ] : isOwner ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/owner' },
         { name: 'My Properties', icon: Home, href: '/dashboard/owner/properties' },
+        { name: 'My Favorites', icon: Heart, href: '/dashboard/owner/favorites' }, // New
         { name: 'Virtual Tours', icon: Globe, href: '/dashboard/owner/tours' },
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/owner/leads' }, // Always show for owners to upsell
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
@@ -71,7 +73,7 @@ export default function DashboardClient({
     ] : isClient ? [
         { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/client' },
         { name: 'Browse Properties', icon: Building, href: '/properties' },
-        { name: 'Saved Properties', icon: Home, href: '/saved' }, // Assuming global /saved page uses correct context or we need to check
+        { name: 'My Favorites', icon: Heart, href: '/dashboard/client/favorites' }, // New
         { name: 'Saved Searches', icon: Briefcase, href: '/dashboard/client/searches' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/client/valuation' },
         { name: 'Market Insights', icon: BarChart2, href: '/dashboard/client/market' },

@@ -275,3 +275,29 @@ export async function recordPropertyShare(propertyId: string, shareMethod?: stri
         revalidatePath(`/properties/${propertyId}`);
     }
 }
+
+// Get user's favorite properties
+export async function getUserFavorites() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return [];
+
+    try {
+        const { data: favorites, error } = await supabase
+            .from('property_favorites')
+            .select(`
+                property_id,
+                properties:properties (*)
+            `)
+            .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        // Transform data to match Property interface
+        return favorites.map((fav: any) => fav.properties).filter(Boolean);
+    } catch (error) {
+        console.error('Error fetching favorites:', error);
+        return [];
+    }
+}

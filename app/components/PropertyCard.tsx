@@ -7,6 +7,7 @@ import { Bed, Bath, Ruler, MapPin, Heart, Award, Lock } from 'lucide-react';
 import PropertyManageButtons from './PropertyManageButtons';
 import { useState } from 'react';
 import UpgradeModal from './UpgradeModal';
+import FavoriteButton from './property/FavoriteButton';
 
 interface PropertyCardProps {
     property: Property;
@@ -84,7 +85,9 @@ export default function PropertyCard({ property, showEditButton, showMakeOffer, 
                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                         <div className="text-white font-bold text-lg flex items-center justify-between">
                             <span>{formatPrice(property.price)}</span>
-                            <Heart className="w-5 h-5 hover:fill-red-500 hover:text-red-500 transition-colors cursor-pointer" />
+                            <div onClick={(e) => e.preventDefault()}>
+                                <FavoriteButton propertyId={property.id} className="w-8 h-8 !bg-white/20 hover:!bg-white text-white" />
+                            </div>
                         </div>
                     </div>
                 </div>
