@@ -184,8 +184,8 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-2 sm:p-4 scroll-smooth flex flex-col justify-end">
-                <div className="space-y-2 sm:space-y-4 pb-4">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 scroll-smooth">
+                <div className="flex flex-col min-h-full justify-end space-y-1 pb-4">
                     {loading && <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-400" /></div>}
 
                     {!loading && messages.length === 0 && (
@@ -206,17 +206,17 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
                         const isLastInSequence = index === messages.length - 1 || messages[index + 1].sender_id !== msg.sender_id;
 
                         return (
-                            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group mb-1`}>
-                                <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] relative ${isMe ? 'items-end' : 'items-start'}`}>
+                            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group ${!isLastInSequence ? 'mb-[1px]' : 'mb-2'}`}>
+                                <div className={`flex flex-col max-w-[85%] sm:max-w-[75%] relative ${isMe ? 'items-end' : 'items-start'}`}>
 
                                     <div className={`
-                                    relative px-3 py-2 sm:px-4 sm:py-2 text-[15px] shadow-sm
+                                    relative px-3 py-1.5 text-[14px] shadow-sm w-fit min-w-[60px]
                                     ${isMe
                                             ? 'bg-violet-600 text-white rounded-2xl rounded-tr-sm'
                                             : 'bg-white text-slate-800 rounded-2xl rounded-tl-sm'
                                         }
-                                    ${!isLastInSequence && isMe ? 'rounded-br-md mb-[2px]' : ''}
-                                    ${!isLastInSequence && !isMe ? 'rounded-bl-md mb-[2px]' : ''}
+                                    ${!isLastInSequence && isMe ? 'rounded-br-md' : ''}
+                                    ${!isLastInSequence && !isMe ? 'rounded-bl-md' : ''}
                                 `}>
 
                                         {/* Tail SVG for visual flair on the first message of a sequence, or standalone */}
