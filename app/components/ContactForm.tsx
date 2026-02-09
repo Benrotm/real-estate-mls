@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mail, Calendar, Loader2, Check } from 'lucide-react';
 import { scheduleAppointment } from '../lib/actions';
 import { submitPropertyInquiry } from '../lib/actions/propertyAnalytics';
@@ -19,6 +19,9 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
     const [error, setError] = useState<string | null>(null);
     const [userProfile, setUserProfile] = useState<any>(null);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+    // UseRef for immediate synchronous blocking of double-submits
+    const isSubmitting = useRef(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -51,7 +54,10 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (isLoading) return;
+
+        // Immediate check against ref
+        if (isSubmitting.current) return;
+        isSubmitting.current = true;
 
         setIsLoading(true);
         setError(null);
@@ -97,6 +103,7 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
             console.error('Inquiry submission error:', err);
             setError(err.message || 'An unexpected error occurred. Please try again.');
         } finally {
+            isSubmitting.current = false;
             setIsLoading(false);
         }
     };

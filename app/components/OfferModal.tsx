@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, DollarSign, Loader2 } from 'lucide-react';
 import { submitOffer } from '../lib/offers';
 
@@ -18,11 +18,17 @@ export default function OfferModal({ isOpen, onClose, propertyId, propertyTitle,
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
+    // UseRef for immediate synchronous blocking
+    const isSubmitting = useRef(false);
+
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (isLoading) return;
+
+        if (isSubmitting.current) return;
+        isSubmitting.current = true;
+
         setIsLoading(true);
         setError('');
 
@@ -40,14 +46,18 @@ export default function OfferModal({ isOpen, onClose, propertyId, propertyTitle,
                     onClose();
                     setSuccess(false);
                     setAmount('');
+                    isSubmitting.current = false; // Reset after close
                 }, 2000);
             } else {
                 throw new Error(result.error || 'Failed to submit offer.');
+                isSubmitting.current = false; // Reset on error
             }
         } catch (err: any) {
             setError(err.message);
+            isSubmitting.current = false; // Reset on error
         } finally {
             setIsLoading(false);
+            // Note: isSubmitting is NOT reset here for success case to prevent double-submit during success message
         }
     };
 
