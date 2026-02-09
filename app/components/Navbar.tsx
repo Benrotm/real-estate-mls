@@ -181,6 +181,11 @@ export default function Navbar({ user }: NavbarProps) {
                         <div className="px-4 py-4 border-b border-slate-100">
                           <div className="font-bold text-base">{user?.full_name || "User"}</div>
                           <div className="text-sm text-slate-500 truncate">{user?.role}</div>
+                          {user?.phone && (
+                            <div className="text-xs text-slate-400 mt-1 flex items-center gap-1 text-orange-600">
+                              <span className="font-medium">{user.phone}</span>
+                            </div>
+                          )}
                           <div className="mt-2 flex gap-2">
                             <span className="text-xs font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded w-fit uppercase">{user?.plan_tier || 'Free'}</span>
                             {isSuperAdmin && (

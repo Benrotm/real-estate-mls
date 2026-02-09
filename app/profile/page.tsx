@@ -1,7 +1,8 @@
 import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
-import { User, Mail, Shield, Building } from 'lucide-react';
+import { Shield, Building } from 'lucide-react';
 import AvatarUpload from '../components/AvatarUpload';
+import ProfileForm from '../components/profile/ProfileForm';
 
 export default async function ProfilePage() {
     const profile = await getUserProfile();
@@ -34,52 +35,36 @@ export default async function ProfilePage() {
                     </div>
                 </div>
 
-                <div className="px-6 py-8 sm:p-10 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <User className="w-5 h-5 text-orange-600" />
-                                Personal Information
-                            </h3>
-                            <div className="space-y-4">
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Full Name</label>
-                                    <div className="text-slate-900 font-medium">{profile.full_name || 'Not set'}</div>
-                                </div>
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                        <Mail className="w-3 h-3" /> Email
-                                    </label>
-                                    <div className="text-slate-900 font-medium">{profile.full_name ? `${profile.full_name.toLowerCase().replace(' ', '.')}@example.com` : 'user@example.com'}</div>
-                                    <p className="text-xs text-slate-400 mt-1">*Email masked for privacy in this demo</p>
-                                </div>
-                            </div>
-                        </div>
+                <div className="px-6 py-8 sm:p-10">
+                    <ProfileForm
+                        initialFullName={profile.full_name}
+                        initialPhone={profile.phone || ''}
+                        email={profile.email || 'user@example.com'}
+                    />
 
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <Shield className="w-5 h-5 text-orange-600" />
-                                Account Details
-                            </h3>
-                            <div className="space-y-4">
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">User ID</label>
-                                    <div className="text-slate-600 font-mono text-sm">{profile.id}</div>
+                    <div className="mt-8">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-orange-600" />
+                            Account Details
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">User ID</label>
+                                <div className="text-slate-600 font-mono text-sm">{profile.id}</div>
+                            </div>
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                    <Building className="w-3 h-3" /> Listings
+                                </label>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-2xl font-bold text-slate-900">{profile.listings_count}</span>
+                                    <span className="text-sm text-slate-500">/ {profile.listings_limit} used</span>
                                 </div>
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                        <Building className="w-3 h-3" /> Listings
-                                    </label>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-bold text-slate-900">{profile.listings_count}</span>
-                                        <span className="text-sm text-slate-500">/ {profile.listings_limit} used</span>
-                                    </div>
-                                    <div className="mt-2 w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                                        <div
-                                            className="bg-orange-500 h-2 rounded-full transition-all"
-                                            style={{ width: `${Math.min((profile.listings_count / profile.listings_limit) * 100, 100)}%` }}
-                                        ></div>
-                                    </div>
+                                <div className="mt-2 w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                    <div
+                                        className="bg-orange-500 h-2 rounded-full transition-all"
+                                        style={{ width: `${Math.min((profile.listings_count / profile.listings_limit) * 100, 100)}%` }}
+                                    ></div>
                                 </div>
                             </div>
                         </div>

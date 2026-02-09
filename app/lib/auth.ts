@@ -13,6 +13,8 @@ export interface UserProfile {
     featured_limit?: number;
     listings_count: number;
     avatar_url?: string;
+    phone?: string;
+    email?: string;
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {

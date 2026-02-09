@@ -85,3 +85,34 @@ export async function updateUserPlan(planName: string) {
         return { error: e.message };
     }
 }
+
+export async function updateUserProfile(data: { full_name: string; phone: string }) {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: 'Unauthorized' };
+    }
+
+    try {
+        const { error } = await supabase
+            .from('profiles')
+            .update({
+                full_name: data.full_name,
+                phone: data.phone
+            })
+            .eq('id', user.id);
+
+        if (error) {
+            console.error('Error updating profile:', error);
+            return { error: error.message };
+        }
+
+        revalidatePath('/profile');
+        revalidatePath('/', 'layout'); // Update navbar name
+        return { success: true };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
