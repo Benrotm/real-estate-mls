@@ -31,7 +31,10 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
                     .single();
 
                 if (profile) {
-                    setUserProfile(profile);
+                    setUserProfile({
+                        ...profile,
+                        email: profile.email || user.email // Fallback to auth email
+                    });
                 } else {
                     // Fallback to auth user metadata if profile missing
                     setUserProfile({
