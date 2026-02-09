@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Calendar, Loader2, Check } from 'lucide-react';
 import { scheduleAppointment } from '../lib/actions';
 import { submitPropertyInquiry } from '../lib/actions/propertyAnalytics';
+import { supabase } from '../lib/supabase/client';
 
 interface ContactFormProps {
     propertyId: string;
@@ -16,6 +17,34 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [userProfile, setUserProfile] = useState<any>(null);
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, email, phone')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile) {
+                    setUserProfile(profile);
+                } else {
+                    // Fallback to auth user metadata if profile missing
+                    setUserProfile({
+                        full_name: user.user_metadata?.full_name,
+                        email: user.email,
+                        phone: user.phone
+                    });
+                }
+            }
+            setIsCheckingAuth(false);
+        };
+        fetchProfile();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -23,9 +52,9 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
         setError(null);
 
         const formData = new FormData(e.currentTarget);
-        const name = formData.get('name') as string;
-        const email = formData.get('email') as string;
-        const phone = formData.get('phone') as string;
+        const name = userProfile?.full_name || formData.get('name') as string;
+        const email = userProfile?.email || formData.get('email') as string;
+        const phone = userProfile?.phone || formData.get('phone') as string;
         const message = formData.get('message') as string;
 
         // Record the inquiry in analytics
@@ -86,37 +115,41 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
                     </div>
                 )}
 
-                <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Full Name</label>
-                    <input
-                        name="name"
-                        type="text"
-                        placeholder="John Doe"
-                        required
-                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
-                    />
-                </div>
+                {!userProfile && (
+                    <>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-bold text-slate-700">Full Name</label>
+                            <input
+                                name="name"
+                                type="text"
+                                placeholder="John Doe"
+                                required
+                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
+                            />
+                        </div>
 
-                <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Email <span className="text-red-500">*</span></label>
-                    <input
-                        name="email"
-                        type="email"
-                        placeholder="john@example.com"
-                        required
-                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
-                    />
-                </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-bold text-slate-700">Email <span className="text-red-500">*</span></label>
+                            <input
+                                name="email"
+                                type="email"
+                                placeholder="john@example.com"
+                                required
+                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
+                            />
+                        </div>
 
-                <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Phone</label>
-                    <input
-                        name="phone"
-                        type="tel"
-                        placeholder="+1 (555) 000-0000"
-                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
-                    />
-                </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-bold text-slate-700">Phone</label>
+                            <input
+                                name="phone"
+                                type="tel"
+                                placeholder="+1 (555) 000-0000"
+                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
+                            />
+                        </div>
+                    </>
+                )}
 
                 <div className="space-y-1.5">
                     <label className="text-sm font-bold text-slate-700">Schedule a Tour</label>
