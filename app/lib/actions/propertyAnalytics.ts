@@ -139,9 +139,88 @@ export async function submitPropertyInquiry(propertyId: string, data: {
     message?: string;
 }) {
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // 1. Get property owner ID
+    const { data: property, error: propError } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', propertyId)
+        .single();
+
+    if (propError || !property) {
+        console.error('Error fetching property owner:', propError);
+        return { success: false, error: 'Property not found' };
+    }
+
+    let conversationId = null;
+
+    // 2. If user is logged in, create/link chat conversation
+    if (user) {
+        try {
+            const { createAdminClient } = await import('@/app/lib/supabase/admin');
+            const supabaseAdmin = createAdminClient();
+
+            // Check if conversation already exists between these two
+            const { data: myConvos } = await supabase
+                .from('conversation_participants')
+                .select('conversation_id')
+                .eq('user_id', user.id);
+
+            const myConvoIds = myConvos?.map(c => c.conversation_id) || [];
+
+            let existingConv = null;
+            if (myConvoIds.length > 0) {
+                const { data: match } = await supabase
+                    .from('conversation_participants')
+                    .select('conversation_id')
+                    .in('conversation_id', myConvoIds)
+                    .eq('user_id', property.owner_id)
+                    .limit(1)
+                    .single();
+                existingConv = match;
+            }
+
+            if (existingConv) {
+                conversationId = existingConv.conversation_id;
+            } else {
+                // Create new conversation
+                const { data: newConv, error: createError } = await supabaseAdmin
+                    .from('conversations')
+                    .insert({})
+                    .select()
+                    .single();
+
+                if (newConv) {
+                    conversationId = newConv.id;
+                    await supabaseAdmin.from('conversation_participants').insert([
+                        { conversation_id: conversationId, user_id: user.id },
+                        { conversation_id: conversationId, user_id: property.owner_id }
+                    ]);
+                }
+            }
+
+            // 3. Send initial message if conversation exists
+            if (conversationId && data.message) {
+                await supabaseAdmin.from('messages').insert({
+                    conversation_id: conversationId,
+                    sender_id: user.id,
+                    content: `Inquiry regarding property: "${data.message}"`
+                });
+
+                // Update conversation updated_at
+                await supabaseAdmin.from('conversations').update({ updated_at: new Date() }).eq('id', conversationId);
+            }
+        } catch (e) {
+            console.error('Error setting up chat for inquiry:', e);
+            // Don't fail the whole inquiry if chat creation fails
+        }
+    }
 
     const { error } = await supabase.from('property_inquiries').insert({
         property_id: propertyId,
+        user_id: user?.id || null,
+        conversation_id: conversationId,
         name: data.name,
         email: data.email,
         phone: data.phone || null,

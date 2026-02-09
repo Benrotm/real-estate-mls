@@ -16,6 +16,7 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversationId, currentUser, onBack }: ChatWindowProps) {
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [otherUser, setOtherUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedAttachments, setUploadedAttachments] = useState<string[]>([]);
@@ -28,7 +29,19 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
 
     useEffect(() => {
         setLoading(true);
-        const fetchMessages = async () => {
+        const fetchData = async () => {
+            // 1. Fetch other participant's info
+            const { data: participants } = await supabase
+                .from('conversation_participants')
+                .select('user_id, user:user_id(full_name, email, role, avatar_url)')
+                .eq('conversation_id', conversationId);
+
+            if (participants) {
+                const other = participants.find(p => p.user_id !== currentUser.id);
+                setOtherUser(other?.user || participants[0]?.user);
+            }
+
+            // 2. Fetch messages
             const { data } = await supabase
                 .from('messages')
                 .select('*')
@@ -40,7 +53,7 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
             scrollToBottom();
         };
 
-        fetchMessages();
+        fetchData();
 
         // Subscribe to new messages
         const channel = supabase
@@ -151,14 +164,22 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
                     </button>
                 )}
                 <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold shadow-sm">
-                        S
-                    </div>
+                    {otherUser?.avatar_url ? (
+                        <img src={otherUser.avatar_url} alt={otherUser.full_name || 'User'} className="w-10 h-10 rounded-full object-cover shadow-sm" />
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold shadow-sm">
+                            {(otherUser?.full_name || otherUser?.email || 'U')[0].toUpperCase()}
+                        </div>
+                    )}
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                 </div>
                 <div className="flex-1">
-                    <h3 className="font-bold text-slate-800 leading-tight">Support Team</h3>
-                    <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Typically replies in minutes</p>
+                    <h3 className="font-bold text-slate-800 leading-tight">
+                        {otherUser?.full_name || otherUser?.email || 'Support Team'}
+                    </h3>
+                    <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                        {otherUser?.role ? otherUser.role.replace('_', ' ') : 'Online'}
+                    </p>
                 </div>
             </div>
 

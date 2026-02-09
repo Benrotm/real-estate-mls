@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PropertyWithOffers, PropertyOffer, PropertyInquiry, updateOfferStatus, updateInquiryStatus, deleteInquiry } from '@/app/lib/actions/offers';
-import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award } from 'lucide-react';
+import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import PropertyManageButtons from '../PropertyManageButtons';
 
@@ -151,6 +151,16 @@ function InquiryRow({ inquiry, onStatusUpdate }: { inquiry: PropertyInquiry; onS
                 </div>
             </div>
             <div className="flex items-center gap-2 ml-4">
+                {inquiry.conversation_id && (
+                    <Link
+                        href={`/dashboard/owner/chat?id=${inquiry.conversation_id}`}
+                        className="p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-2 text-xs font-bold mr-2 whitespace-nowrap"
+                        title="Open Chat"
+                    >
+                        <MessageSquare className="w-4 h-4" />
+                        Chat
+                    </Link>
+                )}
                 <StatusBadge status={inquiry.status} />
                 <div className="flex gap-1 ml-3">
                     <button

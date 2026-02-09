@@ -37,7 +37,9 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
         const ids = myConvos.map(c => c.conversation_id);
 
-        // 2. Fetch conversation details + participants
+        // 2. Fetch conversation details + participants + messages (limited to 1 per conversation)
+        // Note: Supabase doesn't easily support "last message" in a single select across many conversations
+        // so we'll fetch them separately or use a trick.
         const { data } = await supabase
             .from('conversations')
             .select(`
@@ -46,11 +48,15 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 updated_at,
                 conversation_participants (
                     user_id,
-                    user:user_id ( full_name, email, role )
+                    user:user_id ( full_name, email, role, avatar_url )
+                ),
+                messages (
+                    content,
+                    created_at,
+                    sender_id
                 )
             `)
             .in('id', ids)
-            // Order by updated_at so recent messages bubble up
             .order('updated_at', { ascending: false });
 
         if (data) {
@@ -61,9 +67,16 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 // If I'm chatting with myself (testing) or alone, fallback
                 const displayUser: any = other?.user || (Array.isArray(conv.conversation_participants) ? conv.conversation_participants[0]?.user : null);
 
+                // Get last message
+                const sortedMessages = (conv.messages || []).sort((a: any, b: any) =>
+                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                );
+                const lastMsg = sortedMessages[0];
+
                 return {
                     ...conv,
                     otherUser: displayUser,
+                    lastMessage: lastMsg,
                     // If no other user, it's just "Conversation"
                     title: displayUser ? (displayUser.full_name || displayUser.email) : 'Support Chat'
                 };
@@ -180,10 +193,15 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <p className="text-xs text-slate-500 truncate pr-2">
-                                        {conv.otherUser?.email || conv.otherUser?.role || 'User'}
+                                        {conv.lastMessage ? (
+                                            <>
+                                                {conv.lastMessage.sender_id === userId ? 'You: ' : ''}
+                                                {conv.lastMessage.content}
+                                            </>
+                                        ) : (
+                                            conv.otherUser?.email || conv.otherUser?.role || 'No messages yet'
+                                        )}
                                     </p>
-                                    {/* Unread badge placeholder */}
-                                    {/* <span className="w-2 h-2 bg-red-500 rounded-full"></span> */}
                                 </div>
                             </div>
                         </button>

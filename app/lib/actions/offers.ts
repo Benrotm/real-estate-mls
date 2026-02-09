@@ -21,6 +21,8 @@ export interface PropertyOffer {
 export interface PropertyInquiry {
     id: string;
     property_id: string;
+    user_id: string | null;
+    conversation_id: string | null;
     name: string;
     email: string;
     phone: string | null;

@@ -2,8 +2,9 @@ import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
 import ChatLayout from '@/app/components/chat/ChatLayout';
 
-export default async function OwnerChatPage() {
+export default async function OwnerChatPage({ searchParams }: { searchParams: { id?: string } }) {
     const user = await getUserProfile();
+    const initialConversationId = searchParams.id;
 
     if (!user) {
         redirect('/auth/login');
@@ -19,7 +20,7 @@ export default async function OwnerChatPage() {
                 <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
                 <p className="text-slate-500">Chat with interested tenants and buyers.</p>
             </div>
-            <ChatLayout user={user} />
+            <ChatLayout user={user} initialConversationId={initialConversationId} />
         </div>
     );
 }
