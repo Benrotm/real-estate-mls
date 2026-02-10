@@ -7,7 +7,7 @@ import OfferModal from '../OfferModal';
 import UpgradeModal from '@/app/components/UpgradeModal';
 import { BadgeDollarSign, Lock } from 'lucide-react';
 
-export default function PropertyValuationSection({ property, showMakeOffer, isMakeOfferLocked }: { property: any, showMakeOffer?: boolean, isMakeOfferLocked?: boolean }) {
+export default function PropertyValuationSection({ property, showMakeOffer, isMakeOfferLocked, showValuationWidget = true }: { property: any, showMakeOffer?: boolean, isMakeOfferLocked?: boolean, showValuationWidget?: boolean }) {
     const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function PropertyValuationSection({ property, showMakeOffer, isMa
                 </div>
             </div>
 
-            <ValuationWidget property={property} showMakeOffer={false} />
+            {showValuationWidget && <ValuationWidget property={property} showMakeOffer={false} />}
 
             <SoldPriceModal
                 propertyId={property.id}
