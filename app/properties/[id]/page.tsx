@@ -684,9 +684,9 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-slate-500 text-sm font-medium">Internal ID:</span>
-                                <span className="text-slate-900 font-bold text-xs bg-slate-100 px-2 py-1 rounded font-mono">
-                                    {property.id}
+                                <span className="text-slate-500 text-sm font-medium">Personal / Internal ID:</span>
+                                <span className="text-slate-900 font-bold text-xs bg-slate-100 px-2 py-1 rounded font-mono truncate max-w-[150px]" title={property.personal_property_id || property.id}>
+                                    {property.personal_property_id || property.id}
                                 </span>
                             </div>
                         </div>
