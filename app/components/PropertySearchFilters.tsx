@@ -177,7 +177,7 @@ export default function PropertySearchFilters() {
                     <input
                         type="text"
                         placeholder="e.g. 2 Bed in City Center"
-                        className="w-full p-2 border border-slate-300 rounded-md text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 border border-slate-300 rounded-md text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder:text-slate-500"
                         value={searchName}
                         onChange={(e) => setSearchName(e.target.value)}
                         autoFocus
@@ -214,7 +214,7 @@ export default function PropertySearchFilters() {
                     <input
                         type="text"
                         placeholder="Search by location, property name..."
-                        className="w-full pl-10 pr-4 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder:text-slate-500"
                         value={filters.location_city || filters.location_area ? `${filters.location_city} ${filters.location_area}`.trim() : ''}
                         onChange={(e) => {
                             handleChange('location_city', e.target.value);
@@ -225,7 +225,7 @@ export default function PropertySearchFilters() {
                 {/* Core Types Dropdowns */}
                 <div className="flex gap-2 w-full lg:w-auto">
                     <select
-                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900"
                         value={filters.type}
                         onChange={(e) => handleChange('type', e.target.value)}
                     >
@@ -234,7 +234,7 @@ export default function PropertySearchFilters() {
                     </select>
 
                     <select
-                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900"
                         value={filters.listing_type}
                         onChange={(e) => handleChange('listing_type', e.target.value)}
                     >
@@ -297,14 +297,14 @@ export default function PropertySearchFilters() {
                                 <input
                                     type="number"
                                     placeholder="Min Price"
-                                    className="w-full p-2 border rounded-md text-sm"
+                                    className="w-full p-2 border rounded-md text-sm text-slate-900 placeholder:text-slate-500"
                                     value={filters.minPrice}
                                     onChange={(e) => handleChange('minPrice', e.target.value)}
                                 />
                                 <input
                                     type="number"
                                     placeholder="Max Price"
-                                    className="w-full p-2 border rounded-md text-sm"
+                                    className="w-full p-2 border rounded-md text-sm text-slate-900 placeholder:text-slate-500"
                                     value={filters.maxPrice}
                                     onChange={(e) => handleChange('maxPrice', e.target.value)}
                                 />
@@ -317,7 +317,7 @@ export default function PropertySearchFilters() {
                             <input
                                 type="number"
                                 placeholder="Min Sqm"
-                                className="w-full p-2 border rounded-md text-sm"
+                                className="w-full p-2 border rounded-md text-sm text-slate-900 placeholder:text-slate-500"
                                 value={filters.area}
                                 onChange={(e) => handleChange('area', e.target.value)}
                             />
@@ -328,7 +328,7 @@ export default function PropertySearchFilters() {
                             <label className="text-xs font-semibold text-slate-500 uppercase">Layout</label>
                             <div className="flex gap-2">
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1"
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.rooms}
                                     onChange={(e) => handleChange('rooms', e.target.value)}
                                 >
@@ -336,7 +336,7 @@ export default function PropertySearchFilters() {
                                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}+</option>)}
                                 </select>
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1"
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.bathrooms}
                                     onChange={(e) => handleChange('bathrooms', e.target.value)}
                                 >
@@ -354,14 +354,14 @@ export default function PropertySearchFilters() {
                                 <input
                                     type="text"
                                     placeholder="County"
-                                    className="p-2 border rounded-md text-sm flex-1 w-full"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
                                     value={filters.location_county}
                                     onChange={(e) => handleChange('location_county', e.target.value)}
                                 />
                                 <input
                                     type="text"
                                     placeholder="Area"
-                                    className="p-2 border rounded-md text-sm flex-1 w-full"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
                                     value={filters.location_area}
                                     onChange={(e) => handleChange('location_area', e.target.value)}
                                 />
@@ -374,7 +374,7 @@ export default function PropertySearchFilters() {
                             <label className="text-xs font-semibold text-slate-500 uppercase">Details</label>
                             <div className="flex gap-2">
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1"
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.partitioning}
                                     onChange={(e) => handleChange('partitioning', e.target.value)}
                                 >
@@ -382,7 +382,7 @@ export default function PropertySearchFilters() {
                                     {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1"
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.comfort}
                                     onChange={(e) => handleChange('comfort', e.target.value)}
                                 >
@@ -398,12 +398,12 @@ export default function PropertySearchFilters() {
                                 <input
                                     type="number"
                                     placeholder="Year (min)"
-                                    className="p-2 border rounded-md text-sm flex-1 w-full"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
                                     value={filters.year_built}
                                     onChange={(e) => handleChange('year_built', e.target.value)}
                                 />
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1"
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.floor}
                                     onChange={(e) => handleChange('floor', e.target.value)}
                                 >
@@ -418,7 +418,7 @@ export default function PropertySearchFilters() {
                             <label className="text-xs font-semibold text-slate-500 uppercase">Characteristics</label>
                             <div className="flex gap-2 mb-1">
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1 w-full"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
                                     value={filters.building_type}
                                     onChange={(e) => handleChange('building_type', e.target.value)}
                                 >
@@ -428,7 +428,7 @@ export default function PropertySearchFilters() {
                             </div>
                             <div className="flex gap-2">
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1"
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.interior_condition}
                                     onChange={(e) => handleChange('interior_condition', e.target.value)}
                                 >
@@ -436,7 +436,7 @@ export default function PropertySearchFilters() {
                                     {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1"
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.furnishing}
                                     onChange={(e) => handleChange('furnishing', e.target.value)}
                                 >
