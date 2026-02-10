@@ -766,6 +766,17 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                             />
                                         </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Social Media Listing URL</label>
+                                            <input
+                                                type="url"
+                                                name="socialMediaUrl"
+                                                value={formData.socialMediaUrl}
+                                                onChange={handleChange}
+                                                placeholder="Instagram Reel, TikTok, YouTube Short..."
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            />
+                                        </div>
                                         <div className="relative">
                                             <label className="block text-sm font-medium mb-2 text-slate-300 flex items-center gap-2">
                                                 Virtual Tour

@@ -4,7 +4,7 @@ import { checkUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features
 export const dynamic = 'force-dynamic';
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video, Sparkles, ArrowRight } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 
@@ -625,6 +625,56 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                     </div>
                                 </div>
                             )}
+
+                        </div>
+                    )}
+
+                    {/* Social Media Spotlight */}
+                    {property.social_media_url && (
+                        <div className="space-y-6 mt-10">
+                            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                                <Sparkles className="w-6 h-6 text-pink-500" />
+                                Social Media Spotlight
+                            </h2>
+                            <div className="bg-zinc-950 rounded-2xl overflow-hidden shadow-2xl border border-zinc-800">
+                                <div className="w-full h-[600px] relative flex justify-center bg-black">
+                                    {property.social_media_url.includes('instagram.com/reel') ? (
+                                        <iframe
+                                            src={`${property.social_media_url}embed`}
+                                            className="w-full h-full max-w-[400px]"
+                                            frameBorder="0"
+                                            allowFullScreen
+                                        ></iframe>
+                                    ) : property.social_media_url.includes('tiktok.com') ? (
+                                        <blockquote className="tiktok-embed" cite={property.social_media_url} data-video-id={property.social_media_url.split('/video/')[1]} style={{ maxWidth: '605px', minWidth: '325px' }}>
+                                            <section>
+                                                <a target="_blank" href={property.social_media_url} className="text-white underline">View TikTok</a>
+                                            </section>
+                                            <script async src="https://www.tiktok.com/embed.js"></script>
+                                        </blockquote>
+                                    ) : property.social_media_url.includes('youtube.com/shorts') ? (
+                                        <iframe
+                                            src={property.social_media_url.replace('shorts/', 'embed/')}
+                                            className="w-full h-full max-w-[400px]"
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                        ></iframe>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center p-10 text-center h-full">
+                                            <p className="text-slate-400 mb-6">View this property on social media</p>
+                                            <a
+                                                href={property.social_media_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center gap-2"
+                                            >
+                                                Open Social Media Link <ArrowRight className="w-4 h-4" />
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 
