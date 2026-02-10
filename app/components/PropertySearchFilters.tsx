@@ -327,7 +327,7 @@ export default function PropertySearchFilters() {
                             <button
                                 type="button"
                                 onClick={applyFilters}
-                                className="h-[42px] px-8 rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 text-white hover:from-black hover:to-slate-900 text-sm font-bold shadow-lg shadow-slate-900/20 transition-all transform hover:-translate-y-0.5 border border-slate-700"
+                                className="h-[42px] px-8 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white text-sm font-bold shadow-lg shadow-violet-500/30 transition-all transform hover:-translate-y-0.5 border border-transparent"
                             >
                                 Search
                             </button>
@@ -339,16 +339,16 @@ export default function PropertySearchFilters() {
                 <div className="border-t border-slate-100">
                     <button
                         onClick={() => setShowMoreDetails(!showMoreDetails)}
-                        className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                        className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-teal-600 hover:bg-teal-50 transition-colors group"
                     >
                         <span className="flex items-center gap-2">
-                            <span className={`p-1.5 rounded-md ${hasActiveDetails ? 'bg-cyan-100 text-cyan-600' : 'bg-slate-100 text-slate-500'}`}>
+                            <span className={`p-1.5 rounded-md ${hasActiveDetails ? 'bg-teal-100 text-teal-700' : 'bg-teal-50 text-teal-500 group-hover:bg-teal-100'}`}>
                                 <SlidersHorizontal className="w-4 h-4" />
                             </span>
                             More Details
-                            {hasActiveDetails && <span className="text-cyan-600 text-xs bg-cyan-50 px-2 py-0.5 rounded-full">Active</span>}
+                            {hasActiveDetails && <span className="text-teal-700 text-xs bg-teal-100 px-2 py-0.5 rounded-full">Active</span>}
                         </span>
-                        {showMoreDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        {showMoreDetails ? <ChevronUp className="w-4 h-4 text-teal-400" /> : <ChevronDown className="w-4 h-4 text-teal-400" />}
                     </button>
 
                     {showMoreDetails && (
@@ -359,7 +359,7 @@ export default function PropertySearchFilters() {
                                 <label className="text-xs font-bold text-slate-400 uppercase">Property Details</label>
                                 <div className="flex gap-2">
                                     <select
-                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-cyan-500 focus:border-cyan-500"
+                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-teal-500 focus:border-teal-500"
                                         value={filters.partitioning}
                                         onChange={(e) => handleChange('partitioning', e.target.value)}
                                     >
@@ -367,7 +367,7 @@ export default function PropertySearchFilters() {
                                         {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                     <select
-                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-cyan-500 focus:border-cyan-500"
+                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-teal-500 focus:border-teal-500"
                                         value={filters.comfort}
                                         onChange={(e) => handleChange('comfort', e.target.value)}
                                     >
@@ -384,12 +384,12 @@ export default function PropertySearchFilters() {
                                     <input
                                         type="number"
                                         placeholder="Year Built"
-                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400 focus:ring-cyan-500 focus:border-cyan-500"
+                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400 focus:ring-teal-500 focus:border-teal-500"
                                         value={filters.year_built}
                                         onChange={(e) => handleChange('year_built', e.target.value)}
                                     />
                                     <select
-                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-cyan-500 focus:border-cyan-500"
+                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-teal-500 focus:border-teal-500"
                                         value={filters.floor}
                                         onChange={(e) => handleChange('floor', e.target.value)}
                                     >
@@ -406,14 +406,14 @@ export default function PropertySearchFilters() {
                                     <input
                                         type="text"
                                         placeholder="County"
-                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400 focus:ring-cyan-500 focus:border-cyan-500"
+                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400 focus:ring-teal-500 focus:border-teal-500"
                                         value={filters.location_county}
                                         onChange={(e) => handleChange('location_county', e.target.value)}
                                     />
                                     <input
                                         type="text"
                                         placeholder="Sector/Area"
-                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400 focus:ring-cyan-500 focus:border-cyan-500"
+                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400 focus:ring-teal-500 focus:border-teal-500"
                                         value={filters.location_area}
                                         onChange={(e) => handleChange('location_area', e.target.value)}
                                     />
@@ -425,7 +425,7 @@ export default function PropertySearchFilters() {
                                 <label className="text-xs font-bold text-slate-400 uppercase">Condition</label>
                                 <div className="flex gap-2">
                                     <select
-                                        className="w-full p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-cyan-500 focus:border-cyan-500"
+                                        className="w-full p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-teal-500 focus:border-teal-500"
                                         value={filters.furnishing}
                                         onChange={(e) => handleChange('furnishing', e.target.value)}
                                     >
@@ -433,7 +433,7 @@ export default function PropertySearchFilters() {
                                         {FURNISHING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                     <select
-                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-cyan-500 focus:border-cyan-500"
+                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900 focus:ring-teal-500 focus:border-teal-500"
                                         value={filters.interior_condition}
                                         onChange={(e) => handleChange('interior_condition', e.target.value)}
                                     >
@@ -448,29 +448,29 @@ export default function PropertySearchFilters() {
                                 <div className="flex flex-wrap gap-4">
                                     <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium group/check">
                                         <div className="relative flex items-center">
-                                            <input type="checkbox" className="peer rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.has_video} onChange={(e) => handleChange('has_video', e.target.checked)} />
-                                            <div className="absolute inset-0 bg-cyan-100 rounded-full scale-0 peer-checked:scale-150 opacity-0 peer-checked:opacity-20 transition-all"></div>
+                                            <input type="checkbox" className="peer rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.has_video} onChange={(e) => handleChange('has_video', e.target.checked)} />
+                                            <div className="absolute inset-0 bg-teal-100 rounded-full scale-0 peer-checked:scale-150 opacity-0 peer-checked:opacity-20 transition-all"></div>
                                         </div>
                                         Has Video
                                     </label>
                                     <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium group/check">
-                                        <input type="checkbox" className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.has_virtual_tour} onChange={(e) => handleChange('has_virtual_tour', e.target.checked)} />
+                                        <input type="checkbox" className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.has_virtual_tour} onChange={(e) => handleChange('has_virtual_tour', e.target.checked)} />
                                         Virtual Tour
                                     </label>
                                     <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium group/check">
-                                        <input type="checkbox" className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.commission_0} onChange={(e) => handleChange('commission_0', e.target.checked)} />
+                                        <input type="checkbox" className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.commission_0} onChange={(e) => handleChange('commission_0', e.target.checked)} />
                                         No Commission
                                     </label>
                                     <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium group/check">
-                                        <input type="checkbox" className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.exclusive} onChange={(e) => handleChange('exclusive', e.target.checked)} />
+                                        <input type="checkbox" className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.exclusive} onChange={(e) => handleChange('exclusive', e.target.checked)} />
                                         Exclusive
                                     </label>
                                     <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium group/check">
-                                        <input type="checkbox" className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.luxury} onChange={(e) => handleChange('luxury', e.target.checked)} />
+                                        <input type="checkbox" className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.luxury} onChange={(e) => handleChange('luxury', e.target.checked)} />
                                         Luxury
                                     </label>
                                     <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium group/check">
-                                        <input type="checkbox" className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
+                                        <input type="checkbox" className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
                                         Foreclosure
                                     </label>
                                 </div>
@@ -483,16 +483,16 @@ export default function PropertySearchFilters() {
                 <div className="border-t border-slate-100">
                     <button
                         onClick={() => setShowAmenities(!showAmenities)}
-                        className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                        className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-amber-600 hover:bg-amber-50 transition-colors group"
                     >
                         <span className="flex items-center gap-2">
-                            <span className={`p-1.5 rounded-md ${hasActiveAmenities ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>
+                            <span className={`p-1.5 rounded-md ${hasActiveAmenities ? 'bg-amber-100 text-amber-700' : 'bg-amber-50 text-amber-500 group-hover:bg-amber-100'}`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             </span>
                             Amenities & Features
-                            {hasActiveAmenities && <span className="text-amber-600 text-xs bg-amber-50 px-2 py-0.5 rounded-full">Selected: {filters.features?.length}</span>}
+                            {hasActiveAmenities && <span className="text-amber-700 text-xs bg-amber-100 px-2 py-0.5 rounded-full">Selected: {filters.features?.length}</span>}
                         </span>
-                        {showAmenities ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        {showAmenities ? <ChevronUp className="w-4 h-4 text-amber-400" /> : <ChevronDown className="w-4 h-4 text-amber-400" />}
                     </button>
 
                     {showAmenities && (

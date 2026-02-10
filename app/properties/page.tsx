@@ -17,9 +17,14 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
-            <div className="bg-white border-b border-slate-200 py-6 mb-6">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-bold text-slate-900">Properties for Sale & Rent</h1>
+            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 border-b border-indigo-700 py-10 mb-6 shadow-lg relative overflow-hidden">
+                {/* Background Pattern Overlay */}
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-widest uppercase [text-shadow:1px_1px_0px_#3730a3,2px_2px_0px_#3730a3,3px_3px_0px_#3730a3,4px_4px_0px_#3730a3,5px_5px_10px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-300">
+                        Properties for Sale & Rent
+                    </h1>
                 </div>
             </div>
 
