@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import ValuationWidget from '@/app/components/ValuationWidget';
-import SoldPriceModal from './SoldPriceModal';
+
 import OfferModal from '../OfferModal';
 import UpgradeModal from '@/app/components/UpgradeModal';
 import { BadgeDollarSign, Lock } from 'lucide-react';
 
 export default function PropertyValuationSection({ property, showMakeOffer, isMakeOfferLocked, showValuationWidget = true, darkMode = false }: { property: any, showMakeOffer?: boolean, isMakeOfferLocked?: boolean, showValuationWidget?: boolean, darkMode?: boolean }) {
-    const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
+
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 
@@ -38,26 +38,13 @@ export default function PropertyValuationSection({ property, showMakeOffer, isMa
                         )
                     )}
 
-                    <button
-                        onClick={() => setIsSoldModalOpen(true)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${darkMode
-                            ? 'bg-blue-500 hover:bg-blue-400 text-white border-blue-500 shadow-lg shadow-blue-500/20'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-                            }`}
-                    >
-                        <BadgeDollarSign className="w-4 h-4" />
-                        Contribute Sold Price
-                    </button>
+
                 </div>
             </div>
 
             {showValuationWidget && <ValuationWidget property={property} showMakeOffer={false} />}
 
-            <SoldPriceModal
-                propertyId={property.id}
-                isOpen={isSoldModalOpen}
-                onClose={() => setIsSoldModalOpen(false)}
-            />
+
 
             <UpgradeModal
                 isOpen={isUpgradeModalOpen}
