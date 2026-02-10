@@ -167,14 +167,14 @@ export default function PropertySearchFilters() {
     };
 
     return (
-        <div className="relative group mb-8">
-            {/* Neon Border Animation Layer - Isolated with overflow hidden */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+        <div className="relative group mb-8 p-[2px] rounded-2xl overflow-hidden isolation-auto">
+            {/* Neon Border Animation Layer */}
+            <div className="absolute inset-0">
                 <div className="absolute inset-[-50%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#F472B6_0%,#60A5FA_25%,#34D399_50%,#F472B6_75%,#F472B6_100%)] opacity-70 blur-sm" />
             </div>
 
             {/* Inner Content Card */}
-            <div className="relative bg-white rounded-2xl border border-transparent shadow-xl h-full z-10">
+            <div className="relative bg-white rounded-2xl h-full z-10">
 
                 {/* Save Search Modal */}
                 {isSaveModalOpen && (
@@ -219,27 +219,27 @@ export default function PropertySearchFilters() {
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
 
                             {/* 1. Search Bar */}
-                            <div className="space-y-1.5 md:col-span-2 lg:col-span-1">
-                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                                    <Search className="w-3.5 h-3.5 text-indigo-500" /> Keywords
+                            <div className="space-y-1 md:col-span-2 lg:col-span-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                    <Search className="w-3 h-3 text-indigo-500" /> Keywords
                                 </label>
                                 <input
                                     type="text"
                                     placeholder="City, Area, Name..."
-                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 placeholder:text-slate-400"
+                                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 placeholder:text-slate-400"
                                     value={filters.location_city || filters.location_area ? `${filters.location_city} ${filters.location_area}`.trim() : ''}
                                     onChange={(e) => handleChange('location_city', e.target.value)}
                                 />
                             </div>
 
                             {/* 2. Type & Status */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                                    <Home className="w-3.5 h-3.5 text-pink-500" /> Property Type
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                    <Home className="w-3 h-3 text-pink-500" /> Property Type
                                 </label>
                                 <div className="flex gap-2">
                                     <select
-                                        className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-pink-500 text-slate-900"
+                                        className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-pink-500 text-slate-900"
                                         value={filters.type}
                                         onChange={(e) => handleChange('type', e.target.value)}
                                     >
@@ -247,7 +247,7 @@ export default function PropertySearchFilters() {
                                         {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                     <select
-                                        className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-pink-500 text-slate-900"
+                                        className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-pink-500 text-slate-900"
                                         value={filters.listing_type}
                                         onChange={(e) => handleChange('listing_type', e.target.value)}
                                     >
@@ -258,22 +258,22 @@ export default function PropertySearchFilters() {
                             </div>
 
                             {/* 3. Price Range */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                                    <Banknote className="w-3.5 h-3.5 text-emerald-500" /> Price Range
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                    <Banknote className="w-3 h-3 text-emerald-500" /> Price Range
                                 </label>
                                 <div className="flex gap-2">
                                     <input
                                         type="number"
                                         placeholder="Min €"
-                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                         value={filters.minPrice}
                                         onChange={(e) => handleChange('minPrice', e.target.value)}
                                     />
                                     <input
                                         type="number"
                                         placeholder="Max €"
-                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                         value={filters.maxPrice}
                                         onChange={(e) => handleChange('maxPrice', e.target.value)}
                                     />
@@ -281,13 +281,13 @@ export default function PropertySearchFilters() {
                             </div>
 
                             {/* 4. Rooms & Area */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                                    <SlidersHorizontal className="w-3.5 h-3.5 text-orange-500" /> Layout
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                    <SlidersHorizontal className="w-3 h-3 text-orange-500" /> Layout
                                 </label>
                                 <div className="flex gap-2">
                                     <select
-                                        className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-900"
+                                        className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-900"
                                         value={filters.rooms}
                                         onChange={(e) => handleChange('rooms', e.target.value)}
                                     >
@@ -297,7 +297,7 @@ export default function PropertySearchFilters() {
                                     <input
                                         type="number"
                                         placeholder="Min sqm"
-                                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex-1 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm flex-1 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
                                         value={filters.area}
                                         onChange={(e) => handleChange('area', e.target.value)}
                                     />
@@ -312,7 +312,7 @@ export default function PropertySearchFilters() {
                                 <button
                                     type="button"
                                     onClick={clearFilters}
-                                    className="h-[42px] px-4 rounded-xl border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 text-sm font-medium transition-colors"
+                                    className="h-[34px] px-3 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-medium transition-colors"
                                 >
                                     Clear
                                 </button>
@@ -321,7 +321,7 @@ export default function PropertySearchFilters() {
                             <button
                                 type="button"
                                 onClick={() => setIsSaveModalOpen(!isSaveModalOpen)}
-                                className="h-[42px] px-5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 text-sm font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 border border-transparent"
+                                className="h-[34px] px-4 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 text-xs font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 border border-transparent"
                             >
                                 Save
                             </button>
@@ -329,7 +329,7 @@ export default function PropertySearchFilters() {
                             <button
                                 type="button"
                                 onClick={applyFilters}
-                                className="h-[42px] px-8 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white text-sm font-bold shadow-lg shadow-violet-500/30 transition-all transform hover:-translate-y-0.5 border border-transparent"
+                                className="h-[34px] px-6 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white text-xs font-bold shadow-lg shadow-violet-500/30 transition-all transform hover:-translate-y-0.5 border border-transparent"
                             >
                                 Search
                             </button>

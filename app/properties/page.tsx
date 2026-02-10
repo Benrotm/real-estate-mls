@@ -19,7 +19,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
         <div className="min-h-screen bg-slate-50 pb-20">
             <div className="py-4 mb-2">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h1 className="text-3xl md:text-4xl font-medium tracking-tight bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl md:text-3xl font-medium tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         Properties for Sale & Rent
                     </h1>
                 </div>
