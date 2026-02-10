@@ -167,12 +167,14 @@ export default function PropertySearchFilters() {
     };
 
     return (
-        <div className="relative group rounded-2xl p-[2px] overflow-hidden mb-8">
-            {/* Neon Border Animation Layer */}
-            <div className="absolute inset-[-50%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#F472B6_0%,#60A5FA_25%,#34D399_50%,#F472B6_75%,#F472B6_100%)] opacity-70 blur-sm" />
+        <div className="relative group mb-8">
+            {/* Neon Border Animation Layer - Isolated with overflow hidden */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                <div className="absolute inset-[-50%] animate-[spin_4s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#F472B6_0%,#60A5FA_25%,#34D399_50%,#F472B6_75%,#F472B6_100%)] opacity-70 blur-sm" />
+            </div>
 
             {/* Inner Content Card */}
-            <div className="relative bg-white rounded-2xl border border-transparent shadow-xl h-full">
+            <div className="relative bg-white rounded-2xl border border-transparent shadow-xl h-full z-10">
 
                 {/* Save Search Modal */}
                 {isSaveModalOpen && (

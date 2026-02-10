@@ -85,9 +85,7 @@ export default function PropertyCard({ property, showEditButton, showMakeOffer, 
                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                         <div className="text-white font-bold text-lg flex items-center justify-between">
                             <span>{formatPrice(property.price)}</span>
-                            <div onClick={(e) => e.preventDefault()}>
-                                <FavoriteButton propertyId={property.id} className="w-8 h-8 bg-white/20 hover:bg-white text-white" />
-                            </div>
+                            <FavoriteButton propertyId={property.id} className="w-8 h-8 bg-white/20 hover:bg-white text-white relative z-20" />
                         </div>
                     </div>
                 </div>
