@@ -61,14 +61,21 @@ export default function PropertyCarousel({ images, title, propertyId }: Property
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
         >
-            {/* Main Image */}
-            <div className="absolute inset-0 flex items-center justify-center">
-                <img
-                    src={validImages[currentIndex]}
-                    alt={`${title} - Image ${currentIndex + 1}`}
-                    className="w-full h-full object-cover transition-opacity duration-300 select-none"
-                    draggable={false}
-                />
+            {/* Sliding Container */}
+            <div
+                className="flex h-full w-full transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
+                {validImages.map((src, index) => (
+                    <div key={index} className="min-w-full h-full relative flex items-center justify-center bg-slate-900">
+                        <img
+                            src={src}
+                            alt={`${title} - Image ${index + 1}`}
+                            className="w-full h-full object-cover select-none"
+                            draggable={false}
+                        />
+                    </div>
+                ))}
             </div>
 
             {/* Overlay Gradient */}
@@ -86,24 +93,24 @@ export default function PropertyCarousel({ images, title, propertyId }: Property
                 <>
                     <button
                         onClick={(e) => { e.preventDefault(); prevImage(); }}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-4 rounded-full backdrop-blur-sm transition-all transform hover:scale-105 active:scale-95 border border-white/10 shadow-lg z-20"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-2 md:p-4 rounded-full backdrop-blur-sm transition-all transform hover:scale-105 active:scale-95 border border-white/10 shadow-lg z-20"
                         aria-label="Previous image"
                     >
-                        <ChevronLeft className="w-8 h-8 md:w-10 md:h-10" />
+                        <ChevronLeft className="w-6 h-6 md:w-10 md:h-10" />
                     </button>
                     <button
                         onClick={(e) => { e.preventDefault(); nextImage(); }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-4 rounded-full backdrop-blur-sm transition-all transform hover:scale-105 active:scale-95 border border-white/10 shadow-lg z-20"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-2 md:p-4 rounded-full backdrop-blur-sm transition-all transform hover:scale-105 active:scale-95 border border-white/10 shadow-lg z-20"
                         aria-label="Next image"
                     >
-                        <ChevronRight className="w-8 h-8 md:w-10 md:h-10" />
+                        <ChevronRight className="w-6 h-6 md:w-10 md:h-10" />
                     </button>
                 </>
             )}
 
             {/* Image Counter Badge */}
-            <div className="absolute bottom-6 right-6 bg-black/60 text-white px-4 py-2 rounded-lg backdrop-blur-md text-sm font-bold flex items-center gap-2 border border-white/10">
-                <ImageIcon className="w-4 h-4" />
+            <div className="absolute bottom-6 right-6 bg-black/60 text-white px-3 py-1 md:px-4 md:py-2 rounded-lg backdrop-blur-md text-xs md:text-sm font-bold flex items-center gap-2 border border-white/10 z-20">
+                <ImageIcon className="w-3 h-3 md:w-4 md:h-4" />
                 {currentIndex + 1} / {validImages.length}
             </div>
 
@@ -113,7 +120,7 @@ export default function PropertyCarousel({ images, title, propertyId }: Property
                     <button
                         key={idx}
                         onClick={(e) => { e.preventDefault(); goToImage(idx); }}
-                        className={`transition-all shadow-sm ${idx === currentIndex ? 'bg-white w-8 h-2 rounded-full' : 'bg-white/50 w-2 h-2 rounded-full hover:bg-white/80'
+                        className={`transition-all shadow-sm ${idx === currentIndex ? 'bg-white w-6 md:w-8 h-1.5 md:h-2 rounded-full' : 'bg-white/50 w-1.5 md:w-2 h-1.5 md:h-2 rounded-full hover:bg-white/80'
                             }`}
                         aria-label={`Go to image ${idx + 1}`}
                     />
