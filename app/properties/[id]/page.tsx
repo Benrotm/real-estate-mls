@@ -328,9 +328,10 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-10">
                     {/* Info Header */}
+                    {/* Info Header & Summary Cards */}
                     <div>
                         {/* 1. Badges Row */}
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3 mb-6">
                             {property.listing_type === 'For Sale' ? (
                                 <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-md uppercase tracking-wide">
                                     For Sale
@@ -360,49 +361,124 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             )}
                         </div>
 
-                        {/* 2. Title & Share */}
-                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mt-4">
+                        {/* 2. Title & Price */}
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
                             <div>
                                 <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2 leading-tight">
                                     {property.title}
                                 </h1>
-                                <div className="leading-tight">
-                                    <div className="font-extrabold text-2xl text-slate-900">{formatter.format(property.area_usable || 0).replace('$', '').replace('€', '')}</div>
-                                    <div className="text-slate-500 font-bold text-sm">Sq m</div>
+                                <div className="text-slate-500 font-medium flex items-center gap-2">
+                                    <MapPin className="w-4 h-4" />
+                                    {property.address}, {property.location_city}
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 shrink-0">
-                                {/* Favorite Button */}
-                                <FavoriteButton propertyId={property.id} />
-
-                                {/* Share Button */}
-                                <ShareButton
-                                    propertyId={property.id}
-                                    title={property.title}
-                                    description={`Check out ${property.title} on Imobum!`}
-                                />
+                            <div className="flex flex-col items-end gap-2">
+                                <div className="font-extrabold text-3xl text-slate-900">
+                                    {formatter.format(property.price)}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <FavoriteButton propertyId={property.id} />
+                                    <ShareButton
+                                        propertyId={property.id}
+                                        title={property.title}
+                                        description={`Check out ${property.title} on Imobum!`}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Additional Details Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Partitioning</div>
-                            <div className="text-slate-900 font-bold">{property.partitioning || 'N/A'}</div>
+                        {/* 3. Summary Metrics Cards */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                            {/* Rooms */}
+                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 text-indigo-600">
+                                    <Home className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <div className="font-extrabold text-xl text-slate-900">{property.rooms || '-'}</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Rooms</div>
+                                </div>
+                            </div>
+
+                            {/* Bedrooms */}
+                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center shrink-0 text-orange-600">
+                                    <Bed className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <div className="font-extrabold text-xl text-slate-900">{property.bedrooms || '-'}</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Bedrooms</div>
+                                </div>
+                            </div>
+
+                            {/* Bathrooms */}
+                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 text-blue-600">
+                                    <Bath className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <div className="font-extrabold text-xl text-slate-900">{property.bathrooms || '-'}</div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Bathrooms</div>
+                                </div>
+                            </div>
+
+                            {/* Sqm Price */}
+                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0 text-emerald-600">
+                                    <Ruler className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <div className="font-extrabold text-xl text-slate-900">
+                                        {property.area_usable ? Math.round(property.price / property.area_usable) : '-'}
+                                        <span className="text-sm font-normal text-slate-400 ml-1">/sqm</span>
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Unit Price</div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Comfort</div>
-                            <div className="text-slate-900 font-bold">{property.comfort || 'N/A'}</div>
+
+                        {/* 4. Key Details Grid */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                            {[
+                                { label: 'Partitioning', value: property.partitioning },
+                                { label: 'Comfort', value: property.comfort },
+                                { label: 'Building', value: property.building_type },
+                                { label: 'Condition', value: property.interior_condition },
+                                { label: 'Furnishing', value: property.furnishing },
+                                { label: 'Year Built', value: property.year_built },
+                                { label: 'Floors', value: property.floor && property.total_floors ? `${property.floor}/${property.total_floors}` : (property.total_floors || property.floor) }
+                            ].map((item, i) => (
+                                item.value ? (
+                                    <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                        <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">{item.label}</div>
+                                        <div className="text-slate-900 font-bold text-sm truncate" title={String(item.value)}>{item.value}</div>
+                                    </div>
+                                ) : null
+                            ))}
                         </div>
-                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Building</div>
-                            <div className="text-slate-900 font-bold">{property.building_type || 'N/A'}</div>
-                        </div>
-                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Condition</div>
-                            <div className="text-slate-900 font-bold">{property.interior_condition || 'N/A'}</div>
+
+                        {/* 5. Areas & Measurements */}
+                        <h3 className="text-xl font-bold text-slate-900 mb-4">Areas & Measurements</h3>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            {[
+                                { label: 'Built Area', value: property.area_built, unit: 'sqm', icon: Maximize2 },
+                                { label: 'Terrace/Balcony', value: property.area_terrace, unit: 'sqm', icon: Sun },
+                                { label: 'Garden', value: property.area_garden, unit: 'sqm', icon: Trees },
+                                { label: 'Box/Storage', value: property.area_box, unit: 'sqm', icon: Box }
+                            ].map((item, i) => (
+                                <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
+                                        <item.icon className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">{item.label}</div>
+                                        <div className="text-slate-900 font-bold text-sm">
+                                            {item.value ? `${item.value} ${item.unit}` : 'N/A'}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
