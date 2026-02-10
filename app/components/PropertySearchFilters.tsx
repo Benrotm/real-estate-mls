@@ -9,6 +9,8 @@ export default function PropertySearchFilters() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [showFilters, setShowFilters] = useState(false);
+    const [showAmenities, setShowAmenities] = useState(false);
+    const [showMoreDetails, setShowMoreDetails] = useState(false);
 
     // Initialize state from URL params
     const initialFeatures = searchParams.getAll('features');
@@ -46,6 +48,16 @@ export default function PropertySearchFilters() {
         // New Features Array
         features: initialFeatures
     });
+
+    // Check if "More Details" has active filters
+    const hasActiveDetails =
+        filters.partitioning || filters.comfort || filters.year_built || filters.floor ||
+        filters.building_type || filters.interior_condition || filters.furnishing ||
+        filters.has_video || filters.has_virtual_tour || filters.commission_0 ||
+        filters.exclusive || filters.luxury || filters.foreclosure;
+
+    // Check if "Amenities" has active filters
+    const hasActiveAmenities = filters.features && filters.features.length > 0;
 
     // Sync state with URL params when they change (e.g. Back button, Clear Filters)
     useEffect(() => {
@@ -117,6 +129,8 @@ export default function PropertySearchFilters() {
             exclusive: false, luxury: false, hotel_regime: false, foreclosure: false,
             features: []
         });
+        setShowAmenities(false);
+        setShowMoreDetails(false);
         router.push('/properties');
     };
 
@@ -285,10 +299,10 @@ export default function PropertySearchFilters() {
                 </div>
             </div>
 
-            {/* Expandable Advanced Filters */}
+            {/* Expandable Key Filters - Always visible in "Filters" mode */}
             {showFilters && (
                 <div className="mt-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
 
                         {/* Price Range */}
                         <div className="space-y-1">
@@ -311,16 +325,25 @@ export default function PropertySearchFilters() {
                             </div>
                         </div>
 
-                        {/* Area Range */}
+                        {/* Area & Location */}
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Surface Area (sqm)</label>
-                            <input
-                                type="number"
-                                placeholder="Min Sqm"
-                                className="w-full p-2 border rounded-md text-sm text-slate-900 placeholder:text-slate-500"
-                                value={filters.area}
-                                onChange={(e) => handleChange('area', e.target.value)}
-                            />
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Location & Area</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="County"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
+                                    value={filters.location_county}
+                                    onChange={(e) => handleChange('location_county', e.target.value)}
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Min Sqm"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
+                                    value={filters.area}
+                                    onChange={(e) => handleChange('area', e.target.value)}
+                                />
+                            </div>
                         </div>
 
                         {/* Rooms & Baths */}
@@ -346,97 +369,126 @@ export default function PropertySearchFilters() {
                             </div>
                         </div>
 
-
-                        {/* Location Advanced */}
+                        {/* Additional Location */}
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Location Details</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="County"
-                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
-                                    value={filters.location_county}
-                                    onChange={(e) => handleChange('location_county', e.target.value)}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Area"
-                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
-                                    value={filters.location_area}
-                                    onChange={(e) => handleChange('location_area', e.target.value)}
-                                />
-                            </div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase">Area / Sector</label>
+                            <input
+                                type="text"
+                                placeholder="Area"
+                                className="w-full p-2 border rounded-md text-sm text-slate-900 placeholder:text-slate-500"
+                                value={filters.location_area}
+                                onChange={(e) => handleChange('location_area', e.target.value)}
+                            />
                         </div>
+                    </div>
 
-
-                        {/* Other Specs */}
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Details</label>
-                            <div className="flex gap-2">
-                                <select
-                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                    value={filters.partitioning}
-                                    onChange={(e) => handleChange('partitioning', e.target.value)}
-                                >
-                                    <option value="">Partitioning</option>
-                                    {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
-                                <select
-                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                    value={filters.comfort}
-                                    onChange={(e) => handleChange('comfort', e.target.value)}
-                                >
-                                    <option value="">Comfort</option>
-                                    {COMFORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
+                    {/* Section Toggles */}
+                    <div className="flex gap-4 border-t border-slate-100 pt-4">
+                        <button
+                            onClick={() => setShowMoreDetails(!showMoreDetails)}
+                            className={`text-sm font-medium flex items-center gap-2 hover:text-slate-900 transition-colors ${showMoreDetails ? 'text-slate-900' : 'text-slate-600'}`}
+                        >
+                            <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${showMoreDetails ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-300'}`}>
+                                {showMoreDetails ? <X className="w-3 h-3" /> : <span className="text-[10px]">+</span>}
                             </div>
-                        </div>
+                            More Details
+                            {hasActiveDetails && !showMoreDetails && (
+                                <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">!</span>
+                            )}
+                        </button>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Building</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="number"
-                                    placeholder="Year (min)"
-                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
-                                    value={filters.year_built}
-                                    onChange={(e) => handleChange('year_built', e.target.value)}
-                                />
-                                <select
-                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                    value={filters.floor}
-                                    onChange={(e) => handleChange('floor', e.target.value)}
-                                >
-                                    <option value="">Floor</option>
-                                    {['Parter', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10+'].map(f => <option key={f} value={f}>{f}</option>)}
-                                </select>
+                        <button
+                            onClick={() => setShowAmenities(!showAmenities)}
+                            className={`text-sm font-medium flex items-center gap-2 hover:text-slate-900 transition-colors ${showAmenities ? 'text-slate-900' : 'text-slate-600'}`}
+                        >
+                            <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${showAmenities ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-300'}`}>
+                                {showAmenities ? <X className="w-3 h-3" /> : <span className="text-[10px]">+</span>}
                             </div>
-                        </div>
+                            Amenities
+                            {hasActiveAmenities && !showAmenities && (
+                                <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{filters.features?.length}</span>
+                            )}
+                        </button>
+                    </div>
 
-                        {/* Enhanced Characteristics */}
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Characteristics</label>
-                            <div className="flex gap-2 mb-1">
-                                <select
-                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
-                                    value={filters.building_type}
-                                    onChange={(e) => handleChange('building_type', e.target.value)}
-                                >
-                                    <option value="">Building Type</option>
-                                    {BUILDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
+
+                    {/* MORE DETAILS SECTION */}
+                    {showMoreDetails && (
+                        <div className="mt-4 p-4 bg-slate-50 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                            {/* Details */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Property Details</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                        value={filters.partitioning}
+                                        onChange={(e) => handleChange('partitioning', e.target.value)}
+                                    >
+                                        <option value="">Partitioning</option>
+                                        {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                    <select
+                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                        value={filters.comfort}
+                                        onChange={(e) => handleChange('comfort', e.target.value)}
+                                    >
+                                        <option value="">Comfort</option>
+                                        {COMFORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
                             </div>
-                            <div className="flex gap-2">
+
+                            {/* Building */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Building</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        placeholder="Year (min)"
+                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
+                                        value={filters.year_built}
+                                        onChange={(e) => handleChange('year_built', e.target.value)}
+                                    />
+                                    <select
+                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                        value={filters.floor}
+                                        onChange={(e) => handleChange('floor', e.target.value)}
+                                    >
+                                        <option value="">Floor</option>
+                                        {['Parter', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10+'].map(f => <option key={f} value={f}>{f}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Characteristics */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Characteristics</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
+                                        value={filters.building_type}
+                                        onChange={(e) => handleChange('building_type', e.target.value)}
+                                    >
+                                        <option value="">Type</option>
+                                        {BUILDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                    <select
+                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                        value={filters.interior_condition}
+                                        onChange={(e) => handleChange('interior_condition', e.target.value)}
+                                    >
+                                        <option value="">Condition</option>
+                                        {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Furnishing & Options */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Furnishing</label>
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                    value={filters.interior_condition}
-                                    onChange={(e) => handleChange('interior_condition', e.target.value)}
-                                >
-                                    <option value="">Condition</option>
-                                    {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
-                                <select
-                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                    className="w-full p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.furnishing}
                                     onChange={(e) => handleChange('furnishing', e.target.value)}
                                 >
@@ -444,57 +496,60 @@ export default function PropertySearchFilters() {
                                     {FURNISHING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
+
+                            {/* Options Checkboxes */}
+                            <div className="col-span-1 md:col-span-2 lg:col-span-4 pt-2 border-t border-slate-200 mt-2">
+                                <label className="text-xs font-semibold text-slate-500 uppercase block mb-2">Listing Options</label>
+                                <div className="flex flex-wrap gap-4">
+                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
+                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.has_video} onChange={(e) => handleChange('has_video', e.target.checked)} />
+                                        Has Video
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
+                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.has_virtual_tour} onChange={(e) => handleChange('has_virtual_tour', e.target.checked)} />
+                                        Virtual Tour
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
+                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.commission_0} onChange={(e) => handleChange('commission_0', e.target.checked)} />
+                                        No Commission
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
+                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.exclusive} onChange={(e) => handleChange('exclusive', e.target.checked)} />
+                                        Exclusive
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
+                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.luxury} onChange={(e) => handleChange('luxury', e.target.checked)} />
+                                        Luxury
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
+                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
+                                        Foreclosure
+                                    </label>
+                                </div>
+                            </div>
                         </div>
+                    )}
 
-                    </div>
 
-
-                    {/* Amenities / Features Section */}
-                    <div className="pt-2 border-t border-slate-100 mt-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase block mb-2">Amenities</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                            {PROPERTY_FEATURES.map(feature => (
-                                <label key={feature} className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer hover:text-slate-900">
-                                    <input
-                                        type="checkbox"
-                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                        checked={filters.features?.includes(feature)}
-                                        onChange={() => handleFeatureToggle(feature)}
-                                    />
-                                    {feature}
-                                </label>
-                            ))}
+                    {/* AMENITIES SECTION */}
+                    {showAmenities && (
+                        <div className="mt-4 p-4 bg-slate-50 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
+                            <label className="text-xs font-semibold text-slate-500 uppercase block mb-2">Amenities</label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                                {PROPERTY_FEATURES.map(feature => (
+                                    <label key={feature} className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer hover:text-slate-900">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                            checked={filters.features?.includes(feature)}
+                                            onChange={() => handleFeatureToggle(feature)}
+                                        />
+                                        {feature}
+                                    </label>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-
-
-                    {/* Checkboxes Row */}
-                    <div className="flex flex-wrap gap-4 pt-2 border-t border-slate-100 mt-2">
-                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.has_video} onChange={(e) => handleChange('has_video', e.target.checked)} />
-                            Has Video
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.has_virtual_tour} onChange={(e) => handleChange('has_virtual_tour', e.target.checked)} />
-                            Virtual Tour
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.commission_0} onChange={(e) => handleChange('commission_0', e.target.checked)} />
-                            No Commission
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.exclusive} onChange={(e) => handleChange('exclusive', e.target.checked)} />
-                            Exclusive
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.luxury} onChange={(e) => handleChange('luxury', e.target.checked)} />
-                            Luxury
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
-                            Foreclosure
-                        </label>
-                    </div>
+                    )}
                 </div>
             )}
         </div>
