@@ -120,8 +120,91 @@ export default function PropertySearchFilters() {
         router.push('/properties');
     };
 
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [searchName, setSearchName] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
+
+    // Import action dynamically to avoid server-component issues in client component if not handled right, 
+    // but here we can just import at top. 
+    // Wait, let's add the import statement at the top first using a separate edit if needed, 
+    // or assume I can rewrite the whole file or large chunk. 
+    // I'll rewrite the return statement and add the helper functions.
+
+    const handleSaveSearch = async () => {
+        if (!searchName.trim()) return;
+        setIsSaving(true);
+        setSaveMessage({ type: '', text: '' });
+
+        try {
+            // Dynamically import the action to ensure it works in client component
+            const { saveSearch } = await import('@/app/lib/actions/savedSearches');
+
+            // Filter out empty values to keep the saved query clean
+            const activeFilters: any = {};
+            Object.entries(filters).forEach(([key, value]) => {
+                if (key === 'features' && Array.isArray(value) && value.length > 0) {
+                    activeFilters[key] = value;
+                } else if (value !== '' && value !== false && key !== 'features') {
+                    activeFilters[key] = value;
+                }
+            });
+
+            const result = await saveSearch(searchName, activeFilters);
+            if (result.success) {
+                setSaveMessage({ type: 'success', text: 'Search saved successfully!' });
+                setTimeout(() => {
+                    setIsSaveModalOpen(false);
+                    setSearchName('');
+                    setSaveMessage({ type: '', text: '' });
+                }, 1500);
+            } else {
+                setSaveMessage({ type: 'error', text: result.error || 'Failed to save' });
+            }
+        } catch (error) {
+            setSaveMessage({ type: 'error', text: 'An unexpected error occurred' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 relative">
+            {/* Save Search Modal */}
+            {isSaveModalOpen && (
+                <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <h3 className="font-bold text-slate-800 mb-2">Save this Search</h3>
+                    <input
+                        type="text"
+                        placeholder="e.g. 2 Bed in City Center"
+                        className="w-full p-2 border border-slate-300 rounded-md text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={searchName}
+                        onChange={(e) => setSearchName(e.target.value)}
+                        autoFocus
+                    />
+                    {saveMessage.text && (
+                        <div className={`text-xs mb-3 px-2 py-1 rounded ${saveMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {saveMessage.text}
+                        </div>
+                    )}
+                    <div className="flex gap-2 justify-end">
+                        <button
+                            onClick={() => setIsSaveModalOpen(false)}
+                            className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded-md"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSaveSearch}
+                            disabled={isSaving || !searchName.trim()}
+                            className="px-3 py-1.5 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-md disabled:opacity-50"
+                        >
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Top Bar: Search + Core Filters */}
             <div className="flex flex-col lg:flex-row gap-3 items-center mb-0">
 
@@ -132,10 +215,8 @@ export default function PropertySearchFilters() {
                         type="text"
                         placeholder="Search by location, property name..."
                         className="w-full pl-10 pr-4 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={filters.location_city || filters.location_area ? `${filters.location_city} ${filters.location_area}` : ''}
+                        value={filters.location_city || filters.location_area ? `${filters.location_city} ${filters.location_area}`.trim() : ''}
                         onChange={(e) => {
-                            // Simple text search mock - ideally this would be a smart autocomplete
-                            // For now let's just update city as a proxy for 'search'
                             handleChange('location_city', e.target.value);
                         }}
                     />
@@ -144,7 +225,7 @@ export default function PropertySearchFilters() {
                 {/* Core Types Dropdowns */}
                 <div className="flex gap-2 w-full lg:w-auto">
                     <select
-                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-40 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                         value={filters.type}
                         onChange={(e) => handleChange('type', e.target.value)}
                     >
@@ -153,47 +234,54 @@ export default function PropertySearchFilters() {
                     </select>
 
                     <select
-                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-40 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                         value={filters.listing_type}
                         onChange={(e) => handleChange('listing_type', e.target.value)}
                     >
-                        <option value="">All Properties</option>
+                        <option value="">Status</option>
                         {TRANSACTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2 w-full lg:w-auto">
+                <div className="flex gap-2 w-full lg:w-auto items-center">
                     <button
                         type="button"
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`px-4 py-2 rounded-md text-sm font-medium border flex items-center gap-2 transition-colors
+                        className={`px-3 py-2 rounded-md text-sm font-medium border flex items-center gap-1 transition-colors whitespace-nowrap
                             ${showFilters ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                     >
-                        <span className="lg:hidden">Filters</span>
-                        <span className="hidden lg:inline">More Filters</span>
-                        {/* Simple chevron icon could go here */}
+                        {showFilters ? 'Hide' : 'Filters'}
                     </button>
+
+                    {/* Clear Button - Visible if filters active */}
+                    {(Object.values(filters).some(val => val !== '' && val !== false && (!Array.isArray(val) || val.length > 0))) && (
+                        <button
+                            type="button"
+                            onClick={clearFilters}
+                            className="bg-red-50 text-red-600 border border-red-100 px-3 py-2 rounded-md hover:bg-red-100 text-sm font-medium transition-colors whitespace-nowrap"
+                            title="Clear All Filters"
+                        >
+                            Clear
+                        </button>
+                    )}
 
                     <button
                         type="button"
                         onClick={applyFilters}
-                        className="bg-slate-900 text-white px-6 py-2 rounded-md hover:bg-slate-800 text-sm font-bold shadow-sm transition-colors flex-1 lg:flex-none"
+                        className="bg-slate-900 text-white px-5 py-2 rounded-md hover:bg-slate-800 text-sm font-bold shadow-sm transition-colors flex-1 lg:flex-none"
                     >
                         Search
                     </button>
 
-                    {/* Hidden Clear Button (only show if something is selected is a nice touch, but optional) */}
-                    {(Object.values(filters).some(val => val !== '' && val !== false)) && (
-                        <button
-                            type="button"
-                            onClick={clearFilters}
-                            className="bg-slate-100 text-slate-500 px-3 py-2 rounded-md hover:bg-slate-200 lg:hidden"
-                            title="Clear Filters"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
-                    )}
+                    <button
+                        type="button"
+                        onClick={() => setIsSaveModalOpen(!isSaveModalOpen)}
+                        className="bg-white text-slate-600 border border-slate-200 px-3 py-2 rounded-md hover:text-blue-600 hover:border-blue-200 text-sm font-medium transition-colors"
+                        title="Save Search"
+                    >
+                        Save
+                    </button>
                 </div>
             </div>
 
@@ -406,16 +494,6 @@ export default function PropertySearchFilters() {
                             <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
                             Foreclosure
                         </label>
-                    </div>
-
-                    <div className="mt-4 flex justify-end lg:hidden">
-                        <button
-                            type="button"
-                            onClick={clearFilters}
-                            className="bg-slate-100 text-slate-600 px-4 py-2 rounded-md hover:bg-slate-200 text-sm font-medium"
-                        >
-                            Reset Filters
-                        </button>
                     </div>
                 </div>
             )}
