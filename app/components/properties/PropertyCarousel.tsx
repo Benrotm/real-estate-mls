@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import FavoriteButton from '../property/FavoriteButton';
