@@ -4,7 +4,7 @@ import { checkUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features
 export const dynamic = 'force-dynamic';
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 
@@ -488,6 +488,28 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                         allowFullScreen
                                     ></iframe>
+                                </div>
+                            )}
+
+                            {property.video_url && (
+                                <div className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-indigo-50 rounded-xl">
+                                            <Video className="w-6 h-6 text-indigo-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-slate-900">Virtual Tour / Video Link</h3>
+                                            <p className="text-xs text-slate-500">External Link</p>
+                                        </div>
+                                    </div>
+                                    <a
+                                        href={property.video_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-colors"
+                                    >
+                                        Open Link <ExternalLink className="w-3 h-3" />
+                                    </a>
                                 </div>
                             )}
 
