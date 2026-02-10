@@ -459,18 +459,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                     </div>
 
-                    {/* Platform Features / Interaction Options */}
-                    <PropertyFeatures
-                        propertyId={property.id}
-                        ownerId={property.owner_id}
-                        propertyTitle={property.title}
-                        currency={property.currency}
-                        features={{
-                            makeOffer: showMakeOffer,
-                            virtualTour: !!(showVirtualTour && property.virtual_tour_url),
-                            directMessage: false
-                        }}
-                    />
+
 
                     {/* Media: Video & Virtual Tour */}
                     {(property.youtube_video_url || property.video_url || property.virtual_tour_url) && (
@@ -602,6 +591,21 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 <PropertyValuationSection
                     property={property}
                     showMakeOffer={showMakeOffer}
+                />
+            </div>
+
+            {/* Platform Features / Interaction Options */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+                <PropertyFeatures
+                    propertyId={property.id}
+                    ownerId={property.owner_id}
+                    propertyTitle={property.title}
+                    currency={property.currency}
+                    features={{
+                        makeOffer: showMakeOffer,
+                        virtualTour: !!(showVirtualTour && property.virtual_tour_url),
+                        directMessage: false
+                    }}
                 />
             </div>
         </div>
