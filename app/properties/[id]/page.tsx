@@ -675,6 +675,21 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             propertyAddress={`${property.address}, ${property.location_city}`}
                             agentName={agent.name}
                         />
+
+                        <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-500 text-sm font-medium">Ref ID:</span>
+                                <span className="text-slate-900 font-bold bg-slate-100 px-2 py-1 rounded text-sm">
+                                    {property.friendly_id ? `#${property.friendly_id}` : `#${property.id.slice(0, 8)}`}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-500 text-sm font-medium">Internal ID:</span>
+                                <span className="text-slate-900 font-bold text-xs bg-slate-100 px-2 py-1 rounded font-mono">
+                                    {property.id}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
