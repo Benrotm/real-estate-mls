@@ -1,7 +1,8 @@
 import { getSavedSearches, deleteSavedSearch } from '@/app/lib/actions/savedSearches';
 import Link from 'next/link';
-import { Search, Trash2, Calendar, Play } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { redirect } from 'next/navigation';
+import SavedSearchCard from '@/app/components/dashboard/SavedSearchCard';
 
 export default async function SavedSearchesPage() {
     const { success, data: searches, error } = await getSavedSearches();
@@ -40,83 +41,16 @@ export default async function SavedSearchesPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {searches.map((search) => {
-                        // Construct the query string from saved params
-                        const params = new URLSearchParams();
-                        if (search.query_params) {
-                            Object.entries(search.query_params).forEach(([key, value]) => {
-                                if (Array.isArray(value)) {
-                                    value.forEach(v => params.append(key, String(v)));
-                                } else {
-                                    params.set(key, String(value));
-                                }
-                            });
-                        }
-                        const searchUrl = `/properties?${params.toString()}`;
-
-                        // Format Date
-                        const date = new Date(search.created_at).toLocaleDateString('en-US', {
-                            month: 'short', day: 'numeric', year: 'numeric'
-                        });
-
-                        return (
-                            <div key={search.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col group">
-                                <div className="flex justify-between items-start mb-3">
-                                    <h3 className="font-bold text-lg text-slate-800 line-clamp-1" title={search.name}>
-                                        {search.name}
-                                    </h3>
-                                    <form action={async () => {
-                                        'use server';
-                                        await deleteSavedSearch(search.id);
-                                    }}>
-                                        <button
-                                            type="submit"
-                                            className="text-slate-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors"
-                                            title="Delete Search"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </form>
-                                </div>
-
-                                <div className="flex-1 mb-4">
-                                    <div className="flex flex-wrap gap-2">
-                                        {/* Display a few key filters as badges */}
-                                        {Object.entries(search.query_params || {}).slice(0, 4).map(([key, value]) => {
-                                            if (!value || (Array.isArray(value) && value.length === 0)) return null;
-                                            // Format key for display (e.g. location_city -> City)
-                                            const label = key.replace('location_', '').replace('_', ' ');
-                                            const displayValue = Array.isArray(value) ? `${value.length} items` : String(value);
-
-                                            return (
-                                                <span key={key} className="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md capitalize">
-                                                    {label}: {displayValue}
-                                                </span>
-                                            );
-                                        })}
-                                        {(Object.keys(search.query_params || {}).length > 4) && (
-                                            <span className="inline-block px-2 py-1 bg-slate-50 text-slate-400 text-xs rounded-md">
-                                                +{Object.keys(search.query_params || {}).length - 4} more
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
-                                    <div className="flex items-center text-xs text-slate-400 gap-1">
-                                        <Calendar className="w-3 h-3" />
-                                        {date}
-                                    </div>
-                                    <Link
-                                        href={searchUrl}
-                                        className="text-blue-600 hover:text-blue-700 text-sm font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform"
-                                    >
-                                        Run Search <Play className="w-3 h-3 ml-1 fill-current" />
-                                    </Link>
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {searches.map((search) => (
+                        <SavedSearchCard
+                            key={search.id}
+                            search={search}
+                            onDelete={async (id) => {
+                                'use server';
+                                await deleteSavedSearch(id);
+                            }}
+                        />
+                    ))}
                 </div>
             )}
         </div>

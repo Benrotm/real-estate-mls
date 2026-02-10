@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES, BUILDING_TYPES, INTERIOR_CONDITIONS, FURNISHING_TYPES } from '@/app/lib/properties';
-import { Search, X } from 'lucide-react';
+import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES, INTERIOR_CONDITIONS, FURNISHING_TYPES } from '@/app/lib/properties';
+import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote } from 'lucide-react';
+import { saveSearch } from '@/app/lib/actions/savedSearches';
 
 export default function PropertySearchFilters() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [showFilters, setShowFilters] = useState(false);
-    const [showAmenities, setShowAmenities] = useState(false);
+
+    // Collapsible sections state
     const [showMoreDetails, setShowMoreDetails] = useState(false);
+    const [showAmenities, setShowAmenities] = useState(false);
 
     // Initialize state from URL params
     const initialFeatures = searchParams.getAll('features');
@@ -30,13 +32,9 @@ export default function PropertySearchFilters() {
         floor: searchParams.get('floor') || '',
         partitioning: searchParams.get('partitioning') || '',
         comfort: searchParams.get('comfort') || '',
-
-        // New Filters
         building_type: searchParams.get('building_type') || '',
         interior_condition: searchParams.get('interior_condition') || '',
         furnishing: searchParams.get('furnishing') || '',
-
-        // Checkboxes
         has_video: searchParams.get('has_video') === 'true',
         has_virtual_tour: searchParams.get('has_virtual_tour') === 'true',
         commission_0: searchParams.get('commission_0') === 'true',
@@ -44,22 +42,19 @@ export default function PropertySearchFilters() {
         luxury: searchParams.get('luxury') === 'true',
         hotel_regime: searchParams.get('hotel_regime') === 'true',
         foreclosure: searchParams.get('foreclosure') === 'true',
-
-        // New Features Array
         features: initialFeatures
     });
 
-    // Check if "More Details" has active filters
+    // Check if sections have active filters for badges
     const hasActiveDetails =
         filters.partitioning || filters.comfort || filters.year_built || filters.floor ||
         filters.building_type || filters.interior_condition || filters.furnishing ||
         filters.has_video || filters.has_virtual_tour || filters.commission_0 ||
         filters.exclusive || filters.luxury || filters.foreclosure;
 
-    // Check if "Amenities" has active filters
     const hasActiveAmenities = filters.features && filters.features.length > 0;
 
-    // Sync state with URL params when they change (e.g. Back button, Clear Filters)
+    // Sync state with URL params
     useEffect(() => {
         setFilters({
             listing_type: searchParams.get('listing_type') || '',
@@ -76,11 +71,9 @@ export default function PropertySearchFilters() {
             floor: searchParams.get('floor') || '',
             partitioning: searchParams.get('partitioning') || '',
             comfort: searchParams.get('comfort') || '',
-
             building_type: searchParams.get('building_type') || '',
             interior_condition: searchParams.get('interior_condition') || '',
             furnishing: searchParams.get('furnishing') || '',
-
             has_video: searchParams.get('has_video') === 'true',
             has_virtual_tour: searchParams.get('has_virtual_tour') === 'true',
             commission_0: searchParams.get('commission_0') === 'true',
@@ -134,16 +127,11 @@ export default function PropertySearchFilters() {
         router.push('/properties');
     };
 
+    // Save Search Logic
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [searchName, setSearchName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
-
-    // Import action dynamically to avoid server-component issues in client component if not handled right, 
-    // but here we can just import at top. 
-    // Wait, let's add the import statement at the top first using a separate edit if needed, 
-    // or assume I can rewrite the whole file or large chunk. 
-    // I'll rewrite the return statement and add the helper functions.
 
     const handleSaveSearch = async () => {
         if (!searchName.trim()) return;
@@ -151,10 +139,6 @@ export default function PropertySearchFilters() {
         setSaveMessage({ type: '', text: '' });
 
         try {
-            // Dynamically import the action to ensure it works in client component
-            const { saveSearch } = await import('@/app/lib/actions/savedSearches');
-
-            // Filter out empty values to keep the saved query clean
             const activeFilters: any = {};
             Object.entries(filters).forEach(([key, value]) => {
                 if (key === 'features' && Array.isArray(value) && value.length > 0) {
@@ -183,10 +167,10 @@ export default function PropertySearchFilters() {
     };
 
     return (
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 relative">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-8 relative">
             {/* Save Search Modal */}
             {isSaveModalOpen && (
-                <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute top-20 right-5 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
                     <h3 className="font-bold text-slate-800 mb-2">Save this Search</h3>
                     <input
                         type="text"
@@ -219,274 +203,221 @@ export default function PropertySearchFilters() {
                 </div>
             )}
 
-            {/* Top Bar: Search + Core Filters */}
-            <div className="flex flex-col lg:flex-row gap-3 items-center mb-0">
+            {/* HEADER / KEY FILTERS SECTION - "Always Visible" */}
+            <div className="p-5">
+                <div className="flex flex-col lg:flex-row gap-4 items-end">
 
-                {/* Search Inputs Group */}
-                <div className="flex-1 w-full relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                    <input
-                        type="text"
-                        placeholder="Search by location, property name..."
-                        className="w-full pl-10 pr-4 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder:text-slate-500"
-                        value={filters.location_city || filters.location_area ? `${filters.location_city} ${filters.location_area}`.trim() : ''}
-                        onChange={(e) => {
-                            handleChange('location_city', e.target.value);
-                        }}
-                    />
-                </div>
+                    {/* Grid of Main Inputs */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
 
-                {/* Core Types Dropdowns */}
-                <div className="flex gap-2 w-full lg:w-auto">
-                    <select
-                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900"
-                        value={filters.type}
-                        onChange={(e) => handleChange('type', e.target.value)}
-                    >
-                        <option value="">All Types</option>
-                        {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                        {/* 1. Search Bar */}
+                        <div className="space-y-1.5 md:col-span-2 lg:col-span-1">
+                            <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                <Search className="w-3 h-3" /> Keywords
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="City, Area, Name..."
+                                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder:text-slate-400"
+                                value={filters.location_city || filters.location_area ? `${filters.location_city} ${filters.location_area}`.trim() : ''}
+                                onChange={(e) => handleChange('location_city', e.target.value)}
+                            />
+                        </div>
 
-                    <select
-                        className="p-2 border rounded-md text-sm flex-1 lg:flex-none lg:w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900"
-                        value={filters.listing_type}
-                        onChange={(e) => handleChange('listing_type', e.target.value)}
-                    >
-                        <option value="">Status</option>
-                        {TRANSACTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                </div>
+                        {/* 2. Type & Status */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                <Home className="w-3 h-3" /> Property Type
+                            </label>
+                            <div className="flex gap-2">
+                                <select
+                                    className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                                    value={filters.type}
+                                    onChange={(e) => handleChange('type', e.target.value)}
+                                >
+                                    <option value="">All Types</option>
+                                    {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                                <select
+                                    className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                                    value={filters.listing_type}
+                                    onChange={(e) => handleChange('listing_type', e.target.value)}
+                                >
+                                    <option value="">Status</option>
+                                    {TRANSACTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+                        </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 w-full lg:w-auto items-center">
-                    <button
-                        type="button"
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`px-3 py-2 rounded-md text-sm font-medium border flex items-center gap-1 transition-colors whitespace-nowrap
-                            ${showFilters ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                    >
-                        {showFilters ? 'Hide' : 'Filters'}
-                    </button>
-
-                    {/* Clear Button - Visible if filters active */}
-                    {(Object.values(filters).some(val => val !== '' && val !== false && (!Array.isArray(val) || val.length > 0))) && (
-                        <button
-                            type="button"
-                            onClick={clearFilters}
-                            className="bg-red-50 text-red-600 border border-red-100 px-3 py-2 rounded-md hover:bg-red-100 text-sm font-medium transition-colors whitespace-nowrap"
-                            title="Clear All Filters"
-                        >
-                            Clear
-                        </button>
-                    )}
-
-                    <button
-                        type="button"
-                        onClick={applyFilters}
-                        className="bg-slate-900 text-white px-5 py-2 rounded-md hover:bg-slate-800 text-sm font-bold shadow-sm transition-colors flex-1 lg:flex-none"
-                    >
-                        Search
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => setIsSaveModalOpen(!isSaveModalOpen)}
-                        className="bg-white text-slate-600 border border-slate-200 px-3 py-2 rounded-md hover:text-blue-600 hover:border-blue-200 text-sm font-medium transition-colors"
-                        title="Save Search"
-                    >
-                        Save
-                    </button>
-                </div>
-            </div>
-
-            {/* Expandable Key Filters - Always visible in "Filters" mode */}
-            {showFilters && (
-                <div className="mt-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-
-                        {/* Price Range */}
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Price Range</label>
+                        {/* 3. Price Range */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                <Banknote className="w-3 h-3" /> Price Range
+                            </label>
                             <div className="flex gap-2">
                                 <input
                                     type="number"
-                                    placeholder="Min Price"
-                                    className="w-full p-2 border rounded-md text-sm text-slate-900 placeholder:text-slate-500"
+                                    placeholder="Min €"
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={filters.minPrice}
                                     onChange={(e) => handleChange('minPrice', e.target.value)}
                                 />
                                 <input
                                     type="number"
-                                    placeholder="Max Price"
-                                    className="w-full p-2 border rounded-md text-sm text-slate-900 placeholder:text-slate-500"
+                                    placeholder="Max €"
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={filters.maxPrice}
                                     onChange={(e) => handleChange('maxPrice', e.target.value)}
                                 />
                             </div>
                         </div>
 
-                        {/* Area & Location */}
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Location & Area</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="County"
-                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
-                                    value={filters.location_county}
-                                    onChange={(e) => handleChange('location_county', e.target.value)}
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Min Sqm"
-                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
-                                    value={filters.area}
-                                    onChange={(e) => handleChange('area', e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Rooms & Baths */}
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Layout</label>
+                        {/* 4. Rooms & Area */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                <SlidersHorizontal className="w-3 h-3" /> Layout
+                            </label>
                             <div className="flex gap-2">
                                 <select
-                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                    className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                                     value={filters.rooms}
                                     onChange={(e) => handleChange('rooms', e.target.value)}
                                 >
                                     <option value="">Rooms</option>
                                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}+</option>)}
                                 </select>
+                                <input
+                                    type="number"
+                                    placeholder="Min sqm"
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm flex-1 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={filters.area}
+                                    onChange={(e) => handleChange('area', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Actions Group */}
+                    <div className="flex gap-2 self-end shrink-0">
+                        {/* Clear Button */}
+                        {(Object.values(filters).some(val => val !== '' && val !== false && (!Array.isArray(val) || val.length > 0))) && (
+                            <button
+                                type="button"
+                                onClick={clearFilters}
+                                className="h-[42px] px-4 rounded-xl border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 text-sm font-medium transition-colors"
+                            >
+                                Clear
+                            </button>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => setIsSaveModalOpen(!isSaveModalOpen)}
+                            className="h-[42px] px-4 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 text-sm font-bold transition-colors shadow-sm"
+                        >
+                            Save
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={applyFilters}
+                            className="h-[42px] px-6 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-sm font-bold shadow-lg shadow-slate-900/10 transition-colors"
+                        >
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* COLLAPSIBLE: More Details */}
+            <div className="border-t border-slate-100">
+                <button
+                    onClick={() => setShowMoreDetails(!showMoreDetails)}
+                    className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                    <span className="flex items-center gap-2">
+                        <span className={`p-1 rounded-md ${hasActiveDetails ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                        </span>
+                        More Details
+                        {hasActiveDetails && <span className="text-blue-600 text-xs bg-blue-50 px-2 py-0.5 rounded-full">Active</span>}
+                    </span>
+                    {showMoreDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {showMoreDetails && (
+                    <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-1">
+
+                        {/* Details */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Property Details</label>
+                            <div className="flex gap-2">
                                 <select
                                     className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                    value={filters.bathrooms}
-                                    onChange={(e) => handleChange('bathrooms', e.target.value)}
+                                    value={filters.partitioning}
+                                    onChange={(e) => handleChange('partitioning', e.target.value)}
                                 >
-                                    <option value="">Baths</option>
-                                    {[1, 2, 3].map(n => <option key={n} value={n}>{n}+</option>)}
+                                    <option value="">Partitioning</option>
+                                    {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                                <select
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                    value={filters.comfort}
+                                    onChange={(e) => handleChange('comfort', e.target.value)}
+                                >
+                                    <option value="">Comfort</option>
+                                    {COMFORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
                         </div>
 
-                        {/* Additional Location */}
+                        {/* Building */}
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Area / Sector</label>
-                            <input
-                                type="text"
-                                placeholder="Area"
-                                className="w-full p-2 border rounded-md text-sm text-slate-900 placeholder:text-slate-500"
-                                value={filters.location_area}
-                                onChange={(e) => handleChange('location_area', e.target.value)}
-                            />
+                            <label className="text-xs font-bold text-slate-400 uppercase">Building Info</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="number"
+                                    placeholder="Year Built"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400"
+                                    value={filters.year_built}
+                                    onChange={(e) => handleChange('year_built', e.target.value)}
+                                />
+                                <select
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                    value={filters.floor}
+                                    onChange={(e) => handleChange('floor', e.target.value)}
+                                >
+                                    <option value="">Floor</option>
+                                    {['Parter', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10+'].map(f => <option key={f} value={f}>{f}</option>)}
+                                </select>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Section Toggles */}
-                    <div className="flex gap-4 border-t border-slate-100 pt-4">
-                        <button
-                            onClick={() => setShowMoreDetails(!showMoreDetails)}
-                            className={`text-sm font-medium flex items-center gap-2 hover:text-slate-900 transition-colors ${showMoreDetails ? 'text-slate-900' : 'text-slate-600'}`}
-                        >
-                            <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${showMoreDetails ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-300'}`}>
-                                {showMoreDetails ? <X className="w-3 h-3" /> : <span className="text-[10px]">+</span>}
+                        {/* Location Detail */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Exact Location</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="County"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400"
+                                    value={filters.location_county}
+                                    onChange={(e) => handleChange('location_county', e.target.value)}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Sector/Area"
+                                    className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400"
+                                    value={filters.location_area}
+                                    onChange={(e) => handleChange('location_area', e.target.value)}
+                                />
                             </div>
-                            More Details
-                            {hasActiveDetails && !showMoreDetails && (
-                                <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">!</span>
-                            )}
-                        </button>
+                        </div>
 
-                        <button
-                            onClick={() => setShowAmenities(!showAmenities)}
-                            className={`text-sm font-medium flex items-center gap-2 hover:text-slate-900 transition-colors ${showAmenities ? 'text-slate-900' : 'text-slate-600'}`}
-                        >
-                            <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${showAmenities ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-300'}`}>
-                                {showAmenities ? <X className="w-3 h-3" /> : <span className="text-[10px]">+</span>}
-                            </div>
-                            Amenities
-                            {hasActiveAmenities && !showAmenities && (
-                                <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">{filters.features?.length}</span>
-                            )}
-                        </button>
-                    </div>
-
-
-                    {/* MORE DETAILS SECTION */}
-                    {showMoreDetails && (
-                        <div className="mt-4 p-4 bg-slate-50 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                            {/* Details */}
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold text-slate-500 uppercase">Property Details</label>
-                                <div className="flex gap-2">
-                                    <select
-                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                        value={filters.partitioning}
-                                        onChange={(e) => handleChange('partitioning', e.target.value)}
-                                    >
-                                        <option value="">Partitioning</option>
-                                        {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
-                                    <select
-                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                        value={filters.comfort}
-                                        onChange={(e) => handleChange('comfort', e.target.value)}
-                                    >
-                                        <option value="">Comfort</option>
-                                        {COMFORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Building */}
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold text-slate-500 uppercase">Building</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="number"
-                                        placeholder="Year (min)"
-                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
-                                        value={filters.year_built}
-                                        onChange={(e) => handleChange('year_built', e.target.value)}
-                                    />
-                                    <select
-                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                        value={filters.floor}
-                                        onChange={(e) => handleChange('floor', e.target.value)}
-                                    >
-                                        <option value="">Floor</option>
-                                        {['Parter', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10+'].map(f => <option key={f} value={f}>{f}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Characteristics */}
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold text-slate-500 uppercase">Characteristics</label>
-                                <div className="flex gap-2">
-                                    <select
-                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-500"
-                                        value={filters.building_type}
-                                        onChange={(e) => handleChange('building_type', e.target.value)}
-                                    >
-                                        <option value="">Type</option>
-                                        {BUILDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
-                                    <select
-                                        className="p-2 border rounded-md text-sm flex-1 text-slate-900"
-                                        value={filters.interior_condition}
-                                        onChange={(e) => handleChange('interior_condition', e.target.value)}
-                                    >
-                                        <option value="">Condition</option>
-                                        {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Furnishing & Options */}
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold text-slate-500 uppercase">Furnishing</label>
+                        {/* Furnishing */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Condition</label>
+                            <div className="flex gap-2">
                                 <select
                                     className="w-full p-2 border rounded-md text-sm flex-1 text-slate-900"
                                     value={filters.furnishing}
@@ -495,63 +426,85 @@ export default function PropertySearchFilters() {
                                     <option value="">Furnishing</option>
                                     {FURNISHING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
-                            </div>
-
-                            {/* Options Checkboxes */}
-                            <div className="col-span-1 md:col-span-2 lg:col-span-4 pt-2 border-t border-slate-200 mt-2">
-                                <label className="text-xs font-semibold text-slate-500 uppercase block mb-2">Listing Options</label>
-                                <div className="flex flex-wrap gap-4">
-                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.has_video} onChange={(e) => handleChange('has_video', e.target.checked)} />
-                                        Has Video
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.has_virtual_tour} onChange={(e) => handleChange('has_virtual_tour', e.target.checked)} />
-                                        Virtual Tour
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.commission_0} onChange={(e) => handleChange('commission_0', e.target.checked)} />
-                                        No Commission
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.exclusive} onChange={(e) => handleChange('exclusive', e.target.checked)} />
-                                        Exclusive
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.luxury} onChange={(e) => handleChange('luxury', e.target.checked)} />
-                                        Luxury
-                                    </label>
-                                    <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
-                                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
-                                        Foreclosure
-                                    </label>
-                                </div>
+                                <select
+                                    className="p-2 border rounded-md text-sm flex-1 text-slate-900"
+                                    value={filters.interior_condition}
+                                    onChange={(e) => handleChange('interior_condition', e.target.value)}
+                                >
+                                    <option value="">Status</option>
+                                    {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
                             </div>
                         </div>
-                    )}
 
-
-                    {/* AMENITIES SECTION */}
-                    {showAmenities && (
-                        <div className="mt-4 p-4 bg-slate-50 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
-                            <label className="text-xs font-semibold text-slate-500 uppercase block mb-2">Amenities</label>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                                {PROPERTY_FEATURES.map(feature => (
-                                    <label key={feature} className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer hover:text-slate-900">
-                                        <input
-                                            type="checkbox"
-                                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                            checked={filters.features?.includes(feature)}
-                                            onChange={() => handleFeatureToggle(feature)}
-                                        />
-                                        {feature}
-                                    </label>
-                                ))}
+                        {/* Options Checkboxes */}
+                        <div className="col-span-1 md:col-span-2 lg:col-span-4 pt-4 border-t border-slate-100 mt-2">
+                            <div className="flex flex-wrap gap-4">
+                                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium">
+                                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4" checked={filters.has_video} onChange={(e) => handleChange('has_video', e.target.checked)} />
+                                    Has Video
+                                </label>
+                                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium">
+                                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4" checked={filters.has_virtual_tour} onChange={(e) => handleChange('has_virtual_tour', e.target.checked)} />
+                                    Virtual Tour
+                                </label>
+                                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium">
+                                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4" checked={filters.commission_0} onChange={(e) => handleChange('commission_0', e.target.checked)} />
+                                    No Commission
+                                </label>
+                                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium">
+                                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4" checked={filters.exclusive} onChange={(e) => handleChange('exclusive', e.target.checked)} />
+                                    Exclusive
+                                </label>
+                                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium">
+                                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4" checked={filters.luxury} onChange={(e) => handleChange('luxury', e.target.checked)} />
+                                    Luxury
+                                </label>
+                                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900 font-medium">
+                                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
+                                    Foreclosure
+                                </label>
                             </div>
                         </div>
-                    )}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
+
+            {/* COLLAPSIBLE: Amenities */}
+            <div className="border-t border-slate-100">
+                <button
+                    onClick={() => setShowAmenities(!showAmenities)}
+                    className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                    <span className="flex items-center gap-2">
+                        <span className={`p-1 rounded-md ${hasActiveAmenities ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>
+                            {/* Star Icon or similar for amenities */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </span>
+                        Amenities & Features
+                        {hasActiveAmenities && <span className="text-orange-600 text-xs bg-orange-50 px-2 py-0.5 rounded-full">Selected: {filters.features?.length}</span>}
+                    </span>
+                    {showAmenities ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {showAmenities && (
+                    <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-1">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                            {PROPERTY_FEATURES.map(feature => (
+                                <label key={feature} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer hover:text-slate-900 bg-slate-50 p-2 rounded-lg border border-transparent hover:border-slate-200 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                                        checked={filters.features?.includes(feature)}
+                                        onChange={() => handleFeatureToggle(feature)}
+                                    />
+                                    {feature}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
