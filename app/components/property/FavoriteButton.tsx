@@ -67,7 +67,7 @@ export default function FavoriteButton({ propertyId, className = '' }: FavoriteB
             onClick={handleToggle}
             disabled={isActionLoading}
             className={`w-10 h-10 rounded-full shadow-md flex items-center justify-center transition-all group ${isFavorited
-                ? 'bg-red-500 text-white hover:bg-red-600 scale-110'
+                ? '!bg-red-500 text-white hover:!bg-red-600 scale-110'
                 : 'bg-white/90 backdrop-blur-sm text-slate-400 hover:text-red-500 hover:bg-white scale-100'
                 } ${isActionLoading ? 'opacity-70 animate-pulse' : 'hover:scale-110 active:scale-95'} ${className}`}
             title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
