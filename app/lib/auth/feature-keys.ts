@@ -4,6 +4,7 @@ export const SYSTEM_FEATURES = {
     MARKET_INSIGHTS: 'market_insights',
     VIRTUAL_TOUR: 'virtual_tour',
     MAKE_AN_OFFER: 'make_an_offer',
+    PROPERTY_INSIGHTS: 'property_insights',
 } as const;
 
 export type SystemFeature = typeof SYSTEM_FEATURES[keyof typeof SYSTEM_FEATURES];
