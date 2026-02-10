@@ -492,24 +492,23 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             )}
 
                             {property.video_url && (
-                                <div className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-indigo-50 rounded-xl">
-                                            <Video className="w-6 h-6 text-indigo-600" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-slate-900">Virtual Tour / Video Link</h3>
-                                            <p className="text-xs text-slate-500">External Link</p>
-                                        </div>
+                                <div className="bg-zinc-950 rounded-2xl overflow-hidden shadow-2xl">
+                                    <div className="p-4 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center">
+                                        <h3 className="text-white font-bold flex items-center gap-2">
+                                            <Video className="w-5 h-5 text-indigo-500" />
+                                            Virtual Tour
+                                        </h3>
                                     </div>
-                                    <a
-                                        href={property.video_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-colors"
-                                    >
-                                        Open Link <ExternalLink className="w-3 h-3" />
-                                    </a>
+                                    <div className="w-full h-[400px] relative">
+                                        <iframe
+                                            src={property.video_url}
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            allowFullScreen
+                                            className="w-full h-full"
+                                        ></iframe>
+                                    </div>
                                 </div>
                             )}
 

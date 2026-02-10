@@ -756,7 +756,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-2 text-slate-300">Other Video URL</label>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Video or 360 Virtual Tour Link</label>
                                             <input
                                                 type="url"
                                                 name="videoUrl"
