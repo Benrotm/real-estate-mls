@@ -63,11 +63,11 @@ export default function PropertyCarousel({ images, title, propertyId }: Property
         >
             {/* Sliding Container */}
             <div
-                className="flex h-full w-full transition-transform duration-500 ease-out"
+                className="flex h-full w-full transition-transform duration-500 ease-out will-change-transform"
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
                 {validImages.map((src, index) => (
-                    <div key={index} className="min-w-full h-full relative flex items-center justify-center bg-slate-900">
+                    <div key={index} className="min-w-full h-full relative flex items-center justify-center bg-slate-900 shrink-0">
                         <img
                             src={src}
                             alt={`${title} - Image ${index + 1}`}
