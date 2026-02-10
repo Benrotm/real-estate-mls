@@ -15,7 +15,7 @@ export default function PropertyValuationSection({ property, showMakeOffer, isMa
     return (
         <div id="valuation-section" className="mt-12">
             <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Market value & Insights</h2>
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-slate-900'}`}>Market value & Insights</h2>
 
                 <div className="flex items-center gap-3">
                     {showMakeOffer && (
@@ -41,8 +41,8 @@ export default function PropertyValuationSection({ property, showMakeOffer, isMa
                     <button
                         onClick={() => setIsSoldModalOpen(true)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${darkMode
-                                ? 'bg-white hover:bg-slate-100 text-slate-900 border-white'
-                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                            ? 'bg-blue-500 hover:bg-blue-400 text-white border-blue-500 shadow-lg shadow-blue-500/20'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                             }`}
                     >
                         <BadgeDollarSign className="w-4 h-4" />
