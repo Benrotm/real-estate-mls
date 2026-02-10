@@ -236,8 +236,12 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             {/* Breadcrumb / Back */}
             <div className="bg-white border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 py-4">
-                    <Link href="/properties" className="flex items-center gap-2 text-sm text-gray-500 hover:text-slate-900 transition-colors font-medium">
-                        <ArrowLeft className="w-4 h-4" /> Back to Properties
+                    <Link href="/properties" className="relative inline-flex h-12 overflow-hidden rounded-full p-[2px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 group">
+                        <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#0EA5E9_0%,#F472B6_25%,#8B5CF6_50%,#10B981_75%,#0EA5E9_100%)]" />
+                        <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-white px-6 py-1 text-sm font-bold text-slate-900 backdrop-blur-3xl transition-all group-hover:bg-white/90 gap-2 uppercase tracking-wide">
+                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 fill-indigo-600" />
+                            <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent group-hover:from-violet-600 group-hover:to-indigo-600 transition-all">Back to Properties</span>
+                        </span>
                     </Link>
                 </div>
             </div>
