@@ -67,13 +67,13 @@ export default function FavoriteButton({ propertyId, className = '' }: FavoriteB
             onClick={handleToggle}
             disabled={isActionLoading}
             className={`w-10 h-10 rounded-full shadow-md flex items-center justify-center transition-all group ${isFavorited
-                ? 'bg-pink-500 text-white hover:bg-pink-600 scale-110'
-                : 'bg-white/90 backdrop-blur-sm text-slate-400 hover:text-pink-500 hover:bg-white scale-100'
+                ? 'bg-red-500 text-white hover:bg-red-600 scale-110'
+                : 'bg-white/90 backdrop-blur-sm text-slate-400 hover:text-red-500 hover:bg-white scale-100'
                 } ${isActionLoading ? 'opacity-70 animate-pulse' : 'hover:scale-110 active:scale-95'} ${className}`}
             title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
         >
             <Heart
-                className={`w-5 h-5 transition-colors ${isFavorited ? 'fill-current' : 'fill-transparent group-hover:fill-pink-500/20'}`}
+                className={`w-5 h-5 transition-colors ${isFavorited ? 'fill-current' : 'fill-transparent group-hover:fill-red-500/20'}`}
             />
         </button>
     );
