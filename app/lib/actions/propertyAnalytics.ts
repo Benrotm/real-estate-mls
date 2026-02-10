@@ -86,31 +86,54 @@ export async function togglePropertyFavorite(propertyId: string) {
         return { success: false, error: 'Must be logged in to favorite' };
     }
 
-    // Check if already favorited
-    const { data: existing } = await supabase
-        .from('property_favorites')
-        .select('id')
-        .eq('property_id', propertyId)
-        .eq('user_id', user.id)
-        .single();
-
-    if (existing) {
-        // Remove favorite
-        const { error } = await supabase
+    try {
+        // Check if already favorited
+        const { data: existing, error: checkError } = await supabase
             .from('property_favorites')
-            .delete()
-            .eq('id', existing.id);
+            .select('id')
+            .eq('property_id', propertyId)
+            .eq('user_id', user.id)
+            .single();
 
-        return { success: !error, isFavorited: false };
-    } else {
-        // Add favorite
-        const { error } = await supabase.from('property_favorites').insert({
-            property_id: propertyId,
-            user_id: user.id
-        });
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = JSON object requested, multiple (or no) rows returned
+            console.error('Error checking favorite status:', checkError);
+        }
 
-        if (!error) revalidatePath(`/properties/${propertyId}`);
-        return { success: !error, isFavorited: true };
+        if (existing) {
+            // Remove favorite
+            const { error } = await supabase
+                .from('property_favorites')
+                .delete()
+                .eq('id', existing.id);
+
+            if (error) {
+                console.error('Error removing favorite:', error);
+                throw error;
+            }
+
+            return { success: true, isFavorited: false };
+        } else {
+            // Add favorite
+            const { error } = await supabase.from('property_favorites').insert({
+                property_id: propertyId,
+                user_id: user.id
+            });
+
+            if (error) {
+                console.error('Error adding favorite:', error);
+                // Check for RLS violation
+                if (error.code === '42501') {
+                    return { success: false, error: 'Permission denied. Please refresh and try again.' };
+                }
+                throw error;
+            }
+
+            revalidatePath(`/properties/${propertyId}`);
+            return { success: true, isFavorited: true };
+        }
+    } catch (e) {
+        console.error('Toggle favorite exception:', e);
+        return { success: false, error: 'Failed to update favorite' };
     }
 }
 
@@ -126,9 +149,42 @@ export async function checkPropertyFavorite(propertyId: string) {
         .select('id')
         .eq('property_id', propertyId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
     return !!data;
+}
+
+// ... existing code ...
+
+// Get user's favorite properties
+export async function getUserFavorites() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return [];
+
+    try {
+        const { data: favorites, error } = await supabase
+            .from('property_favorites')
+            .select(`
+                property_id,
+                properties:properties (*)
+            `)
+            .eq('user_id', user.id);
+
+        if (error) {
+            console.error('Error fetching favorites raw:', error);
+            throw error;
+        }
+
+        // Transform data to match Property interface
+        return favorites
+            .filter((fav: any) => fav.properties) // Filter out null properties (deleted or RLS hidden)
+            .map((fav: any) => fav.properties);
+    } catch (error) {
+        console.error('Error fetching favorites:', error);
+        return [];
+    }
 }
 
 // Submit property inquiry (from contact form)
@@ -276,28 +332,4 @@ export async function recordPropertyShare(propertyId: string, shareMethod?: stri
     }
 }
 
-// Get user's favorite properties
-export async function getUserFavorites() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return [];
-
-    try {
-        const { data: favorites, error } = await supabase
-            .from('property_favorites')
-            .select(`
-                property_id,
-                properties:properties (*)
-            `)
-            .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        // Transform data to match Property interface
-        return favorites.map((fav: any) => fav.properties).filter(Boolean);
-    } catch (error) {
-        console.error('Error fetching favorites:', error);
-        return [];
-    }
-}

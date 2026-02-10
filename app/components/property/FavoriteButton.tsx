@@ -44,7 +44,7 @@ export default function FavoriteButton({ propertyId, className = '' }: FavoriteB
                 if (result.error.toLowerCase().includes('logged in')) {
                     alert('Please log in to save properties to your favorites.');
                 } else {
-                    alert(result.error);
+                    alert(`Error: ${result.error}`); // Show full error for debugging
                 }
             }
         } catch (error) {
