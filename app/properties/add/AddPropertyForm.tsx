@@ -441,7 +441,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         value={formData.title}
                                         onChange={handleChange}
                                         placeholder="e.g., Luxury Modern Apartment in Downtown"
-                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                     />
                                 </div>
 
@@ -454,7 +454,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         value={formData.description}
                                         onChange={handleChange}
                                         placeholder="Tell us more about the property..."
-                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all resize-none text-white placeholder-slate-600 hover:border-slate-600"
+                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all resize-none text-white placeholder-slate-600 hover:border-slate-600"
                                     />
                                 </div>
 
@@ -466,7 +466,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 name="propertyType"
                                                 value={formData.propertyType}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600"
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600"
                                             >
                                                 {PROPERTY_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
@@ -482,7 +482,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 name="listingType"
                                                 value={formData.listingType}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600"
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600"
                                             >
                                                 {TRANSACTION_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
@@ -512,7 +512,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium mb-2 text-slate-300">Price</label>
                                             <div className="relative">
-                                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-violet-400 font-bold">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-violet-400 font-bold">
                                                     <DollarSign className="w-5 h-5" />
                                                 </div>
                                                 <input
@@ -522,7 +522,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                     value={formData.price}
                                                     onChange={handleChange}
                                                     placeholder="0.00"
-                                                    className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600 text-lg font-medium"
+                                                    className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600 text-lg font-medium"
                                                 />
                                             </div>
                                         </div>
@@ -533,7 +533,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                     name="currency"
                                                     value={formData.currency}
                                                     onChange={handleChange}
-                                                    className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600"
+                                                    className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600"
                                                 >
                                                     <option value="USD" className="bg-slate-900">USD ($)</option>
                                                     <option value="EUR" className="bg-slate-900">EUR (€)</option>
@@ -549,7 +549,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Street Address</label>
                                         <AddressAutocomplete
                                             currentAddress={formData.address}
-                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                             onAddressSelect={(address) => {
                                                 setFormData(prev => ({
                                                     ...prev,
@@ -567,15 +567,15 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium mb-2 text-slate-300">City</label>
-                                            <input type="text" name="city" required value={formData.city} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                            <input type="text" name="city" required value={formData.city} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium mb-2 text-slate-300">State</label>
-                                            <input type="text" name="state" required value={formData.state} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                            <input type="text" name="state" required value={formData.state} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
                                         <div className="col-span-2 md:col-span-1">
                                             <label className="block text-sm font-medium mb-2 text-slate-300">ZIP Code</label>
-                                            <input type="text" name="zip" required value={formData.zip} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                            <input type="text" name="zip" required value={formData.zip} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
                                     </div>
 
@@ -613,51 +613,51 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     {/* Row 1: Rooms, Beds, Baths, Year Built */}
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Rooms</label>
-                                        <input type="number" name="rooms" value={formData.rooms} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="rooms" value={formData.rooms} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Bedrooms</label>
-                                        <input type="number" name="beds" value={formData.beds} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="beds" value={formData.beds} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Bathrooms</label>
-                                        <input type="number" name="baths" value={formData.baths} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="baths" value={formData.baths} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Year Built</label>
-                                        <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
 
                                     {/* Row 2: Usable Area, Built Area, Terrace, Garden */}
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Usable Area (sq ft)</label>
-                                        <input type="number" name="usableArea" value={formData.usableArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="usableArea" value={formData.usableArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Built Area (sq ft)</label>
-                                        <input type="number" name="builtArea" value={formData.builtArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="builtArea" value={formData.builtArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Terrace (sq ft)</label>
-                                        <input type="number" name="terraceArea" value={formData.terraceArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="terraceArea" value={formData.terraceArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Garden (sq ft)</label>
-                                        <input type="number" name="gardenArea" value={formData.gardenArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="gardenArea" value={formData.gardenArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
 
                                     {/* Row 3: Box Area, Floor, Total Floors */}
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Box (sq ft)</label>
-                                        <input type="number" name="boxArea" value={formData.boxArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="boxArea" value={formData.boxArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Floor</label>
-                                        <input type="number" name="floor" placeholder="e.g., 5" value={formData.floor} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="floor" placeholder="e.g., 5" value={formData.floor} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
                                     <div className="col-span-2">
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Total Floors</label>
-                                        <input type="number" name="totalFloors" placeholder="e.g., 10" value={formData.totalFloors} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <input type="number" name="totalFloors" placeholder="e.g., 10" value={formData.totalFloors} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                     </div>
 
                                 </div>
@@ -667,7 +667,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Partitioning</label>
                                         <div className="relative">
-                                            <select name="partitioning" value={formData.partitioning} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                            <select name="partitioning" value={formData.partitioning} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 <option value="" className="bg-slate-900">Select...</option>
                                                 {PARTITIONING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
@@ -679,7 +679,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Comfort</label>
                                         <div className="relative">
-                                            <select name="comfort" value={formData.comfort} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                            <select name="comfort" value={formData.comfort} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 <option value="" className="bg-slate-900">Select...</option>
                                                 {COMFORT_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
@@ -695,7 +695,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Building Type</label>
                                         <div className="relative">
-                                            <select name="buildingType" value={formData.buildingType} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                            <select name="buildingType" value={formData.buildingType} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 <option value="" className="bg-slate-900">Select..</option>
                                                 {BUILDING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
@@ -707,7 +707,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Interior Condition</label>
                                         <div className="relative">
-                                            <select name="interiorCondition" value={formData.interiorCondition} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                            <select name="interiorCondition" value={formData.interiorCondition} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 <option value="" className="bg-slate-900">Select..</option>
                                                 {INTERIOR_CONDITIONS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
@@ -719,7 +719,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     <div>
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Furnishing</label>
                                         <div className="relative">
-                                            <select name="furnishing" value={formData.furnishing} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                            <select name="furnishing" value={formData.furnishing} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 {FURNISHING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
@@ -752,7 +752,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 value={formData.youtubeVideoUrl}
                                                 onChange={handleChange}
                                                 placeholder="https://youtube.com/watch?v=..."
-                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                             />
                                         </div>
                                         <div>
@@ -763,7 +763,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 value={formData.videoUrl}
                                                 onChange={handleChange}
                                                 placeholder="https://vimeo.com/... or https://matterport.com/..."
-                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                             />
                                         </div>
                                         <div className="relative">
@@ -791,7 +791,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                         value={formData.virtualTourUrl}
                                                         onChange={handleChange}
                                                         placeholder="https://my.matterport.com/show/?m=..."
-                                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                                     />
                                                     {availableTours.length > 0 && (
                                                         <div className="relative">
@@ -847,7 +847,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 value={formData.socialMediaUrl}
                                                 onChange={handleChange}
                                                 placeholder="Facebook/Instagram Post URL"
-                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-slate-500/30 focus:border-slate-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-500/30 focus:border-slate-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                             />
                                         </div>
                                         <div>
@@ -858,7 +858,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 value={formData.personalId}
                                                 onChange={handleChange}
                                                 placeholder="Optional internal reference"
-                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-xl px-5 py-4 focus:ring-2 focus:ring-slate-500/30 focus:border-slate-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-500/30 focus:border-slate-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                             />
                                         </div>
                                     </div>
