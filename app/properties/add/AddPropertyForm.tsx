@@ -490,7 +490,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         value={formData.description}
                                         onChange={handleChange}
                                         placeholder="Tell us more about the property..."
-                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all resize-none text-white placeholder-slate-600 hover:border-slate-600"
+                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all resize-y min-h-[120px] text-white placeholder-slate-600 hover:border-slate-600"
                                     />
                                 </div>
 
