@@ -421,6 +421,7 @@ export async function submitPropertyInquiry(propertyId: string, data: {
         // Do not fail the inquiry submission itself
     }
 
+    revalidatePath('/dashboard/owner/leads');
     return { success: true };
 }
 

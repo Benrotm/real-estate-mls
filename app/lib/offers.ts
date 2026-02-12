@@ -114,10 +114,12 @@ export async function submitOffer(propertyId: string, amount: number) {
                 }
             }
         } catch (leadError) {
-            console.error('Failed to auto-process lead from offer:', leadError);
+            console.error('Error in auto-lead creation from offer:', leadError);
+            // Don't block the offer submission
         }
 
         revalidatePath(`/properties/${propertyId}`);
+        revalidatePath('/dashboard/owner/leads');
         return { success: true };
     } catch (error: any) {
         console.error('Submit offer error:', error);

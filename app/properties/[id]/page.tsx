@@ -390,7 +390,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                         propertyTitle={property.title}
                                         currency={property.currency}
                                         showMakeOffer={showMakeOffer}
-                                        variant="secondary"
+                                        variant="neon"
                                     />
                                 </div>
                             </div>
