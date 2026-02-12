@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Mail, Calendar, Loader2, Check } from 'lucide-react';
+import { Mail, Calendar, Loader2, Check, Lock } from 'lucide-react';
+import Link from 'next/link';
 import { scheduleAppointment } from '../lib/actions';
 import { submitPropertyInquiry } from '../lib/actions/propertyAnalytics';
 import { supabase } from '../lib/supabase/client';
@@ -130,84 +131,82 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
         );
     }
 
+    if (!userProfile && !isCheckingAuth) {
+        return (
+            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-lg text-center space-y-6">
+                <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto">
+                    <Lock className="w-8 h-8" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-slate-900">Contact Agent</h3>
+                    <p className="text-slate-500 mt-2">
+                        Please sign in to send inquiries, schedule tours, and view property documents.
+                    </p>
+                </div>
+                <div className="flex flex-col gap-3">
+                    <Link
+                        href="/auth/login"
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all shadow-md hover:shadow-lg"
+                    >
+                        Sign In
+                    </Link>
+                    <Link
+                        href="/auth/signup"
+                        className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-all hover:bg-slate-50"
+                    >
+                        Create Account
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                    <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
-                        {error}
-                    </div>
-                )}
-
-                {!userProfile && (
-                    <>
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-bold text-slate-700">Full Name</label>
-                            <input
-                                name="name"
-                                type="text"
-                                placeholder="John Doe"
-                                required
-                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-bold text-slate-700">Email <span className="text-red-500">*</span></label>
-                            <input
-                                name="email"
-                                type="email"
-                                placeholder="john@example.com"
-                                required
-                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-bold text-slate-700">Phone</label>
-                            <input
-                                name="phone"
-                                type="tel"
-                                placeholder="+1 (555) 000-0000"
-                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
-                            />
-                        </div>
-                    </>
-                )}
-
-                <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Schedule a Tour</label>
-                    <div className="relative">
-                        <input
-                            name="date"
-                            type="date"
-                            className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
-                        />
-                        {/* Default date input usually has an icon, but if not we can position one, standard inputs are fine for now */}
-                    </div>
+            {isCheckingAuth ? (
+                <div className="h-64 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
                 </div>
+            ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {error && (
+                        <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
+                            {error}
+                        </div>
+                    )}
 
-                <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Your Message <span className="text-red-500">*</span></label>
-                    <textarea
-                        name="message"
-                        rows={3}
-                        placeholder="I'm interested in this property..."
-                        required
-                        className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400 resize-none"
-                    ></textarea>
-                </div>
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-bold text-slate-700">Schedule a Tour</label>
+                        <div className="relative">
+                            <input
+                                name="date"
+                                type="date"
+                                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400"
+                            />
+                        </div>
+                    </div>
 
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
-                >
-                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
-                    Send Inquiry
-                </button>
-            </form>
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-bold text-slate-700">Your Message <span className="text-red-500">*</span></label>
+                        <textarea
+                            name="message"
+                            rows={3}
+                            placeholder="I'm interested in this property..."
+                            required
+                            className="w-full p-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-400 resize-none"
+                        ></textarea>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+                    >
+                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
+                        Send Inquiry
+                    </button>
+                </form>
+            )}
         </div>
     );
 }

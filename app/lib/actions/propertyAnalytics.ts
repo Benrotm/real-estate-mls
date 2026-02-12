@@ -248,6 +248,10 @@ export async function submitPropertyInquiry(propertyId: string, data: {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    if (!user) {
+        return { success: false, error: 'You must be logged in to submit an inquiry.' };
+    }
+
     // 1. Get property owner ID
     const { data: property, error: propError } = await supabase
         .from('properties')
