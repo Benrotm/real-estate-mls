@@ -18,6 +18,7 @@ import { createClient } from "@/app/lib/supabase/server";
 import PropertyAnalyticsWidget from '@/app/components/analytics/PropertyAnalyticsWidget';
 import PropertyViewTracker from '@/app/components/analytics/PropertyViewTracker';
 import { getPropertyAnalytics } from '@/app/lib/actions/propertyAnalytics';
+import MakeOfferButton from '@/app/components/property/MakeOfferButton';
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
@@ -384,6 +385,13 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                         title={property.title}
                                         description={`Check out ${property.title} on Imobum!`}
                                     />
+                                    <MakeOfferButton
+                                        propertyId={property.id}
+                                        propertyTitle={property.title}
+                                        currency={property.currency}
+                                        showMakeOffer={showMakeOffer}
+                                        variant="secondary"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -724,6 +732,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             propertyTitle={property.title}
                             propertyAddress={`${property.address}, ${property.location_city}`}
                             agentName={agent.name}
+                            showMakeOffer={showMakeOffer}
+                            currency={property.currency}
                         />
 
                         <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">

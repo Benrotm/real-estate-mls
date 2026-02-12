@@ -6,15 +6,18 @@ import Link from 'next/link';
 import { scheduleAppointment } from '../lib/actions';
 import { submitPropertyInquiry } from '../lib/actions/propertyAnalytics';
 import { supabase } from '../lib/supabase/client';
+import MakeOfferButton from './property/MakeOfferButton';
 
 interface ContactFormProps {
     propertyId: string;
     propertyTitle: string;
     propertyAddress: string;
     agentName: string;
+    showMakeOffer?: boolean;
+    currency?: string;
 }
 
-export default function ContactForm({ propertyId, propertyTitle, propertyAddress, agentName }: ContactFormProps) {
+export default function ContactForm({ propertyId, propertyTitle, propertyAddress, agentName, showMakeOffer = false, currency = 'EUR' }: ContactFormProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -205,6 +208,21 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
                         {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
                         Send Inquiry
                     </button>
+
+                    <div className="relative flex items-center py-2">
+                        <div className="flex-grow border-t border-slate-100"></div>
+                        <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase">Or</span>
+                        <div className="flex-grow border-t border-slate-100"></div>
+                    </div>
+
+                    <MakeOfferButton
+                        propertyId={propertyId}
+                        propertyTitle={propertyTitle}
+                        currency={currency}
+                        showMakeOffer={showMakeOffer}
+                        fullWidth={true}
+                        variant="outline"
+                    />
                 </form>
             )}
         </div>
