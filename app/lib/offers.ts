@@ -53,6 +53,70 @@ export async function submitOffer(propertyId: string, amount: number) {
 
         if (error) throw error;
 
+        // Auto-Create Lead for the Owner
+        try {
+            const { createAdminClient } = await import('./supabase/admin');
+            const supabaseAdmin = createAdminClient();
+
+            // Fetch property owner_id if we don't have it (we only had property_id)
+            const { data: propertyData } = await supabaseAdmin
+                .from('properties')
+                .select('owner_id')
+                .eq('id', propertyId)
+                .single();
+
+            if (propertyData && propertyData.owner_id) {
+                // Check if lead already exists
+                const { data: existingLead } = await supabaseAdmin
+                    .from('leads')
+                    .select('id')
+                    .eq('agent_id', propertyData.owner_id)
+                    // We try to match by email if available, otherwise name (weak match but better than nothing for offers which requires auth)
+                    // Offers require auth, so we definitely have user.id and profile email from lines 17-21 above
+                    .eq('email', profile?.email || user.email)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (!existingLead) {
+                    const { data: newLead, error: leadError } = await supabaseAdmin
+                        .from('leads')
+                        .insert({
+                            agent_id: propertyData.owner_id,
+                            name: profile?.full_name || 'Anonymous User',
+                            email: profile?.email || user.email,
+                            phone: profile?.phone || null,
+                            status: 'New',
+                            source: 'Property Offer',
+                            notes: `Auto-generated from offer of ${amount} EUR on property ID: ${propertyId}`,
+                            created_by: propertyData.owner_id
+                        })
+                        .select()
+                        .single();
+
+                    if (leadError) {
+                        console.error('Error auto-creating lead from offer:', leadError);
+                    } else if (newLead) {
+                        await supabaseAdmin.from('lead_activities').insert({
+                            lead_id: newLead.id,
+                            type: 'offer',
+                            description: `Submitted an offer of ${amount} EUR`,
+                            created_by: propertyData.owner_id
+                        });
+                    }
+                } else {
+                    // Update existing lead activity
+                    await supabaseAdmin.from('lead_activities').insert({
+                        lead_id: existingLead.id,
+                        type: 'offer',
+                        description: `Submitted a new offer of ${amount} EUR`,
+                        created_by: propertyData.owner_id
+                    });
+                }
+            }
+        } catch (leadError) {
+            console.error('Failed to auto-process lead from offer:', leadError);
+        }
+
         revalidatePath(`/properties/${propertyId}`);
         return { success: true };
     } catch (error: any) {

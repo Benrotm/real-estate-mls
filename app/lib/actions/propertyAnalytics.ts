@@ -361,6 +361,62 @@ export async function submitPropertyInquiry(propertyId: string, data: {
         return { success: false, error: error.message };
     }
 
+    // 4. Auto-Create Lead for the Owner
+    try {
+        const { createAdminClient } = await import('@/app/lib/supabase/admin');
+        const supabaseAdmin = createAdminClient();
+
+        // Check if lead already exists for this agent with this email
+        const { data: existingLead } = await supabaseAdmin
+            .from('leads')
+            .select('id')
+            .eq('agent_id', property.owner_id)
+            .eq('email', data.email)
+            .limit(1)
+            .maybeSingle();
+
+        if (!existingLead) {
+            const { data: newLead, error: leadError } = await supabaseAdmin
+                .from('leads')
+                .insert({
+                    agent_id: property.owner_id,
+                    name: data.name,
+                    email: data.email,
+                    phone: data.phone || null,
+                    status: 'New',
+                    source: 'Property Inquiry',
+                    notes: `Auto-generated from inquiry on property: ${propertyId}\nMessage: ${data.message || 'No message'}`,
+                    created_by: property.owner_id // Set creator as owner to maintain RLS consistency if viewing as agent
+                })
+                .select()
+                .single();
+
+            if (leadError) {
+                console.error('Error auto-creating lead:', leadError);
+            } else if (newLead) {
+                // Log activity
+                await supabaseAdmin.from('lead_activities').insert({
+                    lead_id: newLead.id,
+                    type: 'inquiry',
+                    description: `New property inquiry received: "${data.message?.substring(0, 50)}${data.message && data.message.length > 50 ? '...' : ''}"`,
+                    created_by: property.owner_id
+                });
+            }
+        } else {
+            // Optional: Update existing lead or log activity on it
+            await supabaseAdmin.from('lead_activities').insert({
+                lead_id: existingLead.id,
+                type: 'inquiry',
+                description: `New inquiry on property ${propertyId}: "${data.message?.substring(0, 50)}..."`,
+                created_by: property.owner_id
+            });
+        }
+
+    } catch (leadAutoError) {
+        console.error('Failed to auto-process lead from inquiry:', leadAutoError);
+        // Do not fail the inquiry submission itself
+    }
+
     return { success: true };
 }
 

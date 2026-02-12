@@ -75,6 +75,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const [submitting, setSubmitting] = useState(false);
     const [savingDraft, setSavingDraft] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [isUploadingDocs, setIsUploadingDocs] = useState(false);
     const [success, setSuccess] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -167,6 +168,56 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                 ? prev.features.filter(f => f !== feature)
                 : [...prev.features, feature]
         }));
+    };
+
+    const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsUploadingDocs(true);
+        const newUrls: string[] = [];
+        const maxFileSize = 10 * 1024 * 1024; // 10MB for documents
+
+        try {
+            const uploadPromises = Array.from(files).map(async (file) => {
+                // Strict size check
+                if (file.size > maxFileSize) {
+                    throw new Error(`File ${file.name} is too large (max 10MB)`);
+                }
+
+                const fileExt = file.name.split('.').pop();
+                const fileName = `documents/doc_${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('property-images') // Reusing existing bucket
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('property-images')
+                    .getPublicUrl(fileName);
+
+                console.log('Uploaded document:', publicUrl);
+                return publicUrl;
+            });
+
+            const uploadedUrls = await Promise.all(uploadPromises);
+            newUrls.push(...uploadedUrls);
+
+            setFormData(prev => ({
+                ...prev,
+                documents: [...prev.documents, ...newUrls]
+            }));
+
+        } catch (error) {
+            console.error('Error uploading documents:', error);
+            alert('Failed to upload some documents. Please try again.');
+        } finally {
+            setIsUploadingDocs(false);
+            // Reset input
+            if (e.target) e.target.value = '';
+        }
     };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLLabelElement>) => {
@@ -1108,29 +1159,57 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium mb-2 text-slate-300">Private Documents (URLs)</label>
-                                            <div className="space-y-3">
-                                                {formData.documents.map((doc, idx) => (
-                                                    <div key={idx} className="flex gap-2">
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Private Documents</label>
+                                            <div className="space-y-4">
+                                                {/* Upload Button */}
+                                                <div className="flex items-center gap-4">
+                                                    <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 font-medium text-sm transition-all cursor-pointer ${isUploadingDocs ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700 text-white hover:border-slate-600'}`}>
+                                                        {isUploadingDocs ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                                        <span>{isUploadingDocs ? 'Uploading...' : 'Upload Files'}</span>
                                                         <input
-                                                            type="text"
-                                                            value={doc}
-                                                            readOnly
-                                                            className="flex-1 bg-slate-900/50 border border-slate-700 rounded-lg p-2 text-slate-300 text-sm"
+                                                            type="file"
+                                                            multiple
+                                                            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                                                            onChange={handleDocumentUpload}
+                                                            disabled={isUploadingDocs}
+                                                            className="hidden"
                                                         />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setFormData(prev => ({ ...prev, documents: prev.documents.filter((_, i) => i !== idx) }))}
-                                                            className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                        >
-                                                            <X className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                                    </label>
+                                                    <span className="text-xs text-slate-500">PDF, DOC, Images (Max 10MB)</span>
+                                                </div>
+
+                                                {/* Document List */}
+                                                <div className="space-y-2">
+                                                    {formData.documents.map((doc, idx) => (
+                                                        <div key={idx} className="flex items-center gap-2 group">
+                                                            <div className="flex-1 flex items-center gap-3 bg-slate-900/50 border border-slate-700 rounded-lg p-3">
+                                                                <FileText className="w-4 h-4 text-violet-400 shrink-0" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={doc}
+                                                                    readOnly
+                                                                    className="flex-1 bg-transparent border-none p-0 text-slate-300 text-sm focus:ring-0 truncate"
+                                                                />
+                                                                <a href={doc} target="_blank" rel="noopener noreferrer" className="text-xs text-violet-400 hover:text-violet-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    View
+                                                                </a>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setFormData(prev => ({ ...prev, documents: prev.documents.filter((_, i) => i !== idx) }))}
+                                                                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/20"
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Manual URL Input */}
                                                 <div className="flex gap-2">
                                                     <input
                                                         type="url"
-                                                        placeholder="Paste document URL (Dropbox, Google Drive, etc.)"
+                                                        placeholder="Or paste document URL (Dropbox, Google Drive, etc.)"
                                                         className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
@@ -1154,7 +1233,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                             }
                                                         }}
                                                     >
-                                                        Add
+                                                        Add URL
                                                     </button>
                                                 </div>
                                             </div>
