@@ -117,7 +117,7 @@ export default async function AgentDashboard() {
                 {/* 3. Tools & Insights */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     {/* Valuation Reports */}
-                    <Link href="/dashboard/owner/valuation" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
+                    <Link href="/dashboard/agent/valuation" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
                         <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
                             <BarChart className="w-8 h-8" />
                         </div>
@@ -128,7 +128,7 @@ export default async function AgentDashboard() {
                     </Link>
 
                     {/* Market Insights */}
-                    <Link href="/dashboard/owner/market" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
+                    <Link href="/dashboard/agent/market" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
                         <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
                             <TrendingUp className="w-8 h-8" />
                         </div>
