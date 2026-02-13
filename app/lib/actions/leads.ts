@@ -92,7 +92,8 @@ export async function createLead(data: LeadData) {
     }
 
     revalidatePath('/dashboard/agent/leads');
-    redirect('/dashboard/agent/leads');
+    // Return success instead of redirecting to avoid NEXT_REDIRECT error on client catch block
+    return { success: true, lead };
 }
 
 export async function updateLead(leadId: string, data: LeadData) {
@@ -135,6 +136,7 @@ export async function updateLead(leadId: string, data: LeadData) {
 
     revalidatePath('/dashboard/agent/leads');
     revalidatePath('/dashboard/admin/leads');
+    return { success: true };
 }
 
 export async function deleteLead(leadId: string) {

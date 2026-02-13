@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Save, X, User, ClipboardList, Eye } from 'lucide-react';
 import {
     PROPERTY_TYPES,
@@ -58,6 +59,8 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
         });
     };
 
+    const router = useRouter();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -67,11 +70,19 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
             } else {
                 await createLead(formData);
             }
-            if (onCancel) onCancel();
-            if (onCancel) onCancel();
+            if (onCancel) {
+                onCancel();
+            } else {
+                // If not in a modal (e.g. on separate page), redirect
+                router.push('/dashboard/agent/leads');
+                router.refresh();
+            }
         } catch (error: any) {
             console.error('Lead save error:', error);
-            alert(error.message || 'Failed to save lead. Please try again.');
+            // Only alert if it's NOT a redirect error (though we removed redirects from server action, safety first)
+            if (!error.message?.includes('NEXT_REDIRECT')) {
+                alert(error.message || 'Failed to save lead. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
