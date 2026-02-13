@@ -173,7 +173,7 @@ export async function fetchLeads() {
         console.error('Fetch Leads Error:', error);
         return [];
     }
-    return data;
+    return data || [];
 }
 
 export async function fetchLead(leadId: string) {
@@ -236,9 +236,7 @@ export async function fetchNotes(leadId: string) {
         // However, the join on 'created_by' refers to profiles.
         .order('created_at', { ascending: false });
 
-
-
-    return data;
+    return data || [];
 }
 
 export async function fetchActivities(leadId: string) {
@@ -257,5 +255,5 @@ export async function fetchActivities(leadId: string) {
         console.error('Fetch Activities Error:', error);
         return [];
     }
-    return data;
+    return data || [];
 }
