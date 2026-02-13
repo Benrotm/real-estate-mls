@@ -44,10 +44,10 @@ export default function DashboardClient({
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
         { name: 'My Favorites', icon: Heart, href: '/dashboard/agent/favorites' }, // New
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
+        { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
         { name: 'Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
         { name: 'Daily Activities', icon: Calendar, href: '/dashboard/agent/activities' },
-        { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/agent/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/agent/support-chat' },
         { name: 'Report & Suggest', icon: Flag, href: '/dashboard/agent/report' },
