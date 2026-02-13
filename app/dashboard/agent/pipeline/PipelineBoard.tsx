@@ -51,13 +51,13 @@ export default function PipelineBoard({ initialLeads }: PipelineBoardProps) {
     };
 
     return (
-        <div className="flex-1 overflow-x-auto">
-            <div className="flex gap-6 min-w-max h-full pb-4">
+        <div className="flex-1 overflow-x-auto snap-x snap-mandatory">
+            <div className="flex gap-4 px-4 min-w-max h-full pb-4">
                 {STAGES.map(stage => {
                     const stageLeads = initialLeads.filter(l => l.status === stage.id);
 
                     return (
-                        <div key={stage.id} className="w-80 flex flex-col bg-gray-50/50 rounded-xl border border-slate-200 h-full">
+                        <div key={stage.id} className="w-[85vw] md:w-80 flex-shrink-0 snap-center flex flex-col bg-gray-50/50 rounded-xl border border-slate-200 h-full">
                             {/* Header */}
                             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10">
                                 <div className="flex items-center gap-2">
