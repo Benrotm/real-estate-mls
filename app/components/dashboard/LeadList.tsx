@@ -49,19 +49,19 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold shrink-0">
-                                                {lead.name.charAt(0)}
+                                                {(lead.name || '?').charAt(0)}
                                             </div>
                                             <div>
                                                 <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
-                                                    {lead.name}
+                                                    {lead.name || 'Unnamed Lead'}
                                                 </Link>
                                                 <div className="text-xs text-slate-500">{lead.source || 'Unknown Source'}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_COLORS[lead.status as keyof typeof STATUS_COLORS] || 'text-gray-600 bg-gray-100'}`}>
-                                            {STATUS_LABELS[lead.status as keyof typeof STATUS_LABELS] || lead.status}
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_COLORS[(lead.status || 'new') as keyof typeof STATUS_COLORS] || 'text-gray-600 bg-gray-100'}`}>
+                                            {STATUS_LABELS[(lead.status || 'new') as keyof typeof STATUS_LABELS] || lead.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -83,7 +83,7 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                             {lead.budget_max ? `Budget: ${lead.budget_max} ${lead.currency || 'EUR'}` : 'No Budget Set'}
                                         </div>
                                         <div className="text-xs text-slate-400">
-                                            {lead.preference_location_city} {lead.preference_location_area && `(${lead.preference_location_area})`}
+                                            {lead.preference_location_city || ''} {lead.preference_location_area && `(${lead.preference_location_area})`}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">

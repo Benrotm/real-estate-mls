@@ -33,7 +33,7 @@ export async function fetchScoringRules(scope?: 'lead' | 'property') {
         console.error('Error fetching scoring rules:', error);
         return [];
     }
-    return data as ScoringRule[];
+    return (data || []) as ScoringRule[];
 }
 
 export async function updateScoringRule(id: string, weight: number) {
