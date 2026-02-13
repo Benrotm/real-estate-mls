@@ -85,7 +85,7 @@ export async function submitOffer(propertyId: string, amount: number) {
                             name: profile?.full_name || 'Anonymous User',
                             email: profile?.email || user.email,
                             phone: profile?.phone || null,
-                            status: 'New',
+                            status: 'new', // Lowercase to match DB constraint
                             source: 'Property Offer',
                             notes: `Auto-generated from offer of ${amount} EUR on property ID: ${propertyId}`,
                             created_by: propertyData.owner_id
