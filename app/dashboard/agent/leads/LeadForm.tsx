@@ -68,8 +68,10 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                 await createLead(formData);
             }
             if (onCancel) onCancel();
-        } catch (error) {
-            alert('Failed to save lead. Please try again.');
+            if (onCancel) onCancel();
+        } catch (error: any) {
+            console.error('Lead save error:', error);
+            alert(error.message || 'Failed to save lead. Please try again.');
         } finally {
             setIsLoading(false);
         }

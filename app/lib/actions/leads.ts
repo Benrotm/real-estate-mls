@@ -58,18 +58,27 @@ export async function createLead(data: LeadData) {
     // Calculate initial score
     const score = await calculateLeadScore(data);
 
+    // Clean data - remove undefined/null values that might cause issues if not nullable in DB
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+
     const { data: lead, error } = await supabase.from('leads').insert({
-        ...data,
+        ...cleanData,
         score,
         agent_id: user.id,
-        created_by: user.id
+        created_by: user.id,
+        // Ensure default status if missing
+        status: data.status || 'new',
+        // Ensure currency default
+        currency: data.currency || 'EUR'
     })
         .select()
         .single();
 
     if (error) {
-        console.error('Create Lead Error:', error);
-        throw new Error('Failed to create lead');
+        console.error('Create Lead Error Full:', JSON.stringify(error, null, 2));
+        throw new Error(`Failed to create lead: ${error.message} (${error.code})`);
     }
 
     // Log activity
@@ -101,10 +110,15 @@ export async function updateLead(leadId: string, data: LeadData) {
     // Recalculate score on update
     const score = await calculateLeadScore(data);
 
+    // Clean data
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+
     // Build query
     let query = supabase
         .from('leads')
-        .update({ ...data, score })
+        .update({ ...cleanData, score })
         .eq('id', leadId);
 
     // Only restrict by agent_id if NOT super_admin
@@ -115,8 +129,8 @@ export async function updateLead(leadId: string, data: LeadData) {
     const { error } = await query;
 
     if (error) {
-        console.error('Update Lead Error:', error);
-        throw new Error('Failed to update lead');
+        console.error('Update Lead Error Full:', JSON.stringify(error, null, 2));
+        throw new Error(`Failed to update lead: ${error.message} (${error.code})`);
     }
 
     revalidatePath('/dashboard/agent/leads');
