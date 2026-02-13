@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bookmark, ArrowUpRight, TrendingUp } from 'lucide-react';
 import { getUserProfile, getUsageStats, getFeaturedStats } from '../../lib/auth';
-import { getRecentInquiries } from '../../lib/actions/propertyAnalytics';
+import { getRecentInquiries, getTotalPropertyViews } from '../../lib/actions/propertyAnalytics';
+import { getLeadsCount } from '../../lib/actions/leads';
 import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
 
 export default async function AgentDashboard() {
@@ -9,6 +10,8 @@ export default async function AgentDashboard() {
     const usageCount = profile ? await getUsageStats(profile.id) : 0;
     const featuredCount = profile ? await getFeaturedStats(profile.id) : 0;
     const recentInquiries = await getRecentInquiries(5);
+    const totalViews = await getTotalPropertyViews();
+    const totalLeads = await getLeadsCount();
 
     const limit = profile?.listings_limit || 5;
     const featuredLimit = profile?.featured_limit || 0;
@@ -73,8 +76,8 @@ export default async function AgentDashboard() {
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
                             <div className="text-xs font-medium text-slate-500 mb-1">Total Views</div>
-                            <div className="text-3xl font-bold text-slate-900">450</div>
-                            <div className="text-xs text-slate-400 mt-1">+12% vs last week</div>
+                            <div className="text-3xl font-bold text-slate-900">{totalViews}</div>
+                            <div className="text-xs text-slate-400 mt-1">All properties</div>
                         </div>
                         <div className="w-10 h-10 bg-emerald-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
                             <Eye className="w-5 h-5" />
@@ -85,8 +88,8 @@ export default async function AgentDashboard() {
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
                             <div className="text-xs font-medium text-slate-500 mb-1">Total Leads</div>
-                            <div className="text-3xl font-bold text-slate-900">12</div>
-                            <div className="text-xs text-slate-400 mt-1">2 new today</div>
+                            <div className="text-3xl font-bold text-slate-900">{totalLeads}</div>
+                            <div className="text-xs text-slate-400 mt-1">Active leads</div>
                         </div>
                         <div className="w-10 h-10 bg-blue-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
                             <Users className="w-5 h-5" />

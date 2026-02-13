@@ -178,6 +178,24 @@ export async function fetchLeads() {
     return data || [];
 }
 
+export async function getLeadsCount() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return 0;
+
+    const { count, error } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('agent_id', user.id);
+
+    if (error) {
+        console.error('Error fetching leads count:', error);
+        return 0;
+    }
+    return count || 0;
+}
+
 export async function fetchLead(leadId: string) {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

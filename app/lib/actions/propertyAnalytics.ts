@@ -169,6 +169,40 @@ export async function getRecentInquiries(limit = 5) {
     }
 }
 
+// Get total views across all properties owned by the user
+export async function getTotalPropertyViews() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return 0;
+
+    try {
+        // We need to join property_views with properties to filter by owner_id
+        // However, Supabase count with inner join can be tricky syntax-wise if RLS is involved.
+        // A simpler approach if RLS is set up correctly (user can only see views for their properties):
+        // But property_views might be visible to everyone?
+        // Let's assume we need to filter.
+
+        // Option 1: RPC call if exists (best for performance)
+        // Option 2: Join
+
+        const { count, error } = await supabase
+            .from('property_views')
+            .select('id, property:properties!inner(owner_id)', { count: 'exact', head: true })
+            .eq('properties.owner_id', user.id);
+
+        if (error) {
+            console.error('Error fetching total views:', error);
+            return 0;
+        }
+
+        return count || 0;
+    } catch (error) {
+        console.error('Exception fetching total views:', error);
+        return 0;
+    }
+}
+
 // Toggle favorite for a property
 export async function togglePropertyFavorite(propertyId: string) {
     const supabase = await createClient();

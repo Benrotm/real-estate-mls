@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { Building, Check, Eye, Clock, ArrowUpRight, Plus, BarChart, TrendingUp, MessageSquare } from 'lucide-react';
 import HomeValuationWidget from '../../components/HomeValuationWidget';
 import { getUserProfile, getUsageStats, getActiveUsageStats, getFeaturedStats } from '../../lib/auth';
-import { getRecentInquiries } from '../../lib/actions/propertyAnalytics';
+import { getRecentInquiries, getTotalPropertyViews } from '../../lib/actions/propertyAnalytics';
+import { getLeadsCount } from '../../lib/actions/leads';
 import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
 
 export default async function OwnerDashboard() {
@@ -20,6 +21,8 @@ export default async function OwnerDashboard() {
     const usageCount = await getActiveUsageStats(profile.id);
     const featuredCount = await getFeaturedStats(profile.id);
     const recentInquiries = await getRecentInquiries(5);
+    const totalViews = await getTotalPropertyViews();
+    const totalLeads = await getLeadsCount();
 
     const baseLimit = profile.listings_limit || 1;
     const bonus = profile.bonus_listings || 0;
@@ -77,22 +80,22 @@ export default async function OwnerDashboard() {
                         </div>
                     </div>
 
-                    {/* Card 3 */}
+                    {/* Card 3: Total Views */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
                             <div className="text-sm font-medium text-slate-500 mb-1">Total Views</div>
-                            <div className="text-3xl font-bold text-slate-900">0</div>
+                            <div className="text-3xl font-bold text-slate-900">{totalViews}</div>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 text-blue-500 rounded-lg flex items-center justify-center">
                             <Eye className="w-6 h-6" />
                         </div>
                     </div>
 
-                    {/* Card 4 */}
+                    {/* Card 4: Total Leads */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
-                            <div className="text-sm font-medium text-slate-500 mb-1">Interested</div>
-                            <div className="text-3xl font-bold text-slate-900">0</div>
+                            <div className="text-sm font-medium text-slate-500 mb-1">Total Leads</div>
+                            <div className="text-3xl font-bold text-slate-900">{totalLeads}</div>
                         </div>
                         <div className="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
                             <Clock className="w-6 h-6" />
