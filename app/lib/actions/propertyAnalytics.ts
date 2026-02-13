@@ -128,6 +128,47 @@ export async function getPropertyAnalytics(propertyId: string) {
     }
 }
 
+// Get recent inquiries for the current user's properties
+export async function getRecentInquiries(limit = 5) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return [];
+
+    // We join with properties to filter by user ownership if RLS doesn't automatically do it, 
+    // and to get the property title.
+    // Assuming RLS on property_inquiries allows access if you own the property.
+    // If not, we might need to filter by properties.owner_id explicitly.
+    try {
+        const { data, error } = await supabase
+            .from('property_inquiries')
+            .select(`
+                id,
+                created_at,
+                name,
+                message,
+                property:properties!inner(id, title, owner_id)
+            `)
+            .eq('properties.owner_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.error('Error fetching recent inquiries:', error);
+            return [];
+        }
+
+        // Normalize property array to single object if Supabase returns array
+        return (data || []).map((item: any) => ({
+            ...item,
+            property: Array.isArray(item.property) ? item.property[0] : item.property
+        }));
+    } catch (error) {
+        console.error('Exception fetching recent inquiries:', error);
+        return [];
+    }
+}
+
 // Toggle favorite for a property
 export async function togglePropertyFavorite(propertyId: string) {
     const supabase = await createClient();

@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bookmark, ArrowUpRight, TrendingUp } from 'lucide-react';
 import { getUserProfile, getUsageStats, getFeaturedStats } from '../../lib/auth';
+import { getRecentInquiries } from '../../lib/actions/propertyAnalytics';
+import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
 
 export default async function AgentDashboard() {
     const profile = await getUserProfile();
     const usageCount = profile ? await getUsageStats(profile.id) : 0;
     const featuredCount = profile ? await getFeaturedStats(profile.id) : 0;
+    const recentInquiries = await getRecentInquiries(5);
 
     const limit = profile?.listings_limit || 5;
     const featuredLimit = profile?.featured_limit || 0;
@@ -156,21 +159,7 @@ export default async function AgentDashboard() {
                     {/* Left Column (2/3 width) */}
                     <div className="lg:col-span-2 space-y-8">
                         {/* Recent Inquiries */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[300px]">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="flex items-center gap-2 font-bold text-slate-900">
-                                    <MessageSquare className="w-4 h-4 text-orange-500" /> Recent Inquiries
-                                </h3>
-                                <button className="text-xs font-bold text-slate-500 flex items-center gap-1 hover:text-slate-900 transition-colors">
-                                    View All <ArrowUpRight className="w-3 h-3" />
-                                </button>
-                            </div>
-
-                            <div className="h-64 flex flex-col items-center justify-center text-slate-400">
-                                <MessageSquare className="w-12 h-12 mb-3 opacity-20" />
-                                <div className="text-sm font-medium">No inquiries yet</div>
-                            </div>
-                        </div>
+                        <RecentInquiriesWidget inquiries={recentInquiries} viewAllLink="/dashboard/agent/leads" />
 
                         {/* My Listings */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[300px]">

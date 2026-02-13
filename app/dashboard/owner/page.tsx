@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Building, Check, Eye, Clock, ArrowUpRight, Plus, BarChart, TrendingUp, MessageSquare } from 'lucide-react';
 import HomeValuationWidget from '../../components/HomeValuationWidget';
 import { getUserProfile, getUsageStats, getActiveUsageStats, getFeaturedStats } from '../../lib/auth';
+import { getRecentInquiries } from '../../lib/actions/propertyAnalytics';
+import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
 
 export default async function OwnerDashboard() {
     const profile = await getUserProfile();
@@ -17,6 +19,7 @@ export default async function OwnerDashboard() {
 
     const usageCount = await getActiveUsageStats(profile.id);
     const featuredCount = await getFeaturedStats(profile.id);
+    const recentInquiries = await getRecentInquiries(5);
 
     const baseLimit = profile.listings_limit || 1;
     const bonus = profile.bonus_listings || 0;
@@ -132,21 +135,7 @@ export default async function OwnerDashboard() {
                     {/* Recent Properties (Span 2) */}
                     <div className="lg:col-span-2 space-y-8">
                         {/* Recent Inquiries */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[300px]">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="flex items-center gap-2 font-bold text-slate-900">
-                                    <MessageSquare className="w-4 h-4 text-orange-500" /> Recent Inquiries
-                                </h3>
-                                <button className="text-xs font-bold text-slate-500 flex items-center gap-1 hover:text-slate-900 transition-colors">
-                                    View All <ArrowUpRight className="w-3 h-3" />
-                                </button>
-                            </div>
-
-                            <div className="h-64 flex flex-col items-center justify-center text-slate-400">
-                                <MessageSquare className="w-12 h-12 mb-3 opacity-20" />
-                                <div className="text-sm font-medium">No inquiries yet</div>
-                            </div>
-                        </div>
+                        <RecentInquiriesWidget inquiries={recentInquiries} viewAllLink="/dashboard/owner/leads" />
 
                         {/* Recent Properties */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 h-64 p-6 relative">
