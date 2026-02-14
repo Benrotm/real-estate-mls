@@ -1,7 +1,7 @@
 
 import Link from 'next/link';
 import { Mail, Phone, Edit, Search, CheckCircle, Clock } from 'lucide-react';
-import { LeadData } from '@/app/lib/actions/leads'; // Ensure this type is exported
+import { LeadData } from '@/app/lib/types';
 
 const STATUS_COLORS = {
     new: 'bg-blue-100 text-blue-700 border-blue-200',

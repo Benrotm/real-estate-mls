@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/app/lib/supabase/server';
-import { LeadData } from './leads';
+import { LeadData } from '@/app/lib/types';
 import { Property } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
 

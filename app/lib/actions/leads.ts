@@ -4,60 +4,7 @@ import { createClient } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { calculateLeadScore } from './scoring';
-
-export interface LeadData {
-    id?: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    status: string;
-    source?: string;
-    notes?: string;
-
-    preference_type?: string;
-    preference_listing_type?: string;
-    preference_location_county?: string;
-    preference_location_city?: string;
-    preference_location_area?: string;
-
-    budget_min?: number;
-    budget_max?: number;
-    currency?: string;
-
-    preference_rooms_min?: number;
-    preference_rooms_max?: number;
-    preference_bedrooms_min?: number;
-    preference_surface_min?: number;
-    preference_surface_max?: number; // Added
-
-    preference_baths_min?: number; // Added
-    preference_year_built_min?: number; // Added
-    preference_floor_min?: number; // Added
-    preference_floor_max?: number; // Added
-
-    preference_partitioning?: string; // Added from Step 1
-    preference_comfort?: string; // Added from Step 1
-    preference_building_type?: string; // Added from Step 1
-    preference_interior_condition?: string; // Added from Step 1
-    preference_furnishing?: string; // Added from Step 1
-
-    preference_features?: string[];
-
-    // detailed criteria
-    search_duration?: string;
-    viewed_count_total?: string;
-    move_urgency?: string;
-    payment_method?: string;
-    cash_amount?: number;
-    bank_status?: string;
-    budget_vs_market?: string;
-    agent_interest_rating?: string;
-    viewed_count_agent?: number;
-    last_viewing_date?: string;
-    outcome_status?: string;
-    next_steps_summary?: string;
-    score?: number;
-}
+import { LeadData } from '@/app/lib/types';
 
 export async function createLead(data: LeadData) {
     const supabase = await createClient();

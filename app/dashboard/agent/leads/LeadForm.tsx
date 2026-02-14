@@ -13,7 +13,8 @@ import {
     INTERIOR_CONDITIONS,
     FURNISHING_TYPES
 } from '@/app/lib/properties';
-import { createLead, updateLead, LeadData } from '@/app/lib/actions/leads';
+import { createLead, updateLead } from '@/app/lib/actions/leads';
+import { LeadData } from '@/app/lib/types';
 
 const FEATURE_CATEGORIES = {
     'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
