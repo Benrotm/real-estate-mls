@@ -100,9 +100,18 @@ export async function updateLead(leadId: string, data: LeadData) {
     // Recalculate score on update
     const score = await calculateLeadScore(data);
 
-    // Clean data
+    // Clean data - Remove known read-only fields and relations that shouldn't be updated
+    const readOnlyFields = [
+        'id', 'created_at', 'updated_at', 'creator', 'agent_id', 'created_by', 'notes'
+    ];
+
     const cleanData = Object.fromEntries(
-        Object.entries(data).filter(([k, v]) => k !== 'notes' && k !== 'id' && v !== undefined && v !== null && v !== '')
+        Object.entries(data).filter(([k, v]) =>
+            !readOnlyFields.includes(k) &&
+            v !== undefined &&
+            v !== null &&
+            v !== ''
+        )
     );
 
     // Build query
