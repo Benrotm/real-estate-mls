@@ -25,6 +25,8 @@ export default function PropertyManageButtons({ propertyId, status }: PropertyMa
             const result = await togglePropertyStatus(propertyId, status);
             if (result.error) {
                 alert(result.error);
+            } else {
+                router.refresh(); // Ensure the UI updates
             }
         } catch (error) {
             console.error(error);
@@ -39,7 +41,7 @@ export default function PropertyManageButtons({ propertyId, status }: PropertyMa
             <button
                 onClick={handleToggle}
                 disabled={loading}
-                className="flex-1 text-center bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                className="flex-1 text-center text-red-600 font-bold py-3 rounded-xl hover:bg-red-50 hover:shadow-sm transition-all transform active:scale-95 flex items-center justify-center gap-2 border border-red-200"
             >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
                 Publish
@@ -51,7 +53,7 @@ export default function PropertyManageButtons({ propertyId, status }: PropertyMa
         <button
             onClick={handleToggle}
             disabled={loading}
-            className="flex-1 text-center bg-slate-700 text-white font-bold py-3 rounded-xl hover:bg-slate-800 hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2"
+            className="flex-1 text-center text-green-600 font-bold py-3 rounded-xl hover:bg-green-50 hover:shadow-sm transition-all transform active:scale-95 flex items-center justify-center gap-2 border border-green-200"
         >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <EyeOff className="w-4 h-4" />}
             Unpublish
