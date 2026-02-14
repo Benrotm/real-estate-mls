@@ -32,11 +32,14 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
     const [isSubmitting, setIsSubmitting] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
 
-    async function handleSubmit(formData: FormData) {
+    async function handleOnSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+
         if (isSubmitting) return;
 
         setIsSubmitting(true);
         try {
+            const formData = new FormData(e.currentTarget);
             await onAddNote(formData);
             formRef.current?.reset();
         } catch (error) {
@@ -130,7 +133,7 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
             {/* Input Area - Only for Notes */}
             {activeTab === 'notes' && (
                 <div className="p-4 bg-white border-t border-slate-200 animate-in fade-in duration-300">
-                    <form ref={formRef} action={handleSubmit} className="relative">
+                    <form ref={formRef} onSubmit={handleOnSubmit} className="relative">
                         <textarea
                             name="content"
                             required
