@@ -67,6 +67,26 @@ export async function createLead(data: LeadData) {
         throw new Error('Unauthorized');
     }
 
+    // Deduplication check: Check for identical lead created in the last 10 seconds
+    const { data: recentLead } = await supabase
+        .from('leads')
+        .select('id, created_at, name')
+        .eq('agent_id', user.id)
+        .eq('created_by', user.id)
+        .eq('name', data.name) // Check by name match
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (recentLead) {
+        const timeDiff = new Date().getTime() - new Date(recentLead.created_at).getTime();
+        // 10 second window to catch double submissions
+        if (timeDiff < 10000) {
+            console.log('Duplicate lead detected, returning existing ID.');
+            return { success: true, lead: { id: recentLead.id } };
+        }
+    }
+
     // Calculate initial score
     const score = await calculateLeadScore(data);
 
