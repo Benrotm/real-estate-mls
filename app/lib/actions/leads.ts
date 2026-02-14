@@ -72,7 +72,7 @@ export async function createLead(data: LeadData) {
 
     // Clean data - remove undefined/null values that might cause issues if not nullable in DB
     const cleanData = Object.fromEntries(
-        Object.entries(data).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        Object.entries(data).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null && v !== '')
     );
 
     const { data: lead, error } = await supabase.from('leads').insert({
@@ -91,6 +91,15 @@ export async function createLead(data: LeadData) {
     if (error) {
         console.error('Create Lead Error Full:', JSON.stringify(error, null, 2));
         throw new Error(`Failed to create lead: ${error.message} (${error.code})`);
+    }
+
+    // Handle initial note if present
+    if (lead && data.notes && data.notes.trim()) {
+        await supabase.from('lead_notes').insert({
+            lead_id: lead.id,
+            created_by: user.id,
+            content: data.notes
+        });
     }
 
     // Log activity
@@ -126,7 +135,7 @@ export async function updateLead(leadId: string, data: LeadData) {
 
     // Clean data
     const cleanData = Object.fromEntries(
-        Object.entries(data).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        Object.entries(data).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null && v !== '')
     );
 
     // Build query

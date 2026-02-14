@@ -27,7 +27,7 @@ async function checkColumns() {
         `);
 
         if (res.rows.length > 0) {
-            console.log('Column found:', res.rows[0]);
+            console.log('Columns found:', res.rows.map(r => `${r.column_name}: ${r.data_type}`));
         } else {
             console.log('Column "preference_features" NOT found in "leads" table.');
         }
