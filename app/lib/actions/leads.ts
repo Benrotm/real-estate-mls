@@ -104,8 +104,9 @@ export async function createLead(data: LeadData) {
     }
 
     revalidatePath('/dashboard/agent/leads');
-    // Return success instead of redirecting to avoid NEXT_REDIRECT error on client catch block
-    return { success: true, lead };
+    // Return success with minimal data to avoid serialization issues
+    // The full lead object might contain types that Server Actions struggle to serialize (e.g. some Date formats or large JSONs)
+    return { success: true, lead: { id: lead.id } };
 }
 
 export async function updateLead(leadId: string, data: LeadData) {

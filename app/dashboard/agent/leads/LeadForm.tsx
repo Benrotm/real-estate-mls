@@ -86,8 +86,17 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type } = e.target;
+
+        // Handle numeric inputs strictly
+        if (type === 'number') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value === '' ? 0 : Number(value)
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleFeatureToggle = (feature: string) => {
