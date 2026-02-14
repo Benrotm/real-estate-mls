@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Clock, MessageSquare, List } from 'lucide-react';
+import { createNote } from '@/app/lib/actions/leads';
 
 interface Activity {
     id: string;
@@ -24,10 +25,9 @@ interface Props {
     leadId: string;
     initialNotes: Note[];
     initialActivities: Activity[];
-    onAddNote: (formData: FormData) => Promise<void>; // Server action passed as prop
 }
 
-export default function LeadActivityPanel({ leadId, initialNotes, initialActivities, onAddNote }: Props) {
+export default function LeadActivityPanel({ leadId, initialNotes, initialActivities }: Props) {
     const [activeTab, setActiveTab] = useState<'notes' | 'activities'>('notes');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
@@ -40,7 +40,10 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
         setIsSubmitting(true);
         try {
             const formData = new FormData(e.currentTarget);
-            await onAddNote(formData);
+            const content = formData.get('content') as string;
+            if (content && content.trim()) {
+                await createNote(leadId, content);
+            }
             formRef.current?.reset();
         } catch (error) {
             console.error('Failed to add note:', error);

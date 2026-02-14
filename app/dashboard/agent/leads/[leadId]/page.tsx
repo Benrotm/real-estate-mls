@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Phone, Mail, Clock } from 'lucide-react';
-import { fetchLead, fetchNotes, fetchActivities, createNote } from '@/app/lib/actions/leads';
+import { fetchLead, fetchNotes, fetchActivities } from '@/app/lib/actions/leads';
 import { notFound } from 'next/navigation';
 import LeadForm from '../LeadForm';
 import { revalidatePath } from 'next/cache';
@@ -16,14 +16,7 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
         notFound();
     }
 
-    // Force redeploy - verifying contact page route
-    async function handleAddNote(formData: FormData) {
-        "use server";
-        const content = formData.get('content') as string;
-        if (content && content.trim()) {
-            await createNote(leadId, content);
-        }
-    }
+
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen pb-20">
@@ -76,7 +69,6 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
                             leadId={leadId}
                             initialNotes={notes}
                             initialActivities={activities}
-                            onAddNote={handleAddNote}
                         />
                     </div>
                 </div>
