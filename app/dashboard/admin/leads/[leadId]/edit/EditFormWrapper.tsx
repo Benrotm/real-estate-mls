@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import LeadForm from '@/app/dashboard/agent/leads/LeadForm';
-import { LeadData } from '@/app/lib/actions/leads';
+import { LeadData } from '@/app/lib/types';
 
 export default function EditFormWrapper({ initialData }: { initialData: any }) {
     const router = useRouter();
