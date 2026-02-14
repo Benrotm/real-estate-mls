@@ -118,6 +118,37 @@ export async function submitOffer(propertyId: string, amount: number) {
             // Don't block the offer submission
         }
 
+        // Auto-Start Chat with Owner
+        try {
+            const { startConversationWithUser, sendMessage } = await import('./actions/chat');
+            const { createAdminClient } = await import('./supabase/admin');
+            const supabaseAdmin = createAdminClient();
+
+            // Fetch property details if not already available (owner_id and title)
+            const { data: propertyData } = await supabaseAdmin
+                .from('properties')
+                .select('owner_id, title, currency')
+                .eq('id', propertyId)
+                .single();
+
+            if (propertyData && propertyData.owner_id && propertyData.owner_id !== user.id) {
+                // 1. Create/Get Conversation
+                const { conversationId, error: convoError } = await startConversationWithUser(propertyData.owner_id);
+
+                if (conversationId) {
+                    // 2. Send Automated Message
+                    const currencySymbol = propertyData.currency === 'USD' ? '$' : '€';
+                    const messageContent = `👋 Hi! I just submitted an offer of ${currencySymbol}${amount.toLocaleString()} for "${propertyData.title}".`;
+
+                    await sendMessage(conversationId, user.id, messageContent);
+                } else if (convoError) {
+                    console.error('Error starting chat from offer:', convoError);
+                }
+            }
+        } catch (chatError) {
+            console.error('Error in auto-chat interaction from offer:', chatError);
+        }
+
         revalidatePath(`/properties/${propertyId}`);
         revalidatePath('/dashboard/owner/leads');
         return { success: true };
