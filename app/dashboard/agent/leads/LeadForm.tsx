@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, X, User, ClipboardList, Eye, Check } from 'lucide-react';
+import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import {
     PROPERTY_TYPES,
     TRANSACTION_TYPES,
@@ -102,6 +102,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
     };
 
     const router = useRouter();
+    const [isFeaturesExpanded, setIsFeaturesExpanded] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -357,41 +358,58 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
 
                         {/* Features Section */}
                         <div className="border-t border-slate-200 pt-6">
-                            <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-2">
-                                <Check className="w-5 h-5 text-slate-500" />
-                                Features
-                            </h3>
-                            <div className="space-y-6">
-                                {Object.entries(FEATURE_CATEGORIES).map(([category, features]) => {
-                                    const colors = CATEGORY_COLORS[category] || CATEGORY_COLORS['Unit Features'];
-                                    return (
-                                        <div key={category} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                                            <h4 className={`text-xs font-bold uppercase tracking-wider ${colors.text.replace('text-', 'text-slate-500 ')} mb-3 flex items-center gap-2`}>
-                                                <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-                                                {category}
-                                            </h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                {features.map(feature => (
-                                                    <div key={feature}
-                                                        onClick={() => handleFeatureToggle(feature)}
-                                                        className={`px-3 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all border shadow-sm flex items-center gap-2 ${(formData.preference_features || []).includes(feature)
-                                                            ? `${colors.bg} text-white border-transparent shadow-md`
-                                                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                                            }`}
-                                                    >
-                                                        {(formData.preference_features || []).includes(feature) ? (
-                                                            <Check className="w-3 h-3 shrink-0" />
-                                                        ) : (
-                                                            <div className="w-3 h-3 rounded-full border border-slate-300 shrink-0" />
-                                                        )}
-                                                        <span className="truncate">{feature}</span>
-                                                    </div>
-                                                ))}
+                            <button
+                                type="button"
+                                onClick={() => setIsFeaturesExpanded(!isFeaturesExpanded)}
+                                className="w-full flex items-center justify-between text-base font-bold text-slate-900 mb-6 group"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Check className="w-5 h-5 text-slate-500" />
+                                    Features
+                                    <span className="text-xs font-normal text-slate-400 ml-2">
+                                        ({(formData.preference_features || []).length} selected)
+                                    </span>
+                                </span>
+                                {isFeaturesExpanded ? (
+                                    <ChevronUp className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                                ) : (
+                                    <ChevronDown className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                                )}
+                            </button>
+
+                            {isFeaturesExpanded && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {Object.entries(FEATURE_CATEGORIES).map(([category, features]) => {
+                                        const colors = CATEGORY_COLORS[category] || CATEGORY_COLORS['Unit Features'];
+                                        return (
+                                            <div key={category} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                                <h4 className={`text-xs font-bold uppercase tracking-wider ${colors.text.replace('text-', 'text-slate-500 ')} mb-3 flex items-center gap-2`}>
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                                                    {category}
+                                                </h4>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                    {features.map(feature => (
+                                                        <div key={feature}
+                                                            onClick={() => handleFeatureToggle(feature)}
+                                                            className={`px-3 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all border shadow-sm flex items-center gap-2 ${(formData.preference_features || []).includes(feature)
+                                                                ? `${colors.bg} text-white border-transparent shadow-md`
+                                                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                                                }`}
+                                                        >
+                                                            {(formData.preference_features || []).includes(feature) ? (
+                                                                <Check className="w-3 h-3 shrink-0" />
+                                                            ) : (
+                                                                <div className="w-3 h-3 rounded-full border border-slate-300 shrink-0" />
+                                                            )}
+                                                            <span className="truncate">{feature}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

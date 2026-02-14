@@ -37,8 +37,8 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
                 <button
                     onClick={() => setActiveTab('notes')}
                     className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'notes'
-                            ? 'bg-white text-orange-600 border-b-2 border-orange-600'
-                            : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                        ? 'bg-white text-orange-600 border-b-2 border-orange-600'
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                         }`}
                 >
                     <MessageSquare className="w-4 h-4" />
@@ -47,8 +47,8 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
                 <button
                     onClick={() => setActiveTab('activities')}
                     className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'activities'
-                            ? 'bg-white text-orange-600 border-b-2 border-orange-600'
-                            : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                        ? 'bg-white text-orange-600 border-b-2 border-orange-600'
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                         }`}
                 >
                     <List className="w-4 h-4" />
@@ -119,7 +119,7 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
                             name="content"
                             required
                             placeholder="Add a note about this client..."
-                            className="w-full pl-4 pr-12 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm min-h-[80px]"
+                            className="w-full pl-4 pr-12 py-3 rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm min-h-[80px]"
                         />
                         <button
                             type="submit"
