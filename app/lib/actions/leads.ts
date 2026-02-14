@@ -28,6 +28,18 @@ export interface LeadData {
     preference_rooms_max?: number;
     preference_bedrooms_min?: number;
     preference_surface_min?: number;
+    preference_surface_max?: number; // Added
+
+    preference_baths_min?: number; // Added
+    preference_year_built_min?: number; // Added
+    preference_floor_min?: number; // Added
+    preference_floor_max?: number; // Added
+
+    preference_partitioning?: string; // Added from Step 1
+    preference_comfort?: string; // Added from Step 1
+    preference_building_type?: string; // Added from Step 1
+    preference_interior_condition?: string; // Added from Step 1
+    preference_furnishing?: string; // Added from Step 1
 
     preference_features?: string[];
 

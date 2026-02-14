@@ -2,13 +2,36 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, X, User, ClipboardList, Eye } from 'lucide-react';
+import { Save, X, User, ClipboardList, Eye, Check } from 'lucide-react';
 import {
     PROPERTY_TYPES,
     TRANSACTION_TYPES,
-    PROPERTY_FEATURES
+    PROPERTY_FEATURES,
+    PARTITIONING_TYPES,
+    COMFORT_TYPES,
+    BUILDING_TYPES,
+    INTERIOR_CONDITIONS,
+    FURNISHING_TYPES
 } from '@/app/lib/properties';
 import { createLead, updateLead, LeadData } from '@/app/lib/actions/leads';
+
+const FEATURE_CATEGORIES = {
+    'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
+    'Unit Features': ['Air Conditioning', 'Balcony', 'Central Heating', 'Fireplace', 'Garage', 'Jacuzzi', 'Laundry', 'Parking', 'Private Pool', 'Sauna', 'Storage'],
+    'Community & Recreation': ['Amphitheatre', 'Clubhouse', 'Common Garden', 'Jogging Track', 'Library', 'Park', 'Party Hall', 'Playground'],
+    'Sports & Fitness': ['Basketball Court', 'Football Field', 'Gym', 'Squash Court', 'Swimming Pool', 'Tennis Court', 'Yoga Deck'],
+    'Security & Safety': ['24/7 Security', 'CCTV Surveillance', 'Fire Safety', 'Gated Community', 'Intercom', 'Shelter', 'Video Door Phone'],
+    'Sustainability & Services': ['Concierge', 'Elevator', 'Green Building', 'Maintenance Staff', 'Power Backup', 'Rainwater Harvesting', 'Sewage Treatment', 'Smart Home', 'Solar Panels', 'Visitor Parking']
+};
+
+const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: string, text: string, dot: string }> = {
+    'Unit Features': { bg: 'bg-violet-600', border: 'border-violet-500', shadow: 'shadow-violet-600/20', text: 'text-violet-400', dot: 'bg-violet-500' },
+    'Community & Recreation': { bg: 'bg-emerald-600', border: 'border-emerald-500', shadow: 'shadow-emerald-600/20', text: 'text-emerald-400', dot: 'bg-emerald-500' },
+    'Sports & Fitness': { bg: 'bg-orange-600', border: 'border-orange-500', shadow: 'shadow-orange-600/20', text: 'text-orange-400', dot: 'bg-orange-500' },
+    'Security & Safety': { bg: 'bg-red-600', border: 'border-red-500', shadow: 'shadow-red-600/20', text: 'text-red-400', dot: 'bg-red-500' },
+    'Sustainability & Services': { bg: 'bg-teal-600', border: 'border-teal-500', shadow: 'shadow-teal-600/20', text: 'text-teal-400', dot: 'bg-teal-500' },
+    'Listing Tags': { bg: 'bg-indigo-600', border: 'border-indigo-500', shadow: 'shadow-indigo-600/20', text: 'text-indigo-400', dot: 'bg-indigo-500' }
+};
 
 interface LeadFormProps {
     initialData?: LeadData;
@@ -32,6 +55,25 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
         preference_listing_type: 'For Sale',
         currency: 'EUR',
         preference_features: [],
+
+        // New Preferences from Add Property Form
+        preference_location_city: '',
+        preference_location_area: '',
+        preference_rooms_min: 0,
+        preference_rooms_max: 0,
+        preference_bedrooms_min: 0,
+        preference_baths_min: 0,
+        preference_surface_min: 0,
+        preference_surface_max: 0,
+        preference_year_built_min: 0,
+        preference_floor_min: 0,
+        preference_floor_max: 0,
+        preference_partitioning: '',
+        preference_comfort: '',
+        preference_building_type: '',
+        preference_interior_condition: '',
+        preference_furnishing: '',
+
         search_duration: '< 1 month',
         viewed_count_total: '0',
         move_urgency: '< 1 month (Urgent)',
@@ -166,7 +208,206 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                 {/* CLASSIFICATION TAB */}
                 {activeTab === 'classification' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        {/* Status Grid */}
+
+                        {/* Property Requirements Section */}
+                        <div className="border-t border-slate-200 pt-6 first:border-0 first:pt-0">
+                            <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <ClipboardList className="w-5 h-5 text-slate-500" />
+                                Property Requirements
+                            </h3>
+
+                            {/* Basic Info */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className={labelClass}>Property Type</label>
+                                    <div className="relative">
+                                        <select name="preference_type" value={formData.preference_type} onChange={handleChange} className={selectClass}>
+                                            {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Listing Type</label>
+                                    <div className="relative">
+                                        <select name="preference_listing_type" value={formData.preference_listing_type} onChange={handleChange} className={selectClass}>
+                                            {TRANSACTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Location */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className={labelClass}>City</label>
+                                    <input type="text" name="preference_location_city" value={formData.preference_location_city || ''} onChange={handleChange} className={inputClass} placeholder="e.g. New York" />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Area / Neighborhood</label>
+                                    <input type="text" name="preference_location_area" value={formData.preference_location_area || ''} onChange={handleChange} className={inputClass} placeholder="e.g. Downtown" />
+                                </div>
+                            </div>
+
+                            {/* Property Details Grid */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                                {/* Rooms */}
+                                <div>
+                                    <label className={labelClass}>Min Rooms</label>
+                                    <input type="number" name="preference_rooms_min" value={formData.preference_rooms_min || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Max Rooms</label>
+                                    <input type="number" name="preference_rooms_max" value={formData.preference_rooms_max || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Min Bedrooms</label>
+                                    <input type="number" name="preference_bedrooms_min" value={formData.preference_bedrooms_min || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Min Bathrooms</label>
+                                    <input type="number" name="preference_baths_min" value={formData.preference_baths_min || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+
+                                {/* Surface & Floors */}
+                                <div>
+                                    <label className={labelClass}>Min Surface (sqm)</label>
+                                    <input type="number" name="preference_surface_min" value={formData.preference_surface_min || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Max Surface (sqm)</label>
+                                    <input type="number" name="preference_surface_max" value={formData.preference_surface_max || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Min Floor</label>
+                                    <input type="number" name="preference_floor_min" value={formData.preference_floor_min || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Max Floor</label>
+                                    <input type="number" name="preference_floor_max" value={formData.preference_floor_max || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+
+                                {/* Year Built */}
+                                <div>
+                                    <label className={labelClass}>Min Year Built</label>
+                                    <input type="number" name="preference_year_built_min" value={formData.preference_year_built_min || ''} onChange={handleChange} className={inputClass} />
+                                </div>
+                            </div>
+
+                            {/* Dropdowns */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                <div>
+                                    <label className={labelClass}>Building Type</label>
+                                    <div className="relative">
+                                        <select name="preference_building_type" value={formData.preference_building_type || ''} onChange={handleChange} className={selectClass}>
+                                            <option value="">Any</option>
+                                            {BUILDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Partitioning</label>
+                                    <div className="relative">
+                                        <select name="preference_partitioning" value={formData.preference_partitioning || ''} onChange={handleChange} className={selectClass}>
+                                            <option value="">Any</option>
+                                            {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Comfort</label>
+                                    <div className="relative">
+                                        <select name="preference_comfort" value={formData.preference_comfort || ''} onChange={handleChange} className={selectClass}>
+                                            <option value="">Any</option>
+                                            {COMFORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Interior Condition</label>
+                                    <div className="relative">
+                                        <select name="preference_interior_condition" value={formData.preference_interior_condition || ''} onChange={handleChange} className={selectClass}>
+                                            <option value="">Any</option>
+                                            {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Furnishing</label>
+                                    <div className="relative">
+                                        <select name="preference_furnishing" value={formData.preference_furnishing || ''} onChange={handleChange} className={selectClass}>
+                                            <option value="">Any</option>
+                                            {FURNISHING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Agent Interest - Specific to Lead, but fits in requirements */}
+                            <div className="mb-6">
+                                <label className={labelClass}>Agent Interest Level</label>
+                                <div className="relative">
+                                    <select name="agent_interest_rating" value={formData.agent_interest_rating || ''} onChange={handleChange} className={selectClass}>
+                                        <option value="High">High</option>
+                                        <option value="Moderate">Moderate</option>
+                                        <option value="Low">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Features Section */}
+                        <div className="border-t border-slate-200 pt-6">
+                            <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                <Check className="w-5 h-5 text-slate-500" />
+                                Features
+                            </h3>
+                            <div className="space-y-6">
+                                {Object.entries(FEATURE_CATEGORIES).map(([category, features]) => {
+                                    const colors = CATEGORY_COLORS[category] || CATEGORY_COLORS['Unit Features'];
+                                    return (
+                                        <div key={category} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                            <h4 className={`text-xs font-bold uppercase tracking-wider ${colors.text.replace('text-', 'text-slate-500 ')} mb-3 flex items-center gap-2`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                                                {category}
+                                            </h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                {features.map(feature => (
+                                                    <div key={feature}
+                                                        onClick={() => handleFeatureToggle(feature)}
+                                                        className={`px-3 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all border shadow-sm flex items-center gap-2 ${(formData.preference_features || []).includes(feature)
+                                                            ? `${colors.bg} text-white border-transparent shadow-md`
+                                                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                                            }`}
+                                                    >
+                                                        {(formData.preference_features || []).includes(feature) ? (
+                                                            <Check className="w-3 h-3 shrink-0" />
+                                                        ) : (
+                                                            <div className="w-3 h-3 rounded-full border border-slate-300 shrink-0" />
+                                                        )}
+                                                        <span className="truncate">{feature}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* VIEWING TAB */}
+                {activeTab === 'viewing' && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100 mb-6">
+                            <h3 className="text-purple-800 font-bold flex items-center gap-2 mb-1">
+                                <Eye className="w-5 h-5" />
+                                Viewing History
+                            </h3>
+                            <p className="text-purple-600/80 text-sm">Track viewings and outcome.</p>
+                        </div>
+
+                        {/* Status Grid (Moved from Classification) */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label className={labelClass}>Search Duration</label>
@@ -200,83 +441,6 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                                     </select>
                                 </div>
                             </div>
-                        </div>
-
-
-
-                        {/* Preference Details (Collapsable or Section) */}
-                        <div className="border-t border-slate-200 pt-6">
-                            <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-2">
-                                <ClipboardList className="w-5 h-5 text-slate-500" />
-                                Property Requirements
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                                <div>
-                                    <label className={labelClass}>Type</label>
-                                    <div className="relative">
-                                        <select name="preference_type" value={formData.preference_type} onChange={handleChange} className={selectClass}>
-                                            {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>City</label>
-                                    <input type="text" name="preference_location_city" value={formData.preference_location_city || ''} onChange={handleChange} className={inputClass} placeholder="e.g. New York" />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Area / Neighborhood</label>
-                                    <input type="text" name="preference_location_area" value={formData.preference_location_area || ''} onChange={handleChange} className={inputClass} placeholder="e.g. Downtown" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                                <div>
-                                    <label className={labelClass}>Min Rooms</label>
-                                    <input type="number" name="preference_rooms_min" value={formData.preference_rooms_min || ''} onChange={handleChange} className={inputClass} />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Min Surface (sqm)</label>
-                                    <input type="number" name="preference_surface_min" value={formData.preference_surface_min || ''} onChange={handleChange} className={inputClass} />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Agent Interest Level</label>
-                                    <div className="relative">
-                                        <select name="agent_interest_rating" value={formData.agent_interest_rating || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="High">High</option>
-                                            <option value="Moderate">Moderate</option>
-                                            <option value="Low">Low</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label className={labelClass}>Features</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {PROPERTY_FEATURES.map(feature => (
-                                        <div key={feature}
-                                            onClick={() => handleFeatureToggle(feature)}
-                                            className={`px-4 py-2 rounded-xl text-sm font-bold cursor-pointer transition-all border shadow-sm ${(formData.preference_features || []).includes(feature)
-                                                ? 'bg-orange-100 text-orange-800 border-orange-200 shadow-orange-100'
-                                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                                }`}
-                                        >
-                                            {feature}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* VIEWING TAB */}
-                {activeTab === 'viewing' && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100 mb-6">
-                            <h3 className="text-purple-800 font-bold flex items-center gap-2 mb-1">
-                                <Eye className="w-5 h-5" />
-                                Viewing History
-                            </h3>
-                            <p className="text-purple-600/80 text-sm">Track viewings and outcome.</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
