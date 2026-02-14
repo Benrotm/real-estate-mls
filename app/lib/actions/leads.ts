@@ -155,7 +155,7 @@ export async function updateLead(leadId: string, data: LeadData) {
 
     // Clean data
     const cleanData = Object.fromEntries(
-        Object.entries(data).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null && v !== '')
+        Object.entries(data).filter(([k, v]) => k !== 'notes' && k !== 'id' && v !== undefined && v !== null && v !== '')
     );
 
     // Build query
