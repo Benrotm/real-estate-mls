@@ -241,6 +241,26 @@ export async function createNote(leadId: string, content: string) {
 
     if (authError || !user) throw new Error('Unauthorized');
 
+    // Deduplication check: Check for identical note in the last 5 seconds
+    const { data: recentNote } = await supabase
+        .from('lead_notes')
+        .select('created_at, content')
+        .eq('lead_id', leadId)
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (recentNote) {
+        const timeDiff = new Date().getTime() - new Date(recentNote.created_at).getTime();
+        if (timeDiff < 5000 && recentNote.content === content) {
+            console.log('Duplicate note detected, skipping insert.');
+            // Return early as if successful to avoid client error
+            revalidatePath(`/dashboard/agent/leads/${leadId}`);
+            return;
+        }
+    }
+
     const { error } = await supabase.from('lead_notes').insert({
         lead_id: leadId,
         created_by: user.id,
