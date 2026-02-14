@@ -15,13 +15,23 @@ export default async function AgentChatPage({ searchParams }: { searchParams: { 
     }
 
     return (
-        <div className="h-[600px] flex flex-col">
+        <div className="flex flex-col">
             <div className="mb-4 shrink-0">
                 <h1 className="text-2xl font-bold text-slate-900">Agent Messages</h1>
                 <p className="text-slate-500">Communicate with clients and leads.</p>
             </div>
-            <div className="flex-1 min-h-0">
-                <ChatLayout user={user} initialConversationId={initialConversationId} />
+
+            <div className="relative group">
+                <div className="resize-y overflow-hidden h-[600px] min-h-[400px] max-h-[85vh] rounded-2xl border border-slate-200 shadow-xl bg-white pb-3">
+                    <div className="h-full w-full">
+                        <ChatLayout user={user} initialConversationId={initialConversationId} />
+                    </div>
+                </div>
+
+                {/* Visual Resize Handle Hint */}
+                <div className="absolute bottom-1 left-0 right-0 h-3 bg-transparent cursor-ns-resize flex justify-center items-end opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <div className="w-12 h-1 bg-slate-300 rounded-full mb-0.5"></div>
+                </div>
             </div>
         </div>
     );
