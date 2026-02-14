@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Clock, MessageSquare, List } from 'lucide-react';
 
 interface Activity {
@@ -29,6 +29,22 @@ interface Props {
 
 export default function LeadActivityPanel({ leadId, initialNotes, initialActivities, onAddNote }: Props) {
     const [activeTab, setActiveTab] = useState<'notes' | 'activities'>('notes');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
+
+    async function handleSubmit(formData: FormData) {
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
+        try {
+            await onAddNote(formData);
+            formRef.current?.reset();
+        } catch (error) {
+            console.error('Failed to add note:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
@@ -114,7 +130,7 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
             {/* Input Area - Only for Notes */}
             {activeTab === 'notes' && (
                 <div className="p-4 bg-white border-t border-slate-200 animate-in fade-in duration-300">
-                    <form action={onAddNote} className="relative">
+                    <form ref={formRef} action={handleSubmit} className="relative">
                         <textarea
                             name="content"
                             required
@@ -123,10 +139,11 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
                         />
                         <button
                             type="submit"
-                            className="absolute bottom-3 right-3 p-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors shadow-sm"
+                            disabled={isSubmitting}
+                            className={`absolute bottom-3 right-3 p-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors shadow-sm ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title="Add Note"
                         >
-                            <Clock className="w-4 h-4" />
+                            <Clock className={`w-4 h-4 ${isSubmitting ? 'animate-spin' : ''}`} />
                         </button>
                     </form>
                 </div>
