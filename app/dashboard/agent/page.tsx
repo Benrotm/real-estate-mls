@@ -3,8 +3,10 @@ import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bo
 import { getUserProfile, getUsageStats, getFeaturedStats } from '../../lib/auth';
 import { getRecentInquiries, getTotalPropertyViews, getActivePortfolioValue } from '../../lib/actions/propertyAnalytics';
 import { getLeadsCount } from '../../lib/actions/leads';
+import { getUserProperties } from '../../lib/actions/properties';
 import { formatCompactCurrency } from '../../lib/format';
 import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
+import RecentPropertiesWidget from '../../components/dashboard/RecentPropertiesWidget';
 
 export default async function AgentDashboard() {
     const profile = await getUserProfile();
@@ -14,6 +16,7 @@ export default async function AgentDashboard() {
     const totalViews = await getTotalPropertyViews();
     const totalLeads = await getLeadsCount();
     const portfolioValue = await getActivePortfolioValue();
+    const userProperties = await getUserProperties();
 
     const limit = profile?.listings_limit || 5;
     const featuredLimit = profile?.featured_limit || 0;
@@ -167,24 +170,7 @@ export default async function AgentDashboard() {
                         <RecentInquiriesWidget inquiries={recentInquiries} viewAllLink="/dashboard/agent/leads" />
 
                         {/* My Listings */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[300px]">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="flex items-center gap-2 font-bold text-slate-900">
-                                    <Building className="w-4 h-4 text-orange-500" /> My Listings
-                                </h3>
-                                <button className="text-xs font-bold text-slate-500 flex items-center gap-1 hover:text-slate-900 transition-colors">
-                                    Manage All <ArrowUpRight className="w-3 h-3" />
-                                </button>
-                            </div>
-
-                            <div className="h-64 flex flex-col items-center justify-center">
-                                <Building className="w-12 h-12 mb-3 text-slate-300 opacity-50" />
-                                <div className="text-sm font-medium text-slate-500 mb-6">No properties listed yet</div>
-                                <Link href="/properties/add" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2">
-                                    <Plus className="w-4 h-4" /> Add Your First Property
-                                </Link>
-                            </div>
-                        </div>
+                        <RecentPropertiesWidget properties={userProperties} viewAllLink="/dashboard/agent/listings" addLink="/properties/add" />
                     </div>
 
                     {/* Right Column (1/3 width) */}

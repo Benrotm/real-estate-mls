@@ -4,7 +4,9 @@ import HomeValuationWidget from '../../components/HomeValuationWidget';
 import { getUserProfile, getUsageStats, getActiveUsageStats, getFeaturedStats } from '../../lib/auth';
 import { getRecentInquiries, getTotalPropertyViews } from '../../lib/actions/propertyAnalytics';
 import { getLeadsCount } from '../../lib/actions/leads';
+import { getUserProperties } from '../../lib/actions/properties';
 import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
+import RecentPropertiesWidget from '../../components/dashboard/RecentPropertiesWidget';
 
 export default async function OwnerDashboard() {
     const profile = await getUserProfile();
@@ -23,6 +25,7 @@ export default async function OwnerDashboard() {
     const recentInquiries = await getRecentInquiries(5);
     const totalViews = await getTotalPropertyViews();
     const totalLeads = await getLeadsCount();
+    const userProperties = await getUserProperties();
 
     const baseLimit = profile.listings_limit || 1;
     const bonus = profile.bonus_listings || 0;
@@ -141,18 +144,7 @@ export default async function OwnerDashboard() {
                         <RecentInquiriesWidget inquiries={recentInquiries} viewAllLink="/dashboard/owner/leads" />
 
                         {/* Recent Properties */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 h-64 p-6 relative">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-slate-900">Recent Properties</h3>
-                                <button className="text-xs font-bold text-slate-500 flex items-center gap-1 hover:text-slate-900">
-                                    View All <ArrowUpRight className="w-3 h-3" />
-                                </button>
-                            </div>
-
-                            <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                                No properties found
-                            </div>
-                        </div>
+                        <RecentPropertiesWidget properties={userProperties} viewAllLink="/dashboard/owner/properties" addLink="/properties/add" />
                     </div>
 
                     {/* Right Column (Span 1) */}
