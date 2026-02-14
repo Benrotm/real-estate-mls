@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bookmark, ArrowUpRight, TrendingUp } from 'lucide-react';
 import { getUserProfile, getUsageStats, getFeaturedStats } from '../../lib/auth';
-import { getRecentInquiries, getTotalPropertyViews } from '../../lib/actions/propertyAnalytics';
+import { getRecentInquiries, getTotalPropertyViews, getActivePortfolioValue } from '../../lib/actions/propertyAnalytics';
 import { getLeadsCount } from '../../lib/actions/leads';
+import { formatCompactCurrency } from '../../lib/format';
 import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
 
 export default async function AgentDashboard() {
@@ -12,6 +13,7 @@ export default async function AgentDashboard() {
     const recentInquiries = await getRecentInquiries(5);
     const totalViews = await getTotalPropertyViews();
     const totalLeads = await getLeadsCount();
+    const portfolioValue = await getActivePortfolioValue();
 
     const limit = profile?.listings_limit || 5;
     const featuredLimit = profile?.featured_limit || 0;
@@ -101,7 +103,7 @@ export default async function AgentDashboard() {
                 <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
                     <div className="relative z-10">
                         <div className="text-sm font-medium text-orange-100 mb-1">Active Portfolio Value</div>
-                        <div className="text-4xl font-bold text-white">$4.2M</div>
+                        <div className="text-4xl font-bold text-white">{formatCompactCurrency(portfolioValue)}</div>
                     </div>
 
                     <div className="flex gap-12 mt-4 md:mt-0 relative z-10 text-center">

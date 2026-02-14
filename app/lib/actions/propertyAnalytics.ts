@@ -501,6 +501,30 @@ export async function submitPropertyInquiry(propertyId: string, data: {
 }
 
 
+// Get total value of active portfolio
+export async function getActivePortfolioValue() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return 0;
+
+    const { data, error } = await supabase
+        .from('properties')
+        .select('price')
+        .eq('owner_id', user.id)
+        .eq('status', 'active');
+
+    if (error) {
+        console.error('Error fetching portfolio value:', error);
+        return 0;
+    }
+
+    // Sum prices
+    const totalValue = (data || []).reduce((sum, property) => sum + (property.price || 0), 0);
+    return totalValue;
+}
+
+
 // Record property share
 export async function recordPropertyShare(propertyId: string, shareMethod?: string) {
     const supabase = await createClient();
