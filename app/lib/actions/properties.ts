@@ -466,3 +466,49 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
 
     return { success: true, status: newStatus };
 }
+
+export async function createPropertyFromData(data: Partial<PropertyType>) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: 'Unauthorized' };
+
+    try {
+        const propertyData = {
+            owner_id: user.id,
+            title: data.title || 'Untitled Scraped Property',
+            description: data.description || '',
+            price: data.price || 0,
+            currency: data.currency || 'EUR',
+            type: data.type || 'Apartment',
+            listing_type: data.listing_type || 'sale',
+            status: 'draft', // Always draft for safety
+            images: data.images || [],
+            address: data.address || '',
+            features: data.features || [],
+            // Default required fields if missing
+            location_city: data.location_city || 'Timisoara',
+            location_county: 'Timis', // Default
+            rooms: data.rooms || 0,
+            updated_at: new Date().toISOString()
+        };
+
+        const { data: newProperty, error } = await supabase
+            .from('properties')
+            .insert(propertyData)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating property from scrape:', error);
+            return { error: error.message };
+        }
+
+        revalidatePath('/properties');
+        revalidatePath('/dashboard/admin/properties');
+
+        return { success: true, data: newProperty };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}

@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { scrapeOlx, scrapePubli24, importFromApi, getImportSettings, saveImportSettings, ImportResult, ImportSettings } from '@/app/lib/actions/import';
+import { createPropertyFromData } from '@/app/lib/actions/properties';
 import { Globe, Database, Loader2, Play, CheckCircle, AlertCircle, ArrowLeft, Settings, Save, LayoutGrid, Upload, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ImportPropertiesModal from '@/app/components/properties/ImportPropertiesModal';
+import { ScrapedProperty } from '@/app/lib/actions/scrape';
 
 export default function ImportPage() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<'runner' | 'settings'>('runner');
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [results, setResults] = useState<Record<string, ImportResult | null>>({
@@ -17,6 +21,34 @@ export default function ImportPage() {
 
     // Modal State
     const [showImportModal, setShowImportModal] = useState(false);
+
+    const handleScrapeSuccess = async (data: ScrapedProperty) => {
+        // Save as draft property then redirect
+        try {
+            const res = await createPropertyFromData({
+                title: data.title,
+                description: data.description,
+                price: data.price,
+                currency: data.currency as any, // Cast to match PropertyType
+                images: data.images,
+                address: data.address,
+                type: (data.type || 'Apartment') as any,
+                listing_type: (data.listing_type || 'sale') as any, // map scraped 'sale'/'rent' to stored values
+                // Store source URL in description or a custom field if available
+                // description: (data.description || '') + `\n\nSource: ${data.url}`
+            });
+
+            if (res.success && res.data) {
+                // Redirect to edit page
+                router.push(`/dashboard/admin/properties/${res.data.id}/edit`);
+            } else {
+                console.error('Failed to save scraped property:', res.error);
+                // Optionally show error to user (requires local state update)
+            }
+        } catch (error) {
+            console.error('Error in handleScrapeSuccess:', error);
+        }
+    };
 
     // Settings State
     const [settings, setSettings] = useState<ImportSettings>({
@@ -64,9 +96,7 @@ export default function ImportPage() {
                 showDefaultButton={false}
                 forceOpen={showImportModal}
                 onClose={() => setShowImportModal(false)}
-                onScrapeSuccess={() => {
-                    // Optional: could show a success toast or refresh list
-                }}
+                onScrapeSuccess={handleScrapeSuccess}
             />
 
             <div className="mb-8">
