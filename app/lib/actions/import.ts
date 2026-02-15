@@ -97,3 +97,18 @@ export async function importFromApi(): Promise<ImportResult> {
         return { success: false, message: 'API Import Failed', details: error.message };
     }
 }
+
+export async function importPropertiesFromCSV(formData: FormData): Promise<{ success: boolean; error?: string; count?: number }> {
+    try {
+        const file = formData.get('file');
+        if (!file) return { success: false, error: 'No file provided' };
+
+        // Placeholder for CSV processing
+        // TODO: Implement actual CSV parsing and DB insertion
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        return { success: true, count: 0 };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
