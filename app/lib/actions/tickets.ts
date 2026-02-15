@@ -102,7 +102,7 @@ export async function submitPropertyReport(formData: FormData) {
 
     if (ticketError) {
         console.error('Error creating ticket:', ticketError);
-        return { success: false, error: 'Failed to submit report.' };
+        return { success: false, error: ticketError.message || 'Failed to submit report.' };
     }
 
     // 2. Notify via Chat
