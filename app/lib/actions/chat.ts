@@ -3,6 +3,35 @@
 import { createClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 
+export type Message = {
+    id: string;
+    conversation_id: string;
+    sender_id: string | null;
+    content: string;
+    is_read: boolean;
+    created_at: string;
+    sender?: {
+        full_name: string | null;
+        avatar_url: string | null;
+        email: string;
+    };
+};
+
+export type Conversation = {
+    id: string;
+    created_at: string;
+    updated_at: string;
+    participants: {
+        user_id: string;
+        profile: {
+            full_name: string | null;
+            avatar_url: string | null;
+            email: string;
+        };
+    }[];
+    last_message?: Message;
+};
+
 export async function getOrCreateSupportConversation() {
     try {
         const supabase = await createClient();
@@ -11,17 +40,28 @@ export async function getOrCreateSupportConversation() {
         if (!user) return { error: 'Unauthorized' };
 
         // Find a Super Admin
-        const { data: superAdmins } = await supabase
+        let { data: superAdmins } = await supabase
             .from('profiles')
             .select('id')
             .eq('role', 'super_admin')
             .limit(1);
 
         if (!superAdmins || superAdmins.length === 0) {
-            return { error: 'No support staff available.' };
+            // Fallback to any admin if no super_admin
+            const { data: admins } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('role', 'admin')
+                .limit(1);
+
+            if (!admins || admins.length === 0) {
+                return { error: 'No support staff available.' };
+            }
+            // Use the first admin found
+            superAdmins = [admins[0]];
         }
 
-        const supportAgentId = superAdmins[0].id;
+        const supportAgentId = superAdmins![0].id;
 
         // Check if conversation exists
         const { data: userConversations } = await supabase
@@ -90,16 +130,28 @@ export async function createNewSupportConversation() {
         if (!user) return { error: 'Unauthorized' };
 
         // Find a Super Admin
-        const { data: superAdmins } = await supabase
+        let { data: superAdmins } = await supabase
             .from('profiles')
             .select('id')
             .eq('role', 'super_admin')
             .limit(1);
 
         if (!superAdmins || superAdmins.length === 0) {
-            return { error: 'No support staff available.' };
+            // Fallback to any admin if no super_admin
+            const { data: admins } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('role', 'admin')
+                .limit(1);
+
+            if (!admins || admins.length === 0) {
+                return { error: 'No support staff available.' };
+            }
+            // Use the first admin found
+            superAdmins = [admins[0]];
         }
-        const supportAgentId = superAdmins[0].id;
+
+        const supportAgentId = superAdmins![0].id;
 
         // Create NEW conversation ALWAYS (do not check existing)
         const supabaseAdmin = createAdminClient();
@@ -119,7 +171,6 @@ export async function createNewSupportConversation() {
 
         if (partError) throw partError;
 
-        return { conversationId: newConv.id };
         return { conversationId: newConv.id };
     } catch (e: any) {
         console.error('Create specific conversation error:', e);
@@ -267,9 +318,13 @@ export async function startConversationWithUser(targetUserId: string) {
 
 export async function sendMessage(conversationId: string, senderId: string, content: string) {
     try {
-        const supabaseAdmin = createAdminClient();
+        const supabase = await createClient(); // Use regular client to respect RLS
 
-        const { error } = await supabaseAdmin
+        // Check if user is participant
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || user.id !== senderId) return { error: 'Unauthorized' };
+
+        const { error } = await supabase
             .from('messages')
             .insert({
                 conversation_id: conversationId,
@@ -280,6 +335,9 @@ export async function sendMessage(conversationId: string, senderId: string, cont
         if (error) throw error;
 
         // Update conversation updated_at
+        // We might need admin client here if RLS prevents update, but usually participants can update?
+        // Let's use admin client for the update to be safe and simple
+        const supabaseAdmin = createAdminClient();
         await supabaseAdmin
             .from('conversations')
             .update({ updated_at: new Date().toISOString() })
@@ -289,5 +347,55 @@ export async function sendMessage(conversationId: string, senderId: string, cont
     } catch (error: any) {
         console.error('sendMessage error:', error);
         return { success: false, error: error.message };
+    }
+}
+
+export async function getAdminConversations() {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return { error: 'Unauthorized' };
+
+        // Fetch conversations where the current user (admin) is a participant
+        const { data: conversations, error } = await supabase
+            .from('conversations')
+            .select(`
+                *,
+                participants:conversation_participants(
+                    user_id,
+                    profile:profiles(
+                        full_name,
+                        avatar_url,
+                        email
+                    )
+                ),
+                messages(
+                    content,
+                    created_at,
+                    is_read,
+                    sender_id
+                )
+            `)
+            .order('updated_at', { ascending: false });
+
+        if (error) throw error;
+
+        return { conversations };
+
+    } catch (error: any) {
+        console.error('getAdminConversations error:', error);
+        return { error: error.message };
+    }
+}
+
+export async function getUserSupportConversation() {
+    try {
+        // Wrapper for getOrCreateSupportConversation to return full object if needed, 
+        // or just rely on the client to fetch details after getting ID.
+        // For now, let's just return the ID and then the client can subscribe.
+        return await getOrCreateSupportConversation();
+    } catch (e: any) {
+        return { error: e.message };
     }
 }
