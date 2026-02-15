@@ -9,9 +9,11 @@ import { useRouter } from 'next/navigation';
 import ImportPropertiesModal from '@/app/components/properties/ImportPropertiesModal';
 import { ScrapedProperty } from '@/app/lib/actions/scrape';
 
+import PartnerManager from '@/app/components/admin/import/PartnerManager';
+
 export default function ImportPage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'runner' | 'settings'>('runner');
+    const [activeTab, setActiveTab] = useState<'runner' | 'settings' | 'partners'>('runner');
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [results, setResults] = useState<Record<string, ImportResult | null>>({
         olx: null,
@@ -124,6 +126,13 @@ export default function ImportPage() {
                                 }`}
                         >
                             <Settings className="w-4 h-4" /> Configuration
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('partners')}
+                            className={`px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'partners' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            <Globe className="w-4 h-4" /> Partners
                         </button>
                     </div>
                 </div>
@@ -397,6 +406,10 @@ export default function ImportPage() {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {activeTab === 'partners' && (
+                <PartnerManager />
             )}
         </div>
     );

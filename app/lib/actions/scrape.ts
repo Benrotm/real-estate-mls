@@ -16,7 +16,7 @@ export interface ScrapedProperty {
     debugInfo?: any;
 }
 
-export async function scrapeProperty(url: string): Promise<{ data?: ScrapedProperty; error?: string }> {
+export async function scrapeProperty(url: string, customSelectors?: any): Promise<{ data?: ScrapedProperty; error?: string }> {
     try {
         if (!url || !url.startsWith('http')) {
             return { error: 'Invalid URL provided' };
@@ -65,6 +65,30 @@ export async function scrapeProperty(url: string): Promise<{ data?: ScrapedPrope
                 }
             } catch (e) { }
         };
+
+        // 0. CUSTOM SELECTORS (Priority High)
+        if (customSelectors) {
+            if (customSelectors.title) data.title = $(customSelectors.title).text().trim();
+            if (customSelectors.price) {
+                const priceText = $(customSelectors.price).text().replace(/[^0-9.,]/g, '').replace(',', '.');
+                data.price = parseFloat(priceText);
+            }
+            if (customSelectors.currency) data.currency = $(customSelectors.currency).text().trim();
+            if (customSelectors.description) data.description = $(customSelectors.description).text().trim();
+            if (customSelectors.location) data.address = $(customSelectors.location).text().trim();
+
+            // Specs
+            if (customSelectors.rooms) data.rooms = parseInt($(customSelectors.rooms).text().replace(/\D/g, ''));
+            if (customSelectors.area) data.area_usable = parseFloat($(customSelectors.area).text().replace(/[^0-9.]/g, ''));
+            if (customSelectors.floor) data.floor = parseInt($(customSelectors.floor).text().replace(/\D/g, ''));
+
+            // Images
+            if (customSelectors.images) {
+                $(customSelectors.images).each((_, el) => {
+                    addImage($(el).attr('src') || $(el).attr('data-src'));
+                });
+            }
+        }
 
         // 1. Meta / OpenGraph Images (Get ALL)
         $('meta[property="og:image"]').each((_, el) => addImage($(el).attr('content')));

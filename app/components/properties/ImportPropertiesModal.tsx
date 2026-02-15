@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Upload, FileSpreadsheet, Database, Rss, X, Loader2, AlertCircle, CheckCircle2, Link as LinkIcon, Globe } from 'lucide-react';
 import { importPropertiesFromCSV } from '@/app/lib/actions/import';
 import { scrapeProperty, ScrapedProperty } from '@/app/lib/actions/scrape';
+import { getScraperConfigs } from '@/app/lib/actions/scraper-config';
 
 interface ImportPropertiesModalProps {
     onScrapeSuccess?: (data: ScrapedProperty) => void | Promise<void>;
@@ -64,6 +65,8 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
         }
     };
 
+
+
     const handleLinkScrape = async () => {
         if (!linkUrl) return;
 
@@ -71,7 +74,12 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
         setResult(null);
 
         try {
-            const { data, error } = await scrapeProperty(linkUrl);
+            // Check for partner config
+            const configs = await getScraperConfigs();
+            const domain = new URL(linkUrl).hostname.replace('www.', '');
+            const matchingConfig = configs.find(c => c.isActive && domain.includes(c.domain));
+
+            const { data, error } = await scrapeProperty(linkUrl, matchingConfig?.selectors);
 
             if (error) {
                 setResult({ success: false, message: error });
