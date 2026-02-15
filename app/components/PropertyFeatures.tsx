@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BadgeDollarSign, Video, MessageCircle, ShieldCheck, Lock, CheckCircle2, Users, BarChart2, TrendingUp, Calendar, Calculator, Target, Eye } from 'lucide-react';
+import { BadgeDollarSign, Video, MessageCircle, ShieldCheck, Lock, CheckCircle2, Users, BarChart2, TrendingUp, Calendar, Calculator, Target, Eye, Award, ChevronDown } from 'lucide-react';
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import UpgradeModal from './UpgradeModal';
 // OfferModal is in the same directory (app/components) based on list_dir
@@ -127,17 +127,44 @@ export default function PropertyFeatures({ propertyId, ownerId, features, proper
     };
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-10">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-10 transition-all duration-300">
+            <style jsx global>{`
+                @keyframes bounce-slow {
+                    0%, 100% { transform: translateY(-15%); }
+                    50% { transform: translateY(0); }
+                }
+                .animate-bounce-slow {
+                    animation: bounce-slow 2s infinite;
+                }
+            `}</style>
+
             <div
-                className="p-6 border-b border-gray-100 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                className="group relative overflow-hidden p-6 border-b border-gray-100 flex items-center justify-between cursor-pointer transition-all duration-300"
                 onClick={() => setIsExpanded(!isExpanded)}
             >
-                <div>
-                    <h3 className="text-xl font-bold text-slate-900 leading-none">Platform Features</h3>
-                    <p className="text-sm text-slate-500 mt-1">Available interactions and property amenities</p>
+                {/* Decorative background gradient */}
+                <div className={`absolute inset-0 bg-gradient-to-r from-blue-50/20 to-indigo-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+                <div className="relative flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${isExpanded
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                        : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100 group-hover:shadow-lg group-hover:shadow-blue-100/50'
+                        }`}>
+                        <Award className={`w-6 h-6 ${isExpanded ? 'animate-pulse' : ''}`} />
+                    </div>
+                    <div>
+                        <h3 className={`text-xl font-bold tracking-tight transition-colors duration-500 ${isExpanded ? 'text-slate-900' : 'text-blue-600 group-hover:text-blue-700'
+                            }`}>Platform Features</h3>
+                        <p className="text-sm text-slate-500 font-medium">Available interactions and property amenities</p>
+                    </div>
                 </div>
-                <div className={`p-2 rounded-full bg-slate-100 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6" /></svg>
+
+                <div className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${isExpanded ? 'bg-blue-50 text-blue-600 rotate-180' : 'bg-slate-50 text-slate-400'
+                    }`}>
+                    <ChevronDown className={`w-6 h-6 transition-transform ${!isExpanded ? 'animate-bounce-slow text-blue-500' : ''}`} />
+                    {!isExpanded && (
+                        <div className="absolute inset-0 rounded-xl ring-2 ring-blue-500/20 animate-ping opacity-20" />
+                    )}
                 </div>
             </div>
 
