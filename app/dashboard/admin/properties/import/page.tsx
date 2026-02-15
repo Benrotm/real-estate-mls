@@ -29,11 +29,11 @@ export default function ImportPage() {
                 title: data.title,
                 description: data.description,
                 price: data.price,
-                currency: data.currency as any, // Cast to match PropertyType
+                currency: (data.currency === 'USD' || data.currency === 'RON' ? data.currency : 'EUR') as any,
                 images: data.images,
                 address: data.address,
                 type: (data.type || 'Apartment') as any,
-                listing_type: (data.listing_type || 'sale') as any, // map scraped 'sale'/'rent' to stored values
+                listing_type: (data.listing_type === 'rent' ? 'For Rent' : 'For Sale') as any,
                 // Store source URL in description or a custom field if available
                 // description: (data.description || '') + `\n\nSource: ${data.url}`
             });
