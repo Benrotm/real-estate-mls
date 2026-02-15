@@ -227,15 +227,15 @@ export default function Navbar({ user }: NavbarProps) {
                               <div className="w-5"><Hammer className="w-4 h-4" /></div> Developer Dashboard
                             </Link>
                           )}
-                          {userRole !== 'agent' && (
-                            <>
-                              <Link href={userRole === 'owner' ? "/dashboard/owner/properties" : "/properties"} onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
-                                <div className="w-5"><Menu className="w-4 h-4" /></div> My Properties
-                              </Link>
-                              <Link href="/saved" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
-                                <div className="w-5"><Globe className="w-4 h-4" /></div> Saved Searches
-                              </Link>
-                            </>
+                          {userRole !== 'agent' && userRole !== 'client' && userRole !== 'super_admin' && (
+                            <Link href={userRole === 'owner' ? "/dashboard/owner/properties" : "/properties"} onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
+                              <div className="w-5"><Menu className="w-4 h-4" /></div> My Properties
+                            </Link>
+                          )}
+                          {userRole !== 'agent' && userRole !== 'client' && userRole !== 'owner' && userRole !== 'super_admin' && (
+                            <Link href="/saved" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
+                              <div className="w-5"><Globe className="w-4 h-4" /></div> Saved Searches
+                            </Link>
                           )}
                         </div>
 

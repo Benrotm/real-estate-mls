@@ -220,7 +220,10 @@ export async function startConversationWithUser(targetUserId: string) {
         const myConvoIds = myConvos?.map(c => c.conversation_id) || [];
 
         if (myConvoIds.length > 0) {
-            const { data: existing } = await supabase
+            // Use admin client to ensure we can see other participants regardless of RLS
+            const supabaseAdmin = createAdminClient();
+
+            const { data: existing } = await supabaseAdmin
                 .from('conversation_participants')
                 .select('conversation_id')
                 .in('conversation_id', myConvoIds)

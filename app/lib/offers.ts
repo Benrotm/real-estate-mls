@@ -151,6 +151,7 @@ export async function submitOffer(propertyId: string, amount: number) {
 
         revalidatePath(`/properties/${propertyId}`);
         revalidatePath('/dashboard/owner/leads');
+        revalidatePath('/dashboard/client/chat');
         return { success: true };
     } catch (error: any) {
         console.error('Submit offer error:', error);
