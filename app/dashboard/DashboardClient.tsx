@@ -40,6 +40,7 @@ export default function DashboardClient({
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
+        { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },
         { name: 'Listing Import', icon: Globe, href: '/dashboard/admin/properties/import' },
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
