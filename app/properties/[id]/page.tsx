@@ -4,7 +4,7 @@ import { checkUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features
 export const dynamic = 'force-dynamic';
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video, Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video, Sparkles, ArrowRight, LayoutGrid, Activity, Armchair, Layers, ShieldCheck } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 
@@ -463,46 +463,79 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
 
                         {/* 4. Key Details Grid */}
+                        {/* 4. Key Details Grid */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
                             {[
-                                { label: 'Partitioning', value: property.partitioning },
-                                { label: 'Comfort', value: property.comfort },
-                                { label: 'Building', value: property.building_type },
-                                { label: 'Condition', value: property.interior_condition },
-                                { label: 'Furnishing', value: property.furnishing },
-                                { label: 'Year Built', value: property.year_built },
-                                { label: 'Floors', value: property.floor && property.total_floors ? `${property.floor}/${property.total_floors}` : (property.total_floors || property.floor) }
-                            ].map((item, i) => (
-                                item.value ? (
-                                    <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                                        <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">{item.label}</div>
-                                        <div className="text-slate-900 font-bold text-sm truncate" title={String(item.value)}>{item.value}</div>
+                                { label: 'Partitioning', value: property.partitioning, icon: LayoutGrid, color: 'indigo' },
+                                { label: 'Comfort', value: property.comfort, icon: Activity, color: 'rose' },
+                                { label: 'Building', value: property.building_type, icon: Home, color: 'blue' },
+                                { label: 'Condition', value: property.interior_condition, icon: ShieldCheck, color: 'emerald' },
+                                { label: 'Furnishing', value: property.furnishing, icon: Armchair, color: 'orange' },
+                                { label: 'Year Built', value: property.year_built, icon: Calendar, color: 'cyan' },
+                                { label: 'Floors', value: property.floor && property.total_floors ? `${property.floor}/${property.total_floors}` : (property.total_floors || property.floor), icon: Layers, color: 'violet' }
+                            ].map((item, i) => {
+                                if (!item.value) return null;
+
+                                const themes: Record<string, { bg: string, text: string, iconBg: string, iconColor: string, border: string }> = {
+                                    indigo: { bg: 'bg-indigo-50/50', text: 'text-indigo-900', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', border: 'border-indigo-100' },
+                                    rose: { bg: 'bg-rose-50/50', text: 'text-rose-900', iconBg: 'bg-rose-100', iconColor: 'text-rose-600', border: 'border-rose-100' },
+                                    blue: { bg: 'bg-blue-50/50', text: 'text-blue-900', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', border: 'border-blue-100' },
+                                    emerald: { bg: 'bg-emerald-50/50', text: 'text-emerald-900', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', border: 'border-emerald-100' },
+                                    orange: { bg: 'bg-orange-50/50', text: 'text-orange-900', iconBg: 'bg-orange-100', iconColor: 'text-orange-600', border: 'border-orange-100' },
+                                    cyan: { bg: 'bg-cyan-50/50', text: 'text-cyan-900', iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600', border: 'border-cyan-100' },
+                                    violet: { bg: 'bg-violet-50/50', text: 'text-violet-900', iconBg: 'bg-violet-100', iconColor: 'text-violet-600', border: 'border-violet-100' }
+                                };
+
+                                const theme = themes[item.color];
+
+                                return (
+                                    <div key={i} className={`group border ${theme.border} rounded-2xl p-4 shadow-sm ${theme.bg} transition-all duration-300 hover:shadow-md flex items-center gap-3`}>
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.iconBg} ${theme.iconColor} transition-transform duration-300 group-hover:scale-110`}>
+                                            <item.icon className="w-5 h-5" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">{item.label}</div>
+                                            <div className={`font-bold text-sm truncate ${theme.text}`} title={String(item.value)}>{item.value}</div>
+                                        </div>
                                     </div>
-                                ) : null
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {/* 5. Areas & Measurements */}
-                        <h3 className="text-xl font-bold text-slate-900 mb-4">Areas & Measurements</h3>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Maximize2 className="w-6 h-6 text-indigo-600" />
+                            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Areas & Measurements</h3>
+                        </div>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {[
-                                { label: 'Built Area', value: property.area_built, unit: 'sqm', icon: Maximize2 },
-                                { label: 'Terrace/Balcony', value: property.area_terrace, unit: 'sqm', icon: Sun },
-                                { label: 'Garden', value: property.area_garden, unit: 'sqm', icon: Trees },
-                                { label: 'Box/Storage', value: property.area_box, unit: 'sqm', icon: Box }
-                            ].map((item, i) => (
-                                <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
-                                        <item.icon className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">{item.label}</div>
-                                        <div className="text-slate-900 font-bold text-sm">
-                                            {item.value ? `${item.value} ${item.unit}` : 'N/A'}
+                                { label: 'Built Area', value: property.area_built, unit: 'sqm', icon: Ruler, color: 'indigo' },
+                                { label: 'Terrace/Balcony', value: property.area_terrace, unit: 'sqm', icon: Sun, color: 'orange' },
+                                { label: 'Garden', value: property.area_garden, unit: 'sqm', icon: Trees, color: 'emerald' },
+                                { label: 'Box/Storage', value: property.area_box, unit: 'sqm', icon: Box, color: 'blue' }
+                            ].map((item, i) => {
+                                const themes: Record<string, { bg: string, text: string, iconBg: string, iconColor: string, border: string }> = {
+                                    indigo: { bg: 'bg-indigo-50/50', text: 'text-indigo-900', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', border: 'border-indigo-100' },
+                                    orange: { bg: 'bg-orange-50/50', text: 'text-orange-900', iconBg: 'bg-orange-100', iconColor: 'text-orange-600', border: 'border-orange-100' },
+                                    emerald: { bg: 'bg-emerald-50/50', text: 'text-emerald-900', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', border: 'border-emerald-100' },
+                                    blue: { bg: 'bg-blue-50/50', text: 'text-blue-900', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', border: 'border-blue-100' }
+                                };
+                                const theme = themes[item.color];
+
+                                return (
+                                    <div key={i} className={`group border ${theme.border} rounded-2xl p-4 shadow-sm flex items-center gap-3 ${theme.bg} transition-all duration-300 hover:shadow-md`}>
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${theme.iconBg} ${theme.iconColor} transition-transform duration-300 group-hover:scale-110`}>
+                                            <item.icon className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">{item.label}</div>
+                                            <div className={`font-bold text-sm ${theme.text}`}>
+                                                {item.value ? `${item.value} ${item.unit}` : 'N/A'}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
