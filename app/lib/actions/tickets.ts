@@ -78,16 +78,12 @@ export async function submitPropertyReport(formData: FormData) {
         return { success: false, error: 'Property not found.' };
     }
 
-    const subject = type === 'claim'
-        ? `Ownership Claim: ${property.title}`
-        : `Report: ${property.title}`;
+    let subjectPrefix = 'Report';
+    if (type === 'claim') subjectPrefix = 'Ownership Claim';
+    else if (type === 'sold_rented') subjectPrefix = 'Report: Sold/Rented';
+    else if (type === 'not_owner') subjectPrefix = 'Report: Broker not Owner';
 
-    const ticketType = type === 'claim' ? 'feature_request' : 'property_report'; // Mapping 'claim' to feature_request or we could add a new enum? 
-    // The enum in migration was: 'bug', 'property_report', 'feature_request', 'other'.
-    // Let's use 'property_report' for irregularies and 'other' (or maybe 'feature_request' as a proxy for claim? or just 'property_report' for both?)
-    // Actually, distinct types helps. Let's use 'property_report' for both but distinguish in subject/description. 
-    // Wait, the plan said "Report Listing" -> "Claim Ownership".
-    // I'll use 'property_report' for both for now as it fits best.
+    const subject = `${subjectPrefix}: ${property.title}`;
 
     // 1. Create Ticket
     const { data: ticket, error: ticketError } = await supabase
