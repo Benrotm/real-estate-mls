@@ -2,7 +2,7 @@ import { getUserTickets } from '@/app/lib/actions/tickets';
 import UserTicketList from '@/app/components/dashboard/UserTicketList';
 import { Flag } from 'lucide-react';
 
-export default async function OwnerReportPage() {
+export default async function AgentReportPage() {
     const { tickets, error } = await getUserTickets();
 
     if (error) {

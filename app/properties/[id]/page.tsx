@@ -19,6 +19,7 @@ import PropertyAnalyticsWidget from '@/app/components/analytics/PropertyAnalytic
 import PropertyViewTracker from '@/app/components/analytics/PropertyViewTracker';
 import { getPropertyAnalytics } from '@/app/lib/actions/propertyAnalytics';
 import MakeOfferButton from '@/app/components/property/MakeOfferButton';
+import ReportListingButton from '@/app/components/property/ReportListingButton';
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
@@ -380,6 +381,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <FavoriteButton propertyId={property.id} />
+                                    <ReportListingButton propertyId={property.id} propertyTitle={property.title} />
                                     <ShareButton
                                         propertyId={property.id}
                                         title={property.title}

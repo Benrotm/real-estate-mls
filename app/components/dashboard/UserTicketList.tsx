@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { updateTicketStatus } from '@/app/lib/actions/admin-tickets';
 import { format } from 'date-fns';
-import { AlertCircle, CheckCircle, Clock, Search, Filter, X, ExternalLink } from 'lucide-react';
+import { AlertCircle, Search, X, ExternalLink, MessageSquare } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Ticket {
     id: string;
@@ -16,68 +16,27 @@ interface Ticket {
     created_at: string;
     images?: string[];
     user_id?: string;
-    profiles?: {
-        email: string;
-        full_name: string;
-    };
     property_id?: string;
     property?: {
         id: string;
         title: string;
         address: string;
     };
+    admin_notes?: string;
 }
 
-import { resolvePropertyClaim } from '@/app/lib/actions/admin-tickets';
-
-export default function TicketList({ tickets: initialTickets }: { tickets: Ticket[] }) {
+export default function UserTicketList({ tickets: initialTickets }: { tickets: Ticket[] }) {
     const [tickets, setTickets] = useState(initialTickets);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [statusFilter, setStatusFilter] = useState('all');
     const [search, setSearch] = useState('');
-    const [isUpdating, setIsUpdating] = useState(false);
 
     const filteredTickets = tickets.filter(t => {
         const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
         const matchesSearch = t.subject.toLowerCase().includes(search.toLowerCase()) ||
-            t.description.toLowerCase().includes(search.toLowerCase()) ||
-            t.profiles?.email?.toLowerCase().includes(search.toLowerCase());
+            t.description.toLowerCase().includes(search.toLowerCase());
         return matchesStatus && matchesSearch;
     });
-
-    const handleStatusUpdate = async (id: string, newStatus: string) => {
-        setIsUpdating(true);
-        const res = await updateTicketStatus(id, newStatus);
-        if (res.success) {
-            setTickets(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
-            if (selectedTicket?.id === id) {
-                setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
-            }
-        } else {
-            alert('Failed to update status');
-        }
-        setIsUpdating(false);
-    };
-
-    const handleClaimResolution = async (ticketId: string, action: 'approve' | 'reject') => {
-        if (!confirm(action === 'approve'
-            ? "Are you sure you want to TRANSFER OWNERSHIP of this property to this user? This cannot be undone easily."
-            : "Reject this claim?")) return;
-
-        setIsUpdating(true);
-        const res = await resolvePropertyClaim(ticketId, action);
-        if (res.success) {
-            const newStatus = action === 'approve' ? 'resolved' : 'closed';
-            setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
-            if (selectedTicket?.id === ticketId) {
-                setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
-            }
-            alert(action === 'approve' ? 'Ownership Transferred Successfully' : 'Claim Rejected');
-        } else {
-            alert('Failed: ' + res.error);
-        }
-        setIsUpdating(false);
-    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -93,12 +52,12 @@ export default function TicketList({ tickets: initialTickets }: { tickets: Ticke
         <div>
             {/* Filters */}
             <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between">
-                <div className="flex gap-2">
+                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
                     {['all', 'open', 'in_progress', 'resolved', 'closed'].map(status => (
                         <button
                             key={status}
                             onClick={() => setStatusFilter(status)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${statusFilter === status
+                            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors whitespace-nowrap ${statusFilter === status
                                 ? 'bg-slate-900 text-white'
                                 : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
                                 }`}
@@ -128,16 +87,15 @@ export default function TicketList({ tickets: initialTickets }: { tickets: Ticke
                                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Status</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Subject</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Type</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">User</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Date</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Actions</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Details</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {filteredTickets.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                                        No tickets found
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                        No tickets found.
                                     </td>
                                 </tr>
                             ) : (
@@ -157,19 +115,15 @@ export default function TicketList({ tickets: initialTickets }: { tickets: Ticke
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-slate-500 capitalize">{ticket.type.replace('_', ' ')}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-slate-900">{ticket.profiles?.full_name || 'Unknown'}</div>
-                                            <div className="text-xs text-slate-400">{ticket.profiles?.email}</div>
-                                        </td>
                                         <td className="px-6 py-4 text-slate-500 text-sm">
                                             {format(new Date(ticket.created_at), 'MMM d, yyyy')}
                                         </td>
                                         <td className="px-6 py-4">
                                             <button
                                                 onClick={() => setSelectedTicket(ticket)}
-                                                className="text-violet-600 hover:text-violet-700 font-medium text-sm"
+                                                className="text-slate-600 hover:text-slate-900 font-medium text-sm underline"
                                             >
-                                                View Details
+                                                View
                                             </button>
                                         </td>
                                     </tr>
@@ -183,12 +137,14 @@ export default function TicketList({ tickets: initialTickets }: { tickets: Ticke
             {/* Modal */}
             {selectedTicket && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-start sticky top-0 bg-white z-10">
                             <div>
                                 <h2 className="text-xl font-bold text-slate-900 mb-1">{selectedTicket.subject}</h2>
                                 <div className="flex items-center gap-2 text-sm text-slate-500">
-                                    <span className="capitalize">{selectedTicket.type.replace('_', ' ')}</span>
+                                    <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${getStatusColor(selectedTicket.status)}`}>
+                                        {selectedTicket.status.replace('_', ' ')}
+                                    </span>
                                     <span>•</span>
                                     <span>{format(new Date(selectedTicket.created_at), 'PPP p')}</span>
                                 </div>
@@ -202,48 +158,37 @@ export default function TicketList({ tickets: initialTickets }: { tickets: Ticke
                         </div>
 
                         <div className="p-6 space-y-6">
+                            {/* Admin Notes */}
+                            {selectedTicket.admin_notes && (
+                                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4">
+                                    <h3 className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                        <MessageSquare className="w-4 h-4" /> Response from Support
+                                    </h3>
+                                    <p className="text-blue-800 text-sm whitespace-pre-wrap">
+                                        {selectedTicket.admin_notes}
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Property Info Context */}
                             {selectedTicket.property && (
-                                <div className="bg-violet-50 border border-violet-100 rounded-lg p-4 mb-4">
-                                    <h3 className="text-sm font-bold text-violet-900 mb-2 flex items-center gap-2">
+                                <div className="bg-slate-50 border border-slate-100 rounded-lg p-4 mb-4">
+                                    <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
                                         <AlertCircle className="w-4 h-4" /> Related Property
                                     </h3>
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <div className="font-medium text-violet-900">{selectedTicket.property.title}</div>
-                                            <div className="text-xs text-violet-600">{selectedTicket.property.address}</div>
+                                            <div className="font-medium text-slate-900">{selectedTicket.property.title}</div>
+                                            <div className="text-xs text-slate-500">{selectedTicket.property.address}</div>
                                         </div>
-                                        <a
+                                        <Link
                                             href={`/properties/${selectedTicket.property.id}`}
                                             target="_blank"
-                                            className="text-xs bg-white text-violet-600 px-3 py-1.5 rounded-md border border-violet-200 hover:bg-violet-50 flex items-center gap-1"
+                                            className="text-xs bg-white text-slate-600 px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 flex items-center gap-1"
                                         >
                                             View Property <ExternalLink className="w-3 h-3" />
-                                        </a>
+                                        </Link>
                                     </div>
-
-                                    {/* Claim Actions */}
-                                    {selectedTicket.status === 'open' && selectedTicket.subject.includes('Ownership Claim') && (
-                                        <div className="mt-4 pt-4 border-t border-violet-200">
-                                            <div className="text-sm font-medium text-violet-900 mb-2">Ownership Claim Action</div>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleClaimResolution(selectedTicket.id, 'approve')}
-                                                    disabled={isUpdating}
-                                                    className="bg-violet-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50"
-                                                >
-                                                    Approve Transfer
-                                                </button>
-                                                <button
-                                                    onClick={() => handleClaimResolution(selectedTicket.id, 'reject')}
-                                                    disabled={isUpdating}
-                                                    className="bg-white text-red-600 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
-                                                >
-                                                    Reject Claim
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             )}
 
@@ -269,40 +214,6 @@ export default function TicketList({ tickets: initialTickets }: { tickets: Ticke
                                     </div>
                                 </div>
                             )}
-
-                            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                                <h3 className="font-bold text-slate-900 mb-4">Admin Actions</h3>
-                                <div className="flex gap-2 flex-wrap">
-                                    <button
-                                        onClick={() => handleStatusUpdate(selectedTicket.id, 'open')}
-                                        disabled={isUpdating || selectedTicket.status === 'open'}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium border ${selectedTicket.status === 'open' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
-                                    >
-                                        Mark Open
-                                    </button>
-                                    <button
-                                        onClick={() => handleStatusUpdate(selectedTicket.id, 'in_progress')}
-                                        disabled={isUpdating || selectedTicket.status === 'in_progress'}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium border ${selectedTicket.status === 'in_progress' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
-                                    >
-                                        Mark In Progress
-                                    </button>
-                                    <button
-                                        onClick={() => handleStatusUpdate(selectedTicket.id, 'resolved')}
-                                        disabled={isUpdating || selectedTicket.status === 'resolved'}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium border ${selectedTicket.status === 'resolved' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
-                                    >
-                                        Mark Resolved
-                                    </button>
-                                    <button
-                                        onClick={() => handleStatusUpdate(selectedTicket.id, 'closed')}
-                                        disabled={isUpdating || selectedTicket.status === 'closed'}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium border ${selectedTicket.status === 'closed' ? 'bg-slate-600 text-white border-slate-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
-                                    >
-                                        Mark Closed
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

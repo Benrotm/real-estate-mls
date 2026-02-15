@@ -48,3 +48,105 @@ export async function createTicket(formData: FormData) {
     revalidatePath('/dashboard');
     return { success: true };
 }
+
+import { getOrCreateSupportConversation, sendMessage } from './chat';
+
+export async function submitPropertyReport(formData: FormData) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    const propertyId = formData.get('propertyId') as string;
+    const type = formData.get('reportType') as string; // 'irregularity' or 'claim'
+    const description = formData.get('description') as string;
+
+    if (!propertyId || !description) {
+        return { success: false, error: 'Description is required.' };
+    }
+
+    // Get Property Details for the message
+    const { data: property, error: propError } = await supabase
+        .from('properties')
+        .select('title, address')
+        .eq('id', propertyId)
+        .single();
+
+    if (propError || !property) {
+        return { success: false, error: 'Property not found.' };
+    }
+
+    const subject = type === 'claim'
+        ? `Ownership Claim: ${property.title}`
+        : `Report: ${property.title}`;
+
+    const ticketType = type === 'claim' ? 'feature_request' : 'property_report'; // Mapping 'claim' to feature_request or we could add a new enum? 
+    // The enum in migration was: 'bug', 'property_report', 'feature_request', 'other'.
+    // Let's use 'property_report' for irregularies and 'other' (or maybe 'feature_request' as a proxy for claim? or just 'property_report' for both?)
+    // Actually, distinct types helps. Let's use 'property_report' for both but distinguish in subject/description. 
+    // Wait, the plan said "Report Listing" -> "Claim Ownership".
+    // I'll use 'property_report' for both for now as it fits best.
+
+    // 1. Create Ticket
+    const { data: ticket, error: ticketError } = await supabase
+        .from('tickets')
+        .insert({
+            user_id: user.id,
+            type: 'property_report',
+            subject,
+            description: `Type: ${type}\nProperty ID: ${propertyId}\n\n${description}`,
+            status: 'open',
+            priority: type === 'claim' ? 'high' : 'medium',
+            property_id: propertyId
+        })
+        .select()
+        .single();
+
+    if (ticketError) {
+        console.error('Error creating ticket:', ticketError);
+        return { success: false, error: 'Failed to submit report.' };
+    }
+
+    // 2. Notify via Chat
+    const { conversationId, error: chatError } = await getOrCreateSupportConversation();
+
+    if (conversationId) {
+        const messageContent = type === 'claim'
+            ? `I have claimed ownership of property "${property.title}". Ticket #${ticket.id.slice(0, 8)} created.`
+            : `I have reported an issue with property "${property.title}". Ticket #${ticket.id.slice(0, 8)} created.`;
+
+        await sendMessage(conversationId, user.id, messageContent);
+    } else {
+        console.warn('Failed to start chat for report:', chatError);
+    }
+
+    revalidatePath(`/properties/${propertyId}`);
+    return { success: true };
+}
+
+export async function getUserTickets() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { tickets: [], error: 'Unauthorized' };
+    }
+
+    const { data: tickets, error } = await supabase
+        .from('tickets')
+        .select(`
+            *,
+            property:property_id (id, title, address)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching user tickets:', error);
+        return { tickets: [], error: 'Failed to fetch tickets' };
+    }
+
+    return { tickets };
+}
