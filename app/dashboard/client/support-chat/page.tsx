@@ -2,13 +2,13 @@ import SupportChatClient from '@/app/components/chat/SupportChatClient';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Support Chat | Real Estate MLS',
+    title: 'Support Chat | Client Dashboard',
     description: 'Chat with our support team.',
 };
 
-export default function SupportChatPage() {
+export default function ClientSupportChatPage() {
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Support Chat</h1>
             <SupportChatClient />
         </div>
