@@ -158,8 +158,21 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             ownerProfile = profile;
 
             // Check Feature Access sequentially
-            showMakeOffer = await checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.MAKE_AN_OFFER).catch(() => false);
-            showVirtualTour = await checkUserFeatureAccess(property.owner_id, SYSTEM_FEATURES.VIRTUAL_TOUR).catch(() => false);
+            // Bulk check all system features for the owner
+            const featureKeys = Object.values(SYSTEM_FEATURES);
+            const featureStatuses = await Promise.all(
+                featureKeys.map(key => checkUserFeatureAccess(property!.owner_id, key).catch(() => false))
+            );
+
+            // Create a record of feature access
+            const featureAccessRecord = featureKeys.reduce((acc, key, index) => {
+                acc[key] = featureStatuses[index];
+                return acc;
+            }, {} as Record<string, boolean>);
+
+            showMakeOffer = featureAccessRecord[SYSTEM_FEATURES.MAKE_AN_OFFER];
+            showVirtualTour = featureAccessRecord[SYSTEM_FEATURES.VIRTUAL_TOUR];
+            (property as any).system_features = featureAccessRecord;
         }
 
         if (user) {
@@ -771,11 +784,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     ownerId={property.owner_id}
                     propertyTitle={property.title}
                     currency={property.currency}
-                    features={{
-                        makeOffer: showMakeOffer,
-                        virtualTour: !!(showVirtualTour && property.virtual_tour_url),
-                        directMessage: false
-                    }}
+                    features={(property as any).system_features || {}}
                     propertyFeatures={property.features}
                 />
             </div>

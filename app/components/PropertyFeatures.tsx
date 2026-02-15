@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { BadgeDollarSign, Video, MessageCircle, ShieldCheck, Lock, CheckCircle2 } from 'lucide-react';
+import { BadgeDollarSign, Video, MessageCircle, ShieldCheck, Lock, CheckCircle2, Users, BarChart2, TrendingUp, Calendar, Calculator, Target, Eye } from 'lucide-react';
+import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import UpgradeModal from './UpgradeModal';
 // OfferModal is in the same directory (app/components) based on list_dir
 import OfferModal from './OfferModal';
@@ -9,11 +10,7 @@ import OfferModal from './OfferModal';
 interface PropertyFeaturesProps {
     propertyId: string;
     ownerId: string;
-    features: {
-        makeOffer: boolean;
-        virtualTour: boolean;
-        directMessage: boolean;
-    };
+    features: Record<string, boolean>;
     propertyTitle?: string;
     currency?: string;
     propertyFeatures?: string[];
@@ -30,6 +27,104 @@ export default function PropertyFeatures({ propertyId, ownerId, features, proper
         } else if (action) {
             action();
         }
+    };
+
+    const FEATURE_CONFIG: Record<string, { label: string, description: string, icon: any, color: string, action?: string }> = {
+        [SYSTEM_FEATURES.VIEW_OWNER_CONTACT]: {
+            label: 'View Owner Contact Info',
+            description: 'Identity of the property owner and direct contact details',
+            icon: Eye,
+            color: 'blue'
+        },
+        [SYSTEM_FEATURES.LEADS_ACCESS]: {
+            label: 'Leads Access',
+            description: 'Manage and communicate with potential buyers',
+            icon: Users,
+            color: 'indigo'
+        },
+        [SYSTEM_FEATURES.DIRECT_MESSAGE]: {
+            label: 'Direct Message',
+            description: 'Chat directly with the property owner',
+            icon: MessageCircle,
+            color: 'violet'
+        },
+        [SYSTEM_FEATURES.CALENDAR_EVENTS]: {
+            label: 'Calendar Events',
+            description: 'Schedule and track property related viewings',
+            icon: Calendar,
+            color: 'rose'
+        },
+        [SYSTEM_FEATURES.VALUATION_REPORTS]: {
+            label: 'Valuation Reports',
+            description: 'Detailed analysis of property market value',
+            icon: BarChart2,
+            color: 'amber'
+        },
+        [SYSTEM_FEATURES.MARKET_INSIGHTS]: {
+            label: 'Market Insights',
+            description: 'Real-time data on local property trends',
+            icon: TrendingUp,
+            color: 'emerald'
+        },
+        [SYSTEM_FEATURES.MAKE_AN_OFFER]: {
+            label: 'Make an Offer',
+            description: 'Submit a formal price offer directly to the owner',
+            icon: BadgeDollarSign,
+            color: 'emerald',
+            action: 'offer'
+        },
+        [SYSTEM_FEATURES.VIRTUAL_TOUR]: {
+            label: 'Virtual Tour Hosting',
+            description: 'Immersive 3D walkthrough experience',
+            icon: Video,
+            color: 'blue',
+            action: 'tour'
+        },
+        [SYSTEM_FEATURES.PROPERTY_INSIGHTS]: {
+            label: 'Property Insights',
+            description: 'Analytics on property performance',
+            icon: TrendingUp,
+            color: 'purple'
+        },
+        [SYSTEM_FEATURES.PROPERTY_PRICE_CALCULATOR]: {
+            label: 'Property Price Calculator',
+            description: 'Estimate property value based on inputs',
+            icon: Calculator,
+            color: 'indigo'
+        },
+        [SYSTEM_FEATURES.TARGET_MARKETING]: {
+            label: 'Target Marketing',
+            description: 'Reach specific buyer personas for this property',
+            icon: Target,
+            color: 'rose'
+        }
+    };
+
+    const getColorClasses = (color: string, active: boolean) => {
+        if (!active) return 'bg-slate-100 text-slate-400';
+        const classes: Record<string, string> = {
+            blue: 'bg-blue-100 text-blue-600',
+            indigo: 'bg-indigo-100 text-indigo-600',
+            violet: 'bg-violet-100 text-violet-600',
+            emerald: 'bg-emerald-100 text-emerald-600',
+            rose: 'bg-rose-100 text-rose-600',
+            amber: 'bg-amber-100 text-amber-600',
+            purple: 'bg-purple-100 text-purple-600',
+        };
+        return classes[color] || 'bg-slate-100 text-slate-600';
+    };
+
+    const getBadgeColorClasses = (color: string) => {
+        const classes: Record<string, string> = {
+            blue: 'text-blue-600 bg-blue-50',
+            indigo: 'text-indigo-600 bg-indigo-50',
+            violet: 'text-violet-600 bg-violet-50',
+            emerald: 'text-emerald-600 bg-emerald-50',
+            rose: 'text-rose-600 bg-rose-50',
+            amber: 'text-amber-600 bg-amber-50',
+            purple: 'text-purple-600 bg-purple-50',
+        };
+        return classes[color] || 'text-slate-600 bg-slate-50';
     };
 
     return (
@@ -50,89 +145,46 @@ export default function PropertyFeatures({ propertyId, ownerId, features, proper
             <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
 
                 <div className="divide-y divide-gray-100">
-                    {/* Make an Offer */}
-                    <div
-                        onClick={() => handleFeatureClick('Make an Offer', features.makeOffer, () => setIsOfferModalOpen(true))}
-                        className="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors group"
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-xl ${features.makeOffer ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                                {features.makeOffer ? <BadgeDollarSign className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
-                            </div>
-                            <div>
-                                <h4 className={`font-bold ${features.makeOffer ? 'text-slate-900' : 'text-slate-400'}`}>Make an Offer</h4>
-                                <p className="text-xs text-slate-500">Submit a formal price offer directly to the owner</p>
-                            </div>
-                        </div>
-                        <div>
-                            {features.makeOffer ? (
-                                <span className="text-emerald-600 text-sm font-bold flex items-center gap-1 bg-emerald-50 px-3 py-1 rounded-full">
-                                    <CheckCircle2 className="w-4 h-4" /> Available
-                                </span>
-                            ) : (
-                                <span className="text-slate-400 text-sm font-medium flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                                    Unlock Feature
-                                </span>
-                            )}
-                        </div>
-                    </div>
+                    {Object.entries(FEATURE_CONFIG).map(([key, config]) => {
+                        const hasAccess = features[key] || false;
+                        const Icon = config.icon;
 
-                    {/* Virtual Tour */}
-                    <div
-                        onClick={() => handleFeatureClick('Virtual Tour', features.virtualTour, () => {
-                            document.getElementById('virtual-tour-section')?.scrollIntoView({ behavior: 'smooth' });
-                        })}
-                        className="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors group"
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-xl ${features.virtualTour ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
-                                {features.virtualTour ? <Video className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
-                            </div>
-                            <div>
-                                <h4 className={`font-bold ${features.virtualTour ? 'text-slate-900' : 'text-slate-400'}`}>Virtual Tour</h4>
-                                <p className="text-xs text-slate-500"> immersive 3D walkthrough experience</p>
-                            </div>
-                        </div>
-                        <div>
-                            {features.virtualTour ? (
-                                <span className="text-blue-600 text-sm font-bold flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full">
-                                    <CheckCircle2 className="w-4 h-4" /> Available
-                                </span>
-                            ) : (
-                                <span className="text-slate-400 text-sm font-medium flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                                    Unlock Feature
-                                </span>
-                            )}
-                        </div>
-                    </div>
+                        const performAction = () => {
+                            if (config.action === 'offer') setIsOfferModalOpen(true);
+                            if (config.action === 'tour') document.getElementById('virtual-tour-section')?.scrollIntoView({ behavior: 'smooth' });
+                        };
 
-                    {/* Direct Message - Placeholder/Future */}
-                    <div
-                        onClick={() => handleFeatureClick('Direct Message', features.directMessage, () => { })}
-                        className="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors group"
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-xl ${features.directMessage ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-400'}`}>
-                                {features.directMessage ? <MessageCircle className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                        return (
+                            <div
+                                key={key}
+                                onClick={() => handleFeatureClick(config.label, hasAccess, performAction)}
+                                className="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={`p-3 rounded-xl transition-colors ${getColorClasses(config.color, hasAccess)}`}>
+                                        {hasAccess ? <Icon className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                                    </div>
+                                    <div>
+                                        <h4 className={`font-bold transition-colors ${hasAccess ? 'text-slate-900 group-hover:text-indigo-600' : 'text-slate-400'}`}>
+                                            {config.label}
+                                        </h4>
+                                        <p className="text-xs text-slate-500">{config.description}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    {hasAccess ? (
+                                        <span className={`text-sm font-bold flex items-center gap-1 px-3 py-1 rounded-full ${getBadgeColorClasses(config.color)}`}>
+                                            <CheckCircle2 className="w-4 h-4" /> Available
+                                        </span>
+                                    ) : (
+                                        <span className="text-slate-400 text-sm font-medium flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                            Unlock Feature
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                            <div>
-                                <h4 className={`font-bold ${features.directMessage ? 'text-slate-900' : 'text-slate-400'}`}>Direct Message</h4>
-                                <p className="text-xs text-slate-500">Chat directly with the property owner</p>
-                            </div>
-                        </div>
-                        <div>
-                            {features.directMessage ? (
-                                <span className="text-violet-600 text-sm font-bold flex items-center gap-1 bg-violet-50 px-3 py-1 rounded-full">
-                                    <CheckCircle2 className="w-4 h-4" /> Available
-                                </span>
-                            ) : (
-                                <span className="text-slate-400 text-sm font-medium flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                                    Unlock Feature
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
+                        );
+                    })}
                 </div>
 
                 {/* Property Features Synchronization */}
