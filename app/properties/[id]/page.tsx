@@ -776,6 +776,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         virtualTour: !!(showVirtualTour && property.virtual_tour_url),
                         directMessage: false
                     }}
+                    propertyFeatures={property.features}
                 />
             </div>
         </div>
