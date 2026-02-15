@@ -6,7 +6,7 @@ import { importPropertiesFromCSV } from '@/app/lib/actions/import';
 import { scrapeProperty, ScrapedProperty } from '@/app/lib/actions/scrape';
 
 interface ImportPropertiesModalProps {
-    onScrapeSuccess?: (data: ScrapedProperty) => void;
+    onScrapeSuccess?: (data: ScrapedProperty) => void | Promise<void>;
     showDefaultButton?: boolean;
     forceOpen?: boolean;
     onClose?: () => void;
@@ -76,16 +76,26 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
             if (error) {
                 setResult({ success: false, message: error });
             } else if (data) {
-                setResult({ success: true, message: 'Property data scraped successfully! The form will be populated.' });
                 // Pass data back to parent form
                 if (onScrapeSuccess) {
-                    onScrapeSuccess(data);
-                }
+                    try {
+                        await onScrapeSuccess(data);
+                        setResult({ success: true, message: 'Property imported successfully! Redirecting...' });
 
-                // Close modal after short delay to show success
-                setTimeout(() => {
-                    handleClose();
-                }, 1500);
+                        // Close modal after short delay to show success
+                        setTimeout(() => {
+                            handleClose();
+                        }, 1500);
+                    } catch (saveError: any) {
+                        setResult({ success: false, message: saveError.message || 'Failed to save property.' });
+                    }
+                } else {
+                    setResult({ success: true, message: 'Property data scraped successfully!' });
+                    // Close modal after short delay to show success
+                    setTimeout(() => {
+                        handleClose();
+                    }, 1500);
+                }
             }
         } catch (error) {
             setResult({ success: false, message: 'Failed to scrape URL. Please try again.' });

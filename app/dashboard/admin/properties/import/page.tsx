@@ -43,10 +43,11 @@ export default function ImportPage() {
                 router.push(`/dashboard/admin/properties/${res.data.id}/edit`);
             } else {
                 console.error('Failed to save scraped property:', res.error);
-                // Optionally show error to user (requires local state update)
+                throw new Error(res.error || 'Failed to save property draft');
             }
         } catch (error) {
             console.error('Error in handleScrapeSuccess:', error);
+            throw error; // Re-throw to be caught by the modal
         }
     };
 
