@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { scrapeOlx, scrapePubli24, importFromApi, getImportSettings, saveImportSettings, ImportResult, ImportSettings } from '@/app/lib/actions/import';
-import { Globe, Database, Loader2, Play, CheckCircle, AlertCircle, ArrowLeft, Settings, Save, LayoutGrid } from 'lucide-react';
+import { Globe, Database, Loader2, Play, CheckCircle, AlertCircle, ArrowLeft, Settings, Save, LayoutGrid, Upload, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
+import ImportPropertiesModal from '@/app/components/properties/ImportPropertiesModal';
 
 export default function ImportPage() {
     const [activeTab, setActiveTab] = useState<'runner' | 'settings'>('runner');
@@ -13,6 +14,9 @@ export default function ImportPage() {
         publi24: null,
         api: null
     });
+
+    // Modal State
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // Settings State
     const [settings, setSettings] = useState<ImportSettings>({
@@ -56,6 +60,15 @@ export default function ImportPage() {
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
+            <ImportPropertiesModal
+                showDefaultButton={false}
+                forceOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+                onScrapeSuccess={() => {
+                    // Optional: could show a success toast or refresh list
+                }}
+            />
+
             <div className="mb-8">
                 <Link href="/dashboard/admin/properties" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-4">
                     <ArrowLeft className="w-4 h-4" /> Back to All Properties
@@ -88,7 +101,33 @@ export default function ImportPage() {
             {activeTab === 'runner' ? (
                 /* RUNNER VIEW */
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {/* Manual / Bulk Import Card */}
+                        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-3 opacity-10">
+                                <Upload className="w-24 h-24" />
+                            </div>
+                            <div className="flex items-center gap-4 mb-4 relative z-10">
+                                <div className="w-12 h-12 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center">
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-900">Bulk Import</h3>
+                                    <p className="text-xs text-slate-500">CSV, Link, XML</p>
+                                </div>
+                            </div>
+                            <p className="text-slate-600 text-sm mb-6 flex-1 relative z-10">
+                                Upload CSV files, scrape individual links, or sync via XML/CRM feeds.
+                            </p>
+                            <button
+                                onClick={() => setShowImportModal(true)}
+                                className="w-full py-2.5 px-4 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 relative z-10"
+                            >
+                                <Upload className="w-4 h-4" />
+                                Open Importer
+                            </button>
+                        </div>
+
                         {/* OLX Scraper Card */}
                         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col">
                             <div className="flex items-center gap-4 mb-4">
