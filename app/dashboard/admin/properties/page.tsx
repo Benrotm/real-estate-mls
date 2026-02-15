@@ -1,5 +1,5 @@
 import { fetchAllPropertiesAdmin, deletePropertyAdmin } from '@/app/lib/actions/admin';
-import { Trash2, MapPin, ExternalLink, User, Edit } from 'lucide-react';
+import { Trash2, MapPin, ExternalLink, User, Edit, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -31,8 +31,13 @@ export default async function AdminPropertiesPage() {
                     <h1 className="text-3xl font-bold text-slate-900">All Properties Management</h1>
                     <p className="text-slate-500">Super Admin view of all listings.</p>
                 </div>
-                <div className="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold">
-                    Total: {properties.length}
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard/admin/properties/import" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors">
+                        <Globe className="w-4 h-4" /> Import Listings
+                    </Link>
+                    <div className="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold">
+                        Total: {properties.length}
+                    </div>
                 </div>
             </div>
 
