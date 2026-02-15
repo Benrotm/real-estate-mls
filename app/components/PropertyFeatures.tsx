@@ -13,10 +13,9 @@ interface PropertyFeaturesProps {
     features: Record<string, boolean>;
     propertyTitle?: string;
     currency?: string;
-    propertyFeatures?: string[];
 }
 
-export default function PropertyFeatures({ propertyId, ownerId, features, propertyTitle = '', currency = 'USD', propertyFeatures = [] }: PropertyFeaturesProps) {
+export default function PropertyFeatures({ propertyId, ownerId, features, propertyTitle = '', currency = 'USD' }: PropertyFeaturesProps) {
     const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
     const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -187,23 +186,6 @@ export default function PropertyFeatures({ propertyId, ownerId, features, proper
                     })}
                 </div>
 
-                {/* Property Features Synchronization */}
-                {propertyFeatures && propertyFeatures.length > 0 && (
-                    <div className="p-6 bg-slate-50/50 border-t border-gray-100">
-                        <div className="flex items-center gap-2 mb-4">
-                            <CheckCircle2 className="w-5 h-5 text-indigo-600" />
-                            <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Included Amenities</h4>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                            {propertyFeatures.map((feature, i) => (
-                                <div key={i} className="flex items-center gap-2 text-sm text-slate-600 bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
-                                    <span>{feature}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 <UpgradeModal
                     isOpen={!!upgradeFeature}

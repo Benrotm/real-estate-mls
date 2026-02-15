@@ -785,7 +785,6 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     propertyTitle={property.title}
                     currency={property.currency}
                     features={(property as any).system_features || {}}
-                    propertyFeatures={property.features}
                 />
             </div>
         </div>
