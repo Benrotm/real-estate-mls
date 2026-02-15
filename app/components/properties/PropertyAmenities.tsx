@@ -107,13 +107,16 @@ export default function PropertyAmenities({ features }: PropertyAmenitiesProps) 
 
                 <div className="relative p-6 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${isExpanded ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-lg group-hover:shadow-slate-100'
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${isExpanded
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 group-hover:shadow-lg group-hover:shadow-indigo-100/50'
                             }`}>
                             <Sparkles className={`w-6 h-6 ${isExpanded ? 'animate-pulse' : ''}`} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Features & Amenities</h2>
-                            <p className="text-sm text-slate-500">Explore the property's unique characteristics</p>
+                            <h2 className={`text-xl font-bold tracking-tight transition-colors duration-500 ${isExpanded ? 'text-slate-900' : 'text-indigo-600 group-hover:text-indigo-700'
+                                }`}>Features & Amenities</h2>
+                            <p className="text-sm text-slate-500 font-medium">Explore the property's unique characteristics</p>
                         </div>
                     </div>
 
