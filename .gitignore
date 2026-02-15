@@ -41,3 +41,14 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+scripts/verify_tickets.js
+scripts/get_admin_email.js
+scripts/promote_test_user.js
+scripts/demote_test_user.js
+scripts/apply_manual_migration.js
+scripts/apply_manual_migration.ts
+scripts/apply_rls_migration.ts
+scripts/check_db_url.ts
+scripts/debug_schema.js
+scripts/test_report_submission.ts

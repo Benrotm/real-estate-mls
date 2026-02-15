@@ -1,6 +1,6 @@
 -- Add property_id to tickets table
 ALTER TABLE tickets 
-ADD COLUMN IF NOT EXISTS property_id uuid REFERENCES properties(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS property_id text REFERENCES properties(id) ON DELETE SET NULL;
 
 -- Enable RLS for this new column if needed (policies might already cover it, but let's check)
 -- Existing policies cover "Select" for owner and admins, and "Insert" for owner.
