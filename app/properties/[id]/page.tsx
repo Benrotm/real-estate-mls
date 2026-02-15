@@ -644,48 +644,73 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     {property.social_media_url && (
                         <div className="space-y-6 mt-10">
                             <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                                <Sparkles className="w-6 h-6 text-pink-500" />
+                                <Sparkles className="w-6 h-6 text-pink-500 animate-pulse" />
                                 Social Media Spotlight
                             </h2>
-                            <div className="bg-zinc-950 rounded-2xl overflow-hidden shadow-2xl border border-zinc-800">
-                                <div className="w-full h-[600px] relative flex justify-center bg-black">
-                                    {property.social_media_url.includes('instagram.com/reel') ? (
-                                        <iframe
-                                            src={`${property.social_media_url}embed`}
-                                            className="w-full h-full max-w-[400px]"
-                                            frameBorder="0"
-                                            allowFullScreen
-                                        ></iframe>
-                                    ) : property.social_media_url.includes('tiktok.com') ? (
-                                        <blockquote className="tiktok-embed" cite={property.social_media_url} data-video-id={property.social_media_url.split('/video/')[1]} style={{ maxWidth: '605px', minWidth: '325px' }}>
-                                            <section>
-                                                <a target="_blank" href={property.social_media_url} className="text-white underline">View TikTok</a>
-                                            </section>
-                                            <script async src="https://www.tiktok.com/embed.js"></script>
-                                        </blockquote>
-                                    ) : property.social_media_url.includes('youtube.com/shorts') ? (
-                                        <iframe
-                                            src={property.social_media_url.replace('shorts/', 'embed/')}
-                                            className="w-full h-full max-w-[400px]"
-                                            frameBorder="0"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowFullScreen
-                                        ></iframe>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center p-10 text-center h-full">
-                                            <p className="text-slate-400 mb-6">View this property on social media</p>
-                                            <a
-                                                href={property.social_media_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-8 rounded-full transition-colors flex items-center gap-2"
-                                            >
-                                                Open Social Media Link <ArrowRight className="w-4 h-4" />
-                                            </a>
+
+                            {(() => {
+                                const url = property.social_media_url.toLowerCase();
+                                let platform = 'Social Media';
+                                let icon = Sparkles;
+                                let theme = 'from-pink-500 to-rose-500';
+                                let hoverTheme = 'group-hover:from-pink-600 group-hover:to-rose-600';
+                                let platformIcon = null;
+
+                                if (url.includes('instagram.com')) {
+                                    platform = 'Instagram';
+                                    theme = 'from-purple-600 via-pink-600 to-orange-500';
+                                    hoverTheme = 'group-hover:from-purple-700 group-hover:via-pink-700 group-hover:to-orange-600';
+                                    platformIcon = <Instagram className="w-8 h-8 text-white" />;
+                                } else if (url.includes('tiktok.com')) {
+                                    platform = 'TikTok';
+                                    theme = 'from-zinc-900 via-zinc-800 to-zinc-900';
+                                    hoverTheme = 'group-hover:from-black group-hover:via-zinc-900 group-hover:to-black';
+                                    platformIcon = (
+                                        <div className="relative">
+                                            <div className="absolute -inset-1 bg-cyan-400 opacity-75 blur rounded-full animate-pulse"></div>
+                                            <div className="absolute -inset-1 bg-pink-500 opacity-75 blur rounded-full animate-pulse delay-75"></div>
+                                            <Video className="w-8 h-8 text-white relative z-10" />
                                         </div>
-                                    )}
-                                </div>
-                            </div>
+                                    );
+                                } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                                    platform = 'YouTube';
+                                    theme = 'from-red-600 to-red-700';
+                                    hoverTheme = 'group-hover:from-red-700 group-hover:to-red-800';
+                                    platformIcon = <Youtube className="w-10 h-10 text-white" />;
+                                }
+
+                                return (
+                                    <div className="group relative overflow-hidden rounded-3xl p-[1px] bg-slate-200 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-100 hover:-translate-y-1">
+                                        <div className={`absolute inset-0 bg-gradient-to-r ${theme} opacity-20 group-hover:opacity-100 transition-opacity duration-500`} />
+
+                                        <div className="relative bg-white rounded-[23px] overflow-hidden">
+                                            <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                                                <div className="flex items-center gap-6">
+                                                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${theme} ${hoverTheme} flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-3`}>
+                                                        {platformIcon || <Sparkles className="w-8 h-8 text-white" />}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none mb-2">Property Spotlight</h3>
+                                                        <p className="text-slate-500 font-medium">Experience this home on {platform}</p>
+                                                    </div>
+                                                </div>
+
+                                                <a
+                                                    href={property.social_media_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`w-full md:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r ${theme} ${hoverTheme} text-white font-bold flex items-center justify-center gap-3 shadow-lg shadow-pink-100/50 transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 active:scale-95`}
+                                                >
+                                                    View Spotlight <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                                </a>
+                                            </div>
+
+                                            {/* Decorative element */}
+                                            <div className={`absolute -right-10 -bottom-10 w-40 h-40 bg-gradient-to-br ${theme} opacity-[0.03] rounded-full blur-3xl group-hover:opacity-10 transition-opacity`} />
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     )}
 
