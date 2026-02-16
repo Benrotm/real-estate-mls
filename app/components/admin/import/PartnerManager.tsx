@@ -3,13 +3,17 @@
 import { useState, useEffect } from 'react';
 import { ScraperConfig, getScraperConfigs, saveScraperConfig, deleteScraperConfig } from '@/app/lib/actions/scraper-config';
 import { scrapeProperty } from '@/app/lib/actions/scrape';
-import { Plus, Trash2, Save, Play, Globe, Code, CheckCircle, AlertCircle, RefreshCw, X } from 'lucide-react';
+import { Plus, Trash2, Save, Play, Globe, Code, CheckCircle, AlertCircle, RefreshCw, X, Wand2 } from 'lucide-react';
+import SmartMapper from './SmartMapper';
 
 export default function PartnerManager() {
     const [configs, setConfigs] = useState<ScraperConfig[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedConfig, setSelectedConfig] = useState<ScraperConfig | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+
+    // Smart Mapper State
+    const [isSmartMapping, setIsSmartMapping] = useState(false);
 
     // Test State
     const [testUrl, setTestUrl] = useState('');
@@ -40,6 +44,7 @@ export default function PartnerManager() {
         };
         setSelectedConfig(newConfig);
         setIsEditing(true);
+        setIsSmartMapping(false);
         setTestResult(null);
         setTestUrl('');
     };
@@ -47,6 +52,7 @@ export default function PartnerManager() {
     const handleEdit = (config: ScraperConfig) => {
         setSelectedConfig({ ...config });
         setIsEditing(true);
+        setIsSmartMapping(false);
         setTestResult(null);
         setTestUrl('');
     };
@@ -71,6 +77,13 @@ export default function PartnerManager() {
         } else {
             alert('Failed to save: ' + res.message);
         }
+    };
+
+    const handleSmartMapSave = (newSelectors: ScraperConfig['selectors']) => {
+        if (!selectedConfig) return;
+        setSelectedConfig({ ...selectedConfig, selectors: newSelectors });
+        setIsSmartMapping(false);
+        // We don't auto-save to DB here, allowing user to review in the main form first.
     };
 
     const handleTestScrape = async () => {
@@ -107,6 +120,17 @@ export default function PartnerManager() {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Smart Mapper Modal Overlay */}
+            {isSmartMapping && selectedConfig && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <SmartMapper
+                        config={selectedConfig}
+                        onSave={handleSmartMapSave}
+                        onCancel={() => setIsSmartMapping(false)}
+                    />
+                </div>
+            )}
+
             {/* List Sidebar */}
             <div className="lg:col-span-1 space-y-4">
                 <div className="flex justify-between items-center">
@@ -191,26 +215,35 @@ export default function PartnerManager() {
 
                             <hr className="border-slate-100" />
 
-                            {/* Selectors Grid */}
-                            <div>
-                                <div className="flex items-center gap-2 mb-4">
+                            {/* Selectors Grid Header */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
                                     <Code className="w-4 h-4 text-purple-600" />
                                     <h4 className="font-bold text-slate-900">CSS Selectors Mapping</h4>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {Object.keys(selectedConfig.selectors).map((key) => (
-                                        <div key={key}>
-                                            <label className="block text-xs font-bold text-slate-500 mb-1 capitalize">{key}</label>
-                                            <input
-                                                type="text"
-                                                value={(selectedConfig.selectors as any)[key]}
-                                                onChange={(e) => updateSelector(key as any, e.target.value)}
-                                                className="w-full p-2 border border-slate-200 rounded-lg text-sm font-mono text-blue-600 bg-slate-50"
-                                                placeholder={`.${key}-class`}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                                <button
+                                    onClick={() => setIsSmartMapping(true)}
+                                    className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-sm font-bold hover:bg-indigo-100 transition flex items-center gap-2"
+                                >
+                                    <Wand2 className="w-3 h-3" />
+                                    Smart Map
+                                </button>
+                            </div>
+
+                            {/* Selectors Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {Object.keys(selectedConfig.selectors).map((key) => (
+                                    <div key={key}>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1 capitalize">{key}</label>
+                                        <input
+                                            type="text"
+                                            value={(selectedConfig.selectors as any)[key]}
+                                            onChange={(e) => updateSelector(key as any, e.target.value)}
+                                            className="w-full p-2 border border-slate-200 rounded-lg text-sm font-mono text-blue-600 bg-slate-50"
+                                            placeholder={`.${key}-class`}
+                                        />
+                                    </div>
+                                ))}
                             </div>
 
                             <hr className="border-slate-100" />
@@ -229,9 +262,10 @@ export default function PartnerManager() {
                                     <button
                                         onClick={handleTestScrape}
                                         disabled={isTesting || !testUrl}
-                                        className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 disabled:opacity-50"
+                                        className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 disabled:opacity-50 flex items-center gap-2"
                                     >
-                                        {isTesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Test Scrape'}
+                                        {isTesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-3 h-3" />}
+                                        Test Scrape
                                     </button>
                                 </div>
 
