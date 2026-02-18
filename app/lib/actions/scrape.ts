@@ -312,7 +312,7 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             if (content && content.includes('var imageList =')) {
                 try {
                     // Extract the array: var imageList = [...];
-                    const match = content.match(/var\s+imageList\s*=\s*(\[.*?\]);/s);
+                    const match = content.match(/var\s+imageList\s*=\s*(\[[\s\S]*?\]);/);
                     if (match && match[1]) {
                         const json = JSON.parse(match[1]);
                         if (Array.isArray(json)) {
