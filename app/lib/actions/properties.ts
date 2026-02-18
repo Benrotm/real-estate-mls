@@ -506,18 +506,21 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             location_area: data.location_area || '',
 
             // Specs
-            rooms: data.rooms || 0,
-            bedrooms: data.bedrooms || null,
-            bathrooms: data.bathrooms || null,
+            rooms: (data.rooms && data.rooms > 0 && data.rooms < 100) ? data.rooms : null,
+            bedrooms: (data.bedrooms && data.bedrooms > 0 && data.bedrooms < 100) ? data.bedrooms : null,
+            bathrooms: (data.bathrooms && data.bathrooms > 0 && data.bathrooms < 100) ? data.bathrooms : null,
 
             area_usable: data.area_usable || null,
             area_built: data.area_built || null,
             area_terrace: data.area_terrace || null,
             area_garden: data.area_garden || null,
 
-            floor: data.floor || null,
-            total_floors: data.total_floors || null,
-            year_built: data.year_built || null,
+            // Clamp floors to realistic values to avoid integer overflow from bad scraping (e.g. IDs)
+            floor: (data.floor !== undefined && data.floor !== null && data.floor > -20 && data.floor < 200) ? data.floor : null,
+            total_floors: (data.total_floors && data.total_floors > 0 && data.total_floors < 200) ? data.total_floors : null,
+
+            // Validate year built (e.g. 1700 - 2100). Scrapers often pick up IDs or Phone numbers here by mistake.
+            year_built: (data.year_built && data.year_built > 1700 && data.year_built < 2100) ? data.year_built : null,
 
             partitioning: data.partitioning || '',
             comfort: data.comfort || '',
