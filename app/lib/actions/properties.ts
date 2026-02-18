@@ -552,3 +552,49 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
         return { error: e.message };
     }
 }
+
+export async function deleteProperty(id: string) {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: 'Unauthorized' };
+    }
+
+    // Verify ownership or admin status
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    const isAdmin = profile?.role === 'super_admin';
+
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', id)
+        .single();
+
+    if (!property || (property.owner_id !== user.id && !isAdmin)) {
+        return { error: 'Unauthorized: You do not own this property' };
+    }
+
+    const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    revalidatePath('/properties');
+    revalidatePath('/dashboard/owner');
+    revalidatePath('/dashboard/admin/properties');
+    revalidatePath('/dashboard/admin/my-properties');
+    revalidatePath(`/dashboard/owner/properties`);
+
+    return { success: true };
+}

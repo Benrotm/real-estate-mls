@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { PropertyWithOffers, PropertyOffer, PropertyInquiry, updateOfferStatus, updateInquiryStatus, deleteInquiry } from '@/app/lib/actions/offers';
-import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award, MessageSquare } from 'lucide-react';
+import { deleteProperty } from '@/app/lib/actions/properties';
+import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award, MessageSquare, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import PropertyManageButtons from '../PropertyManageButtons';
@@ -308,6 +309,18 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                             <Edit className="w-4 h-4" />
                         </Link>
 
+                        <button
+                            onClick={async () => {
+                                if (confirm('Are you sure you want to delete this property? This action cannot be undone.')) {
+                                    await deleteProperty(property.id);
+                                }
+                            }}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mr-2"
+                            title="Delete property"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+
                         <div className="w-32 scale-90 origin-right">
                             {/* Wrap PropertyManageButtons to match size */}
                             <PropertyManageButtons
@@ -317,7 +330,6 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                         </div>
                     </div>
                 </div>
-
             </div>
 
             {/* Offers Section */}
