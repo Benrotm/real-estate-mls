@@ -214,6 +214,33 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
             }
         });
 
+        // 8. Special Site Logic (Publi24 Image List)
+        $('script').each((_, el) => {
+            const content = $(el).html() || '';
+            if (content.includes('var imageList =')) {
+                const match = content.match(/var\s+imageList\s*=\s*(\[[\s\S]*?\]);/);
+                if (match && match[1]) {
+                    try {
+                        const json = JSON.parse(match[1]);
+                        if (Array.isArray(json)) {
+                            addCandidate('Publi24 Images', `Found ${json.length} images in global variable`, 'script:contains("imageList")', 'json-ld', 1.0);
+                            // Also add specifically as "Images" candidate
+                            candidates.push({
+                                id: `cand_${++candidateId}`,
+                                label: 'Images (Publi24)',
+                                value: `${json.length} images found`,
+                                selector: 'script:contains("imageList")',
+                                sourceType: 'json-ld',
+                                confidence: 1.0
+                            });
+                        }
+                    } catch (e) {
+                        // ignore parse error
+                    }
+                }
+            }
+        });
+
         // Deduplicate candidates by selector (keep first/best)
         const uniqueCandidates: AttributeCandidate[] = [];
         const seenSelectors = new Set<string>();
