@@ -743,6 +743,8 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         offers={analytics.offers}
                         shares={analytics.shares}
                         createdAt={analytics.createdAt}
+                        price={property.price}
+                        area={property.area_usable || property.area_built}
                     />
 
                     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm sticky top-24">

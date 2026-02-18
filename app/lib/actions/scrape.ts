@@ -8,9 +8,49 @@ export interface ScrapedProperty {
     price?: number;
     currency?: string;
     images?: string[];
-    address?: string;
+
+    // Type
     type?: string;
     listing_type?: string;
+
+    // Contact
+    owner_name?: string;
+    owner_phone?: string;
+    private_notes?: string;
+
+    // Location
+    address?: string; // location selector maps to address usually
+    location_county?: string;
+    location_city?: string;
+    location_area?: string;
+
+    // Specs
+    rooms?: number;
+    bedrooms?: number;
+    bathrooms?: number;
+
+    area?: number; // generic
+    area_usable?: number;
+    area_built?: number;
+    area_terrace?: number;
+    area_garden?: number;
+
+    floor?: number;
+    total_floors?: number;
+    year_built?: number;
+
+    partitioning?: string;
+    comfort?: string;
+
+    building_type?: string;
+    interior_condition?: string;
+    furnishing?: string;
+
+    // Media & Features
+    features?: string[];
+    video_url?: string;
+    virtual_tour_url?: string;
+
     url?: string;
     [key: string]: any;
     debugInfo?: any;
@@ -66,26 +106,100 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             } catch (e) { }
         };
 
+        // Helper: Clean Number
+        const getNumber = (sel: string, isInt: boolean = false) => {
+            if (!sel) return undefined;
+            let txt = $(sel).text().trim();
+            if (!txt) return undefined;
+
+            // Handle EU format: 1.234,56 -> 1234.56
+            // Or 1.234 -> 1234 (if followed by 3 digits and looks like thousands)
+            if (txt.match(/[0-9]\.[0-9]{3}/)) {
+                // Likely thousands separator if we see dot followed by 3 digits
+                // And if there is a comma later, it's definitely EU
+                if (txt.includes(',') || txt.split('.').length > 1) {
+                    txt = txt.replace(/\./g, '').replace(',', '.');
+                }
+            } else if (txt.includes(',')) {
+                // If just comma and no dot (e.g. 123,45), replace with dot
+                txt = txt.replace(',', '.');
+            }
+
+            const cleanTxt = txt.replace(/[^0-9.]/g, '');
+            return isInt ? parseInt(cleanTxt) : parseFloat(cleanTxt);
+        };
+
+        // Helper: Get Text
+        const getText = (sel: string) => {
+            if (!sel) return undefined;
+            return $(sel).text().trim() || undefined;
+        };
+
         // 0. CUSTOM SELECTORS (Priority High)
         if (customSelectors) {
-            if (customSelectors.title) data.title = $(customSelectors.title).text().trim();
-            if (customSelectors.price) {
-                const priceText = $(customSelectors.price).text().replace(/[^0-9.,]/g, '').replace(',', '.');
-                data.price = parseFloat(priceText);
-            }
-            if (customSelectors.currency) data.currency = $(customSelectors.currency).text().trim();
-            if (customSelectors.description) data.description = $(customSelectors.description).text().trim();
-            if (customSelectors.location) data.address = $(customSelectors.location).text().trim();
+            // Basics
+            if (customSelectors.title) data.title = getText(customSelectors.title);
+            if (customSelectors.currency) data.currency = getText(customSelectors.currency);
+            if (customSelectors.description) data.description = getText(customSelectors.description);
+            if (customSelectors.type) data.type = getText(customSelectors.type);
+            if (customSelectors.listing_type) data.listing_type = getText(customSelectors.listing_type);
 
-            // Specs
-            if (customSelectors.rooms) data.rooms = parseInt($(customSelectors.rooms).text().replace(/\D/g, ''));
-            if (customSelectors.area) data.area_usable = parseFloat($(customSelectors.area).text().replace(/[^0-9.]/g, ''));
-            if (customSelectors.floor) data.floor = parseInt($(customSelectors.floor).text().replace(/\D/g, ''));
+            // Contact
+            if (customSelectors.owner_name) data.owner_name = getText(customSelectors.owner_name);
+            if (customSelectors.owner_phone) data.owner_phone = getText(customSelectors.owner_phone);
+            if (customSelectors.private_notes) data.private_notes = getText(customSelectors.private_notes);
+
+            if (customSelectors.price) {
+                // Special price handling to cleanup currency symbols if mixed
+                data.price = getNumber(customSelectors.price);
+            }
+
+            // Location
+            if (customSelectors.location) data.address = getText(customSelectors.location);
+            if (customSelectors.location_county) data.location_county = getText(customSelectors.location_county);
+            if (customSelectors.location_city) data.location_city = getText(customSelectors.location_city);
+            if (customSelectors.location_area) data.location_area = getText(customSelectors.location_area);
+
+            // Specs - Strings
+            if (customSelectors.partitioning) data.partitioning = getText(customSelectors.partitioning);
+            if (customSelectors.comfort) data.comfort = getText(customSelectors.comfort);
+            if (customSelectors.building_type) data.building_type = getText(customSelectors.building_type);
+            if (customSelectors.interior_condition) data.interior_condition = getText(customSelectors.interior_condition);
+            if (customSelectors.furnishing) data.furnishing = getText(customSelectors.furnishing);
+
+            // Specs - Numbers
+            if (customSelectors.rooms) data.rooms = getNumber(customSelectors.rooms, true);
+            if (customSelectors.bedrooms) data.bedrooms = getNumber(customSelectors.bedrooms, true);
+            if (customSelectors.bathrooms) data.bathrooms = getNumber(customSelectors.bathrooms, true);
+
+            if (customSelectors.area) data.area_usable = getNumber(customSelectors.area); // Map 'area' to usable by default
+            if (customSelectors.area_usable) data.area_usable = getNumber(customSelectors.area_usable);
+            if (customSelectors.area_built) data.area_built = getNumber(customSelectors.area_built);
+            if (customSelectors.area_terrace) data.area_terrace = getNumber(customSelectors.area_terrace);
+            if (customSelectors.area_garden) data.area_garden = getNumber(customSelectors.area_garden);
+
+            if (customSelectors.floor) data.floor = getNumber(customSelectors.floor, true);
+            if (customSelectors.total_floors) data.total_floors = getNumber(customSelectors.total_floors, true);
+            if (customSelectors.year_built) data.year_built = getNumber(customSelectors.year_built, true);
+
+            // Media
+            if (customSelectors.video_url) data.video_url = $(customSelectors.video_url).attr('src') || $(customSelectors.video_url).attr('href');
+            if (customSelectors.virtual_tour_url) data.virtual_tour_url = $(customSelectors.virtual_tour_url).attr('src') || $(customSelectors.virtual_tour_url).attr('href');
+
+            // Features List
+            if (customSelectors.features) {
+                const feats: string[] = [];
+                $(customSelectors.features).each((_, el) => {
+                    const txt = $(el).text().trim();
+                    if (txt) feats.push(txt);
+                });
+                if (feats.length > 0) data.features = feats;
+            }
 
             // Images
             if (customSelectors.images) {
                 $(customSelectors.images).each((_, el) => {
-                    addImage($(el).attr('src') || $(el).attr('data-src'));
+                    addImage($(el).attr('src') || $(el).attr('data-src') || $(el).attr('href'));
                 });
             }
         }
@@ -215,7 +329,7 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
         let catchAllText = '';
 
         // Strategy: Get text from specific containers or fall back to body
-        const contentContainer = $('article, main, #content, .content, .listing-detail, .property-description').first();
+        const contentContainer = $('article, main, #content, .content, .listing-detail, .property-description, .article-description').first();
         const root = contentContainer.length ? contentContainer : $('body');
 
         // Collect text from generic tags, formatted
@@ -242,7 +356,18 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
 
         // Defaults
         if (data.title && !data.currency) data.currency = 'EUR';
-        if (data.title && !data.type) data.type = 'Apartment';
+        if (data.title && !data.type) {
+            const textToSearch = (data.title + ' ' + (url || '')).toLowerCase();
+            if (textToSearch.includes('casa') || textToSearch.includes('vila') || textToSearch.includes('house') || textToSearch.includes('villa')) {
+                data.type = 'House';
+            } else if (textToSearch.includes('teren') || textToSearch.includes('land') || textToSearch.includes('lot')) {
+                data.type = 'Land';
+            } else if (textToSearch.includes('spatiu') || textToSearch.includes('office') || textToSearch.includes('comercial')) {
+                data.type = 'Commercial';
+            } else {
+                data.type = 'Apartment';
+            }
+        }
 
         return { data };
 

@@ -8,16 +8,52 @@ export interface ScraperConfig {
     domain: string;
     name: string;
     selectors: {
+        // Step 1: Basics
         title: string;
         price: string;
         currency: string;
-        location: string;
         description: string;
-        images: string;
-        // Specs
+        type: string;
+        listing_type: string;
+
+        // Contact
+        owner_name: string;
+        owner_phone: string;
+        private_notes: string;
+
+        // Step 2: Location
+        location: string; // Full address string
+        location_county: string;
+        location_city: string;
+        location_area: string;
+
+        // Step 3: Specs
         rooms: string;
-        area: string;
+        bedrooms: string;
+        bathrooms: string;
+
+        area: string; // Generic area
+        area_usable: string;
+        area_built: string;
+        area_terrace: string;
+        area_garden: string;
+
         floor: string;
+        total_floors: string;
+        year_built: string;
+
+        partitioning: string; // decomandat etc
+        comfort: string; // 1, 2 etc
+
+        building_type: string; // block, house etc
+        interior_condition: string;
+        furnishing: string;
+
+        // Step 4: Features & Media
+        features: string; // Selector for feature list items
+        images: string;
+        video_url: string;
+        virtual_tour_url: string;
     };
     isActive: boolean;
 }

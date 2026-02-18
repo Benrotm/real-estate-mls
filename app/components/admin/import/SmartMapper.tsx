@@ -13,15 +13,52 @@ interface SmartMapperProps {
 
 // Internal fields we want to map
 const INTERNAL_FIELDS: { key: keyof ScraperConfig['selectors']; label: string }[] = [
+    // Basics
     { key: 'title', label: 'Title' },
     { key: 'price', label: 'Price' },
     { key: 'currency', label: 'Currency' },
-    { key: 'location', label: 'Location' },
     { key: 'description', label: 'Description' },
-    { key: 'images', label: 'Images' },
+    { key: 'type', label: 'Property Type' },
+    { key: 'listing_type', label: 'Listing Type' },
+
+    // Contact
+    { key: 'owner_name', label: 'Owner Name' },
+    { key: 'owner_phone', label: 'Owner Phone' },
+    { key: 'private_notes', label: 'Private Notes' },
+
+    // Location
+    { key: 'location', label: 'Full Address' },
+    { key: 'location_county', label: 'County' },
+    { key: 'location_city', label: 'City' },
+    { key: 'location_area', label: 'Area/Neighborhood' },
+
+    // Specs
     { key: 'rooms', label: 'Rooms' },
-    { key: 'area', label: 'Area' },
+    { key: 'bedrooms', label: 'Bedrooms' },
+    { key: 'bathrooms', label: 'Bathrooms' },
+
+    { key: 'area', label: 'Area (Generic)' },
+    { key: 'area_usable', label: 'Usable Area' },
+    { key: 'area_built', label: 'Built Area' },
+    { key: 'area_terrace', label: 'Terrace Area' },
+    { key: 'area_garden', label: 'Garden Area' },
+
     { key: 'floor', label: 'Floor' },
+    { key: 'total_floors', label: 'Total Floors' },
+    { key: 'year_built', label: 'Year Built' },
+
+    { key: 'partitioning', label: 'Partitioning' },
+    { key: 'comfort', label: 'Comfort' },
+
+    { key: 'building_type', label: 'Building Type' },
+    { key: 'interior_condition', label: 'Interior Condition' },
+    { key: 'furnishing', label: 'Furnishing' },
+
+    // Media & Features
+    { key: 'features', label: 'Features List' },
+    { key: 'images', label: 'Images' },
+    { key: 'video_url', label: 'Video URL' },
+    { key: 'virtual_tour_url', label: 'Virtual Tour URL' },
 ];
 
 export default function SmartMapper({ config, onSave, onCancel }: SmartMapperProps) {
@@ -107,7 +144,7 @@ export default function SmartMapper({ config, onSave, onCancel }: SmartMapperPro
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder={`Paste a sample URL from ${config.domain}...`}
-                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-900"
                     />
                 </div>
                 <button
@@ -143,7 +180,7 @@ export default function SmartMapper({ config, onSave, onCancel }: SmartMapperPro
                                 <div className="space-y-2">
                                     {/* Dropdown for Discovered Candidates */}
                                     <select
-                                        className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 hover:bg-white transition-colors cursor-pointer"
+                                        className="w-full p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 hover:bg-white transition-colors cursor-pointer text-slate-900"
                                         value={selectedCandidateId[field.key] || ''}
                                         onChange={(e) => handleMap(field.key, e.target.value)}
                                     >

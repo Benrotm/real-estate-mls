@@ -27,6 +27,7 @@ export default function DashboardClient({
     const menuItems = isAdmin ? [
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
         { name: 'All Leads', icon: Users, href: '/dashboard/admin/leads' },
+        { name: 'My Properties', icon: Home, href: '/dashboard/admin/my-properties' },
         { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
         { name: 'All Virtual Tours', icon: Globe, href: '/dashboard/admin/tours' },
         { name: 'Tour Maker', icon: Camera, href: '/dashboard/owner/tours' },

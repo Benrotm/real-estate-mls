@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { scrapeOlx, scrapePubli24, importFromApi, getImportSettings, saveImportSettings, ImportResult, ImportSettings } from '@/app/lib/actions/import';
 import { createPropertyFromData } from '@/app/lib/actions/properties';
-import { Globe, Database, Loader2, Play, CheckCircle, AlertCircle, ArrowLeft, Settings, Save, LayoutGrid, Upload, FileSpreadsheet } from 'lucide-react';
+import { getPubli24Links } from '@/app/lib/actions/bulk-import';
+import { scrapeProperty, ScrapedProperty } from '@/app/lib/actions/scrape';
+import { getScraperConfigs } from '@/app/lib/actions/scraper-config';
+import { Globe, Database, Loader2, Play, CheckCircle, AlertCircle, ArrowLeft, Settings, Save, LayoutGrid, Upload, FileSpreadsheet, Layers, Download, X, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ImportPropertiesModal from '@/app/components/properties/ImportPropertiesModal';
-import { ScrapedProperty } from '@/app/lib/actions/scrape';
-
 import PartnerManager from '@/app/components/admin/import/PartnerManager';
 
 export default function ImportPage() {
@@ -24,6 +25,113 @@ export default function ImportPage() {
     // Modal State
     const [showImportModal, setShowImportModal] = useState(false);
 
+    // Bulk Import Logic
+    const [showBulkImport, setShowBulkImport] = useState(false);
+    const [bulkUrl, setBulkUrl] = useState('');
+    const [bulkLimit, setBulkLimit] = useState(1);
+    const [bulkLogs, setBulkLogs] = useState<{ message: string; type: 'info' | 'success' | 'error' }[]>([]);
+    const [isBulkImporting, setIsBulkImporting] = useState(false);
+    const logsEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (logsEndRef.current) {
+            logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [bulkLogs]);
+
+    const addLog = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+        setBulkLogs(prev => [...prev, { message, type }]);
+    };
+
+    const handleBulkImport = async () => {
+        if (!bulkUrl) return;
+        if (!bulkUrl.includes('publi24.ro')) {
+            alert('Currently only Publi24 is supported for bulk import.');
+            return;
+        }
+
+        setIsBulkImporting(true);
+        setBulkLogs([]);
+        addLog(`Starting bulk import for: ${bulkUrl}`, 'info');
+
+        try {
+            // Fetch configuration to get selectors
+            // We assume there is a config with domain 'publi24.ro' or we use default if not found (though scraping needs selectors)
+            // Ideally we should let user select, but for now we auto-select the first matching domain
+            const configs = await getScraperConfigs();
+            const config = configs.find(c => c.domain.includes('publi24.ro') || c.name.toLowerCase().includes('publi24'));
+
+            if (!config) {
+                addLog('Error: No Scraper Configuration found for Publi24. Please configure it in the Partners tab first.', 'error');
+                setIsBulkImporting(false);
+                return;
+            }
+
+            let totalImported = 0;
+            let totalFailed = 0;
+
+            for (let page = 1; page <= bulkLimit; page++) {
+                addLog(`Fetching page ${page}...`, 'info');
+
+                const res = await getPubli24Links(bulkUrl, page);
+
+                if (!res.success) {
+                    addLog(`Failed to fetch page ${page}: ${res.error}`, 'error');
+                    continue;
+                }
+
+                const links = res.links || [];
+                addLog(`Found ${links.length} listings on page ${page}.`, 'info');
+
+                for (const link of links) {
+                    addLog(`Scraping: ${link}`, 'info');
+
+                    try {
+                        // 1. Scrape
+                        const scrapeRes = await scrapeProperty(link, config.selectors as any);
+
+                        if (scrapeRes.error || !scrapeRes.data) {
+                            addLog(`Scrape failed: ${scrapeRes.error}`, 'error');
+                            totalFailed++;
+                            continue;
+                        }
+
+                        // 2. Import
+                        const importRes = await createPropertyFromData({
+                            ...scrapeRes.data,
+                            type: (scrapeRes.data.type || 'Apartment') as any,
+                            listing_type: (scrapeRes.data.listing_type === 'rent' ? 'For Rent' : 'For Sale') as any,
+                            currency: (scrapeRes.data.currency === 'USD' || scrapeRes.data.currency === 'RON' ? scrapeRes.data.currency : 'EUR') as any,
+                        }, link);
+
+                        if (importRes.success) {
+                            addLog(`Imported: ${scrapeRes.data.title?.substring(0, 30)}...`, 'success');
+                            totalImported++;
+                        } else {
+                            addLog(`Import failed: ${importRes.error}`, 'error');
+                            totalFailed++;
+                        }
+
+                    } catch (err: any) {
+                        addLog(`Error processing ${link}: ${err.message}`, 'error');
+                        totalFailed++;
+                    }
+
+                    // Small delay to be nice
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+
+            addLog(`Bulk Import Completed! Imported: ${totalImported}, Failed: ${totalFailed}`, 'success');
+
+        } catch (error: any) {
+            addLog(`Critical Error: ${error.message}`, 'error');
+        } finally {
+            setIsBulkImporting(false);
+        }
+    };
+
+
     const handleScrapeSuccess = async (data: ScrapedProperty) => {
         // Save as draft property then redirect
         try {
@@ -36,9 +144,7 @@ export default function ImportPage() {
                 address: data.address,
                 type: (data.type || 'Apartment') as any,
                 listing_type: (data.listing_type === 'rent' ? 'For Rent' : 'For Sale') as any,
-                // Store source URL in description or a custom field if available
-                // description: (data.description || '') + `\n\nSource: ${data.url}`
-            });
+            }, data.url);
 
             if (res.success && res.data) {
                 // Redirect to edit page
@@ -152,7 +258,7 @@ export default function ImportPage() {
                                     <FileSpreadsheet className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg text-slate-900">Bulk Import</h3>
+                                    <h3 className="font-bold text-lg text-slate-900">Raw Import</h3>
                                     <p className="text-xs text-slate-500">CSV, Link, XML</p>
                                 </div>
                             </div>
@@ -211,45 +317,124 @@ export default function ImportPage() {
                         </div>
 
                         {/* Publi24 Scraper Card */}
-                        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                                    <Globe className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-lg text-slate-900">Publi24.ro</h3>
-                                    <p className="text-xs text-slate-500">Scraper Integration</p>
-                                </div>
-                            </div>
-                            <p className="text-slate-600 text-sm mb-6 flex-1">
-                                Run the daily scraper for Publi24 listings in the Timisoara region.
-                            </p>
-                            {!settings.enablePubli24 && (
-                                <div className="mb-4 p-2 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-100 flex items-center gap-2">
-                                    <AlertCircle className="w-3 h-3" /> Disabled in Settings
-                                </div>
-                            )}
-                            {results.publi24 && (
-                                <div className={`mb-4 p-3 rounded-lg text-sm ${results.publi24.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                    <div className="font-bold flex items-center gap-2">
-                                        {results.publi24.success ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                                        {results.publi24.message}
+                        <div className={`bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col transition-all duration-300 ${showBulkImport ? 'md:col-span-2 row-span-2' : ''}`}>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                        <Globe className="w-6 h-6" />
                                     </div>
-                                    <div className="mt-1 text-xs opacity-90">{results.publi24.details}</div>
+                                    <div>
+                                        <h3 className="font-bold text-lg text-slate-900">Publi24.ro</h3>
+                                        <p className="text-xs text-slate-500">Scraper Integration</p>
+                                    </div>
+                                </div>
+                                {showBulkImport && (
+                                    <button
+                                        onClick={() => setShowBulkImport(false)}
+                                        className="p-2 text-slate-400 hover:bg-slate-100 rounded-full"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {!showBulkImport ? (
+                                <>
+                                    <p className="text-slate-600 text-sm mb-6 flex-1">
+                                        Run the daily scraper for Publi24 listings or perform a bulk import from a category.
+                                    </p>
+                                    {!settings.enablePubli24 && (
+                                        <div className="mb-4 p-2 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-100 flex items-center gap-2">
+                                            <AlertCircle className="w-3 h-3" /> Disabled in Settings
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col gap-2 mt-auto">
+                                        <button
+                                            onClick={() => setShowBulkImport(true)}
+                                            disabled={!settings.enablePubli24}
+                                            className="w-full py-2.5 px-4 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            <Layers className="w-4 h-4" />
+                                            Open Bulk Importer
+                                        </button>
+                                        <button
+                                            onClick={() => handleAction('publi24', scrapePubli24)}
+                                            disabled={!!isLoading || !settings.enablePubli24}
+                                            className="w-full py-2 px-4 bg-blue-50 text-blue-700 rounded-lg font-bold hover:bg-blue-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            <Play className="w-4 h-4" />
+                                            Run Daily Scraper
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
+                                        <h4 className="font-bold mb-1 flex items-center gap-2">
+                                            <Layers className="w-4 h-4" /> Bulk Import
+                                        </h4>
+                                        <p className="opacity-90">
+                                            Enter a Publi24 category URL to scrape multiple listings securely.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="col-span-2">
+                                            <label className="block text-xs font-bold text-slate-500 mb-1">Category URL</label>
+                                            <input
+                                                type="url"
+                                                value={bulkUrl}
+                                                onChange={(e) => setBulkUrl(e.target.value)}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="https://www.publi24.ro/..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 mb-1">Pages</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                max={5}
+                                                value={bulkLimit}
+                                                onChange={(e) => setBulkLimit(Number(e.target.value))}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={handleBulkImport}
+                                        disabled={isBulkImporting || !bulkUrl}
+                                        className="w-full py-2.5 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {isBulkImporting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                        {isBulkImporting ? 'Importing...' : 'Start Import'}
+                                    </button>
+
+                                    {/* Logs Area */}
+                                    <div className="bg-slate-900 rounded-lg p-3 h-48 overflow-auto font-mono text-xs border border-slate-800">
+                                        <div className="flex items-center justify-between mb-2 text-slate-500 border-b border-slate-800 pb-1">
+                                            <span className="font-bold uppercase tracking-wider text-[10px]">Console Log</span>
+                                            {isBulkImporting && <span className="text-green-500 animate-pulse">● Live</span>}
+                                        </div>
+                                        <div className="space-y-1">
+                                            {bulkLogs.length === 0 && (
+                                                <div className="text-slate-600 italic">Logs will appear here...</div>
+                                            )}
+                                            {bulkLogs.map((log, i) => (
+                                                <div key={i} className={
+                                                    log.type === 'error' ? 'text-red-400' :
+                                                        log.type === 'success' ? 'text-green-400' : 'text-slate-300'
+                                                }>
+                                                    <span className="opacity-40 mr-2">[{new Date().toLocaleTimeString().split(' ')[0]}]</span>
+                                                    {log.message}
+                                                </div>
+                                            ))}
+                                            <div ref={logsEndRef} />
+                                        </div>
+                                    </div>
                                 </div>
                             )}
-                            <button
-                                onClick={() => handleAction('publi24', scrapePubli24)}
-                                disabled={!!isLoading || !settings.enablePubli24}
-                                className="w-full py-2.5 px-4 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {isLoading === 'publi24' ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Play className="w-4 h-4" />
-                                )}
-                                {isLoading === 'publi24' ? 'Running...' : 'Run Scraper'}
-                            </button>
                         </div>
 
                         {/* Centralized API Card */}

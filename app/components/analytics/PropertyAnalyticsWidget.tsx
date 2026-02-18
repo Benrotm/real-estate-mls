@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Calendar, Heart, MessageCircle, DollarSign, Share2 } from 'lucide-react';
+import { Eye, Calendar, Heart, MessageCircle, DollarSign, Share2, Calculator } from 'lucide-react';
 
 interface PropertyAnalyticsWidgetProps {
     views: number;
@@ -9,6 +9,8 @@ interface PropertyAnalyticsWidgetProps {
     offers: number;
     shares: number;
     createdAt: string | null;
+    price?: number;
+    area?: number | null;
 }
 
 export default function PropertyAnalyticsWidget({
@@ -17,7 +19,9 @@ export default function PropertyAnalyticsWidget({
     inquiries,
     offers,
     shares,
-    createdAt
+    createdAt,
+    price,
+    area
 }: PropertyAnalyticsWidgetProps) {
     const formatDate = (dateStr: string | null) => {
         if (!dateStr) return 'N/A';
@@ -31,13 +35,28 @@ export default function PropertyAnalyticsWidget({
         });
     };
 
-    const stats = [
+    // Calculate Price/Sqm
+    const pricePerSqm = (price && area && area > 0)
+        ? Math.round(price / area)
+        : null;
+
+    const stats: { icon: any; label: string; value: number | string; color: string; bg: string }[] = [
         { icon: Eye, label: 'Views', value: views, color: 'text-blue-500', bg: 'bg-blue-500/10' },
         { icon: Heart, label: 'Favorites', value: favorites, color: 'text-pink-500', bg: 'bg-pink-500/10' },
         { icon: MessageCircle, label: 'Inquiries', value: inquiries, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { icon: DollarSign, label: 'Offers', value: offers, color: 'text-amber-500', bg: 'bg-amber-500/10' },
         { icon: Share2, label: 'Shares', value: shares, color: 'text-purple-500', bg: 'bg-purple-500/10' },
     ];
+
+    if (pricePerSqm) {
+        stats.push({
+            icon: Calculator,
+            label: 'Price / Sqm',
+            value: pricePerSqm.toLocaleString(),
+            color: 'text-cyan-500',
+            bg: 'bg-cyan-500/10'
+        });
+    }
 
     return (
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">

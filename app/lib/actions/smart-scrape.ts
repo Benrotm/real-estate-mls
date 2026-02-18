@@ -143,7 +143,63 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
             }
         });
 
-        // 6. Price Patterns
+
+
+        // 6. Description Discovery (New)
+        // Strategy A: Meta Description
+        $('meta[name="description"]').each((_, el) => addCandidate('Meta Description', $(el).attr('content') || '', 'meta[name="description"]', 'meta', 0.9));
+        $('meta[property="og:description"]').each((_, el) => addCandidate('OG Description', $(el).attr('content') || '', 'meta[property="og:description"]', 'meta', 0.9));
+
+        // Strategy B: "Description" Headers
+        // Look for headers containing "Descriere", "Description", "Detalii", "About"
+        $('h2, h3, h4, strong, b, .label, .section-title').each((_, el) => {
+            const text = $(el).text().trim().toLowerCase();
+            if (text.includes('descriere') || text.includes('description') || text.includes('detalii') || text === 'about') {
+                // Look for the next substantial text block
+                let $next = $(el).next();
+                let params = 0;
+                // Try up to 3 siblings to find the description container
+                while ($next.length && params < 3) {
+                    const nextText = $next.text().trim();
+                    if (nextText.length > 50) {
+                        // Found a likely description
+                        // Generate selector.
+                        const tag = ($(el).prop('tagName') || '').toLowerCase();
+                        const elClass = $(el).attr('class');
+
+                        let selector = '';
+                        if (elClass) {
+                            selector = `.${elClass.split(' ').join('.')}:contains("${$(el).text().trim()}") + ${($next.prop('tagName') || '').toLowerCase()}`;
+                        } else {
+                            selector = `${tag}:contains("${$(el).text().trim()}") + ${($next.prop('tagName') || '').toLowerCase()}`;
+                        }
+
+                        addCandidate('Description (Header)', nextText.substring(0, 150) + '...', selector, 'label-value', 0.85);
+                        break;
+                    }
+                    $next = $next.next();
+                    params++;
+                }
+            }
+        });
+
+        // Strategy C: Common Description Containers
+        const descSelectors = ['.description', '#description', '.descriere', '#descriere', '[itemprop="description"]', '.article-description'];
+        $(descSelectors.join(', ')).each((_, el) => {
+            const text = $(el).text().trim();
+            if (text.length > 50) {
+                const id = $(el).attr('id');
+                const className = $(el).attr('class');
+                let selector = '';
+                if (id) selector = `#${id}`;
+                else if (className) selector = `.${className.split(' ')[0]}`; // simple class selector
+                else selector = `[itemprop="description"]`;
+
+                addCandidate('Description (Container)', text.substring(0, 150) + '...', selector, 'id-class', 0.8);
+            }
+        });
+
+        // 7. Price Patterns
         // Look for common price classes
         $('.price, .amount, .value, [class*="price"]').each((_, el) => {
             const text = $(el).text().trim();
@@ -153,9 +209,6 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
                 const className = $(el).attr('class');
                 if (className) {
                     let selector = `.${className.split(' ').join('.')}`;
-                    // If multiple elements have this class, this selector is risky.
-                    // But for price, it's often the first one or unique.
-                    // We pass it as a candidate.
                     addCandidate('Price Candidate', text, selector, 'id-class', 0.6);
                 }
             }

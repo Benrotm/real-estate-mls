@@ -467,7 +467,12 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
     return { success: true, status: newStatus };
 }
 
-export async function createPropertyFromData(data: Partial<PropertyType>) {
+export async function createPropertyFromData(data: Partial<PropertyType>, sourceUrl?: string) {
+    console.log('createPropertyFromData received:', {
+        url: sourceUrl,
+        private_notes: data.private_notes,
+        has_url_in_object: 'url' in data
+    });
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -483,13 +488,45 @@ export async function createPropertyFromData(data: Partial<PropertyType>) {
             type: data.type || 'Apartment',
             listing_type: data.listing_type || 'sale',
             status: 'draft', // Always draft for safety
+
+            // Contact (Scraped)
+            owner_name: data.owner_name || '',
+            owner_phone: data.owner_phone || '',
+            private_notes: `${data.private_notes || ''}\n\nOriginal Link: ${sourceUrl || (data as any).url || 'N/A'}`.trim(),
+
+            // Media
             images: data.images || [],
+            video_url: data.video_url || '',
+            virtual_tour_url: data.virtual_tour_url || '',
+
+            // Location
             address: data.address || '',
-            features: data.features || [],
-            // Default required fields if missing
             location_city: data.location_city || 'Timisoara',
-            location_county: 'Timis', // Default
+            location_county: data.location_county || 'Timis',
+            location_area: data.location_area || '',
+
+            // Specs
             rooms: data.rooms || 0,
+            bedrooms: data.bedrooms || null,
+            bathrooms: data.bathrooms || null,
+
+            area_usable: data.area_usable || null,
+            area_built: data.area_built || null,
+            area_terrace: data.area_terrace || null,
+            area_garden: data.area_garden || null,
+
+            floor: data.floor || null,
+            total_floors: data.total_floors || null,
+            year_built: data.year_built || null,
+
+            partitioning: data.partitioning || '',
+            comfort: data.comfort || '',
+
+            building_type: data.building_type || '',
+            interior_condition: data.interior_condition || '',
+            furnishing: data.furnishing || '',
+
+            features: data.features || [],
             updated_at: new Date().toISOString()
         };
 

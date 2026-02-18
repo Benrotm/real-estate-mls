@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { ScraperConfig, getScraperConfigs, saveScraperConfig, deleteScraperConfig } from '@/app/lib/actions/scraper-config';
 import { scrapeProperty } from '@/app/lib/actions/scrape';
-import { Plus, Trash2, Save, Play, Globe, Code, CheckCircle, AlertCircle, RefreshCw, X, Wand2 } from 'lucide-react';
+import { createPropertyFromData } from '@/app/lib/actions/properties';
+import { Plus, Trash2, Save, Play, Globe, Code, CheckCircle, AlertCircle, RefreshCw, X, Wand2, Download } from 'lucide-react';
 import SmartMapper from './SmartMapper';
+import Link from 'next/link';
 
 export default function PartnerManager() {
     const [configs, setConfigs] = useState<ScraperConfig[]>([]);
@@ -20,6 +22,10 @@ export default function PartnerManager() {
     const [testResult, setTestResult] = useState<any>(null);
     const [isTesting, setIsTesting] = useState(false);
 
+    // Import State
+    const [isImporting, setIsImporting] = useState(false);
+    const [importSuccessId, setImportSuccessId] = useState<string | null>(null);
+
     useEffect(() => {
         loadConfigs();
     }, []);
@@ -31,15 +37,24 @@ export default function PartnerManager() {
         setIsLoading(false);
     };
 
+    const DEFAULT_SELECTORS = {
+        title: '', price: '', currency: '', description: '', type: '', listing_type: '',
+        location: '', location_county: '', location_city: '', location_area: '',
+        rooms: '', bedrooms: '', bathrooms: '',
+        area: '', area_usable: '', area_built: '', area_terrace: '', area_garden: '',
+        floor: '', total_floors: '', year_built: '',
+        partitioning: '', comfort: '',
+        building_type: '', interior_condition: '', furnishing: '',
+        owner_name: '', owner_phone: '', private_notes: '',
+        features: '', images: '', video_url: '', virtual_tour_url: ''
+    };
+
     const handleAddNew = () => {
         const newConfig: ScraperConfig = {
             id: '',
             name: 'New Partner',
             domain: 'example.com',
-            selectors: {
-                title: '', price: '', currency: '', location: '', description: '', images: '',
-                rooms: '', area: '', floor: ''
-            },
+            selectors: { ...DEFAULT_SELECTORS },
             isActive: true
         };
         setSelectedConfig(newConfig);
@@ -47,14 +62,20 @@ export default function PartnerManager() {
         setIsSmartMapping(false);
         setTestResult(null);
         setTestUrl('');
+        setImportSuccessId(null);
     };
 
     const handleEdit = (config: ScraperConfig) => {
-        setSelectedConfig({ ...config });
+        // Merge with defaults to ensure all fields are present even if DB has old data
+        setSelectedConfig({
+            ...config,
+            selectors: { ...DEFAULT_SELECTORS, ...config.selectors }
+        });
         setIsEditing(true);
         setIsSmartMapping(false);
         setTestResult(null);
         setTestUrl('');
+        setImportSuccessId(null);
     };
 
     const handleDelete = async (id: string) => {
@@ -91,6 +112,7 @@ export default function PartnerManager() {
 
         setIsTesting(true);
         setTestResult(null);
+        setImportSuccessId(null);
 
         // We need to implement a way to pass the selectors to the scraper
         // For now, we simulate testing by passing the url and hypothetically applying the selectors
@@ -105,6 +127,27 @@ export default function PartnerManager() {
             setTestResult({ error: error.message });
         } finally {
             setIsTesting(false);
+        }
+    };
+
+    const handleImportConfig = async () => {
+        if (!testResult?.data) return;
+
+        setIsImporting(true);
+        try {
+            const res = await createPropertyFromData(
+                testResult.data,
+                testUrl // Pass URL as second argument
+            );
+            if (res.success && res.data) {
+                setImportSuccessId(res.data.id);
+            } else {
+                alert('Import failed: ' + res.error);
+            }
+        } catch (error: any) {
+            alert('Import error: ' + error.message);
+        } finally {
+            setIsImporting(false);
         }
     };
 
@@ -197,7 +240,7 @@ export default function PartnerManager() {
                                         type="text"
                                         value={selectedConfig.name}
                                         onChange={(e) => setSelectedConfig({ ...selectedConfig, name: e.target.value })}
-                                        className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                                        className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-900"
                                         placeholder="e.g. PropertyLab"
                                     />
                                 </div>
@@ -207,7 +250,7 @@ export default function PartnerManager() {
                                         type="text"
                                         value={selectedConfig.domain}
                                         onChange={(e) => setSelectedConfig({ ...selectedConfig, domain: e.target.value })}
-                                        className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                                        className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-900"
                                         placeholder="propertylab.ro"
                                     />
                                 </div>
@@ -256,7 +299,7 @@ export default function PartnerManager() {
                                         type="url"
                                         value={testUrl}
                                         onChange={(e) => setTestUrl(e.target.value)}
-                                        className="flex-1 p-2 border border-slate-200 rounded-lg text-sm"
+                                        className="flex-1 p-2 border border-slate-200 rounded-lg text-sm text-slate-900"
                                         placeholder={`Paste a URL from ${selectedConfig.domain || 'the target site'}...`}
                                     />
                                     <button
@@ -277,19 +320,44 @@ export default function PartnerManager() {
                                                 {testResult.error}
                                             </div>
                                         ) : (
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2 text-green-600 font-bold mb-2">
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    Scrape Successful
-                                                </div>
-                                                {Object.entries(testResult.data || {}).map(([k, v]) => (
-                                                    <div key={k} className="grid grid-cols-3 gap-2 border-b border-slate-50 py-1">
-                                                        <span className="font-bold text-slate-500">{k}</span>
-                                                        <span className="col-span-2 font-mono text-slate-800 truncate" title={String(v)}>
-                                                            {typeof v === 'object' ? JSON.stringify(v) : String(v)}
-                                                        </span>
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-green-600 font-bold">
+                                                        <CheckCircle className="w-4 h-4" />
+                                                        Scrape Successful
                                                     </div>
-                                                ))}
+
+                                                    {/* IMPORT ACTION */}
+                                                    {importSuccessId ? (
+                                                        <Link
+                                                            href={`/dashboard/admin/properties/${importSuccessId}/edit`}
+                                                            className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-md font-bold hover:bg-green-200 transition"
+                                                        >
+                                                            <CheckCircle className="w-3 h-3" />
+                                                            Imported! View Property
+                                                        </Link>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleImportConfig}
+                                                            disabled={isImporting}
+                                                            className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-white rounded-md font-bold hover:bg-purple-700 transition disabled:opacity-50"
+                                                        >
+                                                            {isImporting ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                                                            Import Listing
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <div className="max-h-60 overflow-auto border-t border-slate-100 pt-2 space-y-1">
+                                                    {Object.entries(testResult.data || {}).map(([k, v]) => (
+                                                        <div key={k} className="grid grid-cols-3 gap-2 border-b border-slate-50 py-1">
+                                                            <span className="font-bold text-slate-500">{k}</span>
+                                                            <span className="col-span-2 font-mono text-slate-800 truncate" title={String(v)}>
+                                                                {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
