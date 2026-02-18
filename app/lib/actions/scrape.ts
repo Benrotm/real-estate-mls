@@ -305,6 +305,28 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             });
         }
 
+        // 3e. Specific Site Logic (Publi24 - imageList)
+        // Publi24 stores full gallery in a global variable `var imageList = [...]`
+        $('script').each((_, el) => {
+            const content = $(el).html();
+            if (content && content.includes('var imageList =')) {
+                try {
+                    // Extract the array: var imageList = [...];
+                    const match = content.match(/var\s+imageList\s*=\s*(\[.*?\]);/s);
+                    if (match && match[1]) {
+                        const json = JSON.parse(match[1]);
+                        if (Array.isArray(json)) {
+                            json.forEach((img: any) => {
+                                if (img.src) addImage(img.src);
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error parsing Publi24 imageList:', e);
+                }
+            }
+        });
+
         // 4. Last Resort: Big Images in Body
         if (imagesSet.size < 3) {
             $('img').each((_, el) => {
