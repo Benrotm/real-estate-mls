@@ -304,29 +304,43 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             });
         }
 
+        // Helper to parse numbers from text string (not selector)
+        const parseNumber = (txt: string) => {
+            if (!txt) return undefined;
+            // Remove superscripts/subscripts if possible (cheerio might just give text)
+            // Fix: "53 m2" -> "53" (stop at first unit)
+            // Heuristic: take the first number found
+            const match = txt.match(/^([\d.,]+)/);
+            if (match) {
+                let clean = match[1].replace(/,/g, '.');
+                // Remove trailing dots
+                if (clean.endsWith('.')) clean = clean.slice(0, -1);
+                return parseFloat(clean);
+            }
+            return undefined;
+        };
+
         // 3d. Specific Site Logic (Publi24 - Attributes Table)
         if (url.includes('publi24.ro')) {
             $('.attribute-item').each((_, el) => {
+                // Use children() or find() but restrict to immediate context to avoid nested concatenation
                 const label = $(el).find('.attribute-label strong').text().trim().toLowerCase();
-                const value = $(el).find('.attribute-value').text().trim();
+                const value = $(el).find('.attribute-value').first().text().trim();
 
                 if (label.includes('etaj')) {
-                    // "Etaj 1", "Parter", "Demisol"
                     if (value.toLowerCase().includes('parter')) data.floor = 0;
                     else if (value.toLowerCase().includes('demisol')) data.floor = -1;
-                    else {
-                        const floorNum = getNumber(value);
-                        if (floorNum !== null) data.floor = floorNum;
-                    }
+                    else data.floor = parseNumber(value);
                 }
                 if (label.includes('constructi')) {
-                    const year = getNumber(value);
+                    // Check if it's "Dupa 2000" or similar
+                    const year = parseNumber(value);
                     if (year && year > 1900 && year < 2100) data.year_built = year;
                 }
                 if (label.includes('compartimentare')) data.partitioning = value;
-                if (label.includes('camere') && !data.rooms) data.rooms = getNumber(value);
-                if (label.includes('utila') && !data.area_usable) data.area_usable = getNumber(value);
-                if (label.includes('baie') || label.includes('bai')) data.bathrooms = getNumber(value);
+                if (label.includes('camere') && !data.rooms) data.rooms = parseNumber(value);
+                if (label.includes('utila') && !data.area_usable) data.area_usable = parseNumber(value);
+                if (label.includes('baie') || label.includes('bai')) data.bathrooms = parseNumber(value);
             });
 
             // Publi24 Description - Feature Extraction Fallback
@@ -338,13 +352,36 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 { key: 'parcare', value: 'Loc de parcare' },
                 { key: 'garaj', value: 'Garaj' },
                 { key: 'lift', value: 'Lift' },
-                { key: 'balcon', value: 'Balcon' }
+                { key: 'balcon', value: 'Balcon' },
+                { key: 'mobilat', value: 'Mobilat' }
             ];
 
             potentialFeatures.forEach(feat => {
                 if (descLower.includes(feat.key)) {
                     if (!data.features) data.features = [];
                     if (!data.features.includes(feat.value)) data.features.push(feat.value);
+                }
+            });
+
+            // Publi24 Image List (Fixed for dynamic push)
+            $('script').each((_, el) => {
+                const content = $(el).html() || '';
+                if (content.includes('imageList.push')) {
+                    const regex = /imageList\.push\(\{\s*src:\s*'([^']+)'/g;
+                    let match;
+                    while ((match = regex.exec(content)) !== null) {
+                        if (match[1]) addImage(match[1]);
+                    }
+                } else if (content.includes('var imageList =')) {
+                    const match = content.match(/var\s+imageList\s*=\s*(\[[\s\S]*?\]);/);
+                    if (match && match[1]) {
+                        try {
+                            const json = JSON.parse(match[1]);
+                            if (Array.isArray(json)) {
+                                json.forEach((img: any) => { if (img.src) addImage(img.src); });
+                            }
+                        } catch (e) { }
+                    }
                 }
             });
         }

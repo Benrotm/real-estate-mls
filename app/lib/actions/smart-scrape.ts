@@ -238,14 +238,20 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
                         // ignore parse error
                     }
                 } else if (content.includes('imageList.push')) {
-                    // Fallback for .push() pattern
-                    const pushMatches = Array.from(content.matchAll(/imageList\.push\(({[\s\S]*?})\);/g));
-                    if (pushMatches.length > 0) {
-                        addCandidate('Publi24 Images', `Found ${pushMatches.length} images via push()`, 'script:contains("imageList.push")', 'json-ld', 1.0);
+                    // Fallback for .push() pattern with regex (handles loose JS objects better than JSON.parse)
+                    const matches = [];
+                    const regex = /imageList\.push\(\\{\s*src:\s*'([^']+)'/g;
+                    let match;
+                    while ((match = regex.exec(content)) !== null) {
+                        if (match[1]) matches.push(match[1]);
+                    }
+
+                    if (matches.length > 0) {
+                        addCandidate('Publi24 Images', `Found ${matches.length} images via script regex`, 'script:contains("imageList.push")', 'json-ld', 1.0);
                         candidates.push({
                             id: `cand_${++candidateId}`,
                             label: 'Images (Publi24)',
-                            value: `${pushMatches.length} images found`,
+                            value: `${matches.length} images found`,
                             selector: 'script:contains("imageList.push")',
                             sourceType: 'json-ld',
                             confidence: 1.0
