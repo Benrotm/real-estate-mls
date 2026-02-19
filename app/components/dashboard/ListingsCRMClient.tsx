@@ -310,7 +310,9 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                         </Link>
 
                         <button
-                            onClick={async () => {
+                            onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 if (confirm('Are you sure you want to delete this property? This action cannot be undone.')) {
                                     try {
                                         // Simple optimistic update or just reload
@@ -326,7 +328,7 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                                     }
                                 }
                             }}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mr-2"
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mr-2 cursor-pointer relative z-10"
                             title="Delete property"
                         >
                             <Trash2 className="w-4 h-4" />
