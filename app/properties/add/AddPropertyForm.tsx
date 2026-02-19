@@ -160,6 +160,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
             state: data.location_county || prev.state,
             latitude: data.latitude || prev.latitude,
             longitude: data.longitude || prev.longitude,
+            ownerName: data.owner_name || prev.ownerName,
+            ownerPhone: data.owner_phone || prev.ownerPhone,
         }));
         setIsImportModalOpen(false);
     };

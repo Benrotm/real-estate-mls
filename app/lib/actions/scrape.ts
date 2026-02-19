@@ -446,6 +446,27 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 }
             }
 
+            // Publi24 Owner info
+            const profileLink = $('a[href*="/public-user-profile-"]').first();
+            if (profileLink.length && !data.owner_name) {
+                const nameText = profileLink.text().trim();
+                // Avoid capturing long sentences if it's the wrong link
+                if (nameText && nameText.length < 50) {
+                    data.owner_name = nameText;
+                }
+            }
+
+            // Publi24 Phone number usually embedded in the payload
+            if (!data.owner_phone) {
+                const htmlText = $('body').html() || '';
+                // Look for standard 10 digit romanian numbers
+                const phoneMatches = htmlText.match(/07[0-9]{8}/g);
+                if (phoneMatches && phoneMatches.length > 0) {
+                    // Pick the first valid mobile phone number found
+                    data.owner_phone = phoneMatches[0];
+                }
+            }
+
             // Publi24 Image List (Fixed for dynamic push)
             $('script').each((_, el) => {
                 const content = $(el).html() || '';
