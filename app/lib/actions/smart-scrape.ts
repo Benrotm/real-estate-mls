@@ -121,14 +121,14 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
 
                 // Try to find a class on the value
                 if ($value.attr('class')) {
-                    // If value has a class, target that class within a parent that contains the label text
-                    // This is safer than Next Sibling sometimes
                     // Check if parent is small enough to be a container
                     if (parent.text().length < 200) {
                         const parentTag = (parent.prop('tagName') || 'div').toLowerCase();
+                        const parentClass = parent.attr('class')?.split(' ')[0];
+                        const parentSelector = parentClass ? `${parentTag}.${parentClass}` : parentTag;
                         const valueClass = $value.attr('class')?.split(' ')[0];
                         if (valueClass) {
-                            selector = `${parentTag}:contains("${labelText}") .${valueClass}`;
+                            selector = `${parentSelector}:contains("${labelText}") .${valueClass}`;
                         }
                     }
                 }
@@ -136,7 +136,9 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
                 if (!selector) {
                     // Default to adjacent sibling
                     const valueTag = ($value.prop('tagName') || 'span').toLowerCase();
-                    selector = `${tag}:contains("${labelText}") + ${valueTag}`;
+                    const tagClass = $label.attr('class')?.split(' ')[0];
+                    const labelSelector = tagClass ? `${tag}.${tagClass}` : tag;
+                    selector = `${labelSelector}:contains("${labelText}") + ${valueTag}`;
                 }
 
                 addCandidate(labelText, $value.text(), selector, 'label-value');
@@ -274,13 +276,16 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
             });
         }
 
-        // Deduplicate candidates by selector (keep first/best)
+        // Sort by confidence (highest first), then deduplicate candidates by label
+        candidates.sort((a, b) => b.confidence - a.confidence);
+
         const uniqueCandidates: AttributeCandidate[] = [];
-        const seenSelectors = new Set<string>();
+        const seenLabels = new Set<string>();
 
         candidates.forEach(c => {
-            if (!seenSelectors.has(c.selector)) {
-                seenSelectors.add(c.selector);
+            const normalizedLabel = c.label.toLowerCase().trim();
+            if (!seenLabels.has(normalizedLabel)) {
+                seenLabels.add(normalizedLabel);
                 uniqueCandidates.push(c);
             }
         });
