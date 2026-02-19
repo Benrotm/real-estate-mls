@@ -109,8 +109,13 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
         // Helper: Clean Number
         const getNumber = (sel: string, isInt: boolean = false) => {
             if (!sel) return undefined;
-            let txt = $(sel).text().trim();
+            let txt = $(sel).first().text().trim();
             if (!txt) return undefined;
+
+            // Extract the first contiguous sequence of numbers, dots, commas, and spaces
+            const match = txt.match(/\d+[\d.,\s]*\d+|\d+/);
+            if (!match) return undefined;
+            txt = match[0].replace(/\s/g, ''); // strip spaces
 
             // Handle EU format: 1.234,56 -> 1234.56
             // Or 1.234 -> 1234 (if followed by 3 digits and looks like thousands)
@@ -132,7 +137,7 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
         // Helper: Get Text
         const getText = (sel: string) => {
             if (!sel) return undefined;
-            return $(sel).text().trim() || undefined;
+            return $(sel).first().text().trim() || undefined;
         };
 
         // 0. CUSTOM SELECTORS (Priority High)
@@ -309,10 +314,10 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             if (!txt) return undefined;
             // Remove superscripts/subscripts if possible (cheerio might just give text)
             // Fix: "53 m2" -> "53" (stop at first unit)
-            // Heuristic: take the first number found
-            const match = txt.match(/^([\d.,]+)/);
+            // Heuristic: take the first number found (removing the ^ anchor handles things like "etaj 2", and adding \s handles "87 990")
+            const match = txt.match(/\d+[\d.,\s]*\d+|\d+/);
             if (match) {
-                let clean = match[1].replace(/,/g, '.');
+                let clean = match[0].replace(/\s/g, '').replace(/,/g, '.');
                 // Remove trailing dots
                 if (clean.endsWith('.')) clean = clean.slice(0, -1);
                 return parseFloat(clean);
@@ -330,12 +335,12 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 if (label.includes('etaj')) {
                     if (value.toLowerCase().includes('parter')) data.floor = 0;
                     else if (value.toLowerCase().includes('demisol')) data.floor = -1;
-                    else data.floor = parseNumber(value);
+                    else if (!data.floor) data.floor = parseNumber(value);
                 }
                 if (label.includes('constructi')) {
                     // Check if it's "Dupa 2000" or similar
                     const year = parseNumber(value);
-                    if (year && year > 1900 && year < 2100) data.year_built = year;
+                    if (year && year > 1900 && year < 2100 && !data.year_built) data.year_built = year;
                 }
                 if (label.includes('compartimentare')) data.partitioning = value;
                 if (label.includes('camere') && !data.rooms) data.rooms = parseNumber(value);
