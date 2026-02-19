@@ -312,7 +312,18 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                         <button
                             onClick={async () => {
                                 if (confirm('Are you sure you want to delete this property? This action cannot be undone.')) {
-                                    await deleteProperty(property.id);
+                                    try {
+                                        // Simple optimistic update or just reload
+                                        const res = await deleteProperty(property.id);
+                                        if (res.error) {
+                                            alert(`Error: ${res.error}`);
+                                        } else {
+                                            // Force refresh or let revalidatePath handle it
+                                            window.location.reload();
+                                        }
+                                    } catch (e) {
+                                        alert('Failed to delete property');
+                                    }
                                 }
                             }}
                             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mr-2"
