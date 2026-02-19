@@ -447,14 +447,14 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             }
 
             // Publi24 Owner info
-            const profileLink = $('a[href*="/public-user-profile-"]').first();
-            if (profileLink.length && !data.owner_name) {
-                const nameText = profileLink.text().trim();
+            const profileLinks = $('a[href*="/public-user-profile-"]');
+            profileLinks.each((_, el) => {
+                const nameText = $(el).text().trim() || $(el).find('img').attr('alt')?.trim();
                 // Avoid capturing long sentences if it's the wrong link
-                if (nameText && nameText.length < 50) {
+                if (nameText && nameText.length < 50 && !data.owner_name) {
                     data.owner_name = nameText;
                 }
-            }
+            });
 
             // Publi24 Phone number usually embedded in the payload
             if (!data.owner_phone) {
