@@ -158,6 +158,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
             buildingType: data.building_type || prev.buildingType,
             city: data.location_city || prev.city,
             state: data.location_county || prev.state,
+            latitude: data.latitude || prev.latitude,
+            longitude: data.longitude || prev.longitude,
         }));
         setIsImportModalOpen(false);
     };

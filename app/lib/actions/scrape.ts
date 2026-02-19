@@ -369,6 +369,83 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 }
             });
 
+            // Publi24 Location Extraction
+            // Try to find the location link next to the map pin, or breadcrumbs
+            let locationText = '';
+
+            // Look for the "harta" (map) link context or specific location classes usually near the top
+            const mapLink = $('a[href*="#map"], a[href*="harta"]').first();
+            if (mapLink.length) {
+                // The text right before the map link or in its parent often contains the location
+                locationText = mapLink.parent().text().replace('harta', '').trim();
+            }
+
+            if (!locationText) {
+                // Fallback to breadcrumbs (e.g. Publi24 > Imobiliare > ... > Timis > Timisoara)
+                const crumbs: string[] = [];
+                $('.breadcrumbs li a, .breadcrumb li a, [itemprop="itemListElement"] span').each((_, el) => {
+                    const text = $(el).text().trim();
+                    if (text && text !== 'Publi24' && text !== 'Anunturi' && text !== 'Imobiliare') {
+                        crumbs.push(text);
+                    }
+                });
+                if (crumbs.length >= 2) {
+                    locationText = crumbs.slice(-2).join(', '); // Usually County, City
+                }
+            }
+
+            // Also check meta description for location clues if everything else fails
+            if (!locationText && data.description) {
+                const match = data.description.match(/in\s+([A-Z][a-z]+(\s+[A-Z][a-z]+)*)/);
+                if (match) locationText = match[1];
+            }
+
+            // Clean up and assign location flags
+            if (locationText) {
+                // Clean up whitespace and known Romanian connecting words
+                locationText = locationText.replace(/\s+/g, ' ').replace(/(,\s*)+/g, ', ').replace(/(\s*-\s*)+/g, ', ').trim();
+
+                // If it looks like 'Timisoara, Timis' or 'Timis, Timisoara Olimpia'
+                const parts = locationText.split(',').map(p => p.trim()).filter(p => p);
+
+                if (parts.length > 0) {
+                    // Make a best guess: Publi24 often lists County first, then City/Neighborhood
+                    // Example: "Timis, Timisoara Olimpia" -> County: Timis, City: Timisoara, Neighborhood: Olimpia
+                    if (!data.location_county) data.location_county = parts[0];
+                    if (parts.length > 1 && !data.location_city) {
+                        const cityParts = parts[1].split(' ');
+                        data.location_city = cityParts[0]; // "Timisoara"
+
+                        // Put the rest in the address/area
+                        if (cityParts.length > 1 && !data.location_area) {
+                            data.location_area = cityParts.slice(1).join(' ');
+                        }
+                    }
+                    if (!data.address) data.address = locationText;
+                }
+            }
+
+            // Geocode the extracted address so the frontend map pin works immediately
+            if (data.address && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+                try {
+                    const params = new URLSearchParams({
+                        address: data.address,
+                        key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+                    });
+                    const geoRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`);
+                    const geoData = await geoRes.json();
+
+                    if (geoData.status === 'OK' && geoData.results && geoData.results.length > 0) {
+                        const location = geoData.results[0].geometry.location;
+                        data.latitude = location.lat;
+                        data.longitude = location.lng;
+                    }
+                } catch (e) {
+                    // Fail silently, just won't have the lat/long pre-filled
+                    console.log('Geocoding failed during scrape for:', data.address);
+                }
+            }
+
             // Publi24 Image List (Fixed for dynamic push)
             $('script').each((_, el) => {
                 const content = $(el).html() || '';
