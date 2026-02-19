@@ -591,6 +591,12 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             }
         }
 
+        // Add the imported URL to private notes
+        if (url) {
+            const notesPrefix = `Imported from: ${url}\n\n`;
+            data.private_notes = data.private_notes ? notesPrefix + data.private_notes : notesPrefix.trim();
+        }
+
         return { data };
 
     } catch (error: any) {

@@ -162,6 +162,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
             longitude: data.longitude || prev.longitude,
             ownerName: data.owner_name || prev.ownerName,
             ownerPhone: data.owner_phone || prev.ownerPhone,
+            privateNotes: data.private_notes || prev.privateNotes,
         }));
         setIsImportModalOpen(false);
     };
