@@ -147,7 +147,16 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
             builtArea: data.area_built?.toString() || prev.builtArea,
             yearBuilt: data.year_built?.toString() || prev.yearBuilt,
             features: (data.features as string[]) || prev.features,
-            images: (data.images as string[]) || prev.images
+            images: (data.images as string[]) || prev.images,
+            totalFloors: data.total_floors?.toString() || prev.totalFloors,
+            floor: data.floor?.toString() || prev.floor,
+            partitioning: data.partitioning || prev.partitioning,
+            comfort: data.comfort || prev.comfort,
+            interiorCondition: data.interior_condition || prev.interiorCondition,
+            furnishing: data.furnishing || prev.furnishing,
+            buildingType: data.building_type || prev.buildingType,
+            city: data.location_city || prev.city,
+            state: data.location_county || prev.state,
         }));
         setIsImportModalOpen(false);
     };

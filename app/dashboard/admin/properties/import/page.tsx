@@ -136,6 +136,7 @@ export default function ImportPage() {
         // Save as draft property then redirect
         try {
             const res = await createPropertyFromData({
+                ...data,
                 title: data.title,
                 description: data.description,
                 price: data.price,

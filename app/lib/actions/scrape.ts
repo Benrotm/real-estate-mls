@@ -335,17 +335,18 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 if (label.includes('etaj')) {
                     if (value.toLowerCase().includes('parter')) data.floor = 0;
                     else if (value.toLowerCase().includes('demisol')) data.floor = -1;
-                    else if (!data.floor) data.floor = parseNumber(value);
+                    else data.floor = parseNumber(value);
                 }
                 if (label.includes('constructi')) {
                     // Check if it's "Dupa 2000" or similar
                     const year = parseNumber(value);
-                    if (year && year > 1900 && year < 2100 && !data.year_built) data.year_built = year;
+                    if (year && year > 1900 && year < 2100) data.year_built = year;
                 }
                 if (label.includes('compartimentare')) data.partitioning = value;
-                if (label.includes('camere') && !data.rooms) data.rooms = parseNumber(value);
-                if (label.includes('utila') && !data.area_usable) data.area_usable = parseNumber(value);
+                if (label.includes('camere')) data.rooms = parseNumber(value);
+                if (label.includes('utila')) data.area_usable = parseNumber(value);
                 if (label.includes('baie') || label.includes('bai')) data.bathrooms = parseNumber(value);
+                if (label.includes('niveluri')) data.total_floors = parseNumber(value);
             });
 
             // Publi24 Description - Feature Extraction Fallback
