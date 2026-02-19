@@ -255,6 +255,19 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
             }
         });
 
+        // 9. Specific Site Logic (Publi24 - Attributes Table)
+        if (url.includes('publi24.ro')) {
+            $('.attribute-item').each((_, el) => {
+                const label = $(el).find('.attribute-label strong').text().trim();
+                const value = $(el).find('.attribute-value').text().trim();
+
+                if (label && value) {
+                    const selector = `.attribute-item:contains("${label}") .attribute-value`;
+                    addCandidate(label, value, selector, 'label-value', 0.95);
+                }
+            });
+        }
+
         // Deduplicate candidates by selector (keep first/best)
         const uniqueCandidates: AttributeCandidate[] = [];
         const seenSelectors = new Set<string>();

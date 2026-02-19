@@ -298,12 +298,57 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                     let highRes = img;
                     if (img.includes('small__')) {
                         highRes = img.replace('small__', 'big__');
+                        addImage(highRes);
                     }
-                    addImage(highRes);
-                    if (data.debugInfo) data.debugInfo.casadomiImagesFound++;
                 }
             });
         }
+
+        // 3d. Specific Site Logic (Publi24 - Attributes Table)
+        if (url.includes('publi24.ro')) {
+            $('.attribute-item').each((_, el) => {
+                const label = $(el).find('.attribute-label strong').text().trim().toLowerCase();
+                const value = $(el).find('.attribute-value').text().trim();
+
+                if (label.includes('etaj')) {
+                    // "Etaj 1", "Parter", "Demisol"
+                    if (value.toLowerCase().includes('parter')) data.floor = 0;
+                    else if (value.toLowerCase().includes('demisol')) data.floor = -1;
+                    else {
+                        const floorNum = getNumber(value);
+                        if (floorNum !== null) data.floor = floorNum;
+                    }
+                }
+                if (label.includes('constructi')) {
+                    const year = getNumber(value);
+                    if (year && year > 1900 && year < 2100) data.year_built = year;
+                }
+                if (label.includes('compartimentare')) data.partitioning = value;
+                if (label.includes('camere') && !data.rooms) data.rooms = getNumber(value);
+                if (label.includes('utila') && !data.area_usable) data.area_usable = getNumber(value);
+                if (label.includes('baie') || label.includes('bai')) data.bathrooms = getNumber(value);
+            });
+
+            // Publi24 Description - Feature Extraction Fallback
+            const descLower = (data.description || '').toLowerCase();
+            const potentialFeatures = [
+                { key: 'centrala', value: 'Centrala proprie' },
+                { key: 'incalzire pardoseala', value: 'Incalzire in pardoseala' },
+                { key: 'aer conditionat', value: 'Aer conditionat' },
+                { key: 'parcare', value: 'Loc de parcare' },
+                { key: 'garaj', value: 'Garaj' },
+                { key: 'lift', value: 'Lift' },
+                { key: 'balcon', value: 'Balcon' }
+            ];
+
+            potentialFeatures.forEach(feat => {
+                if (descLower.includes(feat.key)) {
+                    if (!data.features) data.features = [];
+                    if (!data.features.includes(feat.value)) data.features.push(feat.value);
+                }
+            });
+        }
+
 
         // 3e. Specific Site Logic (Publi24 - imageList)
         // Publi24 stores full gallery in a global variable `var imageList = [...]`
