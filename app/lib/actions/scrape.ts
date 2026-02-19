@@ -78,8 +78,8 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
         const html = await response.text();
         const $ = cheerio.load(html);
 
-        // Remove scripts/styles to clean up text extraction
-        $('script, style, noscript, iframe, svg, nav, footer, header').remove();
+        // Remove styles/iframes to clean up text extraction (keep scripts for JSON-LD/Global Vars)
+        $('style, noscript, iframe, svg, nav, footer, header').remove();
 
         const data: ScrapedProperty = { url };
         data.debugInfo = {
@@ -433,6 +433,9 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 }
             });
         }
+
+        // Clean up scripts now that we are done with them
+        $('script').remove();
 
 
         // Fallback fields using Meta
