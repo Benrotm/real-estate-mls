@@ -137,6 +137,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
             title: data.title || prev.title,
             description: data.description || prev.description,
             price: data.price?.toString() || prev.price,
+            currency: data.currency || prev.currency,
             listingType: data.listing_type || prev.listingType,
             propertyType: data.type || prev.propertyType,
             address: data.address || prev.address,
