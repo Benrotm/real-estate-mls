@@ -237,6 +237,20 @@ export async function analyzePropertyPage(url: string): Promise<{ success: boole
                     } catch (e) {
                         // ignore parse error
                     }
+                } else if (content.includes('imageList.push')) {
+                    // Fallback for .push() pattern
+                    const pushMatches = Array.from(content.matchAll(/imageList\.push\(({[\s\S]*?})\);/g));
+                    if (pushMatches.length > 0) {
+                        addCandidate('Publi24 Images', `Found ${pushMatches.length} images via push()`, 'script:contains("imageList.push")', 'json-ld', 1.0);
+                        candidates.push({
+                            id: `cand_${++candidateId}`,
+                            label: 'Images (Publi24)',
+                            value: `${pushMatches.length} images found`,
+                            selector: 'script:contains("imageList.push")',
+                            sourceType: 'json-ld',
+                            confidence: 1.0
+                        });
+                    }
                 }
             }
         });

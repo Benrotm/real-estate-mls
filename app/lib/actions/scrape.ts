@@ -320,6 +320,17 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                                 if (img.src) addImage(img.src);
                             });
                         }
+                    } else if (content.includes('imageList.push')) {
+                        // Fallback: Handle imageList.push({...}) pattern
+                        const pushMatches = content.matchAll(/imageList\.push\(({[\s\S]*?})\);/g);
+                        for (const pushMatch of pushMatches) {
+                            try {
+                                const json = JSON.parse(pushMatch[1]);
+                                if (json.src) addImage(json.src);
+                            } catch (e) {
+                                // ignore parse error for individual push
+                            }
+                        }
                     }
                 } catch (e) {
                     console.error('Error parsing Publi24 imageList:', e);
