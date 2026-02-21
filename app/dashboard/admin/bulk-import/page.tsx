@@ -106,17 +106,12 @@ export default function BulkImportPage() {
 
             setLogs([{ id: 'init', message: 'Establishing SECURE link to Render Microservice...', log_level: 'info', created_at: new Date().toISOString() }]);
 
-            // 2. Ping Vercel to ping Render (or ping Render directly)
-            const scraperApiBase = process.env.NEXT_PUBLIC_SCRAPER_API_URL || '';
-            const runBulkEndpoint = scraperApiBase.replace('/scrape-advanced', '/run-bulk-scrape');
-            const webhookUrl = `${window.location.origin}/api/admin/bulk-scrape-item`;
-
-            const res = await fetch(runBulkEndpoint, {
+            // 2. Call NextJS Server Proxy to inject secure env credentials and trigger Render
+            const res = await fetch('/api/admin/start-bulk-import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     categoryUrl: url,
-                    webhookUrl: webhookUrl,
                     jobId: newJobId,
                     pagesToScrape,
                     delayMs
@@ -124,11 +119,11 @@ export default function BulkImportPage() {
             });
 
             if (!res.ok) {
-                const data = await res.json();
+                const data = await res.json().catch(() => ({}));
                 throw new Error(data.error || 'Failed to start bulk scraper');
             }
 
-            setMessage(`Crawler dispatched! Listening for live logs on port 5432...`);
+            setMessage(`Crawler dispatched! Listening for live logs...`);
 
         } catch (err: any) {
             console.error('Bulk Import Error:', err);
@@ -249,6 +244,13 @@ export default function BulkImportPage() {
                                     <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 flex items-start gap-3">
                                         <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                                         <div className="text-sm text-rose-800 font-medium">{message}</div>
+                                    </div>
+                                )}
+
+                                {status === 'running' && (
+                                    <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100 flex items-start gap-3">
+                                        <Loader2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5 animate-spin" />
+                                        <div className="text-sm text-indigo-800 font-medium">{message}</div>
                                     </div>
                                 )}
 
