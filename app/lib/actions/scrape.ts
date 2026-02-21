@@ -539,45 +539,6 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 }
             });
         }
-
-        // Clean up scripts now that we are done with them
-        $('script').remove();
-
-
-        // Fallback fields using Meta
-        if (!data.title) data.title = $('meta[property="og:title"]').attr('content') || $('title').text();
-        if (!data.description) data.description = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content');
-
-        // --- CATCH-ALL DESCRIPTION LOGIC ---
-        // Extract visible text from likely content areas to append to description
-        let catchAllText = '';
-
-        // Strategy: Get text from specific containers or fall back to body
-        const contentContainer = $('article, main, #content, .content, .listing-detail, .property-description, .article-description').first();
-        const root = contentContainer.length ? contentContainer : $('body');
-
-        // Collect text from generic tags, formatted
-        const lines: string[] = [];
-        root.find('p, li, h1, h2, h3, h4, h5, tr').each((_, el) => {
-            const text = $(el).text().replace(/\s+/g, ' ').trim();
-            if (text.length > 10) { // Filter out short noise
-                lines.push(text);
-            }
-        });
-
-        catchAllText = lines.join('\n');
-
-        // Append to description
-        const existingDesc = data.description || '';
-        // Avoid duplicating if the meta desc is basically the start of the text
-        if (!catchAllText.includes(existingDesc.substring(0, 50))) {
-            data.description = `${existingDesc}\n\n=== AUTOMATICALLY SCRAPED DETAILS (Unsorted) ===\n${catchAllText.substring(0, 3000)}\n================================================`;
-        } else {
-            data.description = catchAllText.substring(0, 3000); // Prefer the full text if meta desc is just a snippet
-        }
-
-        data.images = Array.from(imagesSet).slice(0, 25); // Cap at 25 images
-
         // Defaults
         if (data.title && !data.currency) data.currency = 'EUR';
         if (data.title && !data.type) {
