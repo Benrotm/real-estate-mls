@@ -327,27 +327,51 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
 
         // 3d. Specific Site Logic (Publi24 - Attributes Table)
         if (url.includes('publi24.ro')) {
+            const unmappedSpecs: string[] = [];
             $('.attribute-item').each((_, el) => {
                 // Use children() or find() but restrict to immediate context to avoid nested concatenation
-                const label = $(el).find('.attribute-label strong').text().trim().toLowerCase();
+                const labelElement = $(el).find('.attribute-label strong');
+                const labelText = labelElement.text().trim();
+                const label = labelText.toLowerCase();
                 const value = $(el).find('.attribute-value').first().text().trim();
 
+                let isMapped = false;
                 if (label.includes('etaj')) {
                     if (value.toLowerCase().includes('parter')) data.floor = 0;
                     else if (value.toLowerCase().includes('demisol')) data.floor = -1;
                     else data.floor = parseNumber(value);
-                }
-                if (label.includes('constructi')) {
+                    isMapped = true;
+                } else if (label.includes('constructi')) {
                     // Check if it's "Dupa 2000" or similar
                     const year = parseNumber(value);
                     if (year && year > 1900 && year < 2100) data.year_built = year;
+                    isMapped = true;
+                } else if (label.includes('compartimentare')) {
+                    data.partitioning = value;
+                    isMapped = true;
+                } else if (label.includes('camere')) {
+                    data.rooms = parseNumber(value);
+                    isMapped = true;
+                } else if (label.includes('utila')) {
+                    data.area_usable = parseNumber(value);
+                    isMapped = true;
+                } else if (label.includes('baie') || label.includes('bai')) {
+                    data.bathrooms = parseNumber(value);
+                    isMapped = true;
+                } else if (label.includes('niveluri')) {
+                    data.total_floors = parseNumber(value);
+                    isMapped = true;
                 }
-                if (label.includes('compartimentare')) data.partitioning = value;
-                if (label.includes('camere')) data.rooms = parseNumber(value);
-                if (label.includes('utila')) data.area_usable = parseNumber(value);
-                if (label.includes('baie') || label.includes('bai')) data.bathrooms = parseNumber(value);
-                if (label.includes('niveluri')) data.total_floors = parseNumber(value);
+
+                if (!isMapped && labelText && value) {
+                    unmappedSpecs.push(`- ${labelText}: ${value}`);
+                }
             });
+
+            if (unmappedSpecs.length > 0) {
+                const specsText = `\n\nMore details:\n${unmappedSpecs.join('\n')}`;
+                data.description = (data.description || '') + specsText;
+            }
 
             // Publi24 Description - Feature Extraction Fallback
             const descLower = (data.description || '').toLowerCase();
