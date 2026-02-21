@@ -5,7 +5,7 @@ import { PropertyWithOffers, PropertyOffer, PropertyInquiry, updateOfferStatus, 
 import { deleteProperty } from '@/app/lib/actions/properties';
 import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award, MessageSquare, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import PropertyManageButtons from '../PropertyManageButtons';
 
 interface ListingsCRMClientProps {
@@ -200,6 +200,7 @@ function InquiryRow({ inquiry, onStatusUpdate }: { inquiry: PropertyInquiry; onS
 }
 
 function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
+    const router = useRouter();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isInquiriesExpanded, setIsInquiriesExpanded] = useState(false);
     const [_, forceUpdate] = useState(0);
@@ -320,8 +321,7 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                                         if (res.error) {
                                             alert(`Error: ${res.error}`);
                                         } else {
-                                            // Force refresh or let revalidatePath handle it
-                                            window.location.reload();
+                                            router.refresh();
                                         }
                                     } catch (e) {
                                         alert('Failed to delete property');
