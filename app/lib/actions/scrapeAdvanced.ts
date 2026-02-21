@@ -33,8 +33,9 @@ export async function scrapeAdvanced(url: string, customSelectors?: any): Promis
 
                 if (response.ok) {
                     const result = await response.json();
-                    if (result.owner_phone) {
-                        data.owner_phone = result.owner_phone;
+                    const phone = result.owner_phone || result.phoneNumber;
+                    if (phone) {
+                        data.owner_phone = phone;
                         console.log('Successfully retrieved phone from Microservice:', data.owner_phone);
                     }
                 } else {
