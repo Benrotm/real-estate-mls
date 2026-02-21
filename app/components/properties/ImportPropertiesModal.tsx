@@ -5,6 +5,7 @@ import { Upload, FileSpreadsheet, Database, Rss, X, Loader2, AlertCircle, CheckC
 import { importPropertiesFromCSV } from '@/app/lib/actions/import';
 import { scrapeProperty, ScrapedProperty } from '@/app/lib/actions/scrape';
 import { getScraperConfigs } from '@/app/lib/actions/scraper-config';
+import { scrapeAdvanced } from '@/app/lib/actions/scrapeAdvanced';
 
 interface ImportPropertiesModalProps {
     onScrapeSuccess?: (data: ScrapedProperty) => void | Promise<void>;
@@ -17,15 +18,16 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
     const [isOpen, setIsOpen] = useState(forceOpen);
 
     // Sync with forceOpen prop
-    // Sync with forceOpen prop
     useEffect(() => {
         setIsOpen(forceOpen);
     }, [forceOpen]);
 
     const [activeTab, setActiveTab] = useState<'csv' | 'link' | 'xml' | 'crm'>('csv');
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('Processing...');
     const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
     const [linkUrl, setLinkUrl] = useState('');
+    const [isDeepScrape, setIsDeepScrape] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,6 +37,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
         setResult(null);
         setIsLoading(false);
         setLinkUrl('');
+        setIsDeepScrape(false);
         if (onClose) onClose();
     };
 
@@ -43,6 +46,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
         if (!file) return;
 
         setIsLoading(true);
+        setLoadingMessage('Importing CSV...');
         setResult(null);
 
         const formData = new FormData();
@@ -54,8 +58,6 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                 setResult({ success: false, message: response.error });
             } else {
                 setResult({ success: true, message: `Successfully imported propert${response.count === 1 ? 'y' : 'ies'}` });
-                // Optional: Refresh page or redirect
-                // window.location.reload(); 
             }
         } catch (error) {
             setResult({ success: false, message: 'Failed to upload file. Please try again.' });
@@ -65,12 +67,11 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
         }
     };
 
-
-
     const handleLinkScrape = async () => {
         if (!linkUrl) return;
 
         setIsLoading(true);
+        setLoadingMessage(isDeepScrape ? 'Running Deep Scrape (May take 10-15s)...' : 'Scraping Metadata...');
         setResult(null);
 
         try {
@@ -79,7 +80,16 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
             const domain = new URL(linkUrl).hostname.replace('www.', '');
             const matchingConfig = configs.find(c => c.isActive && domain.includes(c.domain));
 
-            const { data, error } = await scrapeProperty(linkUrl, matchingConfig?.selectors);
+            let data, error;
+            if (isDeepScrape) {
+                const res = await scrapeAdvanced(linkUrl, matchingConfig?.selectors);
+                data = res.data;
+                error = res.error;
+            } else {
+                const res = await scrapeProperty(linkUrl, matchingConfig?.selectors);
+                data = res.data;
+                error = res.error;
+            }
 
             if (error) {
                 setResult({ success: false, message: error });
@@ -237,10 +247,24 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                                             />
                                         </div>
                                     </div>
+
+                                    <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                                        <input
+                                            type="checkbox"
+                                            id="deepScrape"
+                                            checked={isDeepScrape}
+                                            onChange={(e) => setIsDeepScrape(e.target.checked)}
+                                            className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+                                        />
+                                        <label htmlFor="deepScrape" className="text-sm font-medium text-slate-700 cursor-pointer">
+                                            Deep Scrape <span className="text-slate-500 font-normal">(Slower, but bypasses Cloudflare & extracts encrypted phone numbers)</span>
+                                        </label>
+                                    </div>
+
                                     <button
                                         onClick={handleLinkScrape}
                                         disabled={!linkUrl}
-                                        className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
                                     >
                                         <LinkIcon className="w-4 h-4" />
                                         Scrape & Import Data
@@ -288,8 +312,8 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                     {/* Loading State */}
                     {isLoading && (
                         <div className="py-12 flex flex-col items-center justify-center">
-                            <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-                            <p className="text-slate-600 font-medium">Processing...</p>
+                            <Loader2 className="w-10 h-10 text-purple-600 animate-spin mb-4" />
+                            <p className="text-slate-700 font-bold">{loadingMessage}</p>
                         </div>
                     )}
 
