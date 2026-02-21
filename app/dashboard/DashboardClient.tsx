@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 
@@ -42,7 +42,8 @@ export default function DashboardClient({
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },
-        { name: 'Listing Import', icon: Globe, href: '/dashboard/admin/properties/import' },
+        { name: 'Single Import', icon: Globe, href: '/dashboard/admin/properties/import' },
+        { name: 'Bulk Import', icon: FileDown, href: '/dashboard/admin/bulk-import' },
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
