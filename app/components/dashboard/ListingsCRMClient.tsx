@@ -225,15 +225,15 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
 
                     {/* Property Info */}
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                            <div>
-                                <h3 className="font-bold text-lg text-slate-900 truncate">{property.title}</h3>
-                                <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    <span>{property.city}, {property.county}</span>
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0 flex-1">
+                                <h3 className="font-bold text-lg text-slate-900 truncate" title={property.title}>{property.title}</h3>
+                                <div className="flex items-center gap-2 text-sm text-slate-500 mt-1 truncate">
+                                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                    <span className="truncate">{property.city}, {property.county}</span>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap gap-2 justify-end">
+                            <div className="flex flex-wrap gap-2 justify-end shrink-0 pl-2">
                                 {property.status === 'draft' && (
                                     <span className="bg-slate-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-slate-500 shrink-0">
                                         Draft - Private
