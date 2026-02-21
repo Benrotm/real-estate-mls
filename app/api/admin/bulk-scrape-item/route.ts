@@ -109,10 +109,10 @@ async function createSystemProperty(data: any, url: string) {
     const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceKey);
 
     try {
-        let finalListingType = 'sale';
+        let finalListingType = 'For Sale';
         const rawListingType = (data.listing_type || '').toLowerCase();
         if (rawListingType.includes('inchiriat') || rawListingType.includes('rent') || url.includes('de-inchiriat') || url.includes('/inchirieri/')) {
-            finalListingType = 'rent';
+            finalListingType = 'For Rent';
         }
 
         const propertyData: any = {
