@@ -460,7 +460,7 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             if (!data.owner_phone) {
                 const htmlText = $('body').html() || '';
                 // Look for standard 10 digit romanian numbers
-                const phoneMatches = htmlText.match(/07[0-9]{8}/g);
+                const phoneMatches = htmlText.replace(/\s+/g, '').match(/0[237][0-9]{8}/g);
                 if (phoneMatches && phoneMatches.length > 0) {
                     // Pick the first valid mobile phone number found
                     data.owner_phone = phoneMatches[0];
