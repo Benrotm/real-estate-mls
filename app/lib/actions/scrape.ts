@@ -483,13 +483,21 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             // Publi24 Phone number usually embedded in the payload
             if (!data.owner_phone) {
                 const htmlText = $('body').html() || '';
-                // Look for standard 10 digit romanian numbers
-                const regex = /(?:^|[^0-9])(0[237][0-9]{8})(?:[^0-9]|$)/g;
+                // Look for standard 10 digit romanian numbers (02, 03, 07 prefixes)
+
+                // First try strict boundaries (safest)
+                let regex = /(?:^|[^0-9])(0[237][0-9]{8})(?:[^0-9]|$)/;
                 let match = regex.exec(htmlText);
-                const phoneMatches = match ? [match[1]] : null;
-                if (phoneMatches && phoneMatches.length > 0) {
-                    // Pick the first valid mobile phone number found
-                    data.owner_phone = phoneMatches[0];
+
+                // If strict fails, try finding it injected into image hash names (e.g. ...207450577590787d.jpg)
+                // We look for 0[237] followed by 8 digits, surrounded by random hex chars, ending in .jpg/.png
+                if (!match) {
+                    regex = /[a-f0-9]{2,}(0[237][0-9]{8})[a-f0-9]{2,}\.(?:jpg|png|webp|jpeg)/;
+                    match = regex.exec(htmlText);
+                }
+
+                if (match) {
+                    data.owner_phone = match[1];
                 }
             }
 
@@ -517,8 +525,32 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
         }
 
 
-        // 3e. Specific Site Logic (Publi24 - imageList)
-        // Publi24 stores full gallery in a global variable `var imageList = [...]`
+        // 3e. Specific Site Logic (Publi24 - imageList & img tags)
+        if (url.includes('publi24.ro')) {
+            // Publi24 stores full gallery in a global variable `var imageList = [...]`
+            const htmlText = $('body').html() || '';
+            const match = htmlText.match(/var\s+imageList\s*=\s*(\[.*?\]);/s);
+            if (match && match[1]) {
+                try {
+                    const list = JSON.parse(match[1]);
+                    list.forEach((item: any) => {
+                        if (item.Url) addImage(item.Url);
+                    });
+                } catch (e) {
+                    console.error('Error parsing Publi24 imageList:', e);
+                }
+            }
+
+            // Fallback: This specific listing format doesn't use imageList, just standard img tags
+            if (imagesSet.size < 5) {
+                $('img').each((_, el) => {
+                    const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy');
+                    if (src && src.includes('s3.publi24.ro') && !src.includes('avatar') && !src.includes('logo')) {
+                        addImage(src);
+                    }
+                });
+            }
+        }
         $('script').each((_, el) => {
             const content = $(el).html();
             if (content && content.includes('var imageList =')) {
