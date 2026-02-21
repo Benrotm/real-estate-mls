@@ -109,12 +109,18 @@ async function createSystemProperty(data: any, url: string) {
     const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceKey);
 
     try {
+        let finalListingType = 'sale';
+        const rawListingType = (data.listing_type || '').toLowerCase();
+        if (rawListingType.includes('inchiriat') || rawListingType.includes('rent') || url.includes('de-inchiriat') || url.includes('/inchirieri/')) {
+            finalListingType = 'rent';
+        }
+
         const propertyData: any = {
             title: data.title || '',
             description: data.description || '',
             price: data.price ? parseFloat(data.price) : 0,
             currency: data.currency || 'EUR',
-            listing_type: data.listing_type || 'sale',
+            listing_type: finalListingType,
             type: data.type || 'Apartment',
 
             // Location
