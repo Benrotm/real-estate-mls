@@ -95,13 +95,20 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
         // If we have an address but no real coordinates, geocode it using the Maps JS API
         if (address && address.length > 3 && (!lat || !lng)) {
+            // Reverse address from "County, City, Zone" to "Zone, City, County, Romania" for Google
+            const addressParts = address.split(',').map((p: string) => p.trim()).filter(Boolean);
+            const reversedAddress = [...addressParts].reverse().join(', ') + ', Romania';
+
             const tryGeocode = () => {
                 // Wait for google.maps to be loaded (it's loaded by the LocationMap/AddressAutocomplete components)
                 if (typeof window !== 'undefined' && (window as any).google?.maps?.Geocoder) {
                     const geocoder = new (window as any).google.maps.Geocoder();
-                    geocoder.geocode({ address: address + ', Romania' }, (results: any, status: any) => {
+                    console.log('[Auto-geocode] Geocoding:', reversedAddress);
+                    geocoder.geocode({ address: reversedAddress }, (results: any, status: any) => {
+                        console.log('[Auto-geocode] Status:', status, 'Results:', results?.length);
                         if (status === 'OK' && results?.[0]) {
                             const loc = results[0].geometry.location;
+                            console.log('[Auto-geocode] Found:', loc.lat(), loc.lng());
                             setFormData(prev => ({
                                 ...prev,
                                 latitude: loc.lat(),
@@ -111,6 +118,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     });
                 } else {
                     // google.maps not loaded yet, retry after a short delay
+                    console.log('[Auto-geocode] Waiting for google.maps to load...');
                     setTimeout(tryGeocode, 1000);
                 }
             };
@@ -718,6 +726,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         <label className="block text-sm font-medium mb-4 text-slate-300">Drag Pin to Location</label>
                                         <div className="rounded-xl overflow-hidden border border-slate-700/80 shadow-lg shadow-black/20">
                                             <LocationMap
+                                                key={`map-${formData.latitude}-${formData.longitude}`}
                                                 lat={Number(formData.latitude)}
                                                 lng={Number(formData.longitude)}
                                                 onLocationSelect={handleLocationSelect}
