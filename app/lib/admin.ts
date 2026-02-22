@@ -396,7 +396,32 @@ export async function fetchUsers() {
             throw new Error(error.message);
         }
 
-        return data || [];
+        const users = data || [];
+
+        // Count active properties per user from the properties table
+        if (users.length > 0) {
+            const { data: propertyCounts, error: countError } = await supabase
+                .from('properties')
+                .select('owner_id')
+                .in('status', ['active', 'draft']);
+
+            if (!countError && propertyCounts) {
+                // Build a map of owner_id -> count
+                const countMap: Record<string, number> = {};
+                propertyCounts.forEach((p: any) => {
+                    if (p.owner_id) {
+                        countMap[p.owner_id] = (countMap[p.owner_id] || 0) + 1;
+                    }
+                });
+
+                // Merge counts into user objects
+                users.forEach((user: any) => {
+                    user.listings_count = countMap[user.id] || 0;
+                });
+            }
+        }
+
+        return users;
     } catch (err) {
         console.error('🔥 Error fetching users:', err);
         // Return empty array instead of mock data to avoid confusion
