@@ -97,8 +97,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         if (address && address.length > 3 && (!lat || !lng)) {
             const tryGeocode = () => {
                 // Wait for google.maps to be loaded (it's loaded by the LocationMap/AddressAutocomplete components)
-                if (typeof window !== 'undefined' && window.google?.maps?.Geocoder) {
-                    const geocoder = new window.google.maps.Geocoder();
+                if (typeof window !== 'undefined' && (window as any).google?.maps?.Geocoder) {
+                    const geocoder = new (window as any).google.maps.Geocoder();
                     geocoder.geocode({ address: address + ', Romania' }, (results: any, status: any) => {
                         if (status === 'OK' && results?.[0]) {
                             const loc = results[0].geometry.location;
