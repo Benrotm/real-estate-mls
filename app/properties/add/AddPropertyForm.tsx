@@ -92,28 +92,30 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         const address = initialData?.address || '';
         const lat = initialData?.latitude;
         const lng = initialData?.longitude;
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-        // If we have an address but no real coordinates, geocode it
-        if (address && address.length > 3 && (!lat || !lng) && apiKey) {
-            const geocode = async () => {
-                try {
-                    const params = new URLSearchParams({ address: address + ', Romania', key: apiKey });
-                    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`);
-                    const data = await res.json();
-                    if (data.status === 'OK' && data.results?.[0]) {
-                        const loc = data.results[0].geometry.location;
-                        setFormData(prev => ({
-                            ...prev,
-                            latitude: loc.lat,
-                            longitude: loc.lng
-                        }));
-                    }
-                } catch (e) {
-                    console.error('Auto-geocode failed:', e);
+        // If we have an address but no real coordinates, geocode it using the Maps JS API
+        if (address && address.length > 3 && (!lat || !lng)) {
+            const tryGeocode = () => {
+                // Wait for google.maps to be loaded (it's loaded by the LocationMap/AddressAutocomplete components)
+                if (typeof window !== 'undefined' && window.google?.maps?.Geocoder) {
+                    const geocoder = new window.google.maps.Geocoder();
+                    geocoder.geocode({ address: address + ', Romania' }, (results: any, status: any) => {
+                        if (status === 'OK' && results?.[0]) {
+                            const loc = results[0].geometry.location;
+                            setFormData(prev => ({
+                                ...prev,
+                                latitude: loc.lat(),
+                                longitude: loc.lng()
+                            }));
+                        }
+                    });
+                } else {
+                    // google.maps not loaded yet, retry after a short delay
+                    setTimeout(tryGeocode, 1000);
                 }
             };
-            geocode();
+            // Give the Maps JS API a moment to load
+            setTimeout(tryGeocode, 1500);
         }
     }, []);
 
