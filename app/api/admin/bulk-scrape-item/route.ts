@@ -210,11 +210,13 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
             updated_at: new Date().toISOString()
         };
 
-        // Get the first super_admin user to assign ownership if necessary
+        // Get the primary super_admin user to assign ownership
+        // Order by created_at ascending to always pick the earliest (primary) admin
         const { data: admins } = await supabaseAdmin
             .from('profiles')
             .select('id')
             .eq('role', 'super_admin')
+            .order('created_at', { ascending: true })
             .limit(1);
 
         if (admins && admins.length > 0) {
