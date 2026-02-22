@@ -7,7 +7,7 @@ export const maxDuration = 60; // Max out Vercel Serverless Function timeout for
 
 export async function POST(req: Request) {
     try {
-        const { url } = await req.json();
+        const { url, phoneNumber } = await req.json();
 
         if (!url) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         // NOTE: createProperty relies on extracting the user from the current session.
         // Because a background ping hits this endpoint, we MUST bypass the session check OR use service role.
 
-        const res = await createSystemProperty(propertyData, url);
+        const res = await createSystemProperty(propertyData, url, phoneNumber);
 
         if (res.error) {
             console.error(`[Bulk Import Webhook] DB Insert Failed for ${url}:`, res.error);
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
 // rely on `supabase.auth.getUser()`, which we don't have in a disconnected Webhook.
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-async function createSystemProperty(data: any, url: string) {
+async function createSystemProperty(data: any, url: string, phoneNumber?: string) {
     // Connect using Service Role to bypass RLS and authenticate as system
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -152,7 +152,7 @@ async function createSystemProperty(data: any, url: string) {
 
             // Contact
             owner_name: data.owner_name || 'System Import',
-            owner_phone: data.owner_phone || '',
+            owner_phone: phoneNumber || data.owner_phone || '',
             private_notes: data.private_notes || `Imported from: ${url}`,
 
             status: 'active',
