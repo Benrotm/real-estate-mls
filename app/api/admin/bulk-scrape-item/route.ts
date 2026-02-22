@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { scrapeProperty } from '@/app/lib/actions/scrape';
 import { createProperty } from '@/app/lib/actions/properties';
+import { calculatePropertyScore } from '@/app/lib/actions/scoring';
 import { createClient } from '@/app/lib/supabase/server';
 
 export const maxDuration = 60; // Max out Vercel Serverless Function timeout for safety
@@ -210,6 +211,10 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
         if (admins && admins.length > 0) {
             propertyData.owner_id = admins[0].id;
         }
+
+        // Calculate property score before insert
+        const score = await calculatePropertyScore(propertyData);
+        propertyData.score = score;
 
         const { data: newProperty, error } = await supabaseAdmin
             .from('properties')
