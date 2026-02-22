@@ -87,6 +87,36 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         });
     }, []);
 
+    // Auto-geocode address on form load when lat/lng are missing (null from DB defaults to Bucharest)
+    useEffect(() => {
+        const address = initialData?.address || '';
+        const lat = initialData?.latitude;
+        const lng = initialData?.longitude;
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+        // If we have an address but no real coordinates, geocode it
+        if (address && address.length > 3 && (!lat || !lng) && apiKey) {
+            const geocode = async () => {
+                try {
+                    const params = new URLSearchParams({ address: address + ', Romania', key: apiKey });
+                    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`);
+                    const data = await res.json();
+                    if (data.status === 'OK' && data.results?.[0]) {
+                        const loc = data.results[0].geometry.location;
+                        setFormData(prev => ({
+                            ...prev,
+                            latitude: loc.lat,
+                            longitude: loc.lng
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Auto-geocode failed:', e);
+                }
+            };
+            geocode();
+        }
+    }, []);
+
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
         description: initialData?.description || '',
