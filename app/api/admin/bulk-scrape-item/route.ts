@@ -129,9 +129,11 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
         }
 
         // Geocode the location for map pin
+        // ALWAYS re-geocode when Render provides location data, because cheerio's coordinates may be wrong
         let latitude = data.latitude;
         let longitude = data.longitude;
-        if (finalAddress && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (!latitude || !longitude)) {
+        const hasRenderLocation = location?.address;
+        if (finalAddress && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (hasRenderLocation || !latitude || !longitude)) {
             try {
                 const geocodeAddr = [locArea, locCity, locCounty, 'Romania'].filter(Boolean).join(', ');
                 const params = new URLSearchParams({
