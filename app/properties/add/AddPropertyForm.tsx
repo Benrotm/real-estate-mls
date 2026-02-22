@@ -88,42 +88,71 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     }, []);
 
     // Auto-geocode address on form load when lat/lng are missing (null from DB defaults to Bucharest)
+    // NOTE: Uses Places API (enabled) instead of Geocoding API (not enabled) via findPlaceFromQuery
     useEffect(() => {
         const address = initialData?.address || '';
         const lat = initialData?.latitude;
         const lng = initialData?.longitude;
 
-        // If we have an address but no real coordinates, geocode it using the Maps JS API
+        // If we have an address but no real coordinates, look it up using the Places API
         if (address && address.length > 3 && (!lat || !lng)) {
             // Reverse address from "County, City, Zone" to "Zone, City, County, Romania" for Google
             const addressParts = address.split(',').map((p: string) => p.trim()).filter(Boolean);
             const reversedAddress = [...addressParts].reverse().join(', ') + ', Romania';
 
-            const tryGeocode = () => {
-                // Wait for google.maps to be loaded (it's loaded by the LocationMap/AddressAutocomplete components)
-                if (typeof window !== 'undefined' && (window as any).google?.maps?.Geocoder) {
-                    const geocoder = new (window as any).google.maps.Geocoder();
-                    console.log('[Auto-geocode] Geocoding:', reversedAddress);
-                    geocoder.geocode({ address: reversedAddress }, (results: any, status: any) => {
-                        console.log('[Auto-geocode] Status:', status, 'Results:', results?.length);
-                        if (status === 'OK' && results?.[0]) {
+            const tryPlacesLookup = () => {
+                const gm = (window as any).google?.maps;
+                if (typeof window !== 'undefined' && gm?.places?.PlacesService) {
+                    console.log('[Auto-geocode] Using Places API for:', reversedAddress);
+
+                    // PlacesService needs a DOM element or map instance
+                    const dummyDiv = document.createElement('div');
+                    const service = new gm.places.PlacesService(dummyDiv);
+
+                    const request = {
+                        query: reversedAddress,
+                        fields: ['geometry']
+                    };
+
+                    service.findPlaceFromQuery(request, (results: any, status: any) => {
+                        console.log('[Auto-geocode] Places status:', status);
+                        if (status === gm.places.PlacesServiceStatus.OK && results?.[0]?.geometry?.location) {
                             const loc = results[0].geometry.location;
-                            console.log('[Auto-geocode] Found:', loc.lat(), loc.lng());
+                            console.log('[Auto-geocode] Found coords:', loc.lat(), loc.lng());
                             setFormData(prev => ({
                                 ...prev,
                                 latitude: loc.lat(),
                                 longitude: loc.lng()
                             }));
+                        } else {
+                            console.warn('[Auto-geocode] Places lookup failed, trying AutocompleteService...');
+                            // Fallback: use AutocompleteService to get a prediction then get its details
+                            const autocomplete = new gm.places.AutocompleteService();
+                            autocomplete.getPlacePredictions({ input: reversedAddress }, (predictions: any, predStatus: any) => {
+                                if (predStatus === gm.places.PlacesServiceStatus.OK && predictions?.[0]) {
+                                    const placeId = predictions[0].place_id;
+                                    service.getDetails({ placeId, fields: ['geometry'] }, (place: any, detailStatus: any) => {
+                                        if (detailStatus === gm.places.PlacesServiceStatus.OK && place?.geometry?.location) {
+                                            const ploc = place.geometry.location;
+                                            console.log('[Auto-geocode] Fallback found coords:', ploc.lat(), ploc.lng());
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                latitude: ploc.lat(),
+                                                longitude: ploc.lng()
+                                            }));
+                                        }
+                                    });
+                                }
+                            });
                         }
                     });
                 } else {
-                    // google.maps not loaded yet, retry after a short delay
-                    console.log('[Auto-geocode] Waiting for google.maps to load...');
-                    setTimeout(tryGeocode, 1000);
+                    console.log('[Auto-geocode] Waiting for google.maps.places to load...');
+                    setTimeout(tryPlacesLookup, 1000);
                 }
             };
             // Give the Maps JS API a moment to load
-            setTimeout(tryGeocode, 1500);
+            setTimeout(tryPlacesLookup, 2000);
         }
     }, []);
 
