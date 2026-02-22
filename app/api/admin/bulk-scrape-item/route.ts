@@ -129,8 +129,17 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
             if (addrParts.length > 1) finalAddress = addrParts.join(', ');
         }
 
-        // Get coordinates: prioritize Render's Playwright-extracted lat/lng from the Publi24 page
-        // Publi24 embeds coordinates as "var lat = 45.xxx; var lng = 21.xxx;" in script tags
+        // Apply OLX-specific params from Render's Playwright extraction (higher accuracy than Cheerio)
+        if (location?.olxParams) {
+            const p = location.olxParams;
+            if (p.area_usable) data.area_usable = data.area_usable || parseFloat(p.area_usable);
+            if (p.floor) data.floor = data.floor || parseInt(p.floor);
+            if (p.rooms) data.rooms = data.rooms || parseInt(p.rooms);
+            if (p.partitioning) data.partitioning = data.partitioning || p.partitioning;
+            if (p.year_built) data.year_built = data.year_built || parseInt(p.year_built);
+        }
+
+        // Get coordinates: prioritize Render's Playwright-extracted lat/lng
         let latitude = location?.latitude || data.latitude;
         let longitude = location?.longitude || data.longitude;
 

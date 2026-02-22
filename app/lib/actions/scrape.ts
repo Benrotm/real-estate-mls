@@ -586,33 +586,87 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             });
         }
 
+        // 3e-olx. Specific Site Logic (OLX.ro - Parameters, Location, Images)
+        if (url.includes('olx.ro')) {
+            const unmappedSpecs: string[] = [];
 
-        // 3e. Specific Site Logic (Publi24 - imageList & img tags)
-        if (url.includes('publi24.ro')) {
-            // Publi24 stores full gallery in a global variable `var imageList = [...]`
-            const htmlText = $('body').html() || '';
-            const match = htmlText.match(/var\s+imageList\s*=\s*(\[.*?\]);/s);
-            if (match && match[1]) {
-                try {
-                    const list = JSON.parse(match[1]);
-                    list.forEach((item: any) => {
-                        if (item.Url) addImage(item.Url);
-                    });
-                } catch (e) {
-                    console.error('Error parsing Publi24 imageList:', e);
+            // OLX parameters are in <p> and <li> tags
+            $('p, li').each((_, el) => {
+                const text = $(el).text().trim();
+
+                if (text.startsWith('Suprafata utila') || text.includes('Suprafață utilă')) {
+                    const m = text.match(/(\d+)/);
+                    if (m && !data.area_usable) data.area_usable = parseInt(m[1]);
+                } else if (text.startsWith('Etaj')) {
+                    const m = text.match(/(\d+)/);
+                    if (m && !data.floor) data.floor = parseInt(m[1]);
+                } else if (text.startsWith('Compartimentare')) {
+                    const val = text.replace(/Compartimentare:?/i, '').trim();
+                    if (val && !data.partitioning) data.partitioning = val;
+                } else if (text.match(/^An construc[tț]ie/i)) {
+                    const m = text.match(/(\d{4})/);
+                    if (m && !data.year_built) data.year_built = parseInt(m[1]);
+                } else if (text.match(/^Nr\.?\s*camere/i) || text.match(/^\d+\s*camer/)) {
+                    const m = text.match(/(\d+)/);
+                    if (m && !data.rooms) data.rooms = parseInt(m[1]);
                 }
+            });
+
+            // Extract rooms from breadcrumbs if not found
+            if (!data.rooms) {
+                $('li[data-testid="breadcrumb-item"] a, ol li a').each((_, el) => {
+                    const text = $(el).text().trim();
+                    const m = text.match(/(\d+)\s*camer/);
+                    if (m && !data.rooms) data.rooms = parseInt(m[1]);
+                });
             }
 
-            // Fallback: This specific listing format doesn't use imageList, just standard img tags
+            // OLX Location - from map link text or breadcrumbs
+            const mapLinkText = $('[data-testid="map-link-text"]').text().trim();
+            if (mapLinkText) {
+                const parts = mapLinkText.split(',').map(p => p.trim());
+                if (parts.length >= 1 && !data.location_city) data.location_city = parts[0];
+                if (parts.length >= 2 && !data.location_county) data.location_county = parts[1];
+                if (!data.address) data.address = mapLinkText;
+            }
+
+            // OLX Coords - from Google Maps link
+            $('a[href*="maps.google.com"]').each((_, el) => {
+                const href = $(el).attr('href') || '';
+                const m = href.match(/ll=([0-9.-]+),([0-9.-]+)/);
+                if (m && !data.latitude) {
+                    data.latitude = parseFloat(m[1]);
+                    data.longitude = parseFloat(m[2]);
+                }
+            });
+
+            // Build address if not set
+            if (!data.address) {
+                const addrParts = [data.location_city, data.location_county, 'Romania'].filter(Boolean);
+                if (addrParts.length > 1) data.address = addrParts.join(', ');
+            }
+
+            // OLX Images from CDN
             if (imagesSet.size < 5) {
                 $('img').each((_, el) => {
-                    const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy');
-                    if (src && src.includes('s3.publi24.ro') && !src.includes('avatar') && !src.includes('logo')) {
+                    const src = $(el).attr('src') || $(el).attr('data-src') || '';
+                    if (src && (src.includes('apollo.olxcdn.com') || src.includes('img.olx')) && !src.includes('avatar') && !src.includes('logo')) {
                         addImage(src);
                     }
                 });
             }
         }
+
+        // 3e-publi24. Specific Site Logic (Publi24 - imageList & img tags)
+        if (url.includes('publi24.ro') && imagesSet.size < 5) {
+            $('img').each((_, el) => {
+                const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy');
+                if (src && src.includes('s3.publi24.ro') && !src.includes('avatar') && !src.includes('logo')) {
+                    addImage(src);
+                }
+            });
+        }
+
         $('script').each((_, el) => {
             const content = $(el).html();
             if (content && content.includes('var imageList =')) {
