@@ -7,7 +7,7 @@ export const maxDuration = 60; // Max out Vercel Serverless Function timeout for
 
 export async function POST(req: Request) {
     try {
-        const { url, phoneNumber } = await req.json();
+        const { url, phoneNumber, location } = await req.json();
 
         if (!url) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         // NOTE: createProperty relies on extracting the user from the current session.
         // Because a background ping hits this endpoint, we MUST bypass the session check OR use service role.
 
-        const res = await createSystemProperty(propertyData, url, phoneNumber);
+        const res = await createSystemProperty(propertyData, url, phoneNumber, location);
 
         if (res.error) {
             console.error(`[Bulk Import Webhook] DB Insert Failed for ${url}:`, res.error);
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
 // rely on `supabase.auth.getUser()`, which we don't have in a disconnected Webhook.
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-async function createSystemProperty(data: any, url: string, phoneNumber?: string) {
+async function createSystemProperty(data: any, url: string, phoneNumber?: string, location?: any) {
     // Connect using Service Role to bypass RLS and authenticate as system
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -115,6 +115,40 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
             finalListingType = 'For Rent';
         }
 
+        // Use Render's Playwright-extracted location if available (much more accurate than cheerio)
+        const locCounty = location?.county || data.location_county || '';
+        const locCity = location?.city || data.location_city || '';
+        const locArea = location?.area || data.location_area || '';
+        const locAddress = location?.address || data.address || '';
+
+        // Build a proper geocoding address if we have Render location data
+        let finalAddress = locAddress;
+        if (!finalAddress || finalAddress.length < 5) {
+            const addrParts = [locArea, locCity, locCounty, 'Romania'].filter(Boolean);
+            if (addrParts.length > 1) finalAddress = addrParts.join(', ');
+        }
+
+        // Geocode the location for map pin
+        let latitude = data.latitude;
+        let longitude = data.longitude;
+        if (finalAddress && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (!latitude || !longitude)) {
+            try {
+                const geocodeAddr = [locArea, locCity, locCounty, 'Romania'].filter(Boolean).join(', ');
+                const params = new URLSearchParams({
+                    address: geocodeAddr,
+                    key: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+                });
+                const geoRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`);
+                const geoData = await geoRes.json();
+                if (geoData.status === 'OK' && geoData.results?.[0]) {
+                    latitude = geoData.results[0].geometry.location.lat;
+                    longitude = geoData.results[0].geometry.location.lng;
+                }
+            } catch (e) {
+                console.error('Geocoding failed:', e);
+            }
+        }
+
         const propertyData: any = {
             title: data.title || '',
             description: data.description || '',
@@ -123,13 +157,13 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
             listing_type: finalListingType,
             type: data.type || 'Apartment',
 
-            // Location
-            address: data.address || '',
-            location_county: data.location_county || '',
-            location_city: data.location_city || '',
-            location_area: data.location_area || '',
-            latitude: data.latitude,
-            longitude: data.longitude,
+            // Location (Render Playwright data takes priority)
+            address: finalAddress,
+            location_county: locCounty,
+            location_city: locCity,
+            location_area: locArea,
+            latitude: latitude,
+            longitude: longitude,
 
             // Specs
             area_usable: data.area_usable ? parseFloat(data.area_usable) : null,
