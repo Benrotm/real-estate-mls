@@ -44,6 +44,7 @@ export default function DashboardClient({
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },
         { name: 'Single Import', icon: Globe, href: '/dashboard/admin/properties/import' },
         { name: 'Bulk Import', icon: FileDown, href: '/dashboard/admin/bulk-import' },
+        { name: 'Bulk Import OLX', icon: Globe, href: '/dashboard/admin/bulk-import-olx' },
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
