@@ -395,60 +395,129 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 }
             });
 
-            // Publi24 Location Extraction
-            // Try to find the location link next to the map pin, or breadcrumbs
+            // Publi24 Location Extraction (Robust)
+            // Strategy 1: Find the location link near the map pin icon
+            // Publi24 shows location as a clickable link like "Timis, Timisoara Girocului" near a map pin
             let locationText = '';
 
-            // Look for the "harta" (map) link context or specific location classes usually near the top
-            const mapLink = $('a[href*="#map"], a[href*="harta"]').first();
-            if (mapLink.length) {
-                // The text right before the map link or in its parent often contains the location
-                locationText = mapLink.parent().text().replace('harta', '').trim();
-            }
-
-            if (!locationText) {
-                // Fallback to breadcrumbs (e.g. Publi24 > Imobiliare > ... > Timis > Timisoara)
-                const crumbs: string[] = [];
-                $('.breadcrumbs li a, .breadcrumb li a, [itemprop="itemListElement"] span').each((_, el) => {
-                    const text = $(el).text().trim();
-                    if (text && text !== 'Publi24' && text !== 'Anunturi' && text !== 'Imobiliare') {
-                        crumbs.push(text);
+            // Look for location links that contain county/city references (typically next to map icon)
+            $('a[href*="/anunturi/"]').each((_, el) => {
+                const href = $(el).attr('href') || '';
+                const text = $(el).text().trim();
+                // Location links usually lead to a filtered listing page and contain short text like "Timis, Timisoara Girocului"
+                if (text && text.length < 80 && text.includes(',') && !text.includes('EUR') && !text.includes('anunt')) {
+                    // Check this isn't a breadcrumb by verifying it has comma-separated location-like parts
+                    const parts = text.split(',').map(p => p.trim());
+                    const hasLocationWord = parts.some(p => !['Publi24', 'Anunturi', 'Imobiliare', 'De vanzare', 'De inchiriat',
+                        'Apartamente', 'Apartamente 2 camere', 'Apartamente 3 camere', 'Apartamente 4 camere',
+                        'Case', 'Garsoniere', 'Terenuri'].includes(p));
+                    if (hasLocationWord && parts.length >= 2) {
+                        locationText = text;
                     }
-                });
-                if (crumbs.length >= 2) {
-                    locationText = crumbs.slice(-2).join(', '); // Usually County, City
+                }
+            });
+
+            // Strategy 2: Look for the "Timis, Timisoara ..." text near map/harta links
+            if (!locationText) {
+                const mapLink = $('a[href*="harta"], a[href*="#map"]').first();
+                if (mapLink.length) {
+                    const parentText = mapLink.parent().text().trim();
+                    // Remove "Vezi pe harta" / "harta" text
+                    const cleaned = parentText.replace(/vezi\s+pe\s+hart[aă]/gi, '').replace(/hart[aă]/gi, '').trim();
+                    if (cleaned && cleaned.length < 100) {
+                        locationText = cleaned;
+                    }
                 }
             }
 
-            // Also check meta description for location clues if everything else fails
-            if (!locationText && data.description) {
-                const match = data.description.match(/in\s+([A-Z][a-z]+(\s+[A-Z][a-z]+)*)/);
-                if (match) locationText = match[1];
+            // Strategy 3: Extract county/city from the URL path 
+            // URL format: /anunturi/imobiliare/de-vanzare/apartamente/apartamente-3-camere/anunt/...
+            // or: /anunturi/imobiliare/de-vanzare/apartamente/timis/  (category pages include county)
+            if (!locationText) {
+                try {
+                    const urlObj = new URL(url);
+                    const pathParts = urlObj.pathname.split('/').filter(p => p && p !== 'anunturi' && p !== 'imobiliare'
+                        && p !== 'de-vanzare' && p !== 'de-inchiriat' && p !== 'anunt'
+                        && !p.startsWith('apartamente') && !p.startsWith('case') && !p.startsWith('garsoniere')
+                        && !p.startsWith('terenuri') && !p.startsWith('spatii') && !p.includes('.html'));
+
+                    // Romanian counties list for matching
+                    const romanianCounties = ['alba', 'arad', 'arges', 'bacau', 'bihor', 'bistrita-nasaud', 'botosani',
+                        'braila', 'brasov', 'bucuresti', 'buzau', 'calarasi', 'caras-severin', 'cluj', 'constanta',
+                        'covasna', 'dambovita', 'dolj', 'galati', 'giurgiu', 'gorj', 'harghita', 'hunedoara', 'ialomita',
+                        'iasi', 'ilfov', 'maramures', 'mehedinti', 'mures', 'neamt', 'olt', 'prahova', 'salaj',
+                        'satu-mare', 'sibiu', 'suceava', 'teleorman', 'timis', 'tulcea', 'valcea', 'vaslui', 'vrancea'];
+
+                    for (const part of pathParts) {
+                        if (romanianCounties.includes(part.toLowerCase())) {
+                            // Capitalize first letter
+                            const county = part.charAt(0).toUpperCase() + part.slice(1);
+                            if (!data.location_county) data.location_county = county;
+                        }
+                    }
+                } catch (e) { }
             }
 
-            // Clean up and assign location flags
-            if (locationText) {
-                // Clean up whitespace and known Romanian connecting words
-                locationText = locationText.replace(/\s+/g, ' ').replace(/(,\s*)+/g, ', ').replace(/(\s*-\s*)+/g, ', ').trim();
+            // Strategy 4: Parse title for neighborhood hints
+            // Titles often contain neighborhood names: "Apartament 3 camere, Spitalul Judetean, Girocului, parter..."
+            if (!locationText && data.title) {
+                const titleParts = data.title.split(',').map(p => p.trim()).filter(p => p);
+                // Skip the first part (usually "Apartament X camere") and last parts (usually building details)
+                // Look for parts that could be neighborhoods
+                const skipWords = ['apartament', 'camere', 'camera', 'parter', 'etaj', 'bloc', 'mp', 'boxa', 'proprietar', 'decomandat', 'semidecomandat', 'izolat'];
+                const possibleLocations = titleParts.filter(p => {
+                    const lower = p.toLowerCase();
+                    return !skipWords.some(w => lower.includes(w)) && p.length > 2 && p.length < 40;
+                });
+                if (possibleLocations.length > 0 && !data.location_area) {
+                    data.location_area = possibleLocations.join(', ');
+                }
+            }
 
-                // If it looks like 'Timisoara, Timis' or 'Timis, Timisoara Olimpia'
+            // Strategy 5: Filtered breadcrumbs as absolute last resort
+            if (!locationText && !data.location_county) {
+                const crumbs: string[] = [];
+                const excludeWords = ['publi24', 'anunturi', 'imobiliare', 'de vanzare', 'de inchiriat',
+                    'apartamente', 'case', 'garsoniere', 'terenuri', 'spatii comerciale',
+                    'apartamente 1 camera', 'apartamente 2 camere', 'apartamente 3 camere', 'apartamente 4 camere'];
+
+                $('[itemprop="itemListElement"] span, .breadcrumbs li a, .breadcrumb li a').each((_, el) => {
+                    const text = $(el).text().trim();
+                    if (text && !excludeWords.includes(text.toLowerCase())) {
+                        crumbs.push(text);
+                    }
+                });
+                if (crumbs.length >= 1) {
+                    locationText = crumbs.join(', ');
+                }
+            }
+
+            // Parse locationText into structured fields
+            if (locationText) {
+                locationText = locationText.replace(/\s+/g, ' ').replace(/(,\s*)+/g, ', ').replace(/(\s*-\s*)+/g, ', ').trim();
+                // Remove "Vezi pe" prefix if present
+                locationText = locationText.replace(/^vezi\s+pe\s+/i, '').trim();
+
                 const parts = locationText.split(',').map(p => p.trim()).filter(p => p);
 
                 if (parts.length > 0) {
-                    // Make a best guess: Publi24 often lists County first, then City/Neighborhood
-                    // Example: "Timis, Timisoara Olimpia" -> County: Timis, City: Timisoara, Neighborhood: Olimpia
                     if (!data.location_county) data.location_county = parts[0];
                     if (parts.length > 1 && !data.location_city) {
                         const cityParts = parts[1].split(' ');
-                        data.location_city = cityParts[0]; // "Timisoara"
+                        data.location_city = cityParts[0];
 
-                        // Put the rest in the address/area
                         if (cityParts.length > 1 && !data.location_area) {
                             data.location_area = cityParts.slice(1).join(' ');
                         }
                     }
                     if (!data.address) data.address = locationText;
                 }
+            }
+
+            // Build a proper address string for geocoding
+            if (!data.address) {
+                const addrParts = [data.location_area, data.location_city, data.location_county, 'Romania'].filter(Boolean);
+                if (addrParts.length > 1) data.address = addrParts.join(', ');
             }
 
             // Geocode the extracted address so the frontend map pin works immediately
