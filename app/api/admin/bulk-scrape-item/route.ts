@@ -128,12 +128,13 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
             if (addrParts.length > 1) finalAddress = addrParts.join(', ');
         }
 
-        // Geocode the location for map pin
-        // ALWAYS re-geocode when Render provides location data, because cheerio's coordinates may be wrong
-        let latitude = data.latitude;
-        let longitude = data.longitude;
-        const hasRenderLocation = location?.address;
-        if (finalAddress && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (hasRenderLocation || !latitude || !longitude)) {
+        // Get coordinates: prioritize Render's Playwright-extracted lat/lng from the Publi24 page
+        // Publi24 embeds coordinates as "var lat = 45.xxx; var lng = 21.xxx;" in script tags
+        let latitude = location?.latitude || data.latitude;
+        let longitude = location?.longitude || data.longitude;
+
+        // Fallback: try Google Geocoding API if no coordinates found
+        if ((!latitude || !longitude) && finalAddress && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
             try {
                 const geocodeAddr = [locArea, locCity, locCounty, 'Romania'].filter(Boolean).join(', ');
                 const params = new URLSearchParams({
@@ -147,8 +148,12 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
                     longitude = geoData.results[0].geometry.location.lng;
                 }
             } catch (e) {
-                console.error('Geocoding failed:', e);
+                console.error('Geocoding fallback failed:', e);
             }
+        }
+
+        if (latitude && longitude) {
+            console.log(`Coordinates resolved: ${latitude}, ${longitude} for "${finalAddress}"`);
         }
 
         const propertyData: any = {
