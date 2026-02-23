@@ -539,7 +539,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                         className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg shadow-white/10"
                     >
                         <Upload className="w-4 h-4" />
-                        Import Properties
+                        Import your listing
                     </button>
                     <ImportPropertiesModal
                         showDefaultButton={false}

@@ -28,6 +28,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
     const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
     const [linkUrl, setLinkUrl] = useState('');
     const [isDeepScrape, setIsDeepScrape] = useState(false);
+    const [isAuthorized, setIsAuthorized] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +39,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
         setIsLoading(false);
         setLinkUrl('');
         setIsDeepScrape(false);
+        setIsAuthorized(false);
         if (onClose) onClose();
     };
 
@@ -130,7 +132,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition font-medium shadow-sm"
             >
                 <Upload className="w-4 h-4" />
-                Import Properties
+                Import your listing
             </button>
         );
     }
@@ -141,8 +143,8 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900">Import Properties</h2>
-                        <p className="text-sm text-slate-500">Add multiple listings at once from external sources.</p>
+                        <h2 className="text-xl font-bold text-slate-900">Import your listing</h2>
+                        <p className="text-sm text-slate-500">Import your listing from an external source.</p>
                     </div>
                     <button onClick={handleClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition">
                         <X className="w-5 h-5" />
@@ -248,6 +250,20 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                                         </div>
                                     </div>
 
+                                    {/* Authorization Checkbox */}
+                                    <div className="flex items-start gap-3 mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                        <input
+                                            type="checkbox"
+                                            id="ownerAuthorized"
+                                            checked={isAuthorized}
+                                            onChange={(e) => setIsAuthorized(e.target.checked)}
+                                            className="w-5 h-5 mt-0.5 text-amber-600 rounded border-amber-400 focus:ring-amber-500 cursor-pointer flex-shrink-0"
+                                        />
+                                        <label htmlFor="ownerAuthorized" className="text-sm font-medium text-amber-900 cursor-pointer leading-snug">
+                                            ✅ I am the owner or authorized agent
+                                        </label>
+                                    </div>
+
                                     <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
                                         <input
                                             type="checkbox"
@@ -263,7 +279,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
 
                                     <button
                                         onClick={handleLinkScrape}
-                                        disabled={!linkUrl}
+                                        disabled={!linkUrl || !isAuthorized}
                                         className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
                                     >
                                         <LinkIcon className="w-4 h-4" />
