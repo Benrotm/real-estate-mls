@@ -6,6 +6,8 @@ import { importPropertiesFromCSV } from '@/app/lib/actions/import';
 import { scrapeProperty, ScrapedProperty } from '@/app/lib/actions/scrape';
 import { getScraperConfigs } from '@/app/lib/actions/scraper-config';
 import { scrapeAdvanced } from '@/app/lib/actions/scrapeAdvanced';
+import { getAdminSettings } from '@/app/lib/actions/admin-settings';
+import { sendSmsOTP, sendEmailOTP, verifyOTP } from '@/app/lib/actions/verify-ownership';
 
 interface ImportPropertiesModalProps {
     onScrapeSuccess?: (data: ScrapedProperty) => void | Promise<void>;
@@ -29,6 +31,21 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
     const [linkUrl, setLinkUrl] = useState('');
     const [isDeepScrape, setIsDeepScrape] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState(false);
+
+    // Verification States
+    const [requireVerification, setRequireVerification] = useState(false);
+    const [verificationStep, setVerificationStep] = useState<'none' | 'method' | 'otp'>('none');
+    const [verificationMethod, setVerificationMethod] = useState<'sms' | 'email'>('sms');
+    const [verificationIdentifier, setVerificationIdentifier] = useState('');
+    const [otpCode, setOtpCode] = useState('');
+    const [scrapedDataCache, setScrapedDataCache] = useState<any>(null);
+
+    // Fetch Admin Settings on load
+    useEffect(() => {
+        getAdminSettings().then(settings => {
+            setRequireVerification(settings.require_ownership_verification);
+        });
+    }, []);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -97,28 +114,87 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                 setResult({ success: false, message: error });
             } else if (data) {
                 // Pass data back to parent form
-                if (onScrapeSuccess) {
-                    try {
-                        await onScrapeSuccess(data);
-                        setResult({ success: true, message: 'Property imported successfully! Redirecting...' });
-
-                        // Close modal after short delay to show success
-                        setTimeout(() => {
-                            handleClose();
-                        }, 1500);
-                    } catch (saveError: any) {
-                        setResult({ success: false, message: saveError.message || 'Failed to save property.' });
-                    }
+                // If verification is required, cache data and move to OTP step
+                if (requireVerification) {
+                    setScrapedDataCache(data);
+                    setVerificationStep('method'); // Let user choose SMS or Email
+                    setResult({ success: true, message: 'Property found! Please verify ownership to continue.' });
                 } else {
-                    setResult({ success: true, message: 'Property data scraped successfully!' });
-                    // Close modal after short delay to show success
-                    setTimeout(() => {
-                        handleClose();
-                    }, 1500);
+                    // No verification required, pass data directly back
+                    await passDataToParent(data);
                 }
             }
         } catch (error) {
             setResult({ success: false, message: 'Failed to scrape URL. Please try again.' });
+        } finally {
+            if (requireVerification && scrapedDataCache) {
+                setIsLoading(false); // Don't wipe UI if waiting for OTP
+            } else {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    const passDataToParent = async (data: any) => {
+        if (onScrapeSuccess) {
+            try {
+                await onScrapeSuccess(data);
+                setResult({ success: true, message: 'Property imported successfully! Redirecting...' });
+                setTimeout(() => handleClose(), 1500);
+            } catch (saveError: any) {
+                setResult({ success: false, message: saveError.message || 'Failed to save property.' });
+            }
+        } else {
+            setResult({ success: true, message: 'Property data scraped successfully!' });
+            setTimeout(() => handleClose(), 1500);
+        }
+    };
+
+    const handleSendOTP = async () => {
+        if (!verificationIdentifier) return;
+        setIsLoading(true);
+        setLoadingMessage(`Sending OTP via ${verificationMethod.toUpperCase()}...`);
+        setResult(null);
+
+        try {
+            let res;
+            if (verificationMethod === 'sms') {
+                res = await sendSmsOTP(verificationIdentifier);
+            } else {
+                res = await sendEmailOTP(verificationIdentifier);
+            }
+
+            if (res.success) {
+                setVerificationStep('otp');
+                setResult({ success: true, message: `Code sent to ${verificationIdentifier}` });
+            } else {
+                setResult({ success: false, message: res.message });
+            }
+        } catch (e: any) {
+            setResult({ success: false, message: 'Failed to send code.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyOTP = async () => {
+        if (!otpCode) return;
+        setIsLoading(true);
+        setLoadingMessage('Verifying code...');
+        setResult(null);
+
+        try {
+            // Check DB for OTP
+            const res = await verifyOTP(verificationIdentifier, otpCode);
+
+            if (res.success) {
+                // Success! Pass the cached data
+                await passDataToParent(scrapedDataCache);
+            } else {
+                setResult({ success: false, message: res.message });
+            }
+        } catch (e: any) {
+            setResult({ success: false, message: 'Verification failed.' });
         } finally {
             setIsLoading(false);
         }
@@ -235,7 +311,7 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                                 </div>
                             </div>
 
-                            {!isLoading && !result && (
+                            {!isLoading && !result && verificationStep === 'none' && (
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Property URL</label>
@@ -285,6 +361,91 @@ export default function ImportPropertiesModal({ onScrapeSuccess, showDefaultButt
                                         <LinkIcon className="w-4 h-4" />
                                         Scrape & Import Data
                                     </button>
+                                </div>
+                            )}
+
+                            {/* Verification UI: Step 1 Choose Method */}
+                            {!isLoading && verificationStep === 'method' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-center">
+                                        <h3 className="text-xl font-bold text-slate-900 mb-2">Verify Ownership</h3>
+                                        <p className="text-slate-600 text-sm mb-6 max-w-sm mx-auto">
+                                            To import this public listing into your inventory, we need to verify you are the owner or authorized agent.
+                                        </p>
+
+                                        <div className="flex justify-center gap-4 mb-6">
+                                            <button
+                                                onClick={() => setVerificationMethod('sms')}
+                                                className={`px-4 py-2 rounded-lg font-bold transition border ${verificationMethod === 'sms' ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-slate-600 border-slate-200'}`}
+                                            >
+                                                Text message (SMS)
+                                            </button>
+                                            <button
+                                                onClick={() => setVerificationMethod('email')}
+                                                className={`px-4 py-2 rounded-lg font-bold transition border ${verificationMethod === 'email' ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-slate-600 border-slate-200'}`}
+                                            >
+                                                Email Code
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-bold text-slate-700 text-left">
+                                                {verificationMethod === 'sms' ? 'Phone Number' : 'Email Address'}
+                                            </label>
+                                            <input
+                                                type={verificationMethod === 'sms' ? "tel" : "email"}
+                                                value={verificationIdentifier}
+                                                onChange={(e) => setVerificationIdentifier(e.target.value)}
+                                                placeholder={verificationMethod === 'sms' ? "+40 700 000 000" : "agent@example.com"}
+                                                className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-slate-900"
+                                            />
+                                        </div>
+
+                                        <button
+                                            onClick={handleSendOTP}
+                                            disabled={!verificationIdentifier}
+                                            className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition disabled:opacity-50 mt-6"
+                                        >
+                                            Send Verification Code
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Verification UI: Step 2 Enter OTP */}
+                            {!isLoading && verificationStep === 'otp' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-center">
+                                        <h3 className="text-xl font-bold text-slate-900 mb-2">Enter Verification Code</h3>
+                                        <p className="text-slate-600 text-sm mb-6 max-w-sm mx-auto">
+                                            We sent a 6-digit code to <strong>{verificationIdentifier}</strong>.
+                                        </p>
+
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                maxLength={6}
+                                                value={otpCode}
+                                                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                                                placeholder="000000"
+                                                className="w-full p-4 text-center text-3xl tracking-[0.5em] font-bold bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-slate-900"
+                                            />
+                                        </div>
+
+                                        <button
+                                            onClick={handleVerifyOTP}
+                                            disabled={otpCode.length !== 6}
+                                            className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition disabled:opacity-50 mt-6"
+                                        >
+                                            Verify & Import Listing
+                                        </button>
+                                        <button
+                                            onClick={() => setVerificationStep('method')}
+                                            className="mt-4 text-sm font-medium text-slate-500 hover:text-slate-700"
+                                        >
+                                            Change {verificationMethod === 'sms' ? 'phone number' : 'email'}
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>

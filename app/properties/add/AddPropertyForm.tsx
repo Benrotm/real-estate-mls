@@ -197,7 +197,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         ownerName: initialData?.owner_name || '',
         ownerPhone: initialData?.owner_phone || '',
         features: (initialData?.features as string[]) || [],
-        images: (initialData?.images as string[]) || []
+        images: (initialData?.images as string[]) || [],
+        publishImobiliare: initialData?.publish_imobiliare || false,
+        publishStoria: initialData?.publish_storia || false
     });
 
     const handleScrapeSuccess = (data: any) => {
@@ -448,8 +450,10 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         formDataToSend.append('owner_name', formData.ownerName || '');
         formDataToSend.append('owner_phone', formData.ownerPhone || '');
 
-        // Status
+        // Status & Distribution
         formDataToSend.append('status', status);
+        formDataToSend.append('publish_imobiliare', formData.publishImobiliare ? 'true' : 'false');
+        formDataToSend.append('publish_storia', formData.publishStoria ? 'true' : 'false');
 
         // Images
         formDataToSend.append('images', JSON.stringify(formData.images));
@@ -1322,6 +1326,52 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                     </button>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Portal Distribution Section */}
+                                <div className="mt-8 pt-8 border-t border-slate-800">
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="p-2 bg-blue-500/20 rounded-lg">
+                                                <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-lg font-bold text-white">Export to Portals (XML Feed)</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishImobiliare ? 'bg-blue-500/10 border-blue-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
+                                                <div className="flex items-center h-5 mt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.publishImobiliare}
+                                                        onChange={(e) => setFormData({ ...formData, publishImobiliare: e.target.checked })}
+                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className={`font-semibold ${formData.publishImobiliare ? 'text-blue-400' : 'text-slate-300'}`}>Publish to Imobiliare.ro</p>
+                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the Imobiliare XML auto-sync feed</p>
+                                                </div>
+                                            </label>
+
+                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishStoria ? 'bg-cyan-500/10 border-cyan-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
+                                                <div className="flex items-center h-5 mt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.publishStoria}
+                                                        onChange={(e) => setFormData({ ...formData, publishStoria: e.target.checked })}
+                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className={`font-semibold ${formData.publishStoria ? 'text-cyan-400' : 'text-slate-300'}`}>Publish to Storia / OLX</p>
+                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the Storia XML auto-sync feed</p>
+                                                </div>
+                                            </label>
                                         </div>
                                     </div>
                                 </div>

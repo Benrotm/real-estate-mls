@@ -1,49 +1,35 @@
 import { Client } from 'pg';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
+import * as fs from 'fs';
 
-// Load env vars
 dotenv.config({ path: '.env.local' });
-dotenv.config(); // fallback
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let connectionString = process.env.DATABASE_URL;
 
-async function runMigration() {
-    const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
+if (connectionString && connectionString.includes('5432')) {
+    connectionString = connectionString.replace(':5432/', ':6543/');
+}
 
-    if (!connectionString) {
-        console.error('❌ No database connection string found.');
-        process.exit(1);
-    }
+if (!connectionString) {
+    console.error('Missing DATABASE_URL');
+    process.exit(1);
+}
 
-    // Fix for Supabase Transaction Pooler (port 6543) vs Session (5432)
-    // Sometimes 'pg' needs ssl: true for hosted dbs
-    const client = new Client({
-        connectionString,
-        ssl: { rejectUnauthorized: false } // Required for Supabase usually
-    });
+const client = new Client({
+    connectionString,
+});
 
+async function run() {
     try {
         await client.connect();
-        console.log('✅ Connected to database.');
-
-        const sqlPath = path.join(__dirname, '../supabase/migrations/20260206143000_virtual_tours.sql');
-        const sql = fs.readFileSync(sqlPath, 'utf8');
-
-        console.log(`Executing migration from ${sqlPath}...`);
-
-        // Simple split by statement if needed, but client.query usually handles multiple statements
+        const sql = fs.readFileSync('supabase/migrations/20260223210740_add_fingerprint.sql', 'utf8');
         await client.query(sql);
-
-        console.log('✅ Migration executed successfully!');
+        console.log("Migration applied successfully!");
     } catch (err) {
-        console.error('❌ Migration failed:', err);
+        console.error("Migration failed:", err);
     } finally {
         await client.end();
     }
 }
 
-runMigration();
+run();

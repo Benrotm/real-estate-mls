@@ -60,6 +60,10 @@ export interface Property {
     promoted?: boolean;
     views_count?: number;
 
+    // Portal Distribution
+    publish_imobiliare?: boolean;
+    publish_storia?: boolean;
+
     created_at: string;
     updated_at: string;
 

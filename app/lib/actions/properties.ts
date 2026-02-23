@@ -5,6 +5,8 @@ import { Property, Property as PropertyType } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
 import { calculatePropertyScore } from './scoring';
 import { getUserProfile, getActiveUsageStats } from '../auth';
+import { generatePropertyFingerprint } from '../utils/fingerprint';
+import { getAdminSettings } from './admin-settings';
 
 export async function createProperty(formData: FormData) {
     const supabase = await createClient();
@@ -76,6 +78,9 @@ export async function createProperty(formData: FormData) {
             youtube_video_url: formData.get('youtube_video_url') as string,
             virtual_tour_url: formData.get('virtual_tour_url') as string,
 
+            publish_imobiliare: formData.get('publish_imobiliare') === 'true',
+            publish_storia: formData.get('publish_storia') === 'true',
+
             status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
 
@@ -94,9 +99,26 @@ export async function createProperty(formData: FormData) {
             }
         }
 
+        // Anti-Duplicate Intelligence Layer
+        const fingerprint = generatePropertyFingerprint(propertyData);
+        const settings = await getAdminSettings();
+
+        let is_duplicate = false;
+        if (settings.enable_anti_duplicate_intelligence) {
+            // Check if this fingerprint already exists
+            const { count } = await supabase
+                .from('properties')
+                .select('id', { count: 'exact', head: true })
+                .eq('fingerprint', fingerprint);
+
+            if (count && count > 0) {
+                is_duplicate = true;
+            }
+        }
+
         const { data, error } = await supabase
             .from('properties')
-            .insert({ ...propertyData, score })
+            .insert({ ...propertyData, score, fingerprint, is_duplicate })
             .select(`
             *,
             owner:profiles(full_name)
@@ -533,9 +555,25 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             updated_at: new Date().toISOString()
         };
 
+        // Anti-Duplicate Intelligence Layer
+        const fingerprint = generatePropertyFingerprint(propertyData);
+        const settings = await getAdminSettings();
+
+        let is_duplicate = false;
+        if (settings.enable_anti_duplicate_intelligence) {
+            const { count } = await supabase
+                .from('properties')
+                .select('id', { count: 'exact', head: true })
+                .eq('fingerprint', fingerprint);
+
+            if (count && count > 0) {
+                is_duplicate = true;
+            }
+        }
+
         const { data: newProperty, error } = await supabase
             .from('properties')
-            .insert(propertyData)
+            .insert({ ...propertyData, fingerprint, is_duplicate })
             .select()
             .single();
 
