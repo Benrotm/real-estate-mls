@@ -310,6 +310,43 @@ export async function GET(request: NextRequest) {
                                     }
 
                                     listingObj.images = galleryImages;
+
+                                    // === Parse CARACTERISTICI detail fields from panel ===
+                                    const panelText = $panel.text();
+
+                                    // Bai (Bathrooms)
+                                    const baiMatch = panelText.match(/Bai:\s*(\d+)/i);
+                                    if (baiMatch) listingObj.bathrooms = parseInt(baiMatch[1], 10);
+
+                                    // An constructie (Year Built)
+                                    const yearMatch = panelText.match(/An constructie:\s*(\d{4})/i);
+                                    if (yearMatch) listingObj.year_built = parseInt(yearMatch[1], 10);
+
+                                    // Suprafata utila (Usable Area in m²)
+                                    const areaMatch = panelText.match(/Suprafata utila:\s*([\d.,]+)/i);
+                                    if (areaMatch) listingObj.area_usable = parseFloat(areaMatch[1].replace(',', '.'));
+
+                                    // Balcoane → area_terrace (store count as terrace area proxy)
+                                    const balcMatch = panelText.match(/Balcoane:\s*(\d+)/i);
+                                    if (balcMatch) listingObj.area_terrace = parseInt(balcMatch[1], 10);
+
+                                    // Locuri de parcare → add "Parking" to features
+                                    const parkMatch = panelText.match(/Locuri de parcare:\s*(\d+)/i);
+                                    if (parkMatch && parseInt(parkMatch[1], 10) > 0) {
+                                        if (!listingObj.features.includes('Parking')) {
+                                            listingObj.features.push('Parking');
+                                        }
+                                    }
+
+                                    // Regim inaltime P+X → total_floors (extract X from description)
+                                    const regimMatch = panelText.match(/[Rr]egim(?:\s+de)?\s+(?:inaltime|înălțime|in[aă]l[tț]ime)[:\s]*P\s*\+\s*(\d+)/i);
+                                    if (regimMatch) {
+                                        listingObj.total_floors = parseInt(regimMatch[1], 10);
+                                    } else {
+                                        // Fallback: try P+X pattern anywhere
+                                        const pPlusMatch = panelText.match(/P\s*\+\s*(\d+)\s*(?:E|etaj)/i);
+                                        if (pPlusMatch) listingObj.total_floors = parseInt(pPlusMatch[1], 10);
+                                    }
                                 }).catch(err => {
                                     // Fallback on fetch fail
                                     $page(el).find('img').each((idx, imgEl) => {
