@@ -237,8 +237,8 @@ export async function GET(req: Request) {
                 continue; // Skip
             }
 
-            // Fallback owner (first admin)
-            const { data: admin } = await supabase.from('profiles').select('id').eq('role', 'admin').limit(1).single();
+            // Fallback owner (first super_admin)
+            const { data: admin } = await supabase.from('profiles').select('id').eq('role', 'super_admin').limit(1).single();
 
             const { error: insertError } = await supabase
                 .from('properties')
