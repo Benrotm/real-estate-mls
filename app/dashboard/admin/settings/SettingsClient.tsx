@@ -281,8 +281,19 @@ export default function SettingsClient() {
                         </div>
 
                         <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
-                            <div className="text-sm text-slate-500">
-                                Last Scraped ID: <strong className="text-slate-300 font-mono bg-slate-800 px-2 py-0.5 rounded">{settings.immoflux_integration.last_scraped_id || 0}</strong>
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-slate-300">Next Page to Scrape:</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value={settings.immoflux_integration.last_scraped_id || 1}
+                                    onChange={(e) => handleImmofluxChange('last_scraped_id', parseInt(e.target.value) || 1)}
+                                    className="w-20 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-white focus:outline-none focus:border-blue-500 transition-colors text-center"
+                                />
+                                <span className="text-xs text-slate-500 max-w-[200px] leading-tight">
+                                    Automatically increments. Reset to 1 to scan newest properties.
+                                </span>
                             </div>
 
                             <div className="flex gap-4">

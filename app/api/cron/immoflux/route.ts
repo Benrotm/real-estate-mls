@@ -132,150 +132,161 @@ export async function GET(req: Request) {
 
         // Ensure required AJAX fields are present
         if (!formFields.has('_token')) formFields.set('_token', dashboardCsrfToken);
-        formFields.set('limit', scrapeLimit.toString());
 
         const filterapUrl = $('#filter').attr('data-href') || `${targetUrl.replace(/\/$/, '')}/filterap`;
 
-        console.log(`[Immoflux Cron] Submitting AJAX filter request to: ${filterapUrl}`);
+        console.log(`[Immoflux Cron] Submitting AJAX filter requests to: ${filterapUrl}`);
 
-        const listRes = await fetch(filterapUrl, {
-            method: 'POST',
-            headers: {
-                'Cookie': sessionCookie,
-                'User-Agent': 'Mozilla/5.0',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json, text/javascript, */*; q=0.01',
-                'X-CSRF-TOKEN': dashboardCsrfToken
-            },
-            body: formFields.toString()
-        });
-
-        const listHtml = await listRes.text();
-        // The AJAX response returns the table rows directly or wrapped in pagination markup
-        $ = cheerio.load(listHtml);
-
+        let currentPage = config.last_scraped_id || 1;
         const listings: any[] = [];
-
-        // This selector targets the standard table rows returned by the AJAX call
-        const rowSelector = 'tr.model-item';
-
-        const foundRows = $(rowSelector).length;
-        if (foundRows === 0) {
-            const debugInfo = JSON.stringify({
-                target_url: targetUrl,
-                filterap_url: filterapUrl,
-                ajax_status: listRes.status,
-                html_preview: listHtml.substring(0, 150)
-            });
-
-            return NextResponse.json({
-                status: 'error',
-                reason: `Found 0 matching property rows using selector '${rowSelector}'. Debug Info: ${debugInfo}`,
-                target_url: targetUrl
-            }, { status: 200 });
-        }
-
         // Array to store promises for secondary scraping tasks
         const scrapingTasks: Promise<void>[] = [];
 
-        $(rowSelector).each((i, el) => {
-            if (listings.length >= scrapeLimit) return false; // Stop iterating once limit is reached
+        while (listings.length < scrapeLimit) {
+            console.log(`[Immoflux Cron] Fetching Page ${currentPage}...`);
+            formFields.set('page', currentPage.toString());
+            // Immoflux usually returns 10-15 items per page natively, let's ask for the maximum remaining to limit
+            formFields.set('limit', Math.min(50, scrapeLimit - listings.length).toString());
 
-            try {
-                const title = config.mapping.title ? $(el).find(config.mapping.title).text().trim() : '';
-                const priceText = config.mapping.price ? $(el).find(config.mapping.price).text().trim() : '';
-                const description = config.mapping.description ? $(el).find(config.mapping.description).text().trim() : '';
-                const location = config.mapping.location_city ? $(el).find(config.mapping.location_city).text().trim() : '';
-                const roomsText = config.mapping.rooms ? $(el).find(config.mapping.rooms).text().trim() : '';
-                const phone = config.mapping.phone ? $(el).find(config.mapping.phone).text().trim() : '';
+            const listRes = await fetch(filterapUrl, {
+                method: 'POST',
+                headers: {
+                    'Cookie': sessionCookie,
+                    'User-Agent': 'Mozilla/5.0',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json, text/javascript, */*; q=0.01',
+                    'X-CSRF-TOKEN': dashboardCsrfToken
+                },
+                body: formFields.toString()
+            });
 
-                // Parse Price
-                let price = 0;
-                const priceMatch = priceText.match(/[\d,.]+/);
-                if (priceMatch) price = parseInt(priceMatch[0].replace(/[,.]/g, ''), 10);
+            const listHtml = await listRes.text();
+            const $page = cheerio.load(listHtml);
 
-                // Parse Rooms
-                let rooms = 0;
-                const roomsMatch = roomsText.match(/\d+/);
-                if (roomsMatch) rooms = parseInt(roomsMatch[0], 10);
+            // Revert variable to rowSelector to match user's custom mapping
+            const rowSelector = 'table tbody tr.model-item';
+            const rows = $page(rowSelector);
 
-                if (title || price > 0) {
-                    const listingObj: any = {
-                        title: title || 'Immoflux Property',
-                        price,
-                        description,
-                        address: location || config.region_filter || 'Timis',
-                        rooms,
-                        owner_phone: phone,
-                        private_notes: 'Original Link: ' + targetUrl,
-                        status: 'draft',
-                        images: [], // Will be hydrated asynchronously
-                        features: ['Immoflux Import']
-                    };
-
-                    listings.push(listingObj);
-
-                    // Hydrate Full Images Array async from SlidePanel
-                    const panelUrl = $(el).find('a.avatar.avatar-big.avatar-ap').attr('data-url');
-                    if (panelUrl) {
-                        scrapingTasks.push(
-                            fetch(panelUrl, {
-                                headers: {
-                                    'Cookie': sessionCookie,
-                                    'User-Agent': 'Mozilla/5.0'
-                                }
-                            }).then(r => r.text()).then(html => {
-                                const $panel = cheerio.load(html);
-                                const galleryImages: string[] = [];
-
-                                // Best Quality: data-gallery anchor tags
-                                $panel('.owl-carousel .item a[data-gallery]').each((_, aEl) => {
-                                    const imgHref = $panel(aEl).attr('href');
-                                    if (imgHref) galleryImages.push(imgHref);
-                                });
-
-                                // Medium Quality: img tags in carousel
-                                if (galleryImages.length === 0) {
-                                    $panel('.owl-carousel .item img').each((_, imgEl) => {
-                                        const imgSrc = $panel(imgEl).attr('src');
-                                        if (imgSrc) galleryImages.push(imgSrc);
-                                    });
-                                }
-
-                                // Worst Quality: Fallback to list view thumbnail
-                                if (galleryImages.length === 0) {
-                                    $(el).find('img').each((idx, imgEl) => {
-                                        const src = $(imgEl).attr('src');
-                                        if (src) galleryImages.push(src);
-                                    });
-                                }
-
-                                listingObj.images = galleryImages;
-                            }).catch(err => {
-                                // Fallback on fetch fail
-                                $(el).find('img').each((idx, imgEl) => {
-                                    const src = $(imgEl).attr('src');
-                                    if (src) listingObj.images.push(src);
-                                });
-                            })
-                        );
-                    } else {
-                        // Fallback if no panel url found
-                        $(el).find('img').each((idx, imgEl) => {
-                            const src = $(imgEl).attr('src');
-                            if (src) listingObj.images.push(src);
-                        });
-                    }
-                }
-            } catch (err) {
-                console.error("Error parsing row", err);
+            if (rows.length === 0) {
+                console.log(`[Immoflux Cron] No more properties found on Page ${currentPage}. Stopping pagination loop.`);
+                break;
             }
-        });
+
+            let pageListingsAdded = 0;
+
+            rows.each((i, el) => {
+                if (listings.length >= scrapeLimit) return false; // Stop iterating once overall limit is reached
+
+                try {
+                    const title = config.mapping.title ? $page(el).find(config.mapping.title).text().trim() : '';
+                    const priceText = config.mapping.price ? $page(el).find(config.mapping.price).text().trim() : '';
+                    const description = config.mapping.description ? $page(el).find(config.mapping.description).text().trim() : '';
+                    const location = config.mapping.location_city ? $page(el).find(config.mapping.location_city).text().trim() : '';
+                    const roomsText = config.mapping.rooms ? $page(el).find(config.mapping.rooms).text().trim() : '';
+                    const phone = config.mapping.phone ? $page(el).find(config.mapping.phone).text().trim() : '';
+
+                    // Parse Price
+                    let price = 0;
+                    const priceMatch = priceText.match(/[\d,.]+/);
+                    if (priceMatch) price = parseInt(priceMatch[0].replace(/[,.]/g, ''), 10);
+
+                    // Parse Rooms
+                    let rooms = 0;
+                    const roomsMatch = roomsText.match(/\d+/);
+                    if (roomsMatch) rooms = parseInt(roomsMatch[0], 10);
+
+                    if (title || price > 0) {
+                        const listingObj: any = {
+                            title: title || 'Immoflux Property',
+                            price,
+                            description,
+                            address: location || config.region_filter || 'Timis',
+                            rooms,
+                            owner_phone: phone,
+                            private_notes: 'Original Link: ' + targetUrl,
+                            status: 'draft',
+                            images: [], // Will be hydrated asynchronously
+                            features: ['Immoflux Import']
+                        };
+
+                        listings.push(listingObj);
+                        pageListingsAdded++;
+
+                        // Hydrate Full Images Array async from SlidePanel
+                        const panelUrl = $page(el).find('a.avatar.avatar-big.avatar-ap').attr('data-url');
+                        if (panelUrl) {
+                            scrapingTasks.push(
+                                fetch(panelUrl, {
+                                    headers: {
+                                        'Cookie': sessionCookie,
+                                        'User-Agent': 'Mozilla/5.0'
+                                    }
+                                }).then(r => r.text()).then(html => {
+                                    const $panel = cheerio.load(html);
+                                    const galleryImages: string[] = [];
+
+                                    // Best Quality: data-gallery anchor tags
+                                    $panel('.owl-carousel .item a[data-gallery]').each((_, aEl) => {
+                                        const imgHref = $panel(aEl).attr('href');
+                                        if (imgHref) galleryImages.push(imgHref);
+                                    });
+
+                                    // Medium Quality: img tags in carousel
+                                    if (galleryImages.length === 0) {
+                                        $panel('.owl-carousel .item img').each((_, imgEl) => {
+                                            const imgSrc = $panel(imgEl).attr('src');
+                                            if (imgSrc) galleryImages.push(imgSrc);
+                                        });
+                                    }
+
+                                    // Worst Quality: Fallback to list view thumbnail
+                                    if (galleryImages.length === 0) {
+                                        $page(el).find('img').each((idx, imgEl) => {
+                                            const src = $page(imgEl).attr('src');
+                                            if (src) galleryImages.push(src);
+                                        });
+                                    }
+
+                                    listingObj.images = galleryImages;
+                                }).catch(err => {
+                                    // Fallback on fetch fail
+                                    $page(el).find('img').each((idx, imgEl) => {
+                                        const src = $page(imgEl).attr('src');
+                                        if (src) listingObj.images.push(src);
+                                    });
+                                })
+                            );
+                        } else {
+                            // Fallback if no panel url found
+                            $page(el).find('img').each((idx, imgEl) => {
+                                const src = $page(imgEl).attr('src');
+                                if (src) listingObj.images.push(src);
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error(`[Immoflux Cron] Error parsing property row on Page ${currentPage}:`, err);
+                }
+            });
+
+            console.log(`[Immoflux Cron] Page ${currentPage} yielded ${pageListingsAdded} viable properties. Running Total: ${listings.length}`);
+            currentPage++;
+        }
 
         console.log(`[Immoflux Cron] Waiting for gallery extractions to finish...`);
         await Promise.all(scrapingTasks);
-        console.log(`[Immoflux Cron] Scraped ${listings.length} properties.`);
+        console.log(`[Immoflux Cron] Finished scraping ${listings.length} properties across pages.`);
+
+        // Save the next page offset to the settings so it resumes correctly next time
+        config.last_scraped_id = currentPage;
+        await supabase
+            .from('admin_settings')
+            .upsert({
+                key: 'immoflux_integration',
+                value: config,
+                description: 'Configuration and mapping rules for the Immoflux property scraper'
+            }, { onConflict: 'key' });
 
         let insertedCount = 0;
         let duplicateCount = 0;
