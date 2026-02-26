@@ -176,13 +176,11 @@ export async function GET(req: Request) {
             }, { status: 200 });
         }
 
+        // Array to store promises for secondary scraping tasks
+        const scrapingTasks: Promise<void>[] = [];
+
         $(rowSelector).each((i, el) => {
             if (listings.length >= scrapeLimit) return false; // Stop iterating once limit is reached
-
-            if (i === 0) {
-                console.log("FIRST ROW HTML:");
-                console.log($(el).html());
-            }
 
             try {
                 const title = config.mapping.title ? $(el).find(config.mapping.title).text().trim() : '';
@@ -200,16 +198,10 @@ export async function GET(req: Request) {
                 // Parse Rooms
                 let rooms = 0;
                 const roomsMatch = roomsText.match(/\d+/);
-
-                // Parse Images
-                const images: string[] = [];
-                $(el).find('img').each((idx, imgEl) => {
-                    const src = $(imgEl).attr('src');
-                    if (src) images.push(src);
-                });
+                if (roomsMatch) rooms = parseInt(roomsMatch[0], 10);
 
                 if (title || price > 0) {
-                    listings.push({
+                    const listingObj: any = {
                         title: title || 'Immoflux Property',
                         price,
                         description,
@@ -218,15 +210,71 @@ export async function GET(req: Request) {
                         owner_phone: phone,
                         private_notes: 'Original Link: ' + targetUrl,
                         status: 'draft',
-                        images: images,
+                        images: [], // Will be hydrated asynchronously
                         features: ['Immoflux Import']
-                    });
+                    };
+
+                    listings.push(listingObj);
+
+                    // Hydrate Full Images Array async from SlidePanel
+                    const panelUrl = $(el).find('a.avatar.avatar-big.avatar-ap').attr('data-url');
+                    if (panelUrl) {
+                        scrapingTasks.push(
+                            fetch(panelUrl, {
+                                headers: {
+                                    'Cookie': sessionCookie,
+                                    'User-Agent': 'Mozilla/5.0'
+                                }
+                            }).then(r => r.text()).then(html => {
+                                const $panel = cheerio.load(html);
+                                const galleryImages: string[] = [];
+
+                                // Best Quality: data-gallery anchor tags
+                                $panel('.owl-carousel .item a[data-gallery]').each((_, aEl) => {
+                                    const imgHref = $panel(aEl).attr('href');
+                                    if (imgHref) galleryImages.push(imgHref);
+                                });
+
+                                // Medium Quality: img tags in carousel
+                                if (galleryImages.length === 0) {
+                                    $panel('.owl-carousel .item img').each((_, imgEl) => {
+                                        const imgSrc = $panel(imgEl).attr('src');
+                                        if (imgSrc) galleryImages.push(imgSrc);
+                                    });
+                                }
+
+                                // Worst Quality: Fallback to list view thumbnail
+                                if (galleryImages.length === 0) {
+                                    $(el).find('img').each((idx, imgEl) => {
+                                        const src = $(imgEl).attr('src');
+                                        if (src) galleryImages.push(src);
+                                    });
+                                }
+
+                                listingObj.images = galleryImages;
+                            }).catch(err => {
+                                // Fallback on fetch fail
+                                $(el).find('img').each((idx, imgEl) => {
+                                    const src = $(imgEl).attr('src');
+                                    if (src) listingObj.images.push(src);
+                                });
+                            })
+                        );
+                    } else {
+                        // Fallback if no panel url found
+                        $(el).find('img').each((idx, imgEl) => {
+                            const src = $(imgEl).attr('src');
+                            if (src) listingObj.images.push(src);
+                        });
+                    }
                 }
             } catch (err) {
                 console.error("Error parsing row", err);
             }
         });
 
+        console.log(`[Immoflux Cron] Waiting for gallery extractions to finish...`);
+        await Promise.all(scrapingTasks);
         console.log(`[Immoflux Cron] Scraped ${listings.length} properties.`);
 
         let insertedCount = 0;
