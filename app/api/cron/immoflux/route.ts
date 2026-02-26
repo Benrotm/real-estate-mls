@@ -238,7 +238,7 @@ export async function GET(req: Request) {
             }
 
             // Fallback owner (first super_admin)
-            const { data: admin } = await supabase.from('profiles').select('id').eq('role', 'super_admin').limit(1).single();
+            const { data: admin } = await supabase.from('profiles').select('id').eq('role', 'super_admin').order('created_at', { ascending: true }).limit(1).single();
 
             const { error: insertError } = await supabase
                 .from('properties')
