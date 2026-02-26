@@ -179,6 +179,11 @@ export async function GET(req: Request) {
         $(rowSelector).each((i, el) => {
             if (listings.length >= scrapeLimit) return false; // Stop iterating once limit is reached
 
+            if (i === 0) {
+                console.log("FIRST ROW HTML:");
+                console.log($(el).html());
+            }
+
             try {
                 const title = config.mapping.title ? $(el).find(config.mapping.title).text().trim() : '';
                 const priceText = config.mapping.price ? $(el).find(config.mapping.price).text().trim() : '';
@@ -195,7 +200,13 @@ export async function GET(req: Request) {
                 // Parse Rooms
                 let rooms = 0;
                 const roomsMatch = roomsText.match(/\d+/);
-                if (roomsMatch) rooms = parseInt(roomsMatch[0], 10);
+
+                // Parse Images
+                const images: string[] = [];
+                $(el).find('img').each((idx, imgEl) => {
+                    const src = $(imgEl).attr('src');
+                    if (src) images.push(src);
+                });
 
                 if (title || price > 0) {
                     listings.push({
@@ -207,6 +218,7 @@ export async function GET(req: Request) {
                         owner_phone: phone,
                         private_notes: 'Original Link: ' + targetUrl,
                         status: 'draft',
+                        images: images,
                         features: ['Immoflux Import']
                     });
                 }
