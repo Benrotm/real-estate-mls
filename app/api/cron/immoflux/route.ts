@@ -1,13 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
 import { ImmofluxConfig } from '@/app/lib/actions/admin-settings';
+
+// Helper function to geocode address strings to coordinates (for Maps)
+async function geocodeAddress(addressString: string): Promise<{ lat: number, lng: number } | null> {
+    try {
+        const query = encodeURIComponent(addressString + ', Romania');
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`, {
+            headers: {
+                'User-Agent': 'Imobum-Scraper/1.0' // Required by Nominatim policy
+            }
+        });
+
+        const data = await res.json();
+        if (data && data.length > 0) {
+            return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        }
+        return null;
+    } catch (e) {
+        console.error("[Geocoding Error]:", e);
+        return null;
+    }
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function GET(req: Request) {
+export async function GET(request: NextRequest) {
     // Verify cron secret if needed
     // const authHeader = req.headers.get('authorization');
     // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) return new Response('Unauthorized', { status: 401 });
@@ -186,10 +207,18 @@ export async function GET(req: Request) {
                     const roomsText = config.mapping.rooms ? $page(el).find(config.mapping.rooms).text().trim() : '';
                     const phone = config.mapping.phone ? $page(el).find(config.mapping.phone).text().trim() : '';
 
-                    // Parse Price
+                    // Parse Price and Currency
                     let price = 0;
+                    let currency = 'EUR';
                     const priceMatch = priceText.match(/[\d,.]+/);
                     if (priceMatch) price = parseInt(priceMatch[0].replace(/[,.]/g, ''), 10);
+
+                    if (priceText.toLowerCase().includes('ron') || priceText.toLowerCase().includes('lei')) {
+                        currency = 'RON';
+                    }
+
+                    // Clean Location string (remove "TM " prefix if it exists)
+                    let cleanedLocation = location.replace(/^TM\s+/i, '').trim();
 
                     // Parse Rooms
                     let rooms = 0;
@@ -200,8 +229,11 @@ export async function GET(req: Request) {
                         const listingObj: any = {
                             title: title || 'Immoflux Property',
                             price,
+                            currency,
                             description,
-                            address: location || config.region_filter || 'Timis',
+                            address: cleanedLocation || config.region_filter || 'Timis',
+                            latitude: null, // Will be hydrated asynchronously
+                            longitude: null, // Will be hydrated asynchronously
                             rooms,
                             owner_phone: phone,
                             private_notes: 'Original Link: ' + targetUrl,
@@ -264,6 +296,17 @@ export async function GET(req: Request) {
                                 if (src) listingObj.images.push(src);
                             });
                         }
+
+                        // Generate Lat/Lng coords for Maps Async
+                        const geoString = listingObj.address;
+                        scrapingTasks.push(
+                            geocodeAddress(geoString).then(coords => {
+                                if (coords) {
+                                    listingObj.latitude = coords.lat;
+                                    listingObj.longitude = coords.lng;
+                                }
+                            })
+                        );
                     }
                 } catch (err) {
                     console.error(`[Immoflux Cron] Error parsing property row on Page ${currentPage}:`, err);
