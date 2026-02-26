@@ -219,6 +219,9 @@ export async function GET(request: NextRequest) {
 
                     // Clean Location string (remove "TM " prefix if it exists)
                     let cleanedLocation = location.replace(/^TM\s+/i, '').trim();
+                    let citySplit = cleanedLocation.split(',');
+                    let parsedCity = citySplit[0] ? citySplit[0].trim() : 'Timisoara';
+                    let parsedCounty = 'Timis'; // Base setting
 
                     // Parse Rooms
                     let rooms = 0;
@@ -232,6 +235,8 @@ export async function GET(request: NextRequest) {
                             currency,
                             description,
                             address: cleanedLocation || config.region_filter || 'Timis',
+                            location_city: parsedCity,
+                            location_county: parsedCounty,
                             latitude: null, // Will be hydrated asynchronously
                             longitude: null, // Will be hydrated asynchronously
                             rooms,
