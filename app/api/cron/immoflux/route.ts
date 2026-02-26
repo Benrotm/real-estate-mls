@@ -237,8 +237,8 @@ export async function GET(req: Request) {
                 continue; // Skip
             }
 
-            // Fallback owner (first super_admin)
-            const { data: admin } = await supabase.from('profiles').select('id').eq('role', 'super_admin').order('created_at', { ascending: true }).limit(1).single();
+            // Fallback owner (first super_admin, ordered by email to guarantee the real admin account over test ones)
+            const { data: admin } = await supabase.from('profiles').select('id').eq('role', 'super_admin').order('email', { ascending: true }).limit(1).single();
 
             const { error: insertError } = await supabase
                 .from('properties')
