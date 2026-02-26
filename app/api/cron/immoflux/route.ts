@@ -217,6 +217,28 @@ export async function GET(request: NextRequest) {
                         currency = 'RON';
                     }
 
+                    // Parse Listing Type and Property Type from the Cell HTML
+                    let listingType = 'For Sale';
+                    let propertyType = 'Apartment';
+                    // Use full row HTML since type/transaction info can be in any cell
+                    const rowHtml = ($page(el).html() || '').toLowerCase();
+
+                    if (rowHtml.includes('inchirier') || rowHtml.includes('închirier')) {
+                        listingType = 'For Rent';
+                    } else if (rowHtml.includes('vanzar') || rowHtml.includes('vânzar')) {
+                        listingType = 'For Sale';
+                    }
+
+                    if (rowHtml.includes('cas') || rowHtml.includes('vil')) {
+                        propertyType = 'House';
+                    } else if (rowHtml.includes('teren')) {
+                        propertyType = 'Land';
+                    } else if (rowHtml.includes('spatiu comercial') || rowHtml.includes('spatiu industrial') || rowHtml.includes('birou')) {
+                        propertyType = 'Commercial';
+                    } else if (rowHtml.includes('apartament') || rowHtml.includes('garsonier')) {
+                        propertyType = 'Apartment';
+                    }
+
                     // Clean Location string (remove "TM " prefix if it exists)
                     let cleanedLocation = location.replace(/^TM\s+/i, '').trim();
                     let citySplit = cleanedLocation.split(',');
@@ -233,6 +255,8 @@ export async function GET(request: NextRequest) {
                             title: title || 'Immoflux Property',
                             price,
                             currency,
+                            type: propertyType,
+                            listing_type: listingType,
                             description,
                             address: cleanedLocation || config.region_filter || 'Timis',
                             location_city: parsedCity,
