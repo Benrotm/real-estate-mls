@@ -1,0 +1,7 @@
+ALTER TABLE scraper_configs ADD COLUMN IF NOT EXISTS category_url TEXT;
+ALTER TABLE scraper_configs ADD COLUMN IF NOT EXISTS link_selector TEXT;
+ALTER TABLE scraper_configs ADD COLUMN IF NOT EXISTS last_scraped_id INTEGER DEFAULT 1;
+ALTER TABLE scraper_configs ADD COLUMN IF NOT EXISTS delay_min INTEGER DEFAULT 5;
+ALTER TABLE scraper_configs ADD COLUMN IF NOT EXISTS delay_max INTEGER DEFAULT 15;
+ALTER TABLE scraper_configs ADD COLUMN IF NOT EXISTS auto_interval INTEGER DEFAULT 15;
+ALTER TABLE scraper_configs ADD COLUMN IF NOT EXISTS watcher_interval_hours INTEGER DEFAULT 4;

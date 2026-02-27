@@ -56,6 +56,15 @@ export interface ScraperConfig {
         virtual_tour_url: string;
     };
     isActive: boolean;
+
+    // Auto-Scraper / Automator Fields
+    category_url?: string;
+    link_selector?: string;
+    last_scraped_id?: number;
+    delay_min?: number;
+    delay_max?: number;
+    auto_interval?: number;
+    watcher_interval_hours?: number;
 }
 
 export async function getScraperConfigs(): Promise<ScraperConfig[]> {
@@ -80,7 +89,14 @@ export async function getScraperConfigs(): Promise<ScraperConfig[]> {
         name: item.name,
         domain: item.domain,
         selectors: item.selectors,
-        isActive: item.is_active
+        isActive: item.is_active,
+        category_url: item.category_url,
+        link_selector: item.link_selector,
+        last_scraped_id: item.last_scraped_id,
+        delay_min: item.delay_min,
+        delay_max: item.delay_max,
+        auto_interval: item.auto_interval,
+        watcher_interval_hours: item.watcher_interval_hours
     }));
 }
 
@@ -93,6 +109,13 @@ export async function saveScraperConfig(config: ScraperConfig): Promise<{ succes
             domain: config.domain,
             selectors: config.selectors,
             is_active: config.isActive,
+            category_url: config.category_url,
+            link_selector: config.link_selector,
+            last_scraped_id: config.last_scraped_id || 1,
+            delay_min: config.delay_min || 5,
+            delay_max: config.delay_max || 15,
+            auto_interval: config.auto_interval || 15,
+            watcher_interval_hours: config.watcher_interval_hours || 4,
             updated_at: new Date().toISOString()
         };
 
@@ -128,7 +151,14 @@ export async function saveScraperConfig(config: ScraperConfig): Promise<{ succes
                 name: saved.name,
                 domain: saved.domain,
                 selectors: saved.selectors,
-                isActive: saved.is_active
+                isActive: saved.is_active,
+                category_url: saved.category_url,
+                link_selector: saved.link_selector,
+                last_scraped_id: saved.last_scraped_id,
+                delay_min: saved.delay_min,
+                delay_max: saved.delay_max,
+                auto_interval: saved.auto_interval,
+                watcher_interval_hours: saved.watcher_interval_hours
             }
         };
     } catch (error: any) {
