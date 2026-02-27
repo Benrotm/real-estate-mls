@@ -251,8 +251,16 @@ export async function GET(request: NextRequest) {
                     if (roomsMatch) rooms = parseInt(roomsMatch[0], 10);
 
                     if (title || price > 0) {
+                        // Build a descriptive title: Type + Transaction + Rooms + Location + Price
+                        const transactionLabel = listingType === 'For Rent' ? 'For Rent' : 'For Sale';
+                        const roomsLabel = rooms > 0 ? `${rooms} Rooms` : '';
+                        const locationLabel = cleanedLocation || parsedCity || '';
+                        const priceLabel = price > 0 ? `${price.toLocaleString('en-US')} ${currency}` : '';
+                        const generatedTitle = [propertyType, transactionLabel, roomsLabel, locationLabel, priceLabel]
+                            .filter(Boolean).join(' ');
+
                         const listingObj: any = {
-                            title: title || 'Immoflux Property',
+                            title: generatedTitle || title || 'Immoflux Property',
                             price,
                             currency,
                             type: propertyType,
