@@ -17,6 +17,21 @@ async function geocodeAddress(addressString: string): Promise<{ lat: number, lng
         if (data && data.length > 0) {
             return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
         }
+
+        // Fallback: if full address failed, try just the city name (first part before comma)
+        const cityOnly = addressString.split(',')[0].trim();
+        if (cityOnly && cityOnly !== addressString.trim()) {
+            console.log(`[Geocoding] Full address "${addressString}" failed, retrying with city: "${cityOnly}"`);
+            const fallbackQuery = encodeURIComponent(cityOnly + ', Romania');
+            const fallbackRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${fallbackQuery}`, {
+                headers: { 'User-Agent': 'Imobum-Scraper/1.0' }
+            });
+            const fallbackData = await fallbackRes.json();
+            if (fallbackData && fallbackData.length > 0) {
+                return { lat: parseFloat(fallbackData[0].lat), lng: parseFloat(fallbackData[0].lon) };
+            }
+        }
+
         return null;
     } catch (e) {
         console.error("[Geocoding Error]:", e);
@@ -432,9 +447,7 @@ export async function GET(request: NextRequest) {
                 .from('properties')
                 .insert({
                     ...item,
-                    owner_id: admin?.id,
-                    type: 'apartment', // Default
-                    property_type: 'sale'
+                    owner_id: admin?.id
                 });
 
             if (!insertError) {
