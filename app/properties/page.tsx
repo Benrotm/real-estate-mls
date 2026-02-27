@@ -5,6 +5,7 @@ import PropertyCard from '@/app/components/PropertyCard';
 import { Suspense } from 'react';
 import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 import { Loader2 } from 'lucide-react';
+import PerPageSelector from '@/app/components/PerPageSelector';
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
     // Await searchParams in case it's a promise (Next.js 15+ compat)
@@ -14,6 +15,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
     // Bulk check for "Make an Offer" feature for all property owners
     const ownerIds = Array.from(new Set(properties.map(p => p.owner_id).filter(Boolean)));
     const makeOfferAccessMap = await bulkCheckUserFeatureAccess(ownerIds, SYSTEM_FEATURES.MAKE_AN_OFFER);
+
+    const currentPerPage = Math.min(parseInt(filters?.per_page) || 15, 50);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
@@ -30,8 +33,11 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                     <PropertySearchFilters />
                 </Suspense>
 
-                <div className="mb-4 font-bold text-slate-700">
-                    {properties.length} Properties Found
+                <div className="mb-4 flex items-center justify-between">
+                    <span className="font-bold text-slate-700">
+                        {properties.length} Properties Found
+                    </span>
+                    <PerPageSelector currentValue={currentPerPage} />
                 </div>
 
                 {properties.length === 0 ? (

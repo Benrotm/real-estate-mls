@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Property } from '../lib/properties';
-import { Bed, Bath, Ruler, MapPin, Heart, Award, Lock } from 'lucide-react';
+import { Bed, Ruler, MapPin, Heart, Award, Lock, DoorOpen } from 'lucide-react';
 import PropertyManageButtons from './PropertyManageButtons';
 import { useState } from 'react';
 import UpgradeModal from './UpgradeModal';
@@ -99,14 +99,10 @@ export default function PropertyCard({ property, showEditButton, showMakeOffer, 
                         {property.location_city}, {property.location_county}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 py-3 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-4 py-3 border-t border-slate-100">
                         <div className="flex items-center gap-2 text-slate-700">
-                            <Bed className="w-5 h-5 text-blue-500" />
-                            <span className="font-bold text-sm">{property.bedrooms || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-700">
-                            <Bath className="w-5 h-5 text-blue-500" />
-                            <span className="font-bold text-sm">{property.bathrooms || 0}</span>
+                            <DoorOpen className="w-5 h-5 text-blue-500" />
+                            <span className="font-bold text-sm">{property.rooms || 0} rooms</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-700">
                             <Ruler className="w-4 h-4 text-blue-500" />

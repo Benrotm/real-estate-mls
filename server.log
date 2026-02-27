@@ -1,0 +1,820 @@
+
+> imobum@1.0.0 dev
+> next dev
+
+▲ Next.js 16.1.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.241:3000
+- Environments: .env.local
+
+✓ Starting...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 1467ms
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter request to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Scraped 10 properties.
+ GET /api/cron/immoflux 200 in 4.3s (compile: 377ms, proxy.ts: 82ms, render: 3.9s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter request to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Scraped 10 properties.
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'area' column of 'properties' in the schema cache"
+}
+ GET /api/cron/immoflux 200 in 3.6s (compile: 129ms, proxy.ts: 7ms, render: 3.4s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter request to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Scraped 10 properties.
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+[Immoflux Cron] Insert Error: {
+  code: 'PGRST204',
+  details: null,
+  hint: null,
+  message: "Could not find the 'source_url' column of 'properties' in the schema cache"
+}
+ GET /api/cron/immoflux 200 in 4.0s (compile: 132ms, proxy.ts: 5ms, render: 3.9s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter request to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Scraped 10 properties.
+ GET /api/cron/immoflux 200 in 3.7s (compile: 132ms, proxy.ts: 5ms, render: 3.6s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter request to: https://blitz.immoflux.ro/approperties/filterap
+FIRST ROW HTML:
+
+                <td>
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="912186">
+                <label></label>
+              </span>
+                </td>
+
+                <td class="cell-80">
+                    <a class="avatar avatar-big avatar-ap" data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepanel/912186">
+
+
+                                                    <img src="https://apcdn.immoflux.ro/a/91e67f54f9a463aa941345508586bc0f/crop/300x300/ap/912186/177214123069a0baae2cc06.jpg">
+
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </td>
+
+
+                <td>
+                    <span class="blue-600 text-nowrap"><strong>130.000€ </strong></span><br>
+                    Vanzare<br>
+                    Apartament<br>
+                    <div class="text-muted text-table-small">
+                        APX912186
+                    </div>
+                                        
+                </td>
+
+                <td>
+                    <strong><i class="icon wb-map" aria-hidden="true"></i> TM Timisoara, Aradului<br></strong>
+                    Apartament 3 camere 2 bai (intre Aradului Torontalului) | Liniste si Confort<br>
+                    <div class="text-muted text-table-small table-text-short text-table-expandable">
+                        Vand apartament in Timisoara, situat intre Calea Aradului si Calea Torontalului (foarte aproape de Vox Technology Park), pe o strada linistita, cu acces facil catre mijloacele de transport si toate punctele de interes.
+Aflat la etajul 4 intr-un bloc cu regim de inaltime pe Parter + 4 Etaje + Pod. Anul constructiei 1985. Suprafata utila de 67 mp.
+
+Apartamentul dispune de 3 camere, 2 bai, bucatarie inchisa, balcon inchis si integrat functional (in prezent este montat aragazul si frigiderul, eliberand spatiul din bucatarie).
+Se vinde mobilat si utilat: aragaz, frigider cu congelator, masina de spalat rufe cu uscator.
+Sistem de climatizare (A.C.) in 2 camere si marchize electrice la fiecare fereastra pentru controlul optim al luminii si temperaturii.
+
+Apartamentul este orientat spre spatele blocului  liniste deplina, departe de zgomotul arterelor principale.
+Parcare: loc amenajat de primarie chiar în spatele blocului.<br>
+                    </div>
+                    <div>
+                                                    <span class="label inline-block bg-blue-grey-500">
+                            3 camere
+                        </span>
+                                                    <span class="label inline-block bg-blue-grey-500">
+                            SU 68.00 mp
+                        </span>
+                                                    <span class="label inline-block bg-blue-grey-500">
+                            An Constructie 1986 
+                        </span>
+                                                    <span class="label inline-block bg-blue-grey-500">
+                            Balcoane 1 
+                        </span>
+                                            </div>
+
+                    <div class="margin-top-5">
+                                                    <div class="btn-icon btn-primary btn-sm inline-block">
+                                <i class="icon fa-phone" aria-hidden="true"></i>
+                                +40 765 388 164
+                            </div>
+
+                        
+                        
+                                                    <a href="https://www.romimo.ro/anunturi/imobiliare/de-vanzare/apartamente/apartamente-3-camere/anunt/apartament-3-camere-2-bai-intre-aradului-torontalului-liniste-si-confort/e0576g19h21d7f321748d882683hh2ee.html" target="_blank" class="btn-icon btn-primary btn-sm inline-block">
+                                <i class="icon fa-link" aria-hidden="true"></i>
+                                romimo
+                            </a>
+                                                
+                    </div>
+
+                    
+                    
+                    
+                    
+                    
+                    
+
+                    <div id="ap-changeable-912186" class="margin-top-5">
+                                            </div>
+
+
+                    <div class="margin-top-10">
+                                                    <a data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepanelimport/912186" type="button" class="btn btn-icon btn-success btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Importa in portofoliu"><i class="ti-arrow-down" aria-hidden="true"></i></a>
+                                                                            <a data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepaneltags/912186" type="button" class="btn btn-icon btn-purple btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Etichete"><i class="ti-tag" aria-hidden="true"></i></a>
+                        
+                                                                            <a data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepaneltags/912186" type="button" class="btn btn-icon btn-warning btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Comentarii agentie"><i class="ti-comments" aria-hidden="true"></i></a>
+                        
+                                                    <a data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepanelreport/912186" type="button" class="btn btn-icon btn-danger btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Raporteaza anunt"><i class="ti-alert" aria-hidden="true"></i></a>
+                        
+                                                </div>
+                </td>
+
+
+
+                <td>
+                    <span class="text-muted">
+                    26.02.2026 23:27:10<br>
+                        </span>
+                    <span class="text-muted">
+                    26.02.2026 23:27:10<br>
+                    </span>
+
+                </td>
+
+                
+                
+                
+                
+                
+
+                
+
+            
+[Immoflux Cron] Scraped 10 properties.
+ GET /api/cron/immoflux 200 in 2.5s (compile: 157ms, proxy.ts: 6ms, render: 2.4s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter request to: https://blitz.immoflux.ro/approperties/filterap
+FIRST ROW HTML:
+
+                <td>
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="912186">
+                <label></label>
+              </span>
+                </td>
+
+                <td class="cell-80">
+                    <a class="avatar avatar-big avatar-ap" data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepanel/912186">
+
+
+                                                    <img src="https://apcdn.immoflux.ro/a/91e67f54f9a463aa941345508586bc0f/crop/300x300/ap/912186/177214123069a0baae2cc06.jpg">
+
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </td>
+
+
+                <td>
+                    <span class="blue-600 text-nowrap"><strong>130.000€ </strong></span><br>
+                    Vanzare<br>
+                    Apartament<br>
+                    <div class="text-muted text-table-small">
+                        APX912186
+                    </div>
+                                        
+                </td>
+
+                <td>
+                    <strong><i class="icon wb-map" aria-hidden="true"></i> TM Timisoara, Aradului<br></strong>
+                    Apartament 3 camere 2 bai (intre Aradului Torontalului) | Liniste si Confort<br>
+                    <div class="text-muted text-table-small table-text-short text-table-expandable">
+                        Vand apartament in Timisoara, situat intre Calea Aradului si Calea Torontalului (foarte aproape de Vox Technology Park), pe o strada linistita, cu acces facil catre mijloacele de transport si toate punctele de interes.
+Aflat la etajul 4 intr-un bloc cu regim de inaltime pe Parter + 4 Etaje + Pod. Anul constructiei 1985. Suprafata utila de 67 mp.
+
+Apartamentul dispune de 3 camere, 2 bai, bucatarie inchisa, balcon inchis si integrat functional (in prezent este montat aragazul si frigiderul, eliberand spatiul din bucatarie).
+Se vinde mobilat si utilat: aragaz, frigider cu congelator, masina de spalat rufe cu uscator.
+Sistem de climatizare (A.C.) in 2 camere si marchize electrice la fiecare fereastra pentru controlul optim al luminii si temperaturii.
+
+Apartamentul este orientat spre spatele blocului  liniste deplina, departe de zgomotul arterelor principale.
+Parcare: loc amenajat de primarie chiar în spatele blocului.<br>
+                    </div>
+                    <div>
+                                                    <span class="label inline-block bg-blue-grey-500">
+                            3 camere
+                        </span>
+                                                    <span class="label inline-block bg-blue-grey-500">
+                            SU 68.00 mp
+                        </span>
+                                                    <span class="label inline-block bg-blue-grey-500">
+                            An Constructie 1986 
+                        </span>
+                                                    <span class="label inline-block bg-blue-grey-500">
+                            Balcoane 1 
+                        </span>
+                                            </div>
+
+                    <div class="margin-top-5">
+                                                    <div class="btn-icon btn-primary btn-sm inline-block">
+                                <i class="icon fa-phone" aria-hidden="true"></i>
+                                +40 765 388 164
+                            </div>
+
+                        
+                        
+                                                    <a href="https://www.romimo.ro/anunturi/imobiliare/de-vanzare/apartamente/apartamente-3-camere/anunt/apartament-3-camere-2-bai-intre-aradului-torontalului-liniste-si-confort/e0576g19h21d7f321748d882683hh2ee.html" target="_blank" class="btn-icon btn-primary btn-sm inline-block">
+                                <i class="icon fa-link" aria-hidden="true"></i>
+                                romimo
+                            </a>
+                                                
+                    </div>
+
+                    
+                    
+                    
+                    
+                    
+                    
+
+                    <div id="ap-changeable-912186" class="margin-top-5">
+                                            </div>
+
+
+                    <div class="margin-top-10">
+                                                    <a data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepanelimport/912186" type="button" class="btn btn-icon btn-success btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Importa in portofoliu"><i class="ti-arrow-down" aria-hidden="true"></i></a>
+                                                                            <a data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepaneltags/912186" type="button" class="btn btn-icon btn-purple btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Etichete"><i class="ti-tag" aria-hidden="true"></i></a>
+                        
+                                                                            <a data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepaneltags/912186" type="button" class="btn btn-icon btn-warning btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Comentarii agentie"><i class="ti-comments" aria-hidden="true"></i></a>
+                        
+                                                    <a data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepanelreport/912186" type="button" class="btn btn-icon btn-danger btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Raporteaza anunt"><i class="ti-alert" aria-hidden="true"></i></a>
+                        
+                                                </div>
+                </td>
+
+
+
+                <td>
+                    <span class="text-muted">
+                    26.02.2026 23:27:10<br>
+                        </span>
+                    <span class="text-muted">
+                    26.02.2026 23:27:10<br>
+                    </span>
+
+                </td>
+
+                
+                
+                
+                
+                
+
+                
+
+            
+[Immoflux Cron] Scraped 10 properties.
+ GET /api/cron/immoflux 200 in 3.5s (compile: 129ms, proxy.ts: 4ms, render: 3.4s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter request to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Waiting for gallery extractions to finish...
+SLIDEPANEL_HTML_START
+<header class="slidePanel-header bg-blue-600">
+    <div class="slidePanel-actions" aria-label="actions" role="group">
+        <button type="button" class="btn btn-icon btn-pure btn-inverse slidePanel-close actions-top icon wb-close" aria-hidden="true"></button>
+
+    </div>
+    <h1>
+        <a id="slide-back-history" class="hidden" href="#"><i class="ti ti-arrow-left"></i></a>
+        Proprietate APX908192 </h1>
+
+    
+
+</header>
+
+
+<section class="slidePanel-inner-section with-tabs">
+
+
+    <ul class="site-sidebar-nav nav nav-tabs nav-justified nav-tabs-line" data-plugin="nav-tabs" role="tablist">
+        <li  class="active"  role="presentation">
+            <a data-toggle="tab" href="#sidebar-general69a0c22b045f1" role="tab">
+                <i class="icon ti-ruler-pencil" aria-hidden="true"></i>
+                Detalii generale
+            </a>
+        </li>
+
+
+
+
+
+
+
+
+
+
+    </ul>
+
+    <div class="site-sidebar-tab-content tab-content">
+
+        <div class="tab-pane fade active in" id="sidebar-general69a0c22b045f1">
+            <div>
+                <div>
+                    <div class="row">
+
+    
+            
+        <div class="col-sm-12">
+
+
+            <div class="owl-carousel" data-plugin="owlCarousel" data-center="false" data-dots="false" data-nav="true" data-margin="5">
+
+                                    <div class="item">
+                        <a href="https://apcdn.immoflux.ro/a/be68f790b16dc3cd84cf12d8cb0dba82/resize/1600x1024/ap/908192/1771857193699c652926d3a.jpg" data-gallery>
+                            <img src="https://apcdn.immoflux.ro/a/61443e6d09236a5d991b543da53cba80/crop/150x150/ap/908192/1771857193699c652926d3a.jpg" class="img-responsive"/>
+                        </a>
+                    </div>
+                                    <div class="item">
+                        <a href="https://apcdn.immoflux.ro/a/e1d3e8856df9d84f37e341e7d9c93262/resize/1600x1024/ap/908192/1771857193699c65298708b.jpg" data-gallery>
+                            <img src="https://apcdn.immoflux.ro/a/f4da41852c6e181ccabd317d56e670e8/crop/150x150/ap/908192/1771857193699c65298708b.jpg" class="img-responsive"/>
+                        </a>
+                    </div>
+                                    <div class="item">
+                        <a href="https://apcdn.immoflux.ro/a/e45ec2292b871022c1d5210b8186d263/resize/1600x1024/ap/908192/1771857193699c6529a88ff.jpg" data-gallery>
+                            <img src="https://apcdn.immoflux.ro/a/e7e57147cf677fc1baeac4002542798f/crop/150x150/ap/908192/1771857193699c6529a88ff.jpg" class="img-responsive"/>
+                        </a>
+                    </div>
+                                    <div class="item">
+                        <a href="https://apcdn.immoflux.ro/a/3e380a836567d644822e439a3dab77bc/resize/1600x1024/ap/908192/1771857193699c6529d268b.jpg" data-gallery>
+                            <img src="https://apcdn.immoflux.ro/a/f804d86038272b3893eabae3250b13bd/crop/150x150/ap/908192/1771857193699c6529d268b.jpg" class="img-responsive"/>
+                        </a>
+                    </div>
+                                    <div class="item">
+                        <a href="https://apcdn.immoflux.ro/a/c1fabbe566c45b83e727595819dffe92/resize/1600x1024/ap/908192/1771857194699c652a20cdf.jpg" data-gallery>
+                            <img src="https://apcdn.immoflux.ro/a/5d9644493a02f6b1ecb2be88cd6df02e/crop/150x150/ap/908192/1771857194699c652a20cdf.jpg" class="img-responsive"/>
+                        </a>
+                    </div>
+                            </div>
+        </div>
+        <div class="col-sm-12">
+        <h3> Proprietar inchiriez apartament cochet cu o camera</h3>
+    </div>
+
+
+
+
+
+    <div class="col-sm-12">
+         <span class="text-muted">
+        Adaugat:  23.02.2026 16:33:13 /
+        Modificat:  26.02.2026 23:54:07
+         </span>
+    </div>
+
+    
+    
+    
+    
+    
+
+    <div class="col-sm-12">
+        <h3>Pret:  <strong><span class="blue-600">350€</span></strong></h3>
+
+        
+        <div class="slidepanel-info">
+            Status: <strong> <span class='label bg-green-600'>Activa</span></strong>
+
+            <br/>Tip:  <strong>Apartament</strong>
+            
+
+            <div class="hide-on-private">
+                Adresa:  <a href="https://www.google.com/maps/search/?api=1&query=45.755756,21.232221" target="_blank">TM Timisoara</a>
+            </div>
+
+                            <div>
+                    Telefon:
+                    <div class="btn-icon btn-primary btn-sm inline-block">
+                        <i class="icon fa-phone" aria-hidden="true"></i>
+                        +40 745 207 510
+                    </div>
+                </div>
+            
+                            <div>
+                    Portaluri:
+
+                                                                        <a href="https://www.romimo.ro/anunturi/imobiliare/de-inchiriat/apartamente/apartamente-1-camera/anunt/proprietar-inchiriez-apartament-cochet-cu-o-camera/3093363302g071if20968i0di061de13.html" target="_blank" class="btn-icon btn-primary btn-sm inline-block">
+                                <i class="icon fa-link" aria-hidden="true"></i>
+                                romimo
+                            </a>
+                                                            </div>
+            
+
+        </div>
+    </div>
+</div>
+
+<div class="slidepanel-info margin-top-10">
+    <iframe
+            width="100%"
+            height="200"
+            frameborder="0"
+            scrolling="no"
+            marginheight="0"
+            marginwidth="0"
+            src="https://maps.google.com/maps?q=45.755756,21.232221&hl=ro&z=14&amp;output=embed"
+    >
+    </iframe>
+
+</div>
+
+<h4 class="example-title strong">Caracteristici</h4>
+<div class="row">
+
+    
+    
+
+    
+
+    
+
+    <div class="col-sm-6">Camere: <strong>1</strong></div>
+    
+    
+    
+    
+    
+
+    
+    
+
+    <div class="col-sm-6">An constructie: <strong>1989</strong></div>
+    
+
+    
+    
+    
+</div>
+
+
+
+<div class="row">
+    <div class="col-sm-6">Suprafata utila: <strong>35.00m<sup>2</sup></strong></div>
+    
+    
+    
+    
+    
+    
+</div>
+
+
+
+<div class="row">
+    
+    
+    
+
+    
+</div>
+
+
+<h4 class="example-title strong">Descriere</h4>
+
+Apartamentul are o camera, un hol, o baie si o bucatarie. E complet mobilitat si utilat. Se afla la 1 minut de Kaufland si Carefour si la 5 minute de centrul orasului.
+
+
+
+
+
+
+
+
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+
+    <div class="site-action site-action-left-slidepanel">
+
+        <button data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepaneltags/908192"  type="button" class="btn btn-purple btn-floating btn-round" data-tooltip="true" data-placement="top" data-original-title="Etichete"><i class="ti-tag" aria-hidden="true"></i></button>
+        <button data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepaneltags/908192"  type="button" class="btn btn-warning btn-floating btn-round" data-tooltip="true" data-placement="top" data-original-title="Comentarii private"><i class="ti-comment" aria-hidden="true"></i></button>
+        <button data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepaneltags/908192"  type="button" class="btn btn-warning btn-floating btn-round" data-tooltip="true" data-placement="top" data-original-title="Comentarii agentie"><i class="ti-comments" aria-hidden="true"></i></button>
+        <button data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepanelreport/908192" type="button" class="btn btn-danger btn-floating btn-round" data-tooltip="true" data-placement="top" data-original-title="Raporteaza anunt"><i class="ti-alert" aria-hidden="true"></i></button>
+
+        
+    </div>
+
+
+    <div class="site-action">
+
+        <button data-toggle="slidePanel" data-url="https://blitz.immoflux.ro/ap/slidepanelimport/908192"  type="button" class="btn btn-success btn-floating btn-round" data-tooltip="true" data-placement="top" data-original-title="Importa in portofoliu"><i class="ti-arrow-down" aria-hidden="true"></i></button>
+        <a href="javascript:void(0)" data-href="javascript:void(0)" type="button" class="btn btn-floating btn-default slidePanel-close"  data-tooltip="true" data-placement="top" data-original-title="Anuleaza"><i class="icon ti-close" aria-hidden="true"></i></a>
+    </div>
+
+
+</section>
+
+
+
+
+
+<script>
+    $(document).ready(function($) {
+        $('.owl-carousel').owlCarousel(
+            {
+                items: 5,
+                nav: true,
+                margin:5,
+                dots: false
+            }
+        );
+        $('.selectpicker').selectpicker({
+//        style: 'btn-info',
+            size: 8
+        });
+
+        var msxhr;
+
+        $('#matching-slidepanel input').on('change', function(){
+            var $target = $('#matching-slidepanel');
+            var $contentbox = $($target.attr('data-contentbox'));
+
+            if (msxhr != null) msxhr.abort();
+            $contentbox.css('opacity',.5);
+            msxhr = $.post($target.attr('data-url'), $target.serialize())
+                .done(function(data){
+                    $contentbox.html(data);
+                    $contentbox.css('opacity',1);
+                    $.components._components.selectable.init();
+                })
+        })
+
+        function initSlidepanelButtons(){
+
+            $('#importAction').click(function(){
+
+                var url = $(this).attr('data-href');
+                var l = Ladda.create(this);
+                l.start();
+
+                $.post(url)
+                    .done(function(data){
+                        if (data.status){
+                            if (data.redirect) window.location.href = data.redirect;
+                        }else{
+                            window.errorsCheck(data);
+                        }
+
+                    })
+                    .always(function() { l.stop(); });
+
+
+
+            });
+        }
+
+        initSlidepanelButtons();
+    });
+</script>
+
+
+
+SLIDEPANEL_HTML_END
+[Immoflux Cron] Scraped 15 properties.
+ GET /api/cron/immoflux 200 in 3.3s (compile: 164ms, proxy.ts: 4ms, render: 3.1s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter request to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Waiting for gallery extractions to finish...
+[Immoflux Cron] Scraped 15 properties.
+ GET /api/cron/immoflux 200 in 5.7s (compile: 175ms, proxy.ts: 5ms, render: 5.5s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter requests to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Fetching Page 1...
+[Immoflux Cron] Page 1 yielded 15 viable properties. Running Total: 15
+[Immoflux Cron] Waiting for gallery extractions to finish...
+[Immoflux Cron] Finished scraping 15 properties across pages.
+ GET /api/cron/immoflux 200 in 4.5s (compile: 146ms, proxy.ts: 5ms, render: 4.3s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter requests to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Fetching Page 3...
+[Immoflux Cron] Page 3 yielded 5 viable properties. Running Total: 5
+[Immoflux Cron] Waiting for gallery extractions to finish...
+[Immoflux Cron] Finished scraping 5 properties across pages.
+ GET /api/cron/immoflux?scrape_limit=5 200 in 2.8s (compile: 187ms, proxy.ts: 6ms, render: 2.6s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter requests to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Fetching Page 5...
+[Immoflux Cron] Page 5 yielded 5 viable properties. Running Total: 5
+[Immoflux Cron] Waiting for gallery extractions to finish...
+[Immoflux Cron] Finished scraping 5 properties across pages.
+ GET /api/cron/immoflux?scrape_limit=2 200 in 5.6s (compile: 148ms, proxy.ts: 5ms, render: 5.4s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter requests to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Fetching Page 3...
+[Immoflux Cron] Page 3 yielded 5 viable properties. Running Total: 5
+[Immoflux Cron] Waiting for gallery extractions to finish...
+[Immoflux Cron] Finished scraping 5 properties across pages.
+ GET /api/cron/immoflux?scrape_limit=5 200 in 2.7s (compile: 144ms, proxy.ts: 4ms, render: 2.5s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter requests to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Fetching Page 4...
+[Immoflux Cron] Page 4 yielded 5 viable properties. Running Total: 5
+[Immoflux Cron] Waiting for gallery extractions to finish...
+[Immoflux Cron] Finished scraping 5 properties across pages.
+ GET /api/cron/immoflux?scrape_limit=5 200 in 2.5s (compile: 124ms, proxy.ts: 5ms, render: 2.4s)
+[Immoflux Cron] Starting...
+[Immoflux Cron] Fetching login page to grab CSRF...
+[Immoflux Cron] Authenticating...
+[Immoflux Cron] Fetching dashboard to extract filters: https://blitz.immoflux.ro/approperties
+[Immoflux Cron] Submitting AJAX filter requests to: https://blitz.immoflux.ro/approperties/filterap
+[Immoflux Cron] Fetching Page 5...
+[Immoflux Cron] Page 5 yielded 5 viable properties. Running Total: 5
+[Immoflux Cron] Waiting for gallery extractions to finish...
+[Immoflux Cron] Finished scraping 5 properties across pages.
+ GET /api/cron/immoflux?scrape_limit=3 200 in 3.1s (compile: 228ms, proxy.ts: 21ms, render: 2.8s)

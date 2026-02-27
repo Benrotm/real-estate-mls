@@ -252,6 +252,10 @@ export async function getProperties(filters?: any) {
         }
     }
 
+    // Apply per-page limit (default 15, max 50)
+    const perPage = Math.min(parseInt(filters?.per_page) || 15, 50);
+    query = query.limit(perPage);
+
     const { data, error } = await query;
 
     if (error) {
