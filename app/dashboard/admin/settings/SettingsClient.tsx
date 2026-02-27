@@ -1,14 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, ShieldCheck, CopyCheck, Save, Loader2, Play, Square, Timer } from 'lucide-react';
-import { getAdminSettings, updateAdminSetting, updateImmofluxSetting, AdminSettings, ImmofluxConfig } from '@/app/lib/actions/admin-settings';
+import { Settings, ShieldCheck, CopyCheck, Save, Loader2, Play, Square, Timer, Globe } from 'lucide-react';
+import { getAdminSettings, updateAdminSetting, updateImmofluxSetting, updateProxySetting, AdminSettings, ImmofluxConfig, ProxyConfig } from '@/app/lib/actions/admin-settings';
 
 export default function SettingsClient() {
     const [settings, setSettings] = useState<AdminSettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
+
+    // Proxy Settings State
+    const [proxyConfig, setProxyConfig] = useState<ProxyConfig>({
+        is_active: false,
+        host: '',
+        port: '',
+        username: '',
+        password: '',
+    });
 
     // Historical Auto-Scraper State
     const [isScraping, setIsScraping] = useState(false);
@@ -62,6 +71,9 @@ export default function SettingsClient() {
         try {
             const data = await getAdminSettings();
             setSettings(data);
+            if (data.proxy_integration) {
+                setProxyConfig(data.proxy_integration);
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -118,6 +130,21 @@ export default function SettingsClient() {
             setTimeout(() => setMessage({ text: '', type: '' }), 3000);
         } else {
             setMessage({ text: `Failed to save Immoflux setup: ${result.error}`, type: 'error' });
+        }
+        setIsSaving(false);
+    };
+
+    const handleSaveProxy = async () => {
+        setIsSaving(true);
+        setMessage({ text: '', type: '' });
+
+        const result = await updateProxySetting(proxyConfig);
+
+        if (result.success) {
+            setMessage({ text: 'Proxy settings saved successfully!', type: 'success' });
+            setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+        } else {
+            setMessage({ text: `Failed to save Proxy settings: ${result.error}`, type: 'error' });
         }
         setIsSaving(false);
     };
@@ -255,6 +282,95 @@ export default function SettingsClient() {
                                 className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.enable_anti_duplicate_intelligence ? 'translate-x-7' : 'translate-x-0'
                                     }`}
                             />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Residential Proxy Settings */}
+            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                <div className="p-8 border-b border-slate-800 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                            <Globe className="w-6 h-6 text-emerald-400" />
+                            Residential Proxy API Connectivity
+                        </h2>
+                        <p className="text-slate-400 mt-2 text-sm">
+                            Route Automated Scraper API traffic through real residential IPs to dramatically bypass Cloudflare/Bot protections.
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            const newVal = !proxyConfig.is_active;
+                            setProxyConfig({ ...proxyConfig, is_active: newVal });
+                            updateProxySetting({ ...proxyConfig, is_active: newVal });
+                        }}
+                        className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${proxyConfig.is_active ? 'bg-emerald-500' : 'bg-slate-700'
+                            }`}
+                    >
+                        <span
+                            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${proxyConfig.is_active ? 'translate-x-7' : 'translate-x-0'
+                                }`}
+                        />
+                    </button>
+                </div>
+
+                <div className="p-8 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Host Endpoint</label>
+                            <input
+                                type="text"
+                                value={proxyConfig.host || ''}
+                                onChange={(e) => setProxyConfig({ ...proxyConfig, host: e.target.value })}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                placeholder="brd.superproxy.io"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Port Number</label>
+                            <input
+                                type="text"
+                                value={proxyConfig.port || ''}
+                                onChange={(e) => setProxyConfig({ ...proxyConfig, port: e.target.value })}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                placeholder="22225"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Username (Zone ID)</label>
+                            <input
+                                type="text"
+                                value={proxyConfig.username || ''}
+                                onChange={(e) => setProxyConfig({ ...proxyConfig, username: e.target.value })}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                placeholder="brd-customer-xxxx-zone-residential"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Proxy Password</label>
+                            <input
+                                type="password"
+                                value={proxyConfig.password || ''}
+                                onChange={(e) => setProxyConfig({ ...proxyConfig, password: e.target.value })}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                placeholder="••••••••"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-4 flex justify-end">
+                        <button
+                            onClick={handleSaveProxy}
+                            disabled={isSaving}
+                            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-emerald-500/20 disabled:opacity-50"
+                        >
+                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Save Proxy Network config
                         </button>
                     </div>
                 </div>

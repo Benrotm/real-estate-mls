@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAdminSettings } from '@/app/lib/actions/admin-settings';
 
 export async function POST(req: Request) {
     try {
@@ -21,6 +22,10 @@ export async function POST(req: Request) {
 
         const webhookUrl = `${origin}/api/admin/bulk-scrape-item`;
 
+        // Fetch Proxy Info
+        const settings = await getAdminSettings();
+        const proxyConfig = settings?.proxy_integration?.is_active ? settings.proxy_integration : null;
+
         // Inject our secret environment variables
         const payload = {
             categoryUrl,
@@ -30,6 +35,7 @@ export async function POST(req: Request) {
             delayMin,
             delayMax,
             mode,
+            proxyConfig,
             supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
             supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY
         };

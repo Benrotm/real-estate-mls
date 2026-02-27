@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/app/lib/supabase/server';
+import { getAdminSettings } from '@/app/lib/actions/admin-settings';
 
 export async function POST(req: Request) {
     try {
@@ -34,6 +35,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Microservice URL not configured' }, { status: 500 });
         }
 
+        // Fetch Proxy Info
+        const settings = await getAdminSettings();
+        const proxyConfig = settings?.proxy_integration?.is_active ? settings.proxy_integration : null;
+
         // Fire and forget - don't await the long-running scrape
         fetch(`${microserviceUrl}/api/run-dynamic-scrape`, {
             method: 'POST',
@@ -50,6 +55,7 @@ export async function POST(req: Request) {
                 mode,
                 linkSelector,
                 extractSelectors,
+                proxyConfig,
                 supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
                 supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY
             })

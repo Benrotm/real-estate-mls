@@ -1,6 +1,8 @@
 'use server';
 
 import * as cheerio from 'cheerio';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { getAdminSettings } from './admin-settings';
 
 export interface ScrapedProperty {
     title?: string;
@@ -62,14 +64,34 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
             return { error: 'Invalid URL provided' };
         }
 
-        const response = await fetch(url, {
+        // --- Fetch Proxy Integration ---
+        const settings = await getAdminSettings();
+        const proxyConfig = settings?.proxy_integration;
+
+        let fetchOptions: RequestInit = {
             cache: 'no-store',
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language': 'en-US,en;q=0.9',
             }
-        });
+        };
+
+        if (proxyConfig && proxyConfig.is_active && proxyConfig.host && proxyConfig.port) {
+            let proxyUrl = `http://${proxyConfig.host}:${proxyConfig.port}`;
+            // Add credentials if they exist
+            if (proxyConfig.username && proxyConfig.password) {
+                proxyUrl = `http://${proxyConfig.username}:${proxyConfig.password}@${proxyConfig.host}:${proxyConfig.port}`;
+            }
+
+            console.log(`[Proxy] Routing Cheerio fetch through Residential Proxy: ${proxyConfig.host}:${proxyConfig.port}`);
+
+            // Next.js explicitly supports agent in standard fetch starting late v13/v14 depending on the Undici iteration natively.
+            const agent = new HttpsProxyAgent(proxyUrl);
+            (fetchOptions as any).dispatcher = agent; // Works in Undici native fetch
+        }
+
+        const response = await fetch(url, fetchOptions);
 
         if (!response.ok) {
             return { error: `Failed to fetch URL: ${response.statusText}` };

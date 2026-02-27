@@ -42,11 +42,20 @@ export interface OlxConfig {
     watcher_interval_hours: number;
 }
 
+export interface ProxyConfig {
+    is_active: boolean;
+    host: string;
+    port: string;
+    username?: string;
+    password?: string;
+}
+
 export interface AdminSettings {
     require_ownership_verification: boolean;
     enable_anti_duplicate_intelligence: boolean;
     immoflux_integration?: ImmofluxConfig;
     olx_integration?: OlxConfig;
+    proxy_integration?: ProxyConfig;
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -81,6 +90,11 @@ const DEFAULT_SETTINGS: AdminSettings = {
             rooms: "td:nth-child(4) span.label",
             phone: "td:nth-child(4) div.btn-primary"
         }
+    },
+    proxy_integration: {
+        is_active: false,
+        host: "brd.superproxy.io",
+        port: "22225"
     }
 };
 
@@ -97,7 +111,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
 
         const settings: any = { ...DEFAULT_SETTINGS };
         for (const row of data) {
-            if (row.key === 'immoflux_integration') {
+            if (row.key === 'immoflux_integration' || row.key === 'olx_integration' || row.key === 'proxy_integration') {
                 settings[row.key] = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
             } else {
                 if (row.value === 'true' || row.value === true) settings[row.key] = true;
@@ -165,6 +179,26 @@ export async function updateOlxSetting(config: OlxConfig) {
 
         if (error) {
             console.error("Failed to update OLX details:", error.message);
+            return { success: false, error: error.message };
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function updateProxySetting(config: ProxyConfig) {
+    try {
+        const { error } = await supabase
+            .from('admin_settings')
+            .upsert({
+                key: 'proxy_integration',
+                value: config,
+                description: 'Residential Proxy API settings to bypass scraping bot protections'
+            }, { onConflict: 'key' });
+
+        if (error) {
+            console.error("Failed to update Proxy details:", error.message);
             return { success: false, error: error.message };
         }
         return { success: true };
