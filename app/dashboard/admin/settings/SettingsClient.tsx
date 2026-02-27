@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, ShieldCheck, CopyCheck, Save, Loader2 } from 'lucide-react';
+import { Settings, ShieldCheck, CopyCheck, Save, Loader2, Play, Square, Timer } from 'lucide-react';
 import { getAdminSettings, updateAdminSetting, updateImmofluxSetting, AdminSettings, ImmofluxConfig } from '@/app/lib/actions/admin-settings';
 
 export default function SettingsClient() {
@@ -10,9 +10,53 @@ export default function SettingsClient() {
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
 
+    // Historical Auto-Scraper State
+    const [isScraping, setIsScraping] = useState(false);
+    const [isAutoScraping, setIsAutoScraping] = useState(false);
+    const [autoCountdown, setAutoCountdown] = useState(0);
+
+    // Watcher Auto-Scraper State
+    const [isWatching, setIsWatching] = useState(false);
+    const [isWatcherActive, setIsWatcherActive] = useState(false);
+    const [watcherCountdown, setWatcherCountdown] = useState(0);
+
     useEffect(() => {
         loadSettings();
     }, []);
+
+    // Historical Auto-Scrape interval
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (isAutoScraping) {
+            timer = setInterval(() => {
+                setAutoCountdown((prev) => {
+                    if (prev <= 1) {
+                        if (!isScraping) runImmofluxScraper();
+                        return (settings?.immoflux_integration?.auto_interval || 10) * 60;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [isAutoScraping, isScraping, settings]);
+
+    // Watcher Auto-Scrape interval
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (isWatcherActive) {
+            timer = setInterval(() => {
+                setWatcherCountdown((prev) => {
+                    if (prev <= 1) {
+                        if (!isWatching) runWatcher();
+                        return (settings?.immoflux_integration?.watcher_interval_hours || 2) * 3600;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [isWatcherActive, isWatching, settings]);
 
     async function loadSettings() {
         try {
@@ -78,7 +122,13 @@ export default function SettingsClient() {
         setIsSaving(false);
     };
 
-    const [isScraping, setIsScraping] = useState(false);
+    const toggleAutoScrape = () => {
+        if (!isAutoScraping) {
+            setAutoCountdown((settings?.immoflux_integration?.auto_interval || 10) * 60);
+            runImmofluxScraper(); // Run first batch immediately
+        }
+        setIsAutoScraping(!isAutoScraping);
+    };
 
     const runImmofluxScraper = async () => {
         setIsScraping(true);
@@ -89,7 +139,9 @@ export default function SettingsClient() {
             const data = await res.json();
 
             if (data.status === 'success') {
-                setMessage({ text: `Scrape complete! Found: ${data.found}, Inserted: ${data.inserted}, Skipped Duplicates: ${data.skipped_duplicates}`, type: 'success' });
+                setMessage({ text: `Page ${data.page_completed || ''} scraped! Found: ${data.found}, Inserted: ${data.inserted}. Waiting for next cycle...`, type: 'success' });
+            } else if (data.status === 'done') {
+                setMessage({ text: `All pages finished! Returning to Page 1 next cycle.`, type: 'success' });
             } else {
                 setMessage({ text: `Scrape issue: ${data.reason}`, type: 'error' });
             }
@@ -97,6 +149,36 @@ export default function SettingsClient() {
             setMessage({ text: `Scraper error: ${error.message}`, type: 'error' });
         } finally {
             setIsScraping(false);
+        }
+    };
+
+    const toggleWatcher = () => {
+        if (!isWatcherActive) {
+            setWatcherCountdown((settings?.immoflux_integration?.watcher_interval_hours || 2) * 3600);
+            runWatcher(); // Run immediate check
+        }
+        setIsWatcherActive(!isWatcherActive);
+    };
+
+    const runWatcher = async () => {
+        setIsWatching(true);
+        setMessage({ text: '', type: '' });
+
+        try {
+            const res = await fetch('/api/cron/immoflux?mode=watcher');
+            const data = await res.json();
+
+            if (data.status === 'done_watcher') {
+                setMessage({ text: `Watcher finished checking. Found ${data.inserted} new properties.`, type: 'success' });
+            } else if (data.status === 'success') {
+                setMessage({ text: `Watcher fetched 1 page. Inserted: ${data.inserted}.`, type: 'success' });
+            } else {
+                setMessage({ text: `Watcher issue: ${data.reason}`, type: 'error' });
+            }
+        } catch (error: any) {
+            setMessage({ text: `Watcher error: ${error.message}`, type: 'error' });
+        } finally {
+            setIsWatching(false);
         }
     };
 
@@ -250,7 +332,7 @@ export default function SettingsClient() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Scrape Limit</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Scrape Limit (Max per run)</label>
                                     <input
                                         type="number"
                                         min="1"
@@ -259,6 +341,64 @@ export default function SettingsClient() {
                                         onChange={(e) => handleImmofluxChange('scrape_limit', parseInt(e.target.value) || 50)}
                                         className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
                                     />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Anti-Ban Settings Section */}
+                        <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800 space-y-4 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 rounded-l-2xl"></div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <Timer className="w-5 h-5 text-emerald-400" />
+                                <h3 className="text-lg font-bold text-white">Anti-Ban Settings & Automator</h3>
+                            </div>
+                            <p className="text-sm text-slate-400 mb-6 max-w-2xl">
+                                Configure delays and automated schedules to scrape humanly and avoid IP bans. <strong>Leave this tab open</strong> to keep the automator running.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Min Delay (sec)</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={settings.immoflux_integration.delay_min || 3}
+                                        onChange={(e) => handleImmofluxChange('delay_min', parseInt(e.target.value) || 3)}
+                                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Max Delay (sec)</label>
+                                    <input
+                                        type="number"
+                                        min="2"
+                                        value={settings.immoflux_integration.delay_max || 8}
+                                        onChange={(e) => handleImmofluxChange('delay_max', parseInt(e.target.value) || 8)}
+                                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">History Scrape Interval (min)</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={settings.immoflux_integration.auto_interval || 10}
+                                            onChange={(e) => handleImmofluxChange('auto_interval', parseInt(e.target.value) || 10)}
+                                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Watcher Interval (hours)</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="24"
+                                            value={settings.immoflux_integration.watcher_interval_hours || 2}
+                                            onChange={(e) => handleImmofluxChange('watcher_interval_hours', parseInt(e.target.value) || 2)}
+                                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-violet-500 transition-colors"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -297,13 +437,71 @@ export default function SettingsClient() {
                             </div>
 
                             <div className="flex gap-4">
+                                <div className="flex bg-slate-900 rounded-xl overflow-hidden border border-slate-800 h-10">
+                                    {isAutoScraping ? (
+                                        <button
+                                            onClick={toggleAutoScrape}
+                                            className="flex flex-col items-center justify-center bg-red-600/20 text-red-400 hover:bg-red-600/30 px-4 h-full transition-all min-w-[140px]"
+                                        >
+                                            <div className="flex items-center gap-1 font-bold text-xs uppercase mb-0.5">
+                                                <Square className="w-3 h-3 fill-current" /> Stop History
+                                            </div>
+                                            <div className="text-[10px] text-red-300 tabular-nums">
+                                                {isScraping ? 'Paging...' : `Next in ${Math.floor(autoCountdown / 60)}:${(autoCountdown % 60).toString().padStart(2, '0')}`}
+                                            </div>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={toggleAutoScrape}
+                                            disabled={isScraping || isSaving}
+                                            className="flex flex-col items-center justify-center bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 px-4 h-full transition-all min-w-[140px] disabled:opacity-50"
+                                        >
+                                            <div className="flex items-center gap-1 font-bold text-xs uppercase mb-0.5">
+                                                <Play className="w-3 h-3 fill-current" /> Loop History
+                                            </div>
+                                            <div className="text-[10px] text-emerald-300">
+                                                Page-by-Page
+                                            </div>
+                                        </button>
+                                    )}
+
+                                    <div className="w-px bg-slate-800 h-full"></div>
+
+                                    {isWatcherActive ? (
+                                        <button
+                                            onClick={toggleWatcher}
+                                            className="flex flex-col items-center justify-center bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 px-4 h-full transition-all min-w-[140px]"
+                                        >
+                                            <div className="flex items-center gap-1 font-bold text-xs uppercase mb-0.5">
+                                                <Square className="w-3 h-3 fill-current" /> Stop Watcher
+                                            </div>
+                                            <div className="text-[10px] text-violet-300 tabular-nums">
+                                                {isWatching ? 'Checking...' : `Next in ${Math.floor(watcherCountdown / 3600)}h ${Math.floor((watcherCountdown % 3600) / 60)}m`}
+                                            </div>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={toggleWatcher}
+                                            disabled={isWatching || isSaving}
+                                            className="flex flex-col items-center justify-center bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 px-4 h-full transition-all min-w-[140px] disabled:opacity-50"
+                                        >
+                                            <div className="flex items-center gap-1 font-bold text-xs uppercase mb-0.5">
+                                                <Play className="w-3 h-3 fill-current" /> Start Watcher
+                                            </div>
+                                            <div className="text-[10px] text-violet-300">
+                                                Newest Only
+                                            </div>
+                                        </button>
+                                    )}
+                                </div>
+
                                 <button
                                     onClick={runImmofluxScraper}
-                                    disabled={isScraping || isSaving}
-                                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-xl font-medium transition-all focus:ring-4 focus:ring-emerald-500/20 disabled:opacity-50"
+                                    disabled={isScraping || isSaving || isAutoScraping || isWatching}
+                                    className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-slate-500/20 disabled:opacity-50"
                                 >
-                                    {isScraping ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                    {isScraping ? 'Scraping...' : 'Run Scraper Now'}
+                                    {isScraping && !isAutoScraping ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                    {isScraping && !isAutoScraping ? 'Scraping...' : 'Run Once'}
                                 </button>
                                 <button
                                     onClick={saveImmofluxSettings}

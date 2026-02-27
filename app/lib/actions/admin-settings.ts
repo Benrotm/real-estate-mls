@@ -18,6 +18,10 @@ export interface ImmofluxConfig {
     url: string;
     username?: string;
     password?: string;
+    delay_min: number;    // Min seconds between property fetches (anti-ban)
+    delay_max: number;    // Max seconds between property fetches (anti-ban)
+    auto_interval: number; // Minutes between auto-scrape batches
+    watcher_interval_hours: number; // Hours between watcher checks
     mapping: {
         title: string;
         price: string;
@@ -39,12 +43,16 @@ const DEFAULT_SETTINGS: AdminSettings = {
     enable_anti_duplicate_intelligence: true,
     immoflux_integration: {
         is_active: false,
-        last_scraped_id: 0,
+        last_scraped_id: 1,
         scrape_limit: 50,
         region_filter: "Timis",
         url: "https://blitz.immoflux.ro/approperties",
         username: "",
         password: "",
+        delay_min: 3,
+        delay_max: 8,
+        auto_interval: 10,
+        watcher_interval_hours: 2,
         mapping: {
             title: "td:nth-child(4) span.tablesaw-cell-content",
             price: "td:nth-child(3) span.blue-600 strong",
