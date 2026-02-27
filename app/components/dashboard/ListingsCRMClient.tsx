@@ -411,12 +411,43 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
 }
 
 export default function ListingsCRMClient({ properties, headerAction }: ListingsCRMClientProps) {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(15);
+
+    const totalCount = properties.length;
+    const totalPages = Math.ceil(totalCount / perPage);
+    const startIdx = (currentPage - 1) * perPage;
+    const visibleProperties = properties.slice(startIdx, startIdx + perPage);
+
+    // Reset page when perPage changes
+    const handlePerPageChange = (value: number) => {
+        setPerPage(value);
+        setCurrentPage(1);
+    };
+
+    // Build page numbers (max 7 with ellipsis)
+    const buildPageNumbers = (): (number | '...')[] => {
+        const pages: (number | '...')[] = [];
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (currentPage > 3) pages.push('...');
+            const start = Math.max(2, currentPage - 1);
+            const end = Math.min(totalPages - 1, currentPage + 1);
+            for (let i = start; i <= end; i++) pages.push(i);
+            if (currentPage < totalPages - 2) pages.push('...');
+            pages.push(totalPages);
+        }
+        return pages;
+    };
+
     return (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">My Listings</h1>
-                    <p className="text-slate-500 mt-1">{properties.length} properties • {properties.reduce((acc, p) => acc + p.offers.length, 0)} total offers</p>
+                    <p className="text-slate-500 mt-1">{totalCount} properties • {properties.reduce((acc, p) => acc + p.offers.length, 0)} total offers</p>
                 </div>
                 <div className="flex items-center gap-3">
                     {headerAction}
@@ -488,6 +519,26 @@ export default function ListingsCRMClient({ properties, headerAction }: Listings
                 </div>
             </div>
 
+            {/* Per-page selector and total counter */}
+            <div className="mb-4 flex items-center justify-between">
+                <span className="font-bold text-slate-700">
+                    {totalCount} Properties Found
+                </span>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <span>Show</span>
+                    <select
+                        value={perPage}
+                        onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
+                        className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none cursor-pointer"
+                    >
+                        <option value={15}>15</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                    </select>
+                    <span>per page</span>
+                </div>
+            </div>
+
             {/* Properties List */}
             {properties.length === 0 ? (
                 <div className="bg-white p-12 text-center rounded-xl border border-dashed border-slate-300">
@@ -501,12 +552,51 @@ export default function ListingsCRMClient({ properties, headerAction }: Listings
                     </Link>
                 </div>
             ) : (
-                <div className="space-y-4">
-                    {properties.map((property) => (
-                        <PropertyCRMCard key={property.id} property={property} />
-                    ))}
-                </div>
+                <>
+                    <div className="space-y-4">
+                        {visibleProperties.map((property) => (
+                            <PropertyCRMCard key={property.id} property={property} />
+                        ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-1 mt-10">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage <= 1}
+                                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-violet-100 hover:text-violet-700 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
+                            >
+                                Prev
+                            </button>
+                            {buildPageNumbers().map((page, i) =>
+                                page === '...' ? (
+                                    <span key={`e-${i}`} className="px-2 py-2 text-slate-400 text-sm">…</span>
+                                ) : (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`min-w-[36px] h-9 rounded-lg text-sm font-bold cursor-pointer transition-all ${page === currentPage
+                                            ? 'bg-violet-600 text-white shadow-md'
+                                            : 'text-slate-600 hover:bg-violet-100 hover:text-violet-700 hover:scale-110'
+                                            }`}
+                                    >
+                                        {page}
+                                    </button>
+                                )
+                            )}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage >= totalPages}
+                                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-violet-100 hover:text-violet-700 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
 }
+

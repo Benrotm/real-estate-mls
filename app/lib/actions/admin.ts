@@ -56,22 +56,28 @@ export async function deleteLeadAdmin(leadId: string) {
 
 // --- PROPERTIES ---
 
-export async function fetchAllPropertiesAdmin() {
+export async function fetchAllPropertiesAdmin(params?: { page?: number; perPage?: number }): Promise<{ properties: any[]; totalCount: number }> {
     const { supabase } = await checkAdmin();
 
-    const { data, error } = await supabase
+    const perPage = Math.min(params?.perPage || 15, 50);
+    const page = Math.max(params?.page || 1, 1);
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    const { data, error, count } = await supabase
         .from('properties')
         .select(`
             *,
             owner:profiles(full_name)
-        `)
-        .order('created_at', { ascending: false });
+        `, { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
     if (error) {
         console.error('Admin Fetch Properties Error:', error);
-        return [];
+        return { properties: [], totalCount: 0 };
     }
-    return data;
+    return { properties: data || [], totalCount: count || 0 };
 }
 
 export async function deletePropertyAdmin(propertyId: string) {

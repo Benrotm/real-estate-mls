@@ -1,18 +1,29 @@
 import { fetchAllPropertiesAdmin, deletePropertyAdmin } from '@/app/lib/actions/admin';
 import { Trash2, MapPin, ExternalLink, User, Edit, Globe } from 'lucide-react';
 import Link from 'next/link';
+import PerPageSelector from '@/app/components/PerPageSelector';
+import Pagination from '@/app/components/Pagination';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPropertiesPage() {
+export default async function AdminPropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
+    const filters = await searchParams;
+    const currentPerPage = Math.min(parseInt(filters?.per_page) || 15, 50);
+    const currentPage = Math.max(parseInt(filters?.page) || 1, 1);
+
     let properties: any[] = [];
+    let totalCount = 0;
     let errorMsg = null;
 
     try {
-        properties = await fetchAllPropertiesAdmin();
+        const result = await fetchAllPropertiesAdmin({ page: currentPage, perPage: currentPerPage });
+        properties = result.properties;
+        totalCount = result.totalCount;
     } catch (err: any) {
         errorMsg = err.message || "Unknown Error";
     }
+
+    const totalPages = Math.ceil(totalCount / currentPerPage);
 
     async function deleteProperty(formData: FormData) {
         'use server';
@@ -35,10 +46,14 @@ export default async function AdminPropertiesPage() {
                     <Link href="/dashboard/admin/properties/import" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors">
                         <Globe className="w-4 h-4" /> Import Listings
                     </Link>
-                    <div className="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold">
-                        Total: {properties.length}
-                    </div>
                 </div>
+            </div>
+
+            <div className="mb-4 flex items-center justify-between">
+                <span className="font-bold text-slate-700">
+                    {totalCount} Properties Total
+                </span>
+                <PerPageSelector currentValue={currentPerPage} basePath="/dashboard/admin/properties" />
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -142,6 +157,8 @@ export default async function AdminPropertiesPage() {
                     </tbody>
                 </table>
             </div>
+
+            <Pagination currentPage={currentPage} totalPages={totalPages} basePath="/dashboard/admin/properties" />
         </div>
     );
 }

@@ -2,14 +2,15 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function PerPageSelector({ currentValue }: { currentValue: number }) {
+export default function PerPageSelector({ currentValue, basePath = '/properties' }: { currentValue: number; basePath?: string }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const params = new URLSearchParams(searchParams.toString());
         params.set('per_page', e.target.value);
-        router.push(`/properties?${params.toString()}`);
+        params.delete('page');
+        router.push(`${basePath}?${params.toString()}`);
     };
 
     return (
