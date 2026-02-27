@@ -420,9 +420,9 @@ export default function SettingsClient() {
                             </div>
                         </div>
 
-                        <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <label className="text-sm font-medium text-slate-300">Next Page to Scrape:</label>
+                        <div className="pt-6 border-t border-slate-800 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
+                            <div className="flex items-center gap-3 w-full xl:w-auto">
+                                <label className="text-sm font-medium text-slate-300 whitespace-nowrap">Next Page to Scrape:</label>
                                 <input
                                     type="number"
                                     min="1"
@@ -431,17 +431,17 @@ export default function SettingsClient() {
                                     onChange={(e) => handleImmofluxChange('last_scraped_id', parseInt(e.target.value) || 1)}
                                     className="w-20 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-white focus:outline-none focus:border-blue-500 transition-colors text-center"
                                 />
-                                <span className="text-xs text-slate-500 max-w-[200px] leading-tight">
+                                <span className="text-xs text-slate-500 max-w-[200px] leading-tight hidden md:block">
                                     Automatically increments. Reset to 1 to scan newest properties.
                                 </span>
                             </div>
 
-                            <div className="flex gap-4">
+                            <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto justify-start xl:justify-end">
                                 <div className="flex bg-slate-900 rounded-xl overflow-hidden border border-slate-800 h-10">
                                     {isAutoScraping ? (
                                         <button
                                             onClick={toggleAutoScrape}
-                                            className="flex flex-col items-center justify-center bg-red-600/20 text-red-400 hover:bg-red-600/30 px-4 h-full transition-all min-w-[140px]"
+                                            className="flex flex-col items-center justify-center bg-red-600/20 text-red-400 hover:bg-red-600/30 px-4 h-full transition-all"
                                         >
                                             <div className="flex items-center gap-1 font-bold text-xs uppercase mb-0.5">
                                                 <Square className="w-3 h-3 fill-current" /> Stop History
@@ -454,7 +454,7 @@ export default function SettingsClient() {
                                         <button
                                             onClick={toggleAutoScrape}
                                             disabled={isScraping || isSaving}
-                                            className="flex flex-col items-center justify-center bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 px-4 h-full transition-all min-w-[140px] disabled:opacity-50"
+                                            className="flex flex-col items-center justify-center bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 px-4 h-full transition-all disabled:opacity-50"
                                         >
                                             <div className="flex items-center gap-1 font-bold text-xs uppercase mb-0.5">
                                                 <Play className="w-3 h-3 fill-current" /> Loop History
@@ -470,7 +470,7 @@ export default function SettingsClient() {
                                     {isWatcherActive ? (
                                         <button
                                             onClick={toggleWatcher}
-                                            className="flex flex-col items-center justify-center bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 px-4 h-full transition-all min-w-[140px]"
+                                            className="flex flex-col items-center justify-center bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 px-4 h-full transition-all"
                                         >
                                             <div className="flex items-center gap-1 font-bold text-xs uppercase mb-0.5">
                                                 <Square className="w-3 h-3 fill-current" /> Stop Watcher
@@ -483,7 +483,7 @@ export default function SettingsClient() {
                                         <button
                                             onClick={toggleWatcher}
                                             disabled={isWatching || isSaving}
-                                            className="flex flex-col items-center justify-center bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 px-4 h-full transition-all min-w-[140px] disabled:opacity-50"
+                                            className="flex flex-col items-center justify-center bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 px-4 h-full transition-all disabled:opacity-50"
                                         >
                                             <div className="flex items-center gap-1 font-bold text-xs uppercase mb-0.5">
                                                 <Play className="w-3 h-3 fill-current" /> Start Watcher
@@ -498,7 +498,7 @@ export default function SettingsClient() {
                                 <button
                                     onClick={runImmofluxScraper}
                                     disabled={isScraping || isSaving || isAutoScraping || isWatching}
-                                    className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-slate-500/20 disabled:opacity-50"
+                                    className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-slate-500/20 disabled:opacity-50"
                                 >
                                     {isScraping && !isAutoScraping ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                                     {isScraping && !isAutoScraping ? 'Scraping...' : 'Run Once'}
@@ -506,10 +506,10 @@ export default function SettingsClient() {
                                 <button
                                     onClick={saveImmofluxSettings}
                                     disabled={isSaving || isScraping}
-                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-xl font-medium transition-all focus:ring-4 focus:ring-blue-500/20 disabled:opacity-50"
+                                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-blue-500/20 disabled:opacity-50"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Save Immoflux Config
+                                    Save Config
                                 </button>
                             </div>
                         </div>
