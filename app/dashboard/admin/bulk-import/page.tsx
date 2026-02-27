@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Play, Loader2, AlertCircle, CheckCircle2, Globe, FileDown, Square, Terminal, Settings2 } from 'lucide-react';
+import { Play, Loader2, AlertCircle, CheckCircle2, Globe, FileDown, Square, Terminal, Settings2, Save, Timer } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/app/lib/supabase/client';
+import { getAdminSettings, updateOlxSetting, AdminSettings } from '@/app/lib/actions/admin-settings';
 
 interface LogMessage {
     id: string;
@@ -13,23 +14,70 @@ interface LogMessage {
 }
 
 export default function BulkImportPage() {
-    const [url, setUrl] = useState('');
-    const [pagesToScrape, setPagesToScrape] = useState(1);
-    const [delayMs, setDelayMs] = useState(12000); // 12 seconds default
+    const [settings, setSettings] = useState<AdminSettings | null>(null);
+    const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [isLoading, setIsLoading] = useState(false);
     const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
-    const [message, setMessage] = useState('');
+    const [message, setMessage] = useState({ text: '', type: '' });
+
+    // Historical Auto-Scraper State
+    const [isScraping, setIsScraping] = useState(false);
+    const [isAutoScraping, setIsAutoScraping] = useState(false);
+    const [autoCountdown, setAutoCountdown] = useState(0);
+
+    // Watcher Auto-Scraper State
+    const [isWatching, setIsWatching] = useState(false);
+    const [isWatcherActive, setIsWatcherActive] = useState(false);
+    const [watcherCountdown, setWatcherCountdown] = useState(0);
 
     const [activeJobId, setActiveJobId] = useState<string | null>(null);
     const [logs, setLogs] = useState<LogMessage[]>([]);
-
     const logsEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        loadSettings();
+    }, []);
 
     // Auto-scroll logs to bottom
     useEffect(() => {
         logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [logs]);
+
+    // Historical Auto-Scrape interval
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (isAutoScraping) {
+            timer = setInterval(() => {
+                setAutoCountdown((prev) => {
+                    if (prev <= 1) {
+                        if (!isScraping) runScraper('history');
+                        return (settings?.olx_integration?.auto_interval || 10) * 60;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [isAutoScraping, isScraping, settings]);
+
+    // Watcher Auto-Scrape interval
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (isWatcherActive) {
+            timer = setInterval(() => {
+                setWatcherCountdown((prev) => {
+                    if (prev <= 1) {
+                        if (!isWatching) runScraper('watcher');
+                        return (settings?.olx_integration?.watcher_interval_hours || 2) * 3600;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [isWatcherActive, isWatching, settings]);
 
     // Handle Realtime Subscription
     useEffect(() => {
@@ -55,8 +103,17 @@ export default function BulkImportPage() {
                 (payload) => {
                     if (payload.new.status === 'completed' || payload.new.status === 'failed') {
                         setIsLoading(false);
+                        setIsScraping(false);
+                        setIsWatching(false);
                         setStatus(payload.new.status === 'completed' ? 'completed' : 'error');
-                        setMessage(payload.new.status === 'completed' ? 'Extraction run completed successfully!' : 'A critical error crashed the running job.');
+                        setMessage({ text: payload.new.status === 'completed' ? 'Extraction run completed successfully!' : 'A critical error crashed the running job.', type: payload.new.status === 'completed' ? 'success' : 'error' });
+
+                        // Increment last scraped ID if it was a history run and succeeded
+                        if (payload.new.status === 'completed' && settings?.olx_integration && !isWatcherActive && !isWatching) {
+                            const updatedConfig = { ...settings.olx_integration, last_scraped_id: settings.olx_integration.last_scraped_id + 1 };
+                            setSettings({ ...settings, olx_integration: updatedConfig });
+                            updateOlxSetting(updatedConfig); // Fire and forget update
+                        }
                     }
                 }
             )
@@ -66,33 +123,92 @@ export default function BulkImportPage() {
             supabase.removeChannel(logSubscription);
             supabase.removeChannel(jobSubscription);
         };
-    }, [activeJobId]);
+    }, [activeJobId, settings, isWatcherActive, isWatching]);
 
+    async function loadSettings() {
+        try {
+            const data = await getAdminSettings();
+            setSettings(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoadingSettings(false);
+        }
+    }
 
-    const handleRunBulkScrape = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleOlxChange = (field: string, value: any) => {
+        if (!settings || !settings.olx_integration) return;
 
-        if (!url || !url.includes('publi24.ro')) {
+        const currentConfig = { ...settings.olx_integration };
+        (currentConfig as any)[field] = value;
+
+        setSettings({ ...settings, olx_integration: currentConfig });
+    };
+
+    const saveSettings = async () => {
+        if (!settings || !settings.olx_integration) return;
+
+        setIsSaving(true);
+        setMessage({ text: '', type: '' });
+
+        const result = await updateOlxSetting(settings.olx_integration);
+
+        if (result.success) {
+            setMessage({ text: 'Settings saved successfully!', type: 'success' });
+            setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+        } else {
+            setMessage({ text: `Failed to save setup: ${result.error}`, type: 'error' });
+        }
+        setIsSaving(false);
+    };
+
+    const toggleAutoScrape = () => {
+        if (!isAutoScraping) {
+            setAutoCountdown((settings?.olx_integration?.auto_interval || 10) * 60);
+            runScraper('history'); // Run first batch immediately
+        }
+        setIsAutoScraping(!isAutoScraping);
+    };
+
+    const toggleWatcher = () => {
+        if (!isWatcherActive) {
+            setWatcherCountdown((settings?.olx_integration?.watcher_interval_hours || 2) * 3600);
+            runScraper('watcher'); // Run first batch immediately
+        }
+        setIsWatcherActive(!isWatcherActive);
+    };
+
+    const runScraper = async (mode: 'history' | 'watcher' = 'history') => {
+        const config = settings?.olx_integration;
+        if (!config || !config.category_url) {
             setStatus('error');
-            setMessage('Please enter a valid Publi24 category URL.');
+            setMessage({ text: 'Please configure and save the OLX setup rules first.', type: 'error' });
             return;
+        }
+
+        if (mode === 'history') {
+            setIsScraping(true);
+        } else {
+            setIsWatching(true);
         }
 
         setIsLoading(true);
         setStatus('running');
-        setMessage('Initializing background scraper server...');
+        setMessage({ text: `Initializing background ${mode} proxy server...`, type: 'info' });
         setLogs([]);
         setActiveJobId(null);
 
         try {
+            const targetPage = mode === 'watcher' ? 1 : config.last_scraped_id;
+
             // 1. Create a tracking Job in Supabase
             const { data: jobData, error: jobError } = await supabase
                 .from('scrape_jobs')
                 .insert({
-                    category_url: url,
+                    category_url: config.category_url,
                     status: 'running',
-                    pages_to_scrape: pagesToScrape,
-                    delay_ms: delayMs
+                    pages_to_scrape: 1, // Using literal 1, our microservice now extracts 1 page per execution
+                    delay_ms: config.delay_min * 1000 // Temporary fallback for legacy column, now using min/max payload
                 })
                 .select()
                 .single();
@@ -104,17 +220,19 @@ export default function BulkImportPage() {
             const newJobId = jobData.id;
             setActiveJobId(newJobId);
 
-            setLogs([{ id: 'init', message: 'Establishing SECURE link to Render Microservice...', log_level: 'info', created_at: new Date().toISOString() }]);
+            setLogs([{ id: 'init', message: `Establishing SECURE link to Render Microservice. Mode: ${mode.toUpperCase()}...`, log_level: 'info', created_at: new Date().toISOString() }]);
 
             // 2. Call NextJS Server Proxy to inject secure env credentials and trigger Render
             const res = await fetch('/api/admin/start-bulk-import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    categoryUrl: url,
+                    categoryUrl: config.category_url,
                     jobId: newJobId,
-                    pagesToScrape,
-                    delayMs
+                    pageNum: targetPage,
+                    delayMin: config.delay_min,
+                    delayMax: config.delay_max,
+                    mode: mode
                 })
             });
 
@@ -123,21 +241,22 @@ export default function BulkImportPage() {
                 throw new Error(data.error || 'Failed to start bulk scraper');
             }
 
-            setMessage(`Crawler dispatched! Listening for live logs...`);
+            setMessage({ text: `Crawler dispatched [Page ${targetPage}]! Listening for live logs...`, type: 'info' });
 
         } catch (err: any) {
             console.error('Bulk Import Error:', err);
             setStatus('error');
             setIsLoading(false);
-            setMessage(err.message || 'An unexpected error occurred while starting the crawler.');
+            if (mode === 'history') setIsScraping(false);
+            if (mode === 'watcher') setIsWatching(false);
+            setMessage({ text: err.message || 'An unexpected error occurred while starting the crawler.', type: 'error' });
         }
     };
 
     const handleStopScrape = async () => {
         if (!activeJobId) return;
         try {
-            // Abort the job gracefully
-            setMessage('Transmitting STOP signal to Render Server...');
+            setMessage({ text: 'Transmitting STOP signal to Render Server...', type: 'warning' });
             await supabase
                 .from('scrape_jobs')
                 .update({ status: 'stopped' })
@@ -145,8 +264,10 @@ export default function BulkImportPage() {
 
             setLogs((prev) => [...prev, { id: 'halt', message: 'STOP SIGNAL SENT. Waiting for scraper to finish current cycle and exit.', log_level: 'warn', created_at: new Date().toISOString() }]);
             setIsLoading(false);
+            setIsScraping(false);
+            setIsWatching(false);
             setStatus('error');
-            setMessage('Import Halted by User.');
+            setMessage({ text: 'Import Halted by User.', type: 'error' });
         } catch (e) {
             console.error(e);
         }
@@ -162,16 +283,34 @@ export default function BulkImportPage() {
         }
     };
 
+    const formatTime = (seconds: number) => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        if (h > 0) return `${h}h ${m}m ${s}s`;
+        return `${m}m ${s}s`;
+    };
+
+    if (isLoadingSettings) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            </div>
+        );
+    }
+
+    const config = settings?.olx_integration;
+
     return (
-        <div className="p-8 max-w-5xl mx-auto space-y-8">
+        <div className="p-8 max-w-7xl mx-auto space-y-8">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
                         <FileDown className="w-8 h-8 text-indigo-600" />
-                        Publi24 Import Terminal
+                        OLX/Publi24 Automation
                     </h1>
                     <p className="text-slate-500 mt-2">
-                        Deploy an automated microservice crawler to harvest listings while safely evading bot detection.
+                        Configure the proxy crawler to safely harvest listings via isolated Render instances.
                     </p>
                 </div>
                 <Link
@@ -186,100 +325,170 @@ export default function BulkImportPage() {
                 {/* SETTINGS PANEL */}
                 <div className="lg:col-span-5 space-y-6">
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                            <Settings2 className="w-5 h-5 text-indigo-500" />
-                            <h2 className="font-bold text-slate-900">Crawler Configuration</h2>
+                        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Settings2 className="w-5 h-5 text-indigo-500" />
+                                <h2 className="font-bold text-slate-900">Crawler Configuration</h2>
+                            </div>
+                            <button
+                                onClick={saveSettings}
+                                disabled={isSaving}
+                                className="px-4 py-1.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition flex items-center gap-2 disabled:opacity-50"
+                            >
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Save Config
+                            </button>
                         </div>
 
-                        <div className="p-6">
-                            <form onSubmit={handleRunBulkScrape} className="space-y-5">
+                        {config && (
+                            <div className="p-6 space-y-6">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Category Page URL</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Target URL (OLX/Publi24)</label>
                                     <input
                                         type="url"
-                                        required
-                                        placeholder="https://www.publi24.ro/..."
-                                        value={url}
-                                        onChange={(e) => setUrl(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-medium placeholder-slate-400 bg-slate-50 focus:bg-white text-sm"
+                                        placeholder="https://www.olx.ro/imobiliare/..."
+                                        value={config.category_url}
+                                        onChange={(e) => handleOlxChange('category_url', e.target.value)}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all text-sm font-medium"
                                         disabled={isLoading || status === 'running'}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Depth (Pages)</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Next Page Target</label>
                                         <input
                                             type="number"
-                                            min="1" max="10"
-                                            required
-                                            value={pagesToScrape}
-                                            onChange={(e) => setPagesToScrape(parseInt(e.target.value))}
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-medium bg-slate-50 focus:bg-white text-sm"
-                                            disabled={isLoading || status === 'running'}
+                                            value={config.last_scraped_id}
+                                            onChange={(e) => handleOlxChange('last_scraped_id', parseInt(e.target.value))}
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Cycle Delay (ms)</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">History Interval (m)</label>
                                         <input
                                             type="number"
-                                            min="3000" step="1000"
-                                            required
-                                            value={delayMs}
-                                            onChange={(e) => setDelayMs(parseInt(e.target.value))}
-                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all font-medium bg-slate-50 focus:bg-white text-sm"
-                                            disabled={isLoading || status === 'running'}
+                                            value={config.auto_interval}
+                                            onChange={(e) => handleOlxChange('auto_interval', parseInt(e.target.value))}
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
                                         />
                                     </div>
                                 </div>
 
-                                {status === 'completed' && (
-                                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-start gap-3">
-                                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                                        <div className="text-sm text-emerald-800 font-medium">{message}</div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Min Delay (s)</label>
+                                        <input
+                                            type="number"
+                                            value={config.delay_min}
+                                            onChange={(e) => handleOlxChange('delay_min', parseInt(e.target.value))}
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Max Delay (s)</label>
+                                        <input
+                                            type="number"
+                                            value={config.delay_max}
+                                            onChange={(e) => handleOlxChange('delay_max', parseInt(e.target.value))}
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Watcher Interval (Hours)</label>
+                                    <input
+                                        type="number"
+                                        value={config.watcher_interval_hours}
+                                        onChange={(e) => handleOlxChange('watcher_interval_hours', parseInt(e.target.value))}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Checks Page 1 only for newly posted listings.</p>
+                                </div>
+
+                                {message.text && (
+                                    <div className={`p-4 rounded-xl flex items-start gap-3 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-rose-50 text-rose-800 border border-rose-100'}`}>
+                                        {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
+                                        <div className="text-sm font-medium">{message.text}</div>
                                     </div>
                                 )}
 
-                                {status === 'error' && (
-                                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 flex items-start gap-3">
-                                        <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                                        <div className="text-sm text-rose-800 font-medium">{message}</div>
+                                <div className="pt-4 border-t border-slate-100 flex flex-col xl:flex-row flex-wrap gap-3">
+                                    <button
+                                        onClick={() => runScraper('history')}
+                                        disabled={isScraping || isWatching}
+                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-slate-900 text-slate-900 rounded-xl font-bold hover:bg-slate-50 transition-all disabled:opacity-50"
+                                    >
+                                        <Play className="w-4 h-4 fill-current" /> Run Next
+                                    </button>
+
+                                    <button
+                                        onClick={toggleAutoScrape}
+                                        disabled={isScraping && !isAutoScraping}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-white rounded-xl font-bold transition-all disabled:opacity-50 ${isAutoScraping ? 'bg-rose-500 hover:bg-rose-600' : 'bg-slate-900 hover:bg-slate-800'}`}
+                                    >
+                                        {isAutoScraping ? (
+                                            <><Square className="w-4 h-4 fill-current" /> Stop Loop</>
+                                        ) : (
+                                            <><Timer className="w-4 h-4" /> Loop History</>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        onClick={toggleWatcher}
+                                        disabled={isScraping && !isWatcherActive}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-white rounded-xl font-bold transition-all disabled:opacity-50 ${isWatcherActive ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                                    >
+                                        {isWatcherActive ? (
+                                            <><Square className="w-4 h-4 fill-current" /> Stop Watcher</>
+                                        ) : (
+                                            <><Globe className="w-4 h-4 flex-shrink-0" /> Watcher</>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Active Timers Display */}
+                                {(isAutoScraping || isWatcherActive) && (
+                                    <div className="mt-4 p-4 rounded-xl bg-slate-900 text-white flex flex-col gap-2 shadow-inner">
+                                        <div className="flex items-center gap-2 text-sm font-medium border-b border-slate-700 pb-2 mb-1">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                                            Automators Active
+                                        </div>
+
+                                        {isAutoScraping && (
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-slate-400">Next History Extract:</span>
+                                                <span className="font-mono text-emerald-300 font-bold">{isScraping ? "RUNNING..." : formatTime(autoCountdown)}</span>
+                                            </div>
+                                        )}
+
+                                        {isWatcherActive && (
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-slate-400">Next Watcher Extract:</span>
+                                                <span className="font-mono text-emerald-300 font-bold">{isWatching ? "RUNNING..." : formatTime(watcherCountdown)}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
-                                {status === 'running' && (
-                                    <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100 flex items-start gap-3">
-                                        <Loader2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5 animate-spin" />
-                                        <div className="text-sm text-indigo-800 font-medium">{message}</div>
-                                    </div>
-                                )}
-
-                                {status === 'running' || isLoading ? (
+                                {(isWatching || isScraping) && (
                                     <button
                                         type="button"
                                         onClick={handleStopScrape}
                                         className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition-all shadow-lg hover:shadow-rose-500/30"
                                     >
                                         <Square className="w-5 h-5 fill-current" />
-                                        Halt Crawler Immediately
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="submit"
-                                        disabled={!url}
-                                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.2)]"
-                                    >
-                                        <Play className="w-5 h-5 text-indigo-400" />
-                                        Engage Automator Deployment
+                                        Halt Crawler Microservice
                                     </button>
                                 )}
-                            </form>
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* VISUAL TERMINAL PANEL */}
-                <div className="lg:col-span-7 flex flex-col h-[600px] bg-[#0a0f1c] rounded-2xl border border-slate-700 shadow-2xl overflow-hidden font-mono text-sm">
+                <div className="lg:col-span-7 flex flex-col h-[700px] bg-[#0a0f1c] rounded-2xl border border-slate-700 shadow-2xl overflow-hidden font-mono text-sm">
                     {/* Fake Window Header */}
                     <div className="h-10 bg-slate-800/80 border-b border-slate-700 flex items-center px-4 justify-between shrink-0">
                         <div className="flex gap-2 items-center">
@@ -302,7 +511,7 @@ export default function BulkImportPage() {
                         {logs.length === 0 && status === 'idle' && (
                             <div className="text-slate-500/50 flex flex-col items-center justify-center h-full max-w-sm mx-auto text-center">
                                 <Terminal className="w-12 h-12 mb-3 opacity-20" />
-                                <p>System standing by. Enter a URL and engage deployment to view remote proxy logs.</p>
+                                <p>System standing by. Configure proxy and select a deployment mode to view remote proxy logs.</p>
                             </div>
                         )}
 
@@ -318,7 +527,7 @@ export default function BulkImportPage() {
                             );
                         })}
 
-                        {status === 'running' && (
+                        {(isScraping || isWatching) && (
                             <div className="mt-2 text-indigo-400 animate-pulse">
                                 _
                             </div>
@@ -332,7 +541,7 @@ export default function BulkImportPage() {
                 <AlertCircle className="w-6 h-6 text-blue-500 shrink-0" />
                 <div className="text-sm text-slate-700">
                     <strong className="block mb-1 text-slate-900">Render Proxy Pipeline Connected</strong>
-                    This terminal reads streams directly from the Render.com Virtual Private Server via Supabase WebSockets. You can safely navigate away from this page at any time—the background process will continue indefinitely until the job stops.
+                    This terminal reads streams directly from the Render.com Virtual Private Server via Supabase WebSockets. Leave this page open in a tab to keep the Automator Loops running actively.
                 </div>
             </div>
         </div>

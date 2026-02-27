@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { categoryUrl, jobId, pagesToScrape, delayMs } = body;
+        const { categoryUrl, jobId, pageNum, delayMin, delayMax, mode } = body;
 
         const scraperApiBase = process.env.NEXT_PUBLIC_SCRAPER_API_URL || '';
         const runBulkEndpoint = scraperApiBase.replace('/scrape-advanced', '/run-bulk-scrape');
@@ -26,8 +26,10 @@ export async function POST(req: Request) {
             categoryUrl,
             webhookUrl,
             jobId,
-            pagesToScrape,
-            delayMs,
+            pageNum,
+            delayMin,
+            delayMax,
+            mode,
             supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
             supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY
         };

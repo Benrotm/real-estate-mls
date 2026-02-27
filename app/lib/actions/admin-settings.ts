@@ -32,15 +32,35 @@ export interface ImmofluxConfig {
     }
 }
 
+export interface OlxConfig {
+    is_active: boolean;
+    category_url: string;
+    last_scraped_id: number;
+    delay_min: number;
+    delay_max: number;
+    auto_interval: number;
+    watcher_interval_hours: number;
+}
+
 export interface AdminSettings {
     require_ownership_verification: boolean;
     enable_anti_duplicate_intelligence: boolean;
     immoflux_integration?: ImmofluxConfig;
+    olx_integration?: OlxConfig;
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
     require_ownership_verification: true,
     enable_anti_duplicate_intelligence: true,
+    olx_integration: {
+        is_active: false,
+        category_url: "https://www.olx.ro/imobiliare/apartamente-garsoniere-de-vanzare/timisoara/",
+        last_scraped_id: 1,
+        delay_min: 5,
+        delay_max: 15,
+        auto_interval: 15,
+        watcher_interval_hours: 2,
+    },
     immoflux_integration: {
         is_active: false,
         last_scraped_id: 1,
@@ -125,6 +145,26 @@ export async function updateImmofluxSetting(config: ImmofluxConfig) {
 
         if (error) {
             console.error("Failed to update Immoflux details:", error.message);
+            return { success: false, error: error.message };
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function updateOlxSetting(config: OlxConfig) {
+    try {
+        const { error } = await supabase
+            .from('admin_settings')
+            .upsert({
+                key: 'olx_integration',
+                value: config,
+                description: 'Configuration for the OLX/Publi24 property scraper microservice'
+            }, { onConflict: 'key' });
+
+        if (error) {
+            console.error("Failed to update OLX details:", error.message);
             return { success: false, error: error.message };
         }
         return { success: true };
