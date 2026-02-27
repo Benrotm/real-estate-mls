@@ -22,7 +22,7 @@ export default async function Home({
   }
 
   // Fetch real properties
-  const allProperties = await getProperties();
+  const { properties: allProperties } = await getProperties();
 
   // Bulk check for "Make an Offer" feature for all property owners
   const ownerIds = Array.from(new Set(allProperties.map(p => p.owner_id).filter(Boolean)));

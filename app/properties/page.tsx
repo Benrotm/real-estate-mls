@@ -4,19 +4,20 @@ import PropertySearchFilters from '@/app/components/PropertySearchFilters';
 import PropertyCard from '@/app/components/PropertyCard';
 import { Suspense } from 'react';
 import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
-import { Loader2 } from 'lucide-react';
 import PerPageSelector from '@/app/components/PerPageSelector';
+import Pagination from '@/app/components/Pagination';
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
-    // Await searchParams in case it's a promise (Next.js 15+ compat)
     const filters = await searchParams;
-    const properties = await getProperties(filters);
+    const { properties, totalCount } = await getProperties(filters);
 
     // Bulk check for "Make an Offer" feature for all property owners
     const ownerIds = Array.from(new Set(properties.map(p => p.owner_id).filter(Boolean)));
     const makeOfferAccessMap = await bulkCheckUserFeatureAccess(ownerIds, SYSTEM_FEATURES.MAKE_AN_OFFER);
 
     const currentPerPage = Math.min(parseInt(filters?.per_page) || 15, 50);
+    const currentPage = Math.max(parseInt(filters?.page) || 1, 1);
+    const totalPages = Math.ceil(totalCount / currentPerPage);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
@@ -35,7 +36,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
 
                 <div className="mb-4 flex items-center justify-between">
                     <span className="font-bold text-slate-700">
-                        {properties.length} Properties Found
+                        {totalCount} Properties Found
                     </span>
                     <PerPageSelector currentValue={currentPerPage} />
                 </div>
@@ -46,16 +47,19 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                         <p className="text-slate-500">Try adjusting your filters to see more results.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {properties.map((property: any) => (
-                            <PropertyCard
-                                key={property.id}
-                                property={property}
-                                showMakeOffer={true}
-                                isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {properties.map((property: any) => (
+                                <PropertyCard
+                                    key={property.id}
+                                    property={property}
+                                    showMakeOffer={true}
+                                    isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
+                                />
+                            ))}
+                        </div>
+                        <Pagination currentPage={currentPage} totalPages={totalPages} />
+                    </>
                 )}
             </div>
         </div>

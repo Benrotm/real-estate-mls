@@ -139,7 +139,7 @@ export async function createProperty(formData: FormData) {
     }
 }
 
-export async function getProperties(filters?: any) {
+export async function getProperties(filters?: any): Promise<{ properties: PropertyType[], totalCount: number }> {
     const supabase = await createClient();
 
     let query = supabase
@@ -147,7 +147,7 @@ export async function getProperties(filters?: any) {
         .select(`
             *,
             owner:profiles(full_name)
-        `)
+        `, { count: 'exact' })
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
@@ -252,18 +252,21 @@ export async function getProperties(filters?: any) {
         }
     }
 
-    // Apply per-page limit (default 15, max 50)
+    // Apply per-page limit and offset for pagination
     const perPage = Math.min(parseInt(filters?.per_page) || 15, 50);
-    query = query.limit(perPage);
+    const page = Math.max(parseInt(filters?.page) || 1, 1);
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+    query = query.range(from, to);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
         console.error('Error fetching properties:', error);
-        return [];
+        return { properties: [], totalCount: 0 };
     }
 
-    return (data || []).map((p: any) => ({
+    const properties = (data || []).map((p: any) => ({
         ...p,
         bedrooms: p.bedrooms ?? p.beds,
         bathrooms: p.bathrooms ?? p.baths,
@@ -271,6 +274,8 @@ export async function getProperties(filters?: any) {
         type: p.type ?? p.property_type,
         location_city: p.location_city ?? p.city,
     })) as PropertyType[];
+
+    return { properties, totalCount: count || 0 };
 }
 
 export async function getPropertyById(id: string) {
