@@ -41,7 +41,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
             <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage <= 1}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-violet-100 hover:text-violet-700 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
             >
                 <ChevronLeft className="w-4 h-4" />
                 Prev
@@ -54,9 +54,9 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
                     <button
                         key={page}
                         onClick={() => goToPage(page)}
-                        className={`min-w-[36px] h-9 rounded-lg text-sm font-bold transition-all ${page === currentPage
-                                ? 'bg-violet-600 text-white shadow-md'
-                                : 'text-slate-600 hover:bg-slate-100'
+                        className={`min-w-[36px] h-9 rounded-lg text-sm font-bold cursor-pointer transition-all ${page === currentPage
+                            ? 'bg-violet-600 text-white shadow-md'
+                            : 'text-slate-600 hover:bg-violet-100 hover:text-violet-700 hover:scale-110'
                             }`}
                     >
                         {page}
@@ -67,7 +67,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
             <button
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage >= totalPages}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-violet-100 hover:text-violet-700 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
             >
                 Next
                 <ChevronRight className="w-4 h-4" />
