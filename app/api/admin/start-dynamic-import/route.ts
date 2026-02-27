@@ -29,8 +29,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing required dynamic scraper parameters' }, { status: 400 });
         }
 
-        // Forward to the microservice
-        const microserviceUrl = process.env.SCRAPER_MICROSERVICE_URL;
+        const scraperApiBase = process.env.NEXT_PUBLIC_SCRAPER_API_URL || '';
+        const microserviceUrl = scraperApiBase.split('/api/')[0];
+
         if (!microserviceUrl) {
             return NextResponse.json({ error: 'Microservice URL not configured' }, { status: 500 });
         }
