@@ -1,7 +1,10 @@
 import { Settings } from 'lucide-react';
 import SettingsClient from './SettingsClient';
+import { getAdminSettings } from '@/app/lib/actions/admin-settings';
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+    const initialSettings = await getAdminSettings();
+
     return (
         <div className="min-h-screen bg-slate-950 text-white p-8">
             <div className="max-w-7xl mx-auto">
@@ -13,7 +16,7 @@ export default function SettingsPage() {
                     <p className="text-slate-400 mt-2">Configure global platform settings, integrations, and intelligent routing.</p>
                 </header>
 
-                <SettingsClient />
+                <SettingsClient initialSettings={initialSettings} />
             </div>
         </div>
     );

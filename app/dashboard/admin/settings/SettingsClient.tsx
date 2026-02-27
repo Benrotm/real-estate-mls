@@ -1,11 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Settings, ShieldCheck, CopyCheck, Save, Loader2, Play, Square, Timer, Globe } from 'lucide-react';
-import { getAdminSettings, updateAdminSetting, updateImmofluxSetting, updateProxySetting, AdminSettings, ImmofluxConfig, ProxyConfig } from '@/app/lib/actions/admin-settings';
+import { useState, useEffect, useRef } from 'react';
+import { Settings2, UserPlus, Database, CloudFog, Wifi, CheckCircle2, AlertCircle, CopyCheck, RefreshCcw, Save, Loader2, Play, Square, Timer, MapPin, Plus, Edit2, Terminal, ShieldCheck, Globe } from 'lucide-react';
+import { supabase } from '@/app/lib/supabase/client';
+import {
+    getAdminSettings,
+    updateAdminSetting,
+    updateProxySetting,
+    updateImmofluxSetting, AdminSettings, ImmofluxConfig, ProxyConfig
+} from '@/app/lib/actions/admin-settings';
 
-export default function SettingsClient() {
-    const [settings, setSettings] = useState<AdminSettings | null>(null);
+interface LogMessage {
+    id: string;
+    message: string;
+    log_level: string;
+    created_at: string;
+}
+
+export default function SettingsClient({ initialSettings }: { initialSettings: AdminSettings | null }) {
+    const [settings, setSettings] = useState<AdminSettings | null>(initialSettings);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
@@ -29,6 +42,13 @@ export default function SettingsClient() {
     const [isWatcherActive, setIsWatcherActive] = useState(false);
     const [watcherCountdown, setWatcherCountdown] = useState(0);
 
+    // Terminal State
+    const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
+    const [activeJobId, setActiveJobId] = useState<string | null>(null);
+    const [logs, setLogs] = useState<LogMessage[]>([]);
+    const logsEndRef = useRef<HTMLDivElement>(null);
+
+    // Initial Load Override
     useEffect(() => {
         loadSettings();
     }, []);
@@ -40,7 +60,7 @@ export default function SettingsClient() {
             timer = setInterval(() => {
                 setAutoCountdown((prev) => {
                     if (prev <= 1) {
-                        if (!isScraping) runImmofluxScraper();
+                        if (!isScraping) runImmofluxScraper('history');
                         return (settings?.immoflux_integration?.auto_interval || 10) * 60;
                     }
                     return prev - 1;
@@ -57,7 +77,7 @@ export default function SettingsClient() {
             timer = setInterval(() => {
                 setWatcherCountdown((prev) => {
                     if (prev <= 1) {
-                        if (!isWatching) runWatcher();
+                        if (!isWatching) runImmofluxScraper('watcher');
                         return (settings?.immoflux_integration?.watcher_interval_hours || 2) * 3600;
                     }
                     return prev - 1;
@@ -66,6 +86,55 @@ export default function SettingsClient() {
         }
         return () => clearInterval(timer);
     }, [isWatcherActive, isWatching, settings]);
+
+    // Handle Realtime Terminal Subscription
+    useEffect(() => {
+        logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [logs]);
+
+    useEffect(() => {
+        if (!activeJobId) return;
+
+        const logSubscription = supabase
+            .channel(`logs-${activeJobId}`)
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'scrape_logs', filter: `job_id=eq.${activeJobId}` },
+                (payload) => {
+                    const newLog = payload.new as LogMessage;
+                    setLogs((prev) => [...prev, newLog]);
+                }
+            )
+            .subscribe();
+
+        const jobSubscription = supabase
+            .channel(`job-${activeJobId}`)
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'scrape_jobs', filter: `id=eq.${activeJobId}` },
+                (payload) => {
+                    if (payload.new.status === 'completed' || payload.new.status === 'failed') {
+                        setIsScraping(false);
+                        setIsWatching(false);
+                        setStatus(payload.new.status === 'completed' ? 'completed' : 'error');
+
+                        // Increment last scraped ID if it was a history run and succeeded
+                        if (payload.new.status === 'completed' && settings?.immoflux_integration && !isWatcherActive && !isWatching) {
+                            const updatedConfig = { ...settings.immoflux_integration, last_scraped_id: settings.immoflux_integration.last_scraped_id + 1 };
+                            setSettings({ ...settings, immoflux_integration: updatedConfig });
+                            updateImmofluxSetting(updatedConfig); // Fire and forget update
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(logSubscription);
+            supabase.removeChannel(jobSubscription);
+        };
+    }, [activeJobId, settings, isWatcherActive, isWatching]);
+
 
     async function loadSettings() {
         try {
@@ -157,56 +226,123 @@ export default function SettingsClient() {
         setIsAutoScraping(!isAutoScraping);
     };
 
-    const runImmofluxScraper = async () => {
-        setIsScraping(true);
-        setMessage({ text: '', type: '' });
+    const runImmofluxScraper = async (mode: 'history' | 'watcher' = 'history') => {
+        const config = settings?.immoflux_integration;
+        if (!config || !config.url) {
+            setStatus('error');
+            setMessage({ text: 'Please configure and save the Immoflux setup rules first.', type: 'error' });
+            return;
+        }
+
+        if (mode === 'history') {
+            setIsScraping(true);
+        } else {
+            setIsWatching(true);
+        }
+
+        setStatus('running');
+        setMessage({ text: `Initializing background ${mode} scraper server...`, type: 'info' });
+        setLogs([]);
+        setActiveJobId(null);
 
         try {
-            const res = await fetch('/api/cron/immoflux');
-            const data = await res.json();
+            const targetPage = mode === 'watcher' ? 1 : config.last_scraped_id || 1;
 
-            if (data.status === 'success') {
-                setMessage({ text: `Page ${data.page_completed || ''} scraped! Found: ${data.found}, Inserted: ${data.inserted}. Waiting for next cycle...`, type: 'success' });
-            } else if (data.status === 'done') {
-                setMessage({ text: `All pages finished! Returning to Page 1 next cycle.`, type: 'success' });
-            } else {
-                setMessage({ text: `Scrape issue: ${data.reason}`, type: 'error' });
+            // 1. Create a tracking Job in Supabase
+            const { data: jobData, error: jobError } = await supabase
+                .from('scrape_jobs')
+                .insert({
+                    category_url: config.url,
+                    status: 'running',
+                    pages_to_scrape: 1,
+                    delay_ms: (config.delay_min || 3) * 1000
+                })
+                .select()
+                .single();
+
+            if (jobError || !jobData) {
+                throw new Error(jobError?.message || 'Failed to create Job Tracking ID.');
             }
-        } catch (error: any) {
-            setMessage({ text: `Scraper error: ${error.message}`, type: 'error' });
-        } finally {
-            setIsScraping(false);
+
+            const newJobId = jobData.id;
+            setActiveJobId(newJobId);
+
+            setLogs([{ id: 'init', message: `Establishing SECURE link to Immoflux Headless Scraper. Mode: ${mode.toUpperCase()}...`, log_level: 'info', created_at: new Date().toISOString() }]);
+
+            // 2. Call NextJS Server Proxy to inject secure env credentials and trigger Render
+            const res = await fetch('/api/admin/start-dynamic-import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    categoryUrl: config.url,
+                    jobId: newJobId,
+                    pageNum: targetPage,
+                    delayMin: config.delay_min,
+                    delayMax: config.delay_max,
+                    mode: mode,
+                    linkSelector: 'a', // Immoflux links are standard anchor tags
+                    extractSelectors: config.mapping
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to start dynamic scraper');
+            }
+
+            setMessage({ text: `Crawler dispatched [Page ${targetPage}]! Listening for live logs...`, type: 'info' });
+
+        } catch (err: any) {
+            console.error('Dynamic Import Error:', err);
+            setStatus('error');
+            if (mode === 'history') setIsScraping(false);
+            if (mode === 'watcher') setIsWatching(false);
+            setMessage({ text: err.message || 'An unexpected error occurred while starting the crawler.', type: 'error' });
         }
+    };
+
+    const handleStopScrape = async () => {
+        if (!activeJobId) return;
+        try {
+            setMessage({ text: 'Transmitting STOP signal to Render Server...', type: 'warning' });
+            await supabase
+                .from('scrape_jobs')
+                .update({ status: 'stopped' })
+                .eq('id', activeJobId);
+
+            setLogs((prev) => [...prev, { id: 'halt', message: 'STOP SIGNAL SENT. Waiting for scraper to finish current cycle and exit.', log_level: 'warn', created_at: new Date().toISOString() }]);
+            setIsScraping(false);
+            setIsWatching(false);
+            setStatus('error');
+            setMessage({ text: 'Import Halted by User.', type: 'error' });
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const getLogColor = (level: string) => {
+        switch (level) {
+            case 'success': return 'text-green-400 font-bold';
+            case 'warn': return 'text-yellow-400';
+            case 'error': return 'text-red-400 font-bold';
+            default: return 'text-slate-300';
+        }
+    };
+
+    const formatTime = (seconds: number) => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        if (h > 0) return `${h}h ${m}m ${s}s`;
+        return `${m}m ${s}s`;
     };
 
     const toggleWatcher = () => {
         if (!isWatcherActive) {
             setWatcherCountdown((settings?.immoflux_integration?.watcher_interval_hours || 2) * 3600);
-            runWatcher(); // Run immediate check
+            runImmofluxScraper('watcher'); // Run immediate check
         }
         setIsWatcherActive(!isWatcherActive);
-    };
-
-    const runWatcher = async () => {
-        setIsWatching(true);
-        setMessage({ text: '', type: '' });
-
-        try {
-            const res = await fetch('/api/cron/immoflux?mode=watcher');
-            const data = await res.json();
-
-            if (data.status === 'done_watcher') {
-                setMessage({ text: `Watcher finished checking. Found ${data.inserted} new properties.`, type: 'success' });
-            } else if (data.status === 'success') {
-                setMessage({ text: `Watcher fetched 1 page. Inserted: ${data.inserted}.`, type: 'success' });
-            } else {
-                setMessage({ text: `Watcher issue: ${data.reason}`, type: 'error' });
-            }
-        } catch (error: any) {
-            setMessage({ text: `Watcher error: ${error.message}`, type: 'error' });
-        } finally {
-            setIsWatching(false);
-        }
     };
 
     if (isLoading) {
@@ -612,7 +748,7 @@ export default function SettingsClient() {
                                 </div>
 
                                 <button
-                                    onClick={runImmofluxScraper}
+                                    onClick={() => runImmofluxScraper('history')}
                                     disabled={isScraping || isSaving || isAutoScraping || isWatching}
                                     className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-slate-500/20 disabled:opacity-50"
                                 >
@@ -629,6 +765,56 @@ export default function SettingsClient() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* VISUAL TERMINAL PANEL */}
+                        <div className="flex flex-col h-[500px] bg-[#0a0f1c] rounded-2xl border border-slate-700 shadow-2xl overflow-hidden font-mono text-sm mt-8">
+                            {/* Fake Window Header */}
+                            <div className="h-10 bg-slate-800/80 border-b border-slate-700 flex items-center px-4 justify-between shrink-0">
+                                <div className="flex gap-2 items-center">
+                                    <div className="w-3 h-3 rounded-full bg-rose-500"></div>
+                                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                    <span className="ml-3 text-xs text-slate-400 font-medium flex items-center gap-2">
+                                        <Terminal className="w-3.5 h-3.5" /> Immoflux Render Microservice Output
+                                    </span>
+                                </div>
+                                {activeJobId && (
+                                    <span className="text-xs text-emerald-400/80 animate-pulse bg-emerald-500/10 px-2 py-0.5 rounded">
+                                        ● REALTIME ACTIVE
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Log Stream */}
+                            <div className="flex-1 p-5 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                                {logs.length === 0 && status === 'idle' && (
+                                    <div className="text-slate-500/50 flex flex-col items-center justify-center h-full max-w-sm mx-auto text-center">
+                                        <Terminal className="w-12 h-12 mb-3 opacity-20" />
+                                        <p>System standing by. Trigger a manual run or Start Loop to view remote logs.</p>
+                                    </div>
+                                )}
+
+                                {logs.map((log, i) => {
+                                    const time = new Date(log.created_at).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                                    return (
+                                        <div key={log.id + i} className="mb-1.5 flex gap-3 hover:bg-white/5 px-2 -mx-2 rounded py-0.5 transition-colors group">
+                                            <span className="text-slate-600 shrink-0 select-none">[{time}]</span>
+                                            <span className={`break-words ${getLogColor(log.log_level)}`}>
+                                                {log.message}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+
+                                {(isScraping || isWatching) && (
+                                    <div className="mt-2 text-indigo-400 animate-pulse">
+                                        _
+                                    </div>
+                                )}
+                                <div ref={logsEndRef} />
+                            </div>
+                        </div>
+
                     </div>
                 )}
             </div>
