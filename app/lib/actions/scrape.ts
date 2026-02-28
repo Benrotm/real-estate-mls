@@ -58,7 +58,7 @@ export interface ScrapedProperty {
     debugInfo?: any;
 }
 
-export async function scrapeProperty(url: string, customSelectors?: any): Promise<{ data?: ScrapedProperty; error?: string }> {
+export async function scrapeProperty(url: string, customSelectors?: any, cookies?: string): Promise<{ data?: ScrapedProperty; error?: string }> {
     try {
         if (!url || !url.startsWith('http')) {
             return { error: 'Invalid URL provided' };
@@ -76,6 +76,10 @@ export async function scrapeProperty(url: string, customSelectors?: any): Promis
                 'Accept-Language': 'en-US,en;q=0.9',
             }
         };
+
+        if (cookies) {
+            (fetchOptions.headers as any)['Cookie'] = cookies;
+        }
 
         if (proxyConfig && proxyConfig.is_active && proxyConfig.host && proxyConfig.port) {
             let proxyUrl = `http://${proxyConfig.host}:${proxyConfig.port}`;
