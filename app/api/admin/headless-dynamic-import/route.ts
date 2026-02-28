@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { scrapeProperty } from '@/app/lib/actions/scrape';
 import { createPropertyFromData } from '@/app/lib/actions/properties';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
     try {
@@ -26,8 +27,20 @@ export async function POST(req: Request) {
             dataToSave = scrapeResult.data;
         }
 
+        // Fetch an Admin ID to automatically own the headless imported properties
+        const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data: adminUser } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('role', 'super_admin')
+            .limit(1)
+            .single();
+
         // 2. Save the Property to the Database using the internal action
-        const saveResult = await createPropertyFromData(dataToSave as any, url || 'immoflux_batch');
+        const saveResult = await createPropertyFromData(dataToSave as any, url || 'immoflux_batch', adminUser?.id);
 
         if (!saveResult.success) {
             return NextResponse.json({ success: false, error: saveResult.error || 'Failed to save to database' });

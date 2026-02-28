@@ -498,20 +498,25 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
     return { success: true, status: newStatus };
 }
 
-export async function createPropertyFromData(data: Partial<PropertyType>, sourceUrl?: string) {
+export async function createPropertyFromData(data: Partial<PropertyType>, sourceUrl?: string, adminBypassUserId?: string) {
     console.log('createPropertyFromData received:', {
         url: sourceUrl,
         private_notes: data.private_notes,
         has_url_in_object: 'url' in data
     });
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return { error: 'Unauthorized' };
+    let userId = adminBypassUserId;
+
+    if (!userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { error: 'Unauthorized' };
+        userId = user.id;
+    }
 
     try {
         const propertyData = {
-            owner_id: user.id,
+            owner_id: userId,
             title: data.title || 'Untitled Scraped Property',
             description: data.description || '',
             price: data.price || 0,
