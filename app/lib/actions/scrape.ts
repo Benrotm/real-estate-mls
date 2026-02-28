@@ -699,24 +699,27 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
         // 3f. Specific Site Logic (Immoflux.ro)
         if (url.includes('immoflux.ro')) {
-            // Description Extraction (Immoflux has unstructured text following a header)
-            const descHeader = $('h4:contains("Descriere")');
-            if (descHeader.length > 0) {
-                let immoDesc = '';
-                let currentItem = descHeader.next();
-                while (currentItem.length > 0 && !currentItem.is('h4, script, style, .site-sidebar-nav')) {
-                    const text = currentItem.text().trim();
-                    if (text) immoDesc += text + '\n\n';
-                    currentItem = currentItem.next();
+            // Description Extraction - Handle unstructured text nodes via container regex
+            const container = $('.slidePanel-inner-section');
+            if (container.length > 0) {
+                const fullText = container.text().trim();
+                const descMatch = fullText.match(/Descriere\s*:?\s*([\s\S]+)/i);
+                if (descMatch && descMatch[1]) {
+                    let immoDesc = descMatch[1].trim();
+                    const cutOffMatch = immoDesc.match(/([\s\S]+?)(?:\s+Detalii suplimentare|\s+Caracteristici|\s+Dotari|\s*Zona|$)/i);
+                    if (cutOffMatch && cutOffMatch[1]) {
+                        data.description = cutOffMatch[1].trim();
+                    } else {
+                        data.description = immoDesc;
+                    }
                 }
-                if (immoDesc) data.description = immoDesc.trim();
             }
 
             // Location Refinement
-            if (data.address && data.address.toLowerCase().startsWith('tm ')) {
-                data.location_city = data.address.replace(/^tm\s+/i, '').trim();
+            const rawCity = data.location_city || data.address || '';
+            if (rawCity && rawCity.toLowerCase().startsWith('tm ')) {
+                data.location_city = rawCity.replace(/^tm\s+/i, '').trim();
                 data.location_county = 'Timis';
-                // Build a technical address for geocoding
                 data.address = `${data.location_city}, ${data.location_area || ''}, Timis, Romania`.replace(/,\s*,/g, ',');
             }
 
