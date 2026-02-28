@@ -731,13 +731,12 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             });
 
             // Phone Extraction (Immoflux specific cleaning)
-            if (customSelectors?.owner_phone) {
+            const infoText = $('.slidepanel-info').text().trim();
+            const phoneMatch = infoText.match(/Telefon\s*:?\s*([\s\d+]+)/i);
+            if (phoneMatch && phoneMatch[1]) {
+                data.owner_phone = phoneMatch[1].replace(/\D/g, '');
+            } else if (customSelectors?.owner_phone) {
                 const rawPhone = getText(customSelectors.owner_phone);
-                if (rawPhone) {
-                    data.owner_phone = rawPhone.replace(/\D/g, '');
-                }
-            } else if ((customSelectors as any)?.phone) {
-                const rawPhone = getText((customSelectors as any).phone);
                 if (rawPhone) {
                     data.owner_phone = rawPhone.replace(/\D/g, '');
                 }
