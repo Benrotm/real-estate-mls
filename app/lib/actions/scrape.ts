@@ -697,6 +697,36 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             });
         }
 
+        // 3f. Specific Site Logic (Immoflux.ro)
+        if (url.includes('immoflux.ro')) {
+            // Description Extraction (Immoflux has unstructured text following a header)
+            const descHeader = $('h4:contains("Descriere")');
+            if (descHeader.length > 0) {
+                let immoDesc = '';
+                let currentItem = descHeader.next();
+                while (currentItem.length > 0 && !currentItem.is('h4, script, style, .site-sidebar-nav')) {
+                    const text = currentItem.text().trim();
+                    if (text) immoDesc += text + '\n\n';
+                    currentItem = currentItem.next();
+                }
+                if (immoDesc) data.description = immoDesc.trim();
+            }
+
+            // Location Refinement
+            if (data.address && data.address.toLowerCase().startsWith('tm ')) {
+                data.location_city = data.address.replace(/^tm\s+/i, '').trim();
+                data.location_county = 'Timis';
+                // Build a technical address for geocoding
+                data.address = `${data.location_city}, ${data.location_area || ''}, Timis, Romania`.replace(/,\s*,/g, ',');
+            }
+
+            // Image Extraction (Prioritize href for high-res)
+            $('.owl-carousel .item a').each((_, el) => {
+                const highRes = $(el).attr('href');
+                if (highRes) addImage(highRes);
+            });
+        }
+
         $('script').each((_, el) => {
             const content = $(el).html();
             if (content && content.includes('var imageList =')) {
