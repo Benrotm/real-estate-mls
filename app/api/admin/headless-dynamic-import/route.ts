@@ -5,7 +5,7 @@ import { createPropertyFromData } from '@/app/lib/actions/properties';
 export async function POST(req: Request) {
     try {
         const payload = await req.json();
-        const { url, selectors, propertyData, cookies } = payload;
+        const { url, selectors, propertyData, cookies, html } = payload;
 
         let dataToSave;
 
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
             }
 
             // 1. Scrape the Property using Cheerio
-            const scrapeResult = await scrapeProperty(url, selectors, cookies);
+            const scrapeResult = await scrapeProperty(url, selectors, cookies, html);
 
             if (scrapeResult.error || !scrapeResult.data) {
                 return NextResponse.json({ success: false, error: scrapeResult.error || 'Failed to extract data' });

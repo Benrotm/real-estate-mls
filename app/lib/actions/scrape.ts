@@ -58,7 +58,7 @@ export interface ScrapedProperty {
     debugInfo?: any;
 }
 
-export async function scrapeProperty(url: string, customSelectors?: any, cookies?: string): Promise<{ data?: ScrapedProperty; error?: string }> {
+export async function scrapeProperty(url: string, customSelectors?: any, cookies?: string, rawHtml?: string): Promise<{ data?: ScrapedProperty; error?: string }> {
     try {
         if (!url || !url.startsWith('http')) {
             return { error: 'Invalid URL provided' };
@@ -95,13 +95,17 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             (fetchOptions as any).dispatcher = agent; // Works in Undici native fetch
         }
 
-        const response = await fetch(url, fetchOptions);
+        let html = rawHtml;
+        if (!html) {
+            const response = await fetch(url, fetchOptions);
 
-        if (!response.ok) {
-            return { error: `Failed to fetch URL: ${response.statusText}` };
+            if (!response.ok) {
+                return { error: `Failed to fetch URL: ${response.statusText}` };
+            }
+
+            html = await response.text();
         }
 
-        const html = await response.text();
         const $ = cheerio.load(html);
 
         // Remove styles/iframes to clean up text extraction (keep scripts for JSON-LD/Global Vars)
