@@ -719,37 +719,52 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             }
 
             // Location Refinement
+            // Filter noise leaked from generic mapping (like "Status: Activa")
+            const noise = ['activa', 'apartament', 'casa', 'vila', 'teren', 'spatiu', 'status:', 'tip:'];
+            const filterNoise = (val: string) => {
+                if (!val) return '';
+                const lower = val.toLowerCase();
+                return noise.some(n => lower === n || lower.startsWith(n)) ? '' : val;
+            };
 
-            // Extract City from "Adresa:" label
-            const cityMatch = infoText.match(/Adresa\s*:?\s*([\s\S]+?)(?:\s*Portaluri|$)/i);
-            let city = cityMatch ? cityMatch[1].trim() : (data.location_city || '');
+            data.location_area = filterNoise(data.location_area || '');
+            data.location_city = filterNoise(data.location_city || '');
 
-            // Extract Area from "Zona:" label
-            const areaMatch = infoText.match(/Zona\s*:?\s*([\s\S]+?)(?:\s*Adresa|$)/i);
-            let area = areaMatch ? areaMatch[1].trim() : (data.location_area || '');
+            // Robust extract from labels
+            const getLabelValue = (label: string, endLabels: string[]) => {
+                const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const endPattern = endLabels.map(l => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+                const regex = new RegExp(`${escapedLabel}\\s*:?\\s*([\\s\\S]+?)(?:\\s*(?:${endPattern})|$)`, 'i');
+                const match = infoText.match(regex);
+                return match ? match[1].trim() : '';
+            };
 
-            if (city || area) {
-                if (city) {
-                    if (city.toLowerCase().startsWith('tm ')) {
-                        city = city.replace(/^tm\s+/i, '').trim();
+            const cityValue = getLabelValue('Adresa', ['Portaluri', 'Telefon', 'Status']) || data.location_city;
+            const areaValue = getLabelValue('Zona', ['Adresa', 'Portaluri', 'Telefon', 'Status']) || data.location_area;
+
+            if (cityValue || areaValue) {
+                if (cityValue) {
+                    let cleanCity = cityValue;
+                    if (cleanCity.toLowerCase().startsWith('tm ')) {
+                        cleanCity = cleanCity.replace(/^tm\s+/i, '').trim();
                     }
-                    data.location_city = city;
+                    data.location_city = cleanCity;
                 }
 
-                if (area) {
-                    data.location_area = area;
+                if (areaValue) {
+                    data.location_area = areaValue;
                 }
 
                 data.location_county = data.location_county || 'Timis';
 
                 // Synthesize a clean address for the "Street Address" field.
-                const parts = [
+                const addrParts = [
                     data.location_area,
                     data.location_city,
                     data.location_county,
                     'Romania'
                 ].filter(Boolean);
-                data.address = parts.join(', ');
+                data.address = addrParts.join(', ');
             }
 
             // Image Extraction (Prioritize href for high-res)
