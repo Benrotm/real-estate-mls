@@ -34,8 +34,8 @@ export async function POST(req: Request) {
         );
         const { data: adminUser } = await supabaseAdmin
             .from('profiles')
-            .select('id')
-            .eq('role', 'super_admin')
+            .select('id, role')
+            .in('role', ['super_admin', 'admin'])
             .limit(1)
             .single();
 
