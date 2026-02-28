@@ -720,13 +720,20 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
             // Location Refinement
             // Filter noise leaked from generic mapping (like "Status: Activa")
-            const noise = ['activa', 'apartament', 'casa', 'vila', 'teren', 'spatiu', 'status:', 'tip:'];
+            const noise = ['activa', 'apartament', 'casa', 'vila', 'teren', 'spatiu', 'status:', 'tip:', 'portaluri', 'adresa:'];
             const filterNoise = (val: string) => {
-                if (!val) return '';
-                const lower = val.toLowerCase();
-                return noise.some(n => lower === n || lower.startsWith(n)) ? '' : val;
+                if (!val || typeof val !== 'string') return '';
+                const clean = val.trim();
+                const lower = clean.toLowerCase();
+                // Specific noise words to kill exactly or that look like labels
+                if (noise.some(n => lower === n || lower.includes(n))) {
+                    if (lower === 'activa' || lower === 'activa ') return '';
+                    if (lower.startsWith('status:') || lower.startsWith('tip:')) return '';
+                }
+                return clean;
             };
 
+            // Force clear initial values if they are noise
             data.location_area = filterNoise(data.location_area || '');
             data.location_city = filterNoise(data.location_city || '');
 
@@ -739,8 +746,11 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 return match ? match[1].trim() : '';
             };
 
-            const cityValue = getLabelValue('Adresa', ['Portaluri', 'Telefon', 'Status']) || data.location_city;
-            const areaValue = getLabelValue('Zona', ['Adresa', 'Portaluri', 'Telefon', 'Status']) || data.location_area;
+            const cityRaw = getLabelValue('Adresa', ['Portaluri', 'Telefon', 'Status']) || data.location_city;
+            const areaRaw = getLabelValue('Zona', ['Adresa', 'Portaluri', 'Telefon', 'Status']) || data.location_area;
+
+            const cityValue = filterNoise(cityRaw);
+            const areaValue = filterNoise(areaRaw);
 
             if (cityValue || areaValue) {
                 if (cityValue) {
