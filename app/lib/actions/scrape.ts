@@ -700,6 +700,8 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
         // 3f. Specific Site Logic (Immoflux.ro)
         if (url.includes('immoflux.ro')) {
+            const infoText = $('.slidepanel-info').text().trim();
+
             // Description Extraction - Handle unstructured text nodes via container regex
             const container = $('.slidePanel-inner-section');
             if (container.length > 0) {
@@ -717,16 +719,21 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             }
 
             // Location Refinement
-            const city = data.location_city || getText('.slidepanel-info a[href*="maps"]') || '';
-            const area = data.location_area || getText('.slidepanel-info strong') || '';
+
+            // Extract City from "Adresa:" label
+            const cityMatch = infoText.match(/Adresa\s*:?\s*([\s\S]+?)(?:\s*Portaluri|$)/i);
+            let city = cityMatch ? cityMatch[1].trim() : (data.location_city || '');
+
+            // Extract Area from "Zona:" label
+            const areaMatch = infoText.match(/Zona\s*:?\s*([\s\S]+?)(?:\s*Adresa|$)/i);
+            let area = areaMatch ? areaMatch[1].trim() : (data.location_area || '');
 
             if (city || area) {
                 if (city) {
-                    let cleanCity = city.trim();
-                    if (cleanCity.toLowerCase().startsWith('tm ')) {
-                        cleanCity = cleanCity.replace(/^tm\s+/i, '').trim();
+                    if (city.toLowerCase().startsWith('tm ')) {
+                        city = city.replace(/^tm\s+/i, '').trim();
                     }
-                    data.location_city = cleanCity;
+                    data.location_city = city;
                 }
 
                 if (area) {
@@ -735,8 +742,7 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
                 data.location_county = data.location_county || 'Timis';
 
-                // Synthesize a full address for the "Street Address" field on the frontend.
-                // This triggers the frontend map to refresh and provides a better initial geocoding source.
+                // Synthesize a clean address for the "Street Address" field.
                 const parts = [
                     data.location_area,
                     data.location_city,
@@ -753,7 +759,6 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             });
 
             // Phone Extraction (Immoflux specific cleaning)
-            const infoText = $('.slidepanel-info').text().trim();
             const phoneMatch = infoText.match(/Telefon\s*:?\s*([\s\d+]+)/i);
             if (phoneMatch && phoneMatch[1]) {
                 data.owner_phone = phoneMatch[1].replace(/\D/g, '');
