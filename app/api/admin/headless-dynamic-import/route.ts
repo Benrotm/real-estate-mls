@@ -6,9 +6,9 @@ import { createClient } from '@supabase/supabase-js';
 export async function POST(req: Request) {
     try {
         const payload = await req.json();
-        const { url, selectors, propertyData, cookies, html } = payload;
+        const { url, selectors, propertyData, cookies, html, adminId } = payload;
 
-        let dataToSave;
+        let dataToSave: any;
 
         if (propertyData) {
             // Data was extracted directly by the microservice (e.g. Immoflux list scraping)
@@ -27,20 +27,25 @@ export async function POST(req: Request) {
             dataToSave = scrapeResult.data;
         }
 
-        // Fetch an Admin ID to automatically own the headless imported properties
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-        const { data: adminUser } = await supabaseAdmin
-            .from('profiles')
-            .select('id, role')
-            .in('role', ['super_admin', 'admin'])
-            .limit(1)
-            .single();
+        let finalOwnerId = adminId;
+
+        if (!finalOwnerId) {
+            // Fetch an Admin ID to automatically own the headless imported properties
+            const supabaseAdmin = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            );
+            const { data: adminUser } = await supabaseAdmin
+                .from('profiles')
+                .select('id, role')
+                .in('role', ['super_admin', 'admin'])
+                .limit(1)
+                .single();
+            finalOwnerId = adminUser?.id;
+        }
 
         // 2. Save the Property to the Database using the internal action
-        const saveResult = await createPropertyFromData(dataToSave as any, url || 'immoflux_batch', adminUser?.id);
+        const saveResult = await createPropertyFromData(dataToSave, url || 'immoflux_batch', finalOwnerId);
 
         if (!saveResult.success) {
             return NextResponse.json({ success: false, error: saveResult.error || 'Failed to save to database' });

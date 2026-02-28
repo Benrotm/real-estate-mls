@@ -69,6 +69,7 @@ export async function POST(req: Request) {
                 extractSelectors,
                 proxyConfig,
                 webhookBaseUrl: origin,
+                adminId: user.id,
                 immofluxUser: process.env.IMMOFLUX_USER || 'benoni.silion@blitz-timisoara.ro',
                 immofluxPass: process.env.IMMOFLUX_PASS || 'EDwohI#6Oi',
                 supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
