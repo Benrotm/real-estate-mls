@@ -40,8 +40,19 @@ export async function POST(req: Request) {
         const settings = await getAdminSettings();
         const proxyConfig = settings?.proxy_integration?.is_active ? settings.proxy_integration : null;
 
-        // Fire and forget - don't await the long-running scrape
-        fetch(`${microserviceUrl}/api/run-dynamic-scrape`, {
+        // Derive NextJS request origin to pass to Microservice
+        let origin = '';
+        if (process.env.NEXT_PUBLIC_SITE_URL) {
+            origin = process.env.NEXT_PUBLIC_SITE_URL;
+        } else {
+            const host = req.headers.get('host') || 'localhost:3000';
+            const protocol = host.includes('localhost') ? 'http' : 'https';
+            origin = `${protocol}://${host}`;
+        }
+
+        // Await the fetch so Vercel Serverless doesn't freeze the Lambda before the request sends.
+        // The microservice immediately replies with 200 OK after starting the browser cluster.
+        const res = await fetch(`${microserviceUrl}/api/run-dynamic-scrape`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -57,10 +68,15 @@ export async function POST(req: Request) {
                 linkSelector,
                 extractSelectors,
                 proxyConfig,
+                webhookBaseUrl: origin,
                 supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
                 supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY
             })
-        }).catch(err => console.error('Error triggering microservice:', err));
+        });
+
+        if (!res.ok) {
+            console.error('Microservice returned an error status:', res.status);
+        }
 
         return NextResponse.json({ success: true, message: 'Dynamic Crawler execution started' });
 
