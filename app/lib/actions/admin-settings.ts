@@ -28,7 +28,7 @@ export interface ImmofluxConfig {
         description: string;
         location_city: string;
         rooms: string;
-        phone: string;
+        owner_phone: string;
     }
 }
 
@@ -88,7 +88,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
             description: "td:nth-child(4) div.text-table-expandable",
             location_city: "td:nth-child(4) strong",
             rooms: "td:nth-child(4) span.label",
-            phone: "td:nth-child(4) div.btn-primary"
+            owner_phone: "td:nth-child(4) div.btn-primary"
         }
     },
     proxy_integration: {

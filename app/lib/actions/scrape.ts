@@ -182,6 +182,7 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             // Contact
             if (customSelectors.owner_name) data.owner_name = getText(customSelectors.owner_name);
             if (customSelectors.owner_phone) data.owner_phone = getText(customSelectors.owner_phone);
+            else if ((customSelectors as any).phone) data.owner_phone = getText((customSelectors as any).phone);
             if (customSelectors.private_notes) data.private_notes = getText(customSelectors.private_notes);
 
             if (customSelectors.price) {
@@ -728,6 +729,19 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 const highRes = $(el).attr('href');
                 if (highRes) addImage(highRes);
             });
+
+            // Phone Extraction (Immoflux specific cleaning)
+            if (customSelectors?.owner_phone) {
+                const rawPhone = getText(customSelectors.owner_phone);
+                if (rawPhone) {
+                    data.owner_phone = rawPhone.replace(/\D/g, '');
+                }
+            } else if ((customSelectors as any)?.phone) {
+                const rawPhone = getText((customSelectors as any).phone);
+                if (rawPhone) {
+                    data.owner_phone = rawPhone.replace(/\D/g, '');
+                }
+            }
         }
 
         $('script').each((_, el) => {
