@@ -522,7 +522,7 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             price: data.price || 0,
             currency: data.currency || 'EUR',
             type: data.type || 'Apartment',
-            listing_type: data.listing_type || 'sale',
+            listing_type: data.listing_type === 'rent' || data.listing_type === 'For Rent' ? 'For Rent' : 'For Sale',
             status: 'draft', // Always draft for safety
 
             // Contact (Scraped)
