@@ -717,11 +717,33 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             }
 
             // Location Refinement
-            const rawCity = data.location_city || data.address || '';
-            if (rawCity && rawCity.toLowerCase().startsWith('tm ')) {
-                data.location_city = rawCity.replace(/^tm\s+/i, '').trim();
-                data.location_county = 'Timis';
-                data.address = `${data.location_city}, ${data.location_area || ''}, Timis, Romania`.replace(/,\s*,/g, ',');
+            const city = data.location_city || getText('.slidepanel-info a[href*="maps"]') || '';
+            const area = data.location_area || getText('.slidepanel-info strong') || '';
+
+            if (city || area) {
+                if (city) {
+                    let cleanCity = city.trim();
+                    if (cleanCity.toLowerCase().startsWith('tm ')) {
+                        cleanCity = cleanCity.replace(/^tm\s+/i, '').trim();
+                    }
+                    data.location_city = cleanCity;
+                }
+
+                if (area) {
+                    data.location_area = area;
+                }
+
+                data.location_county = data.location_county || 'Timis';
+
+                // Synthesize a full address for the "Street Address" field on the frontend.
+                // This triggers the frontend map to refresh and provides a better initial geocoding source.
+                const parts = [
+                    data.location_area,
+                    data.location_city,
+                    data.location_county,
+                    'Romania'
+                ].filter(Boolean);
+                data.address = parts.join(', ');
             }
 
             // Image Extraction (Prioritize href for high-res)
