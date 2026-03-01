@@ -229,7 +229,7 @@ export async function GET(request: NextRequest) {
                 let propertyType = 'Apartment';
                 const rowHtml = ($page(el).html() || '').toLowerCase();
 
-                if (rowHtml.includes('inchirier') || rowHtml.includes('închirier')) listingType = 'For Rent';
+                if (rowHtml.includes('inchirier') || rowHtml.includes('închirier') || rowHtml.includes('chirie')) listingType = 'For Rent';
                 else if (rowHtml.includes('vanzar') || rowHtml.includes('vânzar')) listingType = 'For Sale';
 
                 if (rowHtml.includes('cas') || rowHtml.includes('vil')) propertyType = 'House';

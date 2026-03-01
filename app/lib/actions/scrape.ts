@@ -837,6 +837,15 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 }
             });
         }
+        if (data.title && !data.listing_type) {
+            const textToSearch = (data.title + ' ' + (data.description || '') + ' ' + (url || '')).toLowerCase();
+            if (textToSearch.includes('inchirier') || textToSearch.includes('închiriere') || textToSearch.includes('rent') || textToSearch.includes('chiria')) {
+                data.listing_type = 'For Rent';
+            } else {
+                data.listing_type = 'For Sale';
+            }
+        }
+
         // Defaults
         data.images = Array.from(imagesSet).slice(0, 25); // Cap at 25 images
 

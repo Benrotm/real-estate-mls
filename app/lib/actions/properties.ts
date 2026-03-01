@@ -523,7 +523,11 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             price: data.price || 0,
             currency: data.currency || 'EUR',
             type: data.type || 'Apartment',
-            listing_type: (data.listing_type as any) === 'rent' || (data.listing_type as any) === 'For Rent' ? 'For Rent' : 'For Sale',
+            listing_type: (function () {
+                const lt = String(data.listing_type || '').toLowerCase();
+                if (lt.includes('rent') || lt.includes('inchirier') || lt.includes('închirier')) return 'For Rent';
+                return 'For Sale';
+            })(),
 
             // Contact (Scraped)
             owner_name: data.owner_name || '',
