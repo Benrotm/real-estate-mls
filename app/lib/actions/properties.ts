@@ -531,7 +531,8 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             private_notes: (function () {
                 const url = sourceUrl || (data as any).url;
                 const baseNotes = data.private_notes || '';
-                if (!url) return baseNotes;
+                // Only add the original link if it's NOT an immoflux link (per privacy request)
+                if (!url || url.includes('immoflux.ro')) return baseNotes;
                 return `${baseNotes}\n\nOriginal Link: ${url}`.trim();
             })(),
 
