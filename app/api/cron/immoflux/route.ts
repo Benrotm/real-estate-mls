@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
                 const description = config.mapping.description ? $page(el).find(config.mapping.description).text().trim() : '';
                 const location = config.mapping.location_city ? $page(el).find(config.mapping.location_city).text().trim() : '';
                 const roomsText = config.mapping.rooms ? $page(el).find(config.mapping.rooms).text().trim() : '';
-                const phone = config.mapping.phone ? $page(el).find(config.mapping.phone).text().trim() : '';
+                const phone = config.mapping.owner_phone ? $page(el).find(config.mapping.owner_phone).text().trim() : '';
 
                 let price = 0;
                 let currency = 'EUR';
