@@ -163,7 +163,10 @@ export async function updatePropertyAdmin(propertyId: string, formData: FormData
             updated_at: new Date().toISOString()
         };
 
-        // Remove nulls/undefined if needed, or Supabase handles them (sets to null)
+        // Recalculate score on update to catch corrections (e.g. adding partitioning)
+        const { calculatePropertyScore } = await import('./scoring');
+        const score = await calculatePropertyScore(propertyData);
+        propertyData.score = score;
 
         const { error } = await supabase
             .from('properties')

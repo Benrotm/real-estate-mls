@@ -1,12 +1,14 @@
 'use server';
 
 import { createClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { Property, Property as PropertyType } from '@/app/lib/properties';
 import { calculatePropertyScore } from './scoring';
 import { revalidatePath } from 'next/cache';
 import { getUserProfile, getActiveUsageStats } from '../auth';
 import { generatePropertyFingerprint } from '../utils/fingerprint';
 import { getAdminSettings } from './admin-settings';
+import { enrichPropertyFromDescription, geocodeProperty } from './enrichment';
 
 export async function createProperty(formData: FormData) {
     const supabase = await createClient();
@@ -138,6 +140,9 @@ export async function createProperty(formData: FormData) {
         return { error: e.message || 'Internal Server Error' };
     }
 }
+
+// robust version will be at the bottom or replaces the old one entirely. 
+// I'll remove this middle implementation.
 
 export async function getProperties(filters?: any): Promise<{ properties: PropertyType[], totalCount: number }> {
     const supabase = await createClient();
@@ -499,23 +504,19 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
 }
 
 export async function createPropertyFromData(data: Partial<PropertyType>, sourceUrl?: string, adminBypassUserId?: string) {
-    console.log('createPropertyFromData received:', {
-        url: sourceUrl,
-        private_notes: data.private_notes,
-        has_url_in_object: 'url' in data
-    });
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     let userId = adminBypassUserId;
-
     if (!userId) {
-        const { data: { user } } = await supabase.auth.getUser();
+        const clientSupabase = await createClient();
+        const { data: { user } } = await clientSupabase.auth.getUser();
         if (!user) return { error: 'Unauthorized' };
         userId = user.id;
     }
 
     try {
-        const propertyData = {
+        // 1. Map basic fields
+        let propertyData: any = {
             owner_id: userId,
             title: data.title || 'Untitled Scraped Property',
             description: data.description || '',
@@ -523,7 +524,6 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             currency: data.currency || 'EUR',
             type: data.type || 'Apartment',
             listing_type: (data.listing_type as any) === 'rent' || (data.listing_type as any) === 'For Rent' ? 'For Rent' : 'For Sale',
-            status: 'draft', // Always draft for safety
 
             // Contact (Scraped)
             owner_name: data.owner_name || '',
@@ -533,6 +533,7 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             // Media
             images: data.images || [],
             video_url: data.video_url || '',
+            youtube_video_url: data.youtube_video_url || '',
             virtual_tour_url: data.virtual_tour_url || '',
 
             // Location
@@ -540,41 +541,50 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             location_city: data.location_city || 'Timisoara',
             location_county: data.location_county || 'Timis',
             location_area: data.location_area || '',
+            latitude: data.latitude || null,
+            longitude: data.longitude || null,
 
             // Specs
             rooms: (data.rooms && data.rooms > 0 && data.rooms < 100) ? data.rooms : null,
             bedrooms: (data.bedrooms && data.bedrooms > 0 && data.bedrooms < 100) ? data.bedrooms : null,
             bathrooms: (data.bathrooms && data.bathrooms > 0 && data.bathrooms < 100) ? data.bathrooms : null,
-
             area_usable: data.area_usable || null,
             area_built: data.area_built || null,
             area_terrace: data.area_terrace || null,
             area_garden: data.area_garden || null,
-
-            // Clamp floors to realistic values to avoid integer overflow from bad scraping (e.g. IDs)
-            floor: (data.floor !== undefined && data.floor !== null && data.floor > -20 && data.floor < 200) ? data.floor : null,
+            floor: (data.floor !== undefined && data.floor !== null && (data.floor as number) > -20 && (data.floor as number) < 200) ? data.floor : null,
             total_floors: (data.total_floors && data.total_floors > 0 && data.total_floors < 200) ? data.total_floors : null,
-
-            // Validate year built (e.g. 1700 - 2100). Scrapers often pick up IDs or Phone numbers here by mistake.
             year_built: (data.year_built && data.year_built > 1700 && data.year_built < 2100) ? data.year_built : null,
 
             partitioning: data.partitioning || '',
             comfort: data.comfort || '',
-
             building_type: data.building_type || '',
             interior_condition: data.interior_condition || '',
             furnishing: data.furnishing || '',
-
             features: data.features || [],
-            score: null as number | null,
             updated_at: new Date().toISOString()
         };
 
-        // Calculate Property Score (Automated)
+        // 2. Smart Enrichment from Description (Boosts Score)
+        propertyData = await enrichPropertyFromDescription(propertyData.description, propertyData);
+
+        // 3. Geocoding (Fix Bucharest Map issue)
+        if (!propertyData.latitude || !propertyData.longitude) {
+            const coords = await geocodeProperty(propertyData);
+            if (coords.lat && coords.lon) {
+                propertyData.latitude = coords.lat;
+                propertyData.longitude = coords.lon;
+            }
+        }
+
+        // 4. Status & Publication
+        propertyData.status = 'active'; // Automatically publish
+
+        // 5. Calculate Property Score (AFTER Enrichment)
         const score = await calculatePropertyScore(propertyData as any);
         propertyData.score = score;
 
-        // Anti-Duplicate Intelligence Layer
+        // 6. Anti-Duplicate Intelligence Layer
         const fingerprint = generatePropertyFingerprint(propertyData);
         const settings = await getAdminSettings();
 
@@ -603,9 +613,11 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
 
         revalidatePath('/properties');
         revalidatePath('/dashboard/admin/properties');
+        revalidatePath('/dashboard/owner/properties');
 
         return { success: true, data: newProperty };
     } catch (e: any) {
+        console.error('createPropertyFromData Error:', e);
         return { error: e.message };
     }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
+import { createPropertyFromData } from "@/app/lib/actions/properties";
 import { ImmofluxConfig } from '@/app/lib/actions/admin-settings';
 
 // Helper function to geocode address strings to coordinates (for Maps)
@@ -393,11 +394,10 @@ export async function GET(request: NextRequest) {
 
             const { _isDuplicate, ...cleanItem } = item;
 
-            const { error: insertError } = await supabase
-                .from('properties')
-                .insert({ ...cleanItem, owner_id: admin?.id });
+            // use the robust action instead of raw insert
+            const result = await createPropertyFromData(cleanItem, undefined, admin?.id);
 
-            if (!insertError) insertedCount++;
+            if (result.success) insertedCount++;
         }
 
         if (mode === 'watcher' && watcherAborted) {

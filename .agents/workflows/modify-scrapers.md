@@ -22,15 +22,17 @@ Before writing ANY code, use the `view_file` tool to read the architecture docum
 Match your proposed changes against the "Crucial Rules for Future Development" section at the bottom of the architecture document. 
 Use the `notify_user` tool to present your plan to the user. Explain exactly what you are modifying and confirm it does not violate the architecture bounds.
 
-## Step 3: Git Version Control Checkpoint
+## Step 3: Git Version Control & Deployment
 Once the user confirms your plan:
-**BEFORE** writing any code, run a git commit to save the current working state so the user can easily rollback if the scraper breaks.
+1. Make your code modifications.
+2. Run a git commit and push the changes, which will automatically trigger the deployment to Render or Vercel.
+
 ```bash
 git add .
-git commit -m "chore: checkpoint before modifying [ScraperName] scraper"
+git commit -m "chore: [Brief description of the fix for ScraperName]"
+git push
 ```
 // turbo
 
-## Step 4: Execute Changes & Update Docs
-Make the code modifications. 
+## Step 4: Update Docs
 If your changes alter the fundamental behavior of the scraper (e.g., adding a new abstraction layer or changing the auth flow), you MUST update the corresponding `docs/architecture/*.md` file to reflect the new state.
