@@ -791,13 +791,6 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 }
             }
 
-            // FINAL OVERRIDE: If address still looks like noise, blank it to avoid poisoning the map
-            if (data.address.toLowerCase().includes('activa') || data.address.length < 5) {
-                data.address = '';
-            }
-
-            // DEBUG SIGNAL - V2 (Ultra Robust)
-            (data as any).debug_info = 'V2-ULTRA-ROBUST-EXTRACTOR';
         }
 
         $('script').each((_, el) => {
