@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { LeadData } from '@/app/lib/types';
 import { Property } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
@@ -16,7 +17,7 @@ export interface ScoringRule {
 }
 
 export async function fetchScoringRules(scope?: 'lead' | 'property') {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     let query = supabase
         .from('scoring_rules')
         .select('*')
