@@ -531,9 +531,10 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
                 const price = typeof data.price === 'string' ? parseFloat(data.price) : (data.price || 0);
                 const currency = (data.currency || 'EUR').toUpperCase();
 
-                // 1. Strict Keywords Check
-                const hasRentKeywords = lt.includes('rent') || lt.includes('inchiriere') || lt.includes('închiriere') || lt.includes('inchiriez') || lt.includes('închiriez') || title.includes('inchiriez') || title.includes('închiriez') || title.includes(' de inchiriat');
-                const hasSaleKeywords = lt.includes('sale') || lt.includes('vanzare') || lt.includes('vânzare') || title.includes('vand ') || title.includes('vând ') || title.includes(' de vanzare');
+                // 1. Strict Keywords Check (title + description + explicit listing_type)
+                const all = lt + ' ' + title + ' ' + desc;
+                const hasRentKeywords = all.includes('rent') || all.includes('inchiriere') || all.includes('închiriere') || all.includes('inchiriez') || all.includes('închiriez') || all.includes(' de inchiriat') || all.includes('chirie');
+                const hasSaleKeywords = lt.includes('sale') || lt.includes('vanzare') || lt.includes('vânzare') || title.includes('vand ') || title.includes('vând ') || title.includes(' de vanzare') || title.includes(' de vânzare');
 
                 // 2. Price Heuristics (Assume EUR context usually)
                 // If it looks like a sale price (> 10k EUR), default to Sale unless it's strongly Rent
