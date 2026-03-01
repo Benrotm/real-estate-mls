@@ -873,11 +873,7 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             }
         }
 
-        // Add the imported URL to private notes
-        if (url) {
-            const notesPrefix = `Imported from: ${url}\n\n`;
-            data.private_notes = data.private_notes ? notesPrefix + data.private_notes : notesPrefix.trim();
-        }
+        // Source URL is intentionally NOT stored in private_notes (per user request)
 
         // Geocode Location if we have city/state/address
         const addressParts = [data.address, data.location_city, data.location_county, 'Romania'].filter(Boolean);

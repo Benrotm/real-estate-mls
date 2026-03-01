@@ -559,13 +559,7 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             // Contact (Scraped)
             owner_name: data.owner_name || '',
             owner_phone: data.owner_phone || '',
-            private_notes: (function () {
-                const url = sourceUrl || (data as any).url;
-                const baseNotes = data.private_notes || '';
-                // Only add the original link if it's NOT an immoflux link (per privacy request)
-                if (!url || url.includes('immoflux.ro')) return baseNotes;
-                return `${baseNotes}\n\nOriginal Link: ${url}`.trim();
-            })(),
+            private_notes: data.private_notes || '',
 
             // Media
             images: data.images || [],
