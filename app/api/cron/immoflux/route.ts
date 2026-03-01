@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
 
         console.log(`[Immoflux Cron] Fetching Page ${currentPage}...`);
         formFields.set('page', currentPage.toString());
-        formFields.set('limit', '15'); // Small chunk to avoid Vercel timeouts
+        formFields.set('limit', (config.scrape_limit || 15).toString());
 
         // Another natural delay
         await delay(2000 + Math.random() * 1000);

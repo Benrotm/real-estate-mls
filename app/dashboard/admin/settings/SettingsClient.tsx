@@ -747,14 +747,24 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
                                     )}
                                 </div>
 
-                                <button
-                                    onClick={() => runImmofluxScraper('history')}
-                                    disabled={isScraping || isSaving || isAutoScraping || isWatching}
-                                    className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-slate-500/20 disabled:opacity-50"
-                                >
-                                    {isScraping && !isAutoScraping ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                    {isScraping && !isAutoScraping ? 'Scraping...' : 'Run Once'}
-                                </button>
+                                {isScraping && !isAutoScraping ? (
+                                    <button
+                                        onClick={handleStopScrape}
+                                        className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white px-4 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-red-500/20"
+                                    >
+                                        <Square className="w-4 h-4 fill-current" />
+                                        Stop Run
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => runImmofluxScraper('history')}
+                                        disabled={isScraping || isSaving || isAutoScraping || isWatching}
+                                        className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 h-10 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-slate-500/20 disabled:opacity-50"
+                                    >
+                                        <Play className="w-4 h-4 fill-current" />
+                                        Run Once
+                                    </button>
+                                )}
                                 <button
                                     onClick={saveImmofluxSettings}
                                     disabled={isSaving || isScraping}

@@ -2,8 +2,8 @@
 
 import { createClient } from '@/app/lib/supabase/server';
 import { Property, Property as PropertyType } from '@/app/lib/properties';
-import { revalidatePath } from 'next/cache';
 import { calculatePropertyScore } from './scoring';
+import { revalidatePath } from 'next/cache';
 import { getUserProfile, getActiveUsageStats } from '../auth';
 import { generatePropertyFingerprint } from '../utils/fingerprint';
 import { getAdminSettings } from './admin-settings';
@@ -566,8 +566,13 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             furnishing: data.furnishing || '',
 
             features: data.features || [],
+            score: null as number | null,
             updated_at: new Date().toISOString()
         };
+
+        // Calculate Property Score (Automated)
+        const score = await calculatePropertyScore(propertyData as any);
+        propertyData.score = score;
 
         // Anti-Duplicate Intelligence Layer
         const fingerprint = generatePropertyFingerprint(propertyData);
