@@ -700,9 +700,12 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
         // 3f. Specific Site Logic (Immoflux.ro)
         if (url.includes('immoflux.ro')) {
-            const infoText = $('.slidepanel-info').text().trim();
+            // Paranoid Info Text Capture
+            const infoContainer = $('.slidepanel-info').first();
+            const infoTextOriginal = infoContainer.text().trim();
+            const fullBodyText = $('body').text();
 
-            // Description Extraction - Handle unstructured text nodes via container regex
+            // Description Extraction - Handle unstructured text nodes
             const container = $('.slidePanel-inner-section');
             if (container.length > 0) {
                 const fullText = container.text().trim();
@@ -710,72 +713,59 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 if (descMatch && descMatch[1]) {
                     let immoDesc = descMatch[1].trim();
                     const cutOffMatch = immoDesc.match(/([\s\S]+?)(?:\s+Detalii suplimentare|\s+Caracteristici|\s+Dotari|\s*Zona|$)/i);
-                    if (cutOffMatch && cutOffMatch[1]) {
-                        data.description = cutOffMatch[1].trim();
-                    } else {
-                        data.description = immoDesc;
-                    }
+                    data.description = cutOffMatch ? cutOffMatch[1].trim() : immoDesc;
                 }
             }
 
-            // Location Refinement
-            // Filter noise leaked from generic mapping (like "Status: Activa")
-            const noise = ['activa', 'apartament', 'casa', 'vila', 'teren', 'spatiu', 'status:', 'tip:', 'portaluri', 'adresa:'];
-            const filterNoise = (val: string) => {
+            // ADVANCED NOISE FILTERING
+            const noiseWords = ['activa', 'apartament', 'casa', 'vila', 'teren', 'spatiu', 'status:', 'tip:', 'portaluri', 'adresa:', 'zona:'];
+            const filterNoiseParanoid = (val: any) => {
                 if (!val || typeof val !== 'string') return '';
-                const clean = val.trim();
+                let clean = val.replace(/\s+/g, ' ').trim();
                 const lower = clean.toLowerCase();
-                // Specific noise words to kill exactly or that look like labels
-                if (noise.some(n => lower === n || lower.includes(n))) {
-                    if (lower === 'activa' || lower === 'activa ') return '';
-                    if (lower.startsWith('status:') || lower.startsWith('tip:')) return '';
+
+                // If it's just a noise word or label, kill it
+                if (noiseWords.some(n => lower === n || lower === n.replace(':', '') || lower.startsWith(n))) {
+                    // Only keep if it's longer than the noise word and doesn't look like just a label
+                    if (lower.length < 10 && noiseWords.some(n => lower.includes(n))) return '';
                 }
+
+                // Specific hard kills
+                if (lower === 'activa' || lower.includes('status: activa')) return '';
+
                 return clean;
             };
 
-            // Force clear initial values if they are noise
-            data.location_area = filterNoise(data.location_area || '');
-            data.location_city = filterNoise(data.location_city || '');
+            // Force clean initial values
+            data.location_area = filterNoiseParanoid(data.location_area);
+            data.location_city = filterNoiseParanoid(data.location_city);
 
-            // Robust extract from labels
-            const getLabelValue = (label: string, endLabels: string[]) => {
-                const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const endPattern = endLabels.map(l => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-                const regex = new RegExp(`${escapedLabel}\\s*:?\\s*([\\s\\S]+?)(?:\\s*(?:${endPattern})|$)`, 'i');
-                const match = infoText.match(regex);
+            const getLabelValueRobust = (label: string, stops: string[]) => {
+                // Look in both container and body
+                const source = infoTextOriginal.length > 20 ? infoTextOriginal : fullBodyText;
+                const regex = new RegExp(`${label}\\s*:?\\s*([\\s\\S]+?)(?:${stops.join('|')}|$)`, 'i');
+                const match = source.match(regex);
                 return match ? match[1].trim() : '';
             };
 
-            const cityRaw = getLabelValue('Adresa', ['Portaluri', 'Telefon', 'Status']) || data.location_city;
-            const areaRaw = getLabelValue('Zona', ['Adresa', 'Portaluri', 'Telefon', 'Status']) || data.location_area;
+            const cityRaw = getLabelValueRobust('Adresa', ['Portaluri', 'Telefon', 'Status', 'Tip']) || data.location_city;
+            const areaRaw = getLabelValueRobust('Zona', ['Adresa', 'Portaluri', 'Telefon', 'Status', 'Tip']) || data.location_area;
 
-            const cityValue = filterNoise(cityRaw);
-            const areaValue = filterNoise(areaRaw);
+            let finalCity = filterNoiseParanoid(cityRaw) || 'Timisoara';
+            let finalArea = filterNoiseParanoid(areaRaw);
 
-            if (cityValue || areaValue) {
-                if (cityValue) {
-                    let cleanCity = cityValue;
-                    if (cleanCity.toLowerCase().startsWith('tm ')) {
-                        cleanCity = cleanCity.replace(/^tm\s+/i, '').trim();
-                    }
-                    data.location_city = cleanCity;
-                }
-
-                if (areaValue) {
-                    data.location_area = areaValue;
-                }
-
-                data.location_county = data.location_county || 'Timis';
-
-                // Synthesize a clean address for the "Street Address" field.
-                const addrParts = [
-                    data.location_area,
-                    data.location_city,
-                    data.location_county,
-                    'Romania'
-                ].filter(Boolean);
-                data.address = addrParts.join(', ');
+            // Cleanup City "TM " prefix
+            if (finalCity.toLowerCase().startsWith('tm ')) {
+                finalCity = finalCity.replace(/^tm\s+/i, '').trim();
             }
+
+            data.location_city = finalCity;
+            data.location_area = finalArea;
+            data.location_county = data.location_county || 'Timis';
+
+            // Synthesize Definitive Address
+            const addrParts = [finalArea, finalCity, data.location_county, 'Romania'].filter(p => p && p.length > 2);
+            data.address = addrParts.join(', ');
 
             // Image Extraction (Prioritize href for high-res)
             $('.owl-carousel .item a').each((_, el) => {
@@ -783,16 +773,31 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 if (highRes) addImage(highRes);
             });
 
-            // Phone Extraction (Immoflux specific cleaning)
-            const phoneMatch = infoText.match(/Telefon\s*:?\s*([\s\d+]+)/i);
+            // Phone Extraction (High Priority)
+            const phoneMatch = fullBodyText.match(/Telefon\s*:?\s*([+]*[\s\d]{8,20})/i);
             if (phoneMatch && phoneMatch[1]) {
-                data.owner_phone = phoneMatch[1].replace(/\D/g, '');
-            } else if (customSelectors?.owner_phone) {
-                const rawPhone = getText(customSelectors.owner_phone);
-                if (rawPhone) {
-                    data.owner_phone = rawPhone.replace(/\D/g, '');
+                const cleanedPhone = phoneMatch[1].trim().replace(/\s/g, '');
+                if (cleanedPhone.length >= 10) data.owner_phone = cleanedPhone;
+            }
+
+            if (!data.owner_phone) {
+                // Secondary check for text near phone icon
+                const phoneIcon = $('i.fa-phone, i.wb-mobile').parent();
+                if (phoneIcon.length) {
+                    const phoneText = phoneIcon.text().trim();
+                    if (phoneText.match(/[+0-9\s]{10,}/)) {
+                        data.owner_phone = phoneText.replace(/\s+/g, '').replace('Telefon:', '').trim();
+                    }
                 }
             }
+
+            // FINAL OVERRIDE: If address still looks like noise, blank it to avoid poisoning the map
+            if (data.address.toLowerCase().includes('activa') || data.address.length < 5) {
+                data.address = '';
+            }
+
+            // DEBUG SIGNAL - V2 (Ultra Robust)
+            (data as any).debug_info = 'V2-ULTRA-ROBUST-EXTRACTOR';
         }
 
         $('script').each((_, el) => {
