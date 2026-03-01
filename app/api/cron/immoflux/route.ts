@@ -270,7 +270,6 @@ export async function GET(request: NextRequest) {
                         longitude: null,
                         rooms,
                         owner_phone: phone,
-                        private_notes: 'Original Link: ' + targetUrl,
                         status: 'draft',
                         images: [],
                         features: ['Immoflux Import']

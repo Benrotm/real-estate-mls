@@ -528,7 +528,12 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             // Contact (Scraped)
             owner_name: data.owner_name || '',
             owner_phone: data.owner_phone || '',
-            private_notes: `${data.private_notes || ''}\n\nOriginal Link: ${sourceUrl || (data as any).url || 'N/A'}`.trim(),
+            private_notes: (function () {
+                const url = sourceUrl || (data as any).url;
+                const baseNotes = data.private_notes || '';
+                if (!url) return baseNotes;
+                return `${baseNotes}\n\nOriginal Link: ${url}`.trim();
+            })(),
 
             // Media
             images: data.images || [],
