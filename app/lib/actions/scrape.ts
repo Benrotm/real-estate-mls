@@ -838,8 +838,18 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             });
         }
         if (data.title && !data.listing_type) {
-            const textToSearch = (data.title + ' ' + (data.description || '') + ' ' + (url || '')).toLowerCase();
-            if (textToSearch.includes('inchirier') || textToSearch.includes('închiriere') || textToSearch.includes('rent') || textToSearch.includes('chiria')) {
+            const titleMatch = (data.title || '').toLowerCase();
+            const textToSearch = (titleMatch + ' ' + (data.description || '') + ' ' + (url || '')).toLowerCase();
+            const price = data.price || 0;
+
+            const hasRentKeywords = textToSearch.includes('inchirier') || textToSearch.includes('închiriere') || textToSearch.includes('rent') || textToSearch.includes('chirie') || textToSearch.includes('inchiriez') || textToSearch.includes('închiriez');
+            const hasSaleKeywords = textToSearch.includes('vanzare') || textToSearch.includes('vânzare') || textToSearch.includes('vand ') || textToSearch.includes('vând ') || textToSearch.includes('vândut');
+
+            if (price > 10000 && !hasRentKeywords) {
+                data.listing_type = 'For Sale';
+            } else if (price < 4000 && price > 0 && hasRentKeywords) {
+                data.listing_type = 'For Rent';
+            } else if (hasRentKeywords && !hasSaleKeywords) {
                 data.listing_type = 'For Rent';
             } else {
                 data.listing_type = 'For Sale';

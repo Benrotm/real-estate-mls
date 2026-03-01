@@ -24,6 +24,7 @@ export function generatePropertyFingerprint(data: {
     rooms?: number | string | null;
     price?: number | string | null;
     type?: string;
+    owner_phone?: string;
 }): string {
     // 1. Build a normalized location string
     const locationStr = normalizeString(data.city) + normalizeString(data.neighborhood) + normalizeString(data.address);
@@ -31,22 +32,30 @@ export function generatePropertyFingerprint(data: {
     // 2. Normalize rooms
     const rooms = data.rooms ? data.rooms.toString() : '0';
 
-    // 3. Normalize price (round to nearest thousand to catch slight price differences for the same property)
-    // If no price, use '0'
+    // 3. Normalize price
     let priceNormalized = '0';
     if (data.price) {
         let p = typeof data.price === 'string' ? parseFloat(data.price) : data.price;
         if (!isNaN(p)) {
-            priceNormalized = (Math.round(p / 1000) * 1000).toString();
+            // For Rents (small prices), use more precision to avoid collisions
+            if (p < 2500) {
+                priceNormalized = Math.round(p).toString(); // Exact price for rents
+            } else {
+                // Round to nearest 500 for sales to catch minor price variations
+                priceNormalized = (Math.round(p / 500) * 500).toString();
+            }
         }
     }
 
     // 4. Normalize type
     const type = normalizeString(data.type);
 
-    // 5. Combine into a single fingerprint string
-    const rawFingerprint = `${locationStr}_R:${rooms}_P:${priceNormalized}_T:${type}`;
+    // 5. Normalise phone
+    const phone = (data.owner_phone || '').replace(/[^0-9]/g, '');
 
-    // 6. Hash it so it's a fixed length string
+    // 6. Combine into a single fingerprint string (include phone if available)
+    const rawFingerprint = `${locationStr}_R:${rooms}_P:${priceNormalized}_T:${type}_PH:${phone}`;
+
+    // 7. Hash it
     return crypto.createHash('sha256').update(rawFingerprint).digest('hex');
 }

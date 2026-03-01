@@ -523,9 +523,35 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             price: data.price || 0,
             currency: data.currency || 'EUR',
             type: data.type || 'Apartment',
+            personal_property_id: data.personal_property_id || null,
             listing_type: (function () {
+                const title = (data.title || '').toLowerCase();
+                const desc = (data.description || '').toLowerCase();
                 const lt = String(data.listing_type || '').toLowerCase();
-                if (lt.includes('rent') || lt.includes('inchirier') || lt.includes('închirier')) return 'For Rent';
+                const price = typeof data.price === 'string' ? parseFloat(data.price) : (data.price || 0);
+                const currency = (data.currency || 'EUR').toUpperCase();
+
+                // 1. Strict Keywords Check
+                const hasRentKeywords = lt.includes('rent') || lt.includes('inchiriere') || lt.includes('închiriere') || lt.includes('inchiriez') || lt.includes('închiriez') || title.includes('inchiriez') || title.includes('închiriez') || title.includes(' de inchiriat');
+                const hasSaleKeywords = lt.includes('sale') || lt.includes('vanzare') || lt.includes('vânzare') || title.includes('vand ') || title.includes('vând ') || title.includes(' de vanzare');
+
+                // 2. Price Heuristics (Assume EUR context usually)
+                // If it looks like a sale price (> 10k EUR), default to Sale unless it's strongly Rent
+                if (price > 10000 && !hasRentKeywords) return 'For Sale';
+                if (price > 30000) {
+                    // Even with some keywords, > 30k is almost always Sale in Timisoara context (unless it's a huge SAD/Spatiu)
+                    if (data.type !== 'Commercial' && data.type !== 'Land') return 'For Sale';
+                }
+
+                // If it looks like a rent price (< 2500 EUR), default to Rent if Rent keywords exist
+                if (price < 4000 && price > 0 && hasRentKeywords) return 'For Rent';
+
+                // 3. Conflict Resolution
+                if (hasRentKeywords && !hasSaleKeywords) return 'For Rent';
+                if (hasSaleKeywords && !hasRentKeywords) return 'For Sale';
+
+                // Fallback to explicit value or default
+                if (lt === 'rent' || lt === 'for rent') return 'For Rent';
                 return 'For Sale';
             })(),
 

@@ -272,7 +272,8 @@ export async function GET(request: NextRequest) {
                         owner_phone: phone,
                         status: 'draft',
                         images: [],
-                        features: ['Immoflux Import']
+                        features: ['Immoflux Import'],
+                        personal_property_id: panelUrl ? panelUrl.split('/').pop() : null
                     }
                 });
 
@@ -378,12 +379,11 @@ export async function GET(request: NextRequest) {
                 continue;
             }
 
-            // Fallback safety check
+            // Fallback safety check (First check by External ID, then by Fingerprint)
             const { data: existing } = await supabase
                 .from('properties')
                 .select('id')
-                .eq('price', item.price)
-                .eq('address', item.address)
+                .or(`personal_property_id.eq.${item.personal_property_id || 'none'}`)
                 .limit(1);
 
             if (existing && existing.length > 0) {
