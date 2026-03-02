@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 
@@ -40,6 +40,7 @@ export default function DashboardClient({
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
+        { name: 'ImoFluxMLS', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },
         { name: 'Single Import', icon: Globe, href: '/dashboard/admin/properties/import' },

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
         }
 
         const payload = await req.json();
-        const { categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors } = payload;
+        const { categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, platformUser, platformPassword } = payload;
 
         if (!categoryUrl || !jobId || !linkSelector || !extractSelectors) {
             return NextResponse.json({ error: 'Missing required dynamic scraper parameters' }, { status: 400 });
@@ -70,8 +70,8 @@ export async function POST(req: Request) {
                 proxyConfig,
                 webhookBaseUrl: origin,
                 adminId: user.id,
-                immofluxUser: process.env.IMMOFLUX_USER || 'benoni.silion@blitz-timisoara.ro',
-                immofluxPass: process.env.IMMOFLUX_PASS || 'EDwohI#6Oi',
+                immofluxUser: platformUser || process.env.IMMOFLUX_USER || 'benoni.silion@blitz-timisoara.ro',
+                immofluxPass: platformPassword || process.env.IMMOFLUX_PASS || 'EDwohI#6Oi',
                 supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
                 supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY
             })

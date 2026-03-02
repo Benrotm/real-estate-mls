@@ -54,6 +54,7 @@ export interface AdminSettings {
     require_ownership_verification: boolean;
     enable_anti_duplicate_intelligence: boolean;
     immoflux_integration?: ImmofluxConfig;
+    fluxmls_integration?: ImmofluxConfig;
     olx_integration?: OlxConfig;
     proxy_integration?: ProxyConfig;
 }
@@ -91,6 +92,27 @@ const DEFAULT_SETTINGS: AdminSettings = {
             owner_phone: "td:nth-child(4) div.btn-primary"
         }
     },
+    fluxmls_integration: {
+        is_active: false,
+        last_scraped_id: 1,
+        scrape_limit: 50,
+        region_filter: "Timis",
+        url: "https://fluxmls.immoflux.ro/login",
+        username: "alexandru.nanu@remax.ro",
+        password: "",
+        delay_min: 3,
+        delay_max: 8,
+        auto_interval: 10,
+        watcher_interval_hours: 2,
+        mapping: {
+            title: "td:nth-child(4) span.tablesaw-cell-content",
+            price: "td:nth-child(3) span.blue-600 strong",
+            description: "td:nth-child(4) div.text-table-expandable",
+            location_city: "td:nth-child(4) strong",
+            rooms: "td:nth-child(4) span.label",
+            owner_phone: "td:nth-child(4) div.btn-primary"
+        }
+    },
     proxy_integration: {
         is_active: false,
         host: "brd.superproxy.io",
@@ -111,7 +133,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
 
         const settings: any = { ...DEFAULT_SETTINGS };
         for (const row of data) {
-            if (row.key === 'immoflux_integration' || row.key === 'olx_integration' || row.key === 'proxy_integration') {
+            if (row.key === 'immoflux_integration' || row.key === 'fluxmls_integration' || row.key === 'olx_integration' || row.key === 'proxy_integration') {
                 settings[row.key] = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
             } else {
                 if (row.value === 'true' || row.value === true) settings[row.key] = true;
@@ -159,6 +181,26 @@ export async function updateImmofluxSetting(config: ImmofluxConfig) {
 
         if (error) {
             console.error("Failed to update Immoflux details:", error.message);
+            return { success: false, error: error.message };
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function updateFluxMLSSetting(config: ImmofluxConfig) {
+    try {
+        const { error } = await supabase
+            .from('admin_settings')
+            .upsert({
+                key: 'fluxmls_integration',
+                value: config,
+                description: 'Configuration and mapping rules for the FluxMLS API integration'
+            }, { onConflict: 'key' });
+
+        if (error) {
+            console.error("Failed to update FluxMLS details:", error.message);
             return { success: false, error: error.message };
         }
         return { success: true };
