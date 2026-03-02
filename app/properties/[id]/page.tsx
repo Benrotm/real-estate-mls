@@ -390,7 +390,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             </div>
 
                             <div className="flex flex-col items-end gap-2">
-                                <div className="font-extrabold text-3xl text-slate-900">
+                                <div className="font-bold text-3xl text-slate-900">
                                     {formatter.format(property.price)}
                                 </div>
                                 <div className="flex items-center gap-3">
