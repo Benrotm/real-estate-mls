@@ -509,7 +509,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {[
-                                { label: 'Built Area', value: property.area_built, unit: 'sqm', icon: Ruler, color: 'indigo' },
+                                { label: 'Usable Area', value: property.area_usable, unit: 'sqm', icon: Ruler, color: 'indigo' },
                                 { label: 'Terrace/Balcony', value: property.area_terrace, unit: 'sqm', icon: Sun, color: 'orange' },
                                 { label: 'Garden', value: property.area_garden, unit: 'sqm', icon: Trees, color: 'emerald' },
                                 { label: 'Box/Storage', value: property.area_box, unit: 'sqm', icon: Box, color: 'blue' }
