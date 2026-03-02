@@ -380,7 +380,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         {/* 2. Title & Price */}
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
                             <div>
-                                <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2 leading-tight">
+                                <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 leading-tight">
                                     {property.title}
                                 </h1>
                                 <div className="text-slate-500 font-medium flex items-center gap-2">
