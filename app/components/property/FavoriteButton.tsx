@@ -83,7 +83,7 @@ export default function FavoriteButton({ propertyId, className = '', variant = '
             >
                 <div className={`p-3 rounded-full transition-all duration-300 ${isFavorited
                     ? 'bg-red-500 text-white shadow-lg'
-                    : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-red-500'
+                    : 'bg-slate-100 text-red-500 group-hover:bg-slate-200'
                     } ${isActionLoading ? 'opacity-70 animate-pulse' : 'hover:scale-110 active:scale-95'}`}>
                     <Heart
                         className={`w-5 h-5 transition-colors ${isFavorited ? 'fill-current' : 'fill-transparent group-hover:fill-red-500/20'}`}

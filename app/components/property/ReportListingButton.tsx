@@ -69,7 +69,7 @@ export default function ReportListingButton({ propertyId, propertyTitle }: Repor
                 onClick={() => setIsOpen(true)}
                 className="flex flex-col items-center gap-1 min-w-[60px] text-slate-500 hover:text-slate-900 transition-colors"
             >
-                <div className="p-3 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
+                <div className="p-3 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-amber-500">
                     <Flag className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-medium">Report</span>

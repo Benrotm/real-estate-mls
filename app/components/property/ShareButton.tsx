@@ -66,11 +66,13 @@ export default function ShareButton({ propertyId, title, description, url, class
         <div className={`relative ${className}`}>
             <button
                 onClick={handleShare}
-                className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors font-medium shadow-sm"
+                className="flex flex-col items-center gap-1 min-w-[60px] group transition-all"
                 aria-label="Share this property"
             >
-                <Share2 className="w-4 h-4" />
-                <span>Share</span>
+                <div className="p-3 rounded-full bg-slate-100 group-hover:bg-slate-200 transition-colors text-blue-500 group-hover:scale-110 active:scale-95 shadow-sm">
+                    <Share2 className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 transition-colors">Share</span>
             </button>
 
             {/* Fallback Dropdown for Desktop */}
