@@ -89,7 +89,7 @@ export default function FavoriteButton({ propertyId, className = '', variant = '
                         className={`w-5 h-5 transition-colors ${isFavorited ? 'fill-current' : 'fill-transparent group-hover:fill-red-500/20'}`}
                     />
                 </div>
-                <span className={`text-[10px] font-extrabold uppercase tracking-wider transition-colors ${isFavorited ? 'text-red-600' : 'text-slate-500 group-hover:text-slate-900'
+                <span className={`text-xs font-medium transition-colors ${isFavorited ? 'text-red-600' : 'text-slate-500 group-hover:text-slate-900'
                     }`}>
                     Favorites
                 </span>
