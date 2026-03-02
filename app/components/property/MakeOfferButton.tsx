@@ -62,7 +62,7 @@ export default function MakeOfferButton({
                         {isMakeOfferLocked ? (
                             <Lock className="w-4 h-4 transition-transform group-hover:scale-110 text-slate-400" />
                         ) : (
-                            <DollarSign className="w-4 h-4 transition-transform group-hover:scale-110 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 fill-indigo-600" />
+                            <DollarSign className="w-4 h-4 transition-transform group-hover:scale-110 text-indigo-600 fill-indigo-600/20" />
                         )}
                         <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent group-hover:from-violet-600 group-hover:to-indigo-600 transition-all">
                             Make an Offer
