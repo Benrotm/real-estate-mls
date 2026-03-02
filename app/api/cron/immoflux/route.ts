@@ -383,7 +383,7 @@ export async function GET(request: NextRequest) {
             const { data: existing } = await supabase
                 .from('properties')
                 .select('id')
-                .or(`personal_property_id.eq.${item.personal_property_id || 'none'}`)
+                .eq('personal_property_id', item.personal_property_id || 'none')
                 .limit(1);
 
             if (existing && existing.length > 0) {

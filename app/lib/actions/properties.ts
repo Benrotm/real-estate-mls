@@ -528,7 +528,7 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
                 const title = (data.title || '').toLowerCase();
                 const desc = (data.description || '').toLowerCase();
                 const lt = String(data.listing_type || '').toLowerCase();
-                const price = typeof data.price === 'string' ? parseFloat(data.price) : (data.price || 0);
+                const price = typeof (data.price as any) === 'string' ? parseFloat(data.price as any) : (data.price || 0);
                 const currency = (data.currency || 'EUR').toUpperCase();
 
                 // 1. Strict Keywords Check (title + description + explicit listing_type)
