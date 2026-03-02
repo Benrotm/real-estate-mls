@@ -107,11 +107,11 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     score: dbProperty.score || 0,
                     created_at: dbProperty.created_at instanceof Date ? (dbProperty.created_at as Date).toISOString() : (dbProperty.created_at || new Date().toISOString()),
                     updated_at: dbProperty.updated_at instanceof Date ? (dbProperty.updated_at as Date).toISOString() : (dbProperty.updated_at || new Date().toISOString()),
-                    friendly_id: dbProperty.friendly_id || null,
-                    private_notes: dbProperty.private_notes || null,
+                    friendly_id: dbProperty.friendly_id || undefined,
+                    private_notes: dbProperty.private_notes || undefined,
                     documents: dbProperty.documents || [],
-                    owner_name: (dbProperty as any).owner_name || null,
-                    owner_phone: (dbProperty as any).owner_phone || null
+                    owner_name: (dbProperty as any).owner_name || undefined,
+                    owner_phone: (dbProperty as any).owner_phone || undefined
                 };
             }
         }

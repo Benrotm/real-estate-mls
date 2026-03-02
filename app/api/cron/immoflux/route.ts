@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
                         status: 'draft',
                         images: [],
                         features: ['Immoflux Import'],
-                        personal_property_id: panelUrl ? panelUrl.split('/').pop() : null
+                        personal_property_id: panelUrl ? panelUrl.split('/').pop() : undefined
                     }
                 });
 

@@ -523,7 +523,7 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             price: data.price || 0,
             currency: data.currency || 'EUR',
             type: data.type || 'Apartment',
-            personal_property_id: data.personal_property_id || null,
+            personal_property_id: data.personal_property_id || undefined,
             listing_type: (function () {
                 const title = (data.title || '').toLowerCase();
                 const desc = (data.description || '').toLowerCase();
