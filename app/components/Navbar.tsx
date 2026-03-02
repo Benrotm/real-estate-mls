@@ -69,7 +69,6 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="relative group">
               <button
                 onClick={() => setIsServicesOpen(!isServicesOpen)}
-                onMouseEnter={() => setIsServicesOpen(true)}
                 className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md flex items-center gap-1"
               >
                 Services <ChevronDown className="w-4 h-4 opacity-70" />
@@ -80,7 +79,6 @@ export default function Navbar({ user }: NavbarProps) {
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setIsServicesOpen(false)}></div>
                   <div
-                    onMouseLeave={() => setIsServicesOpen(false)}
                     className="absolute left-0 mt-0 w-64 bg-slate-800 rounded-xl shadow-2xl border border-white/10 py-2 z-20 grid grid-cols-1 overflow-hidden"
                   >
                     {SERVICES.map((service) => (
