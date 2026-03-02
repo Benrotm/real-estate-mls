@@ -7,9 +7,10 @@ import { togglePropertyFavorite, checkPropertyFavorite } from '@/app/lib/actions
 interface FavoriteButtonProps {
     propertyId: string;
     className?: string;
+    variant?: 'icon' | 'with-label';
 }
 
-export default function FavoriteButton({ propertyId, className = '' }: FavoriteButtonProps) {
+export default function FavoriteButton({ propertyId, className = '', variant = 'icon' }: FavoriteButtonProps) {
     const [isFavorited, setIsFavorited] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
@@ -44,7 +45,7 @@ export default function FavoriteButton({ propertyId, className = '' }: FavoriteB
                 if (result.error.toLowerCase().includes('logged in')) {
                     alert('Please log in to save properties to your favorites.');
                 } else {
-                    alert(`Error: ${result.error}`); // Show full error for debugging
+                    alert(`Error: ${result.error}`);
                 }
             }
         } catch (error) {
@@ -55,10 +56,44 @@ export default function FavoriteButton({ propertyId, className = '' }: FavoriteB
     };
 
     if (isLoading) {
+        if (variant === 'with-label') {
+            return (
+                <div className="flex flex-col items-center gap-1 min-w-[60px]">
+                    <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin"></div>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Loading</span>
+                </div>
+            );
+        }
         return (
             <div className={`w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center ${className}`}>
                 <div className="w-5 h-5 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin"></div>
             </div>
+        );
+    }
+
+    if (variant === 'with-label') {
+        return (
+            <button
+                onClick={handleToggle}
+                disabled={isActionLoading}
+                className={`flex flex-col items-center gap-1 min-w-[60px] group transition-all ${className}`}
+                title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+                <div className={`p-3 rounded-full transition-all duration-300 ${isFavorited
+                    ? 'bg-red-500 text-white shadow-lg'
+                    : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-red-500'
+                    } ${isActionLoading ? 'opacity-70 animate-pulse' : 'hover:scale-110 active:scale-95'}`}>
+                    <Heart
+                        className={`w-5 h-5 transition-colors ${isFavorited ? 'fill-current' : 'fill-transparent group-hover:fill-red-500/20'}`}
+                    />
+                </div>
+                <span className={`text-[10px] font-extrabold uppercase tracking-wider transition-colors ${isFavorited ? 'text-red-600' : 'text-slate-500 group-hover:text-slate-900'
+                    }`}>
+                    Favorites
+                </span>
+            </button>
         );
     }
 

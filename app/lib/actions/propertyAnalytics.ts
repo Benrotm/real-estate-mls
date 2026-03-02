@@ -213,45 +213,47 @@ export async function togglePropertyFavorite(propertyId: string) {
     }
 
     try {
-        // Check if already favorited
+        // Check if already favorited - Use maybeSingle to avoid unnecessary error logs
         const { data: existing, error: checkError } = await supabase
             .from('property_favorites')
             .select('id')
             .eq('property_id', propertyId)
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = JSON object requested, multiple (or no) rows returned
+        if (checkError) {
             console.error('Error checking favorite status:', checkError);
+            return { success: false, error: 'Database error checking status' };
         }
 
         if (existing) {
             // Remove favorite
-            const { error } = await supabase
+            const { error: deleteError } = await supabase
                 .from('property_favorites')
                 .delete()
                 .eq('id', existing.id);
 
-            if (error) {
-                console.error('Error removing favorite:', error);
-                throw error;
+            if (deleteError) {
+                console.error('Error removing favorite:', deleteError);
+                return { success: false, error: 'Failed to remove favorite' };
             }
 
+            revalidatePath(`/properties/${propertyId}`);
             return { success: true, isFavorited: false };
         } else {
             // Add favorite
-            const { error } = await supabase.from('property_favorites').insert({
+            const { error: insertError } = await supabase.from('property_favorites').insert({
                 property_id: propertyId,
                 user_id: user.id
             });
 
-            if (error) {
-                console.error('Error adding favorite:', error);
+            if (insertError) {
+                console.error('Error adding favorite:', insertError);
                 // Check for RLS violation
-                if (error.code === '42501') {
+                if (insertError.code === '42501') {
                     return { success: false, error: 'Permission denied. Please refresh and try again.' };
                 }
-                throw error;
+                return { success: false, error: 'Failed to add favorite' };
             }
 
             revalidatePath(`/properties/${propertyId}`);
@@ -259,7 +261,7 @@ export async function togglePropertyFavorite(propertyId: string) {
         }
     } catch (e) {
         console.error('Toggle favorite exception:', e);
-        return { success: false, error: 'Failed to update favorite' };
+        return { success: false, error: 'Internal server error' };
     }
 }
 

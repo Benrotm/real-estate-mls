@@ -394,7 +394,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                     {formatter.format(property.price)}
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <FavoriteButton propertyId={property.id} />
+                                    <FavoriteButton propertyId={property.id} variant="with-label" />
                                     <ReportListingButton propertyId={property.id} propertyTitle={property.title} />
                                     <ShareButton
                                         propertyId={property.id}
