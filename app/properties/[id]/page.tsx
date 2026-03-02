@@ -413,7 +413,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         </div>
 
                         {/* 3. Summary Metrics Cards */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
                             {/* Rooms */}
                             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 text-indigo-600">
@@ -444,20 +444,6 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 <div>
                                     <div className="font-extrabold text-xl text-slate-900">{property.bathrooms || '-'}</div>
                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Bathrooms</div>
-                                </div>
-                            </div>
-
-                            {/* Sqm Price */}
-                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0 text-emerald-600">
-                                    <Ruler className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <div className="font-extrabold text-xl text-slate-900">
-                                        {property.area_usable ? Math.round(property.price / property.area_usable) : '-'}
-                                        <span className="text-sm font-normal text-slate-400 ml-1">/sqm</span>
-                                    </div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Unit Price</div>
                                 </div>
                             </div>
                         </div>
