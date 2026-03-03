@@ -815,8 +815,43 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 }
             }
 
-            // 3. Set county to Timis by default (FluxMLS is primarily in Romania)
-            data.location_county = data.location_county || 'Timis';
+            // 3. Determine county from city name (FluxMLS has properties across Romania)
+            if (!data.location_county && data.location_city) {
+                const cityCountyMap: Record<string, string> = {
+                    'bucuresti': 'Bucuresti', 'bucharest': 'Bucuresti',
+                    'constanta': 'Constanta', 'constanța': 'Constanta',
+                    'cluj-napoca': 'Cluj', 'cluj': 'Cluj',
+                    'timisoara': 'Timis', 'timișoara': 'Timis',
+                    'iasi': 'Iasi', 'iași': 'Iasi',
+                    'brasov': 'Brasov', 'brașov': 'Brasov',
+                    'craiova': 'Dolj', 'galati': 'Galati', 'galați': 'Galati',
+                    'ploiesti': 'Prahova', 'ploiești': 'Prahova',
+                    'oradea': 'Bihor', 'arad': 'Arad',
+                    'pitesti': 'Arges', 'pitești': 'Arges',
+                    'sibiu': 'Sibiu', 'bacau': 'Bacau', 'bacău': 'Bacau',
+                    'buzau': 'Buzau', 'buzău': 'Buzau',
+                    'baia mare': 'Maramures', 'suceava': 'Suceava',
+                    'botosani': 'Botosani', 'botoșani': 'Botosani',
+                    'satu mare': 'Satu Mare', 'targu mures': 'Mures', 'târgu mureș': 'Mures',
+                    'alba iulia': 'Alba', 'deva': 'Hunedoara',
+                    'resita': 'Caras-Severin', 'reșița': 'Caras-Severin',
+                    'braila': 'Braila', 'brăila': 'Braila',
+                    'targoviste': 'Dambovita', 'târgoviște': 'Dambovita',
+                    'giurgiu': 'Giurgiu', 'slobozia': 'Ialomita',
+                    'calarasi': 'Calarasi', 'călărași': 'Calarasi',
+                    'alexandria': 'Teleorman', 'tulcea': 'Tulcea',
+                    'ramnicu valcea': 'Valcea', 'râmnicu vâlcea': 'Valcea',
+                    'vaslui': 'Vaslui', 'focsani': 'Vrancea', 'focșani': 'Vrancea',
+                    'piatra neamt': 'Neamt', 'piatra neamț': 'Neamt',
+                    'miercurea ciuc': 'Harghita', 'sfantu gheorghe': 'Covasna',
+                    'zalau': 'Salaj', 'zalău': 'Salaj',
+                    'pantelimon': 'Ilfov', 'bragadiru': 'Ilfov', 'voluntari': 'Ilfov',
+                    'popesti-leordeni': 'Ilfov', 'otopeni': 'Ilfov', 'chitila': 'Ilfov',
+                    'micesti': 'Arges', 'urseni': 'Timis',
+                };
+                const cityLower = data.location_city.toLowerCase().normalize('NFC');
+                data.location_county = cityCountyMap[cityLower] || '';
+            }
 
             // 4. Build a clean address from parsed components
             const addrParts = [data.location_area, data.location_city, data.location_county, 'Romania'].filter((p: any) => p && p.length > 1);
