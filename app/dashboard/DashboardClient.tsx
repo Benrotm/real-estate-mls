@@ -40,7 +40,8 @@ export default function DashboardClient({
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
-        { name: 'ImoFluxMLS', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
+        { name: 'Imoflux', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
+        { name: 'FluxMLS', icon: CopyCheck, href: '/dashboard/admin/fluxmls' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },
         { name: 'Single Import', icon: Globe, href: '/dashboard/admin/properties/import' },

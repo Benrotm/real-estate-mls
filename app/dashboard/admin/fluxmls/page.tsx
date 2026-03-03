@@ -1,13 +1,8 @@
 import { CopyCheck } from 'lucide-react';
-import ImoFluxMLSClient from './ImoFluxMLSClient';
+import FluxMLSClient from './FluxMLSClient';
 import { getAdminSettings } from '@/app/lib/actions/admin-settings';
 
-export const metadata = {
-    title: 'Immoflux Dashboard | Real Estate MLS',
-    description: 'Manage automated property ingestion from Immoflux.',
-};
-
-export default async function ImoFluxMLSPage() {
+export default async function FluxMLSPage() {
     const initialSettings = await getAdminSettings();
 
     return (
@@ -16,12 +11,12 @@ export default async function ImoFluxMLSPage() {
                 <header className="mb-12 border-b border-slate-800 pb-8">
                     <h1 className="text-3xl font-bold flex items-center gap-3">
                         <CopyCheck className="w-8 h-8 text-fuchsia-500" />
-                        Immoflux Integration
+                        FluxMLS Integration
                     </h1>
-                    <p className="text-slate-400 mt-2">Manage settings, mappings, and background tasks for Immoflux integration.</p>
+                    <p className="text-slate-400 mt-2">Manage settings, mappings, and background tasks specifically for the FluxMLS API integration.</p>
                 </header>
 
-                <ImoFluxMLSClient initialSettings={initialSettings} />
+                <FluxMLSClient initialSettings={initialSettings} />
             </div>
         </div>
     );
