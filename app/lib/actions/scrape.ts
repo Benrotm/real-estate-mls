@@ -853,8 +853,9 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 data.location_county = cityCountyMap[cityLower] || '';
             }
 
-            // 4. Build a clean address from parsed components
-            const addrParts = [data.location_area, data.location_city, data.location_county, 'Romania'].filter((p: any) => p && p.length > 1);
+            // 4. Build a clean address from parsed components (deduplicate city/county)
+            const countyForAddr = data.location_county && data.location_county.toLowerCase() !== (data.location_city || '').toLowerCase() ? data.location_county : '';
+            const addrParts = [data.location_area, data.location_city, countyForAddr, 'Romania'].filter((p: any) => p && p.length > 1);
             data.address = addrParts.join(', ');
         }
 
