@@ -941,23 +941,20 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
         // Source URL is intentionally NOT stored in private_notes (per user request)
 
-        // Geocode Location if we have city/state/address
-        const addressParts = [data.address, data.location_city, data.location_county, 'Romania'].filter(Boolean);
-        if (addressParts.length > 0) {
-            const query = encodeURIComponent(addressParts.join(', '));
-            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-            if (apiKey) {
-                try {
-                    const geoRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}`);
-                    const geoData = await geoRes.json();
-                    if (geoData.status === 'OK' && geoData.results[0]) {
-                        const loc = geoData.results[0].geometry.location;
-                        data.latitude = loc.lat;
-                        data.longitude = loc.lng;
-                    }
-                } catch (e) {
-                    console.error('Geocoding Error:', e);
+        // Geocode Location — always re-geocode using the final corrected address
+        if (data.address && process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+            try {
+                const geoQuery = encodeURIComponent(data.address);
+                const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                const geoRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${geoQuery}&key=${apiKey}`);
+                const geoData = await geoRes.json();
+                if (geoData.status === 'OK' && geoData.results[0]) {
+                    const loc = geoData.results[0].geometry.location;
+                    data.latitude = loc.lat;
+                    data.longitude = loc.lng;
                 }
+            } catch (e) {
+                console.error('Geocoding Error:', e);
             }
         }
 
