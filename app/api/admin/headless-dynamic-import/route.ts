@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 export async function POST(req: Request) {
     try {
         const payload = await req.json();
-        const { url, selectors, propertyData, cookies, html, adminId } = payload;
+        const { url, selectors, propertyData, cookies, html, adminId, extraData } = payload;
 
         let dataToSave: any;
 
@@ -25,6 +25,11 @@ export async function POST(req: Request) {
                 return NextResponse.json({ success: false, error: scrapeResult.error || 'Failed to extract data' });
             }
             dataToSave = scrapeResult.data;
+        }
+
+        // Merge extra data from microservice (e.g. agent info from FluxMLS listing table)
+        if (extraData) {
+            Object.assign(dataToSave, extraData);
         }
 
         let finalOwnerId = adminId;

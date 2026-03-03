@@ -793,6 +793,36 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
         }
 
+        // 3g. Specific Site Logic (FluxMLS - fluxmls.immoflux.ro)
+        if (url.includes('fluxmls.immoflux.ro')) {
+            // 1. Clean description - remove "Descriere" header prefix
+            if (data.description) {
+                data.description = data.description.replace(/^\s*Descriere\s*/i, '').trim();
+            }
+
+            // 2. Parse .property-show-zone which returns "City, Area" (e.g. "Bucuresti, P-ta Muncii")
+            const zoneText = data.location_city || getText('.property-show-zone') || '';
+            const zoneCleaned = zoneText.replace(/^\s*\uf041\s*/, '').trim(); // Remove map marker unicode
+
+            if (zoneCleaned) {
+                const parts = zoneCleaned.split(',').map((p: string) => p.trim()).filter((p: string) => p);
+                if (parts.length >= 2) {
+                    data.location_city = parts[0];
+                    data.location_area = parts.slice(1).join(', ');
+                } else if (parts.length === 1) {
+                    data.location_city = parts[0];
+                    data.location_area = '';
+                }
+            }
+
+            // 3. Set county to Timis by default (FluxMLS is primarily in Romania)
+            data.location_county = data.location_county || 'Timis';
+
+            // 4. Build a clean address from parsed components
+            const addrParts = [data.location_area, data.location_city, data.location_county, 'Romania'].filter((p: any) => p && p.length > 1);
+            data.address = addrParts.join(', ');
+        }
+
         $('script').each((_, el) => {
             const content = $(el).html();
             if (content && content.includes('var imageList =')) {
