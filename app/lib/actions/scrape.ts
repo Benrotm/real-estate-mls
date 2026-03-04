@@ -816,41 +816,109 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             }
 
             // 3. Determine county from city name (FluxMLS has properties across Romania)
+            // Comprehensive map covering major cities, resort towns, and neighborhoods
+            const cityCountyMap: Record<string, string> = {
+                // ---- Bucuresti & Ilfov ----
+                'bucuresti': 'Bucuresti', 'bucharest': 'Bucuresti',
+                'pantelimon': 'Ilfov', 'bragadiru': 'Ilfov', 'voluntari': 'Ilfov',
+                'popesti-leordeni': 'Ilfov', 'otopeni': 'Ilfov', 'chitila': 'Ilfov',
+                'magurele': 'Ilfov', 'buftea': 'Ilfov', 'chiajna': 'Ilfov',
+                'domnesti': 'Ilfov', 'cornetu': 'Ilfov', 'jilava': 'Ilfov',
+                'stefanestii de jos': 'Ilfov', 'tunari': 'Ilfov', 'afumati': 'Ilfov',
+                // ---- Constanta (Black Sea Coast) ----
+                'constanta': 'Constanta', 'constanța': 'Constanta',
+                'costinesti': 'Constanta', 'costinești': 'Constanta',
+                'mamaia': 'Constanta', 'mamaia-sat': 'Constanta',
+                'eforie': 'Constanta', 'eforie nord': 'Constanta', 'eforie sud': 'Constanta',
+                'neptun': 'Constanta', 'olimp': 'Constanta', 'jupiter': 'Constanta',
+                'venus': 'Constanta', 'saturn': 'Constanta', 'cap aurora': 'Constanta',
+                'mangalia': 'Constanta', 'vama veche': 'Constanta', '2 mai': 'Constanta',
+                'navodari': 'Constanta', 'năvodari': 'Constanta',
+                'techirghiol': 'Constanta', 'agigea': 'Constanta',
+                'cernavoda': 'Constanta', 'cernavodă': 'Constanta',
+                'medgidia': 'Constanta', 'ovidiu': 'Constanta',
+                'cumpana': 'Constanta', 'cumpăna': 'Constanta',
+                'lazu': 'Constanta', 'lumina': 'Constanta',
+                'palazu mare': 'Constanta', 'tomis': 'Constanta',
+                // ---- Timis ----
+                'timisoara': 'Timis', 'timișoara': 'Timis',
+                'lugoj': 'Timis', 'urseni': 'Timis', 'giroc': 'Timis',
+                'dumbravita': 'Timis', 'dumbrăvița': 'Timis',
+                'ghiroda': 'Timis', 'mosnita': 'Timis', 'moșnița': 'Timis',
+                'sanandrei': 'Timis', 'sânandrei': 'Timis',
+                'giarmata': 'Timis', 'giarmata vii': 'Timis',
+                'recas': 'Timis', 'becicherecu mic': 'Timis',
+                'deta': 'Timis', 'gataia': 'Timis', 'buzias': 'Timis',
+                'jimbolia': 'Timis', 'sannicolau mare': 'Timis',
+                'fratelia': 'Timis', 'lipovei': 'Timis', 'fabric': 'Timis',
+                'iosefin': 'Timis', 'elisabetin': 'Timis', 'cetate': 'Timis',
+                'dacia': 'Timis', 'sagului': 'Timis', 'șagului': 'Timis',
+                'steaua': 'Timis', 'aradului': 'Timis', 'telegrafului': 'Timis',
+                'calea urseni': 'Timis', 'girocului': 'Timis', 'soarelui': 'Timis',
+                'punctele cardinale': 'Timis', 'dambovita': 'Timis', 'dâmbovița': 'Timis',
+                'lugojului': 'Timis', 'torontalului': 'Timis', 'buziasului': 'Timis',
+                'mosnita noua': 'Timis', 'moșnița nouă': 'Timis',
+                // ---- Cluj ----
+                'cluj-napoca': 'Cluj', 'cluj': 'Cluj',
+                'turda': 'Cluj', 'campia turzii': 'Cluj', 'dej': 'Cluj',
+                'floresti': 'Cluj', 'baciu': 'Cluj', 'apahida': 'Cluj',
+                'gilau': 'Cluj', 'feleacu': 'Cluj', 'marasti': 'Cluj',
+                // ---- Other Major Cities ----
+                'iasi': 'Iasi', 'iași': 'Iasi',
+                'brasov': 'Brasov', 'brașov': 'Brasov',
+                'poiana brasov': 'Brasov', 'predeal': 'Brasov', 'rasnov': 'Brasov',
+                'sacele': 'Brasov', 'codlea': 'Brasov', 'ghimbav': 'Brasov',
+                'bartolomeu': 'Brasov', 'tractorul': 'Brasov', 'astra': 'Brasov',
+                'craiova': 'Dolj',
+                'galati': 'Galati', 'galați': 'Galati',
+                'ploiesti': 'Prahova', 'ploiești': 'Prahova',
+                'sinaia': 'Prahova', 'busteni': 'Prahova', 'azuga': 'Prahova',
+                'campina': 'Prahova', 'câmpina': 'Prahova',
+                'oradea': 'Bihor', 'arad': 'Arad',
+                'pitesti': 'Arges', 'pitești': 'Arges',
+                'curtea de arges': 'Arges', 'mioveni': 'Arges',
+                'micesti': 'Arges', 'ratesti': 'Arges', 'rătești': 'Arges',
+                'sibiu': 'Sibiu',
+                'bacau': 'Bacau', 'bacău': 'Bacau',
+                'buzau': 'Buzau', 'buzău': 'Buzau',
+                'baia mare': 'Maramures', 'suceava': 'Suceava',
+                'botosani': 'Botosani', 'botoșani': 'Botosani',
+                'satu mare': 'Satu Mare',
+                'targu mures': 'Mures', 'târgu mureș': 'Mures',
+                'alba iulia': 'Alba', 'deva': 'Hunedoara',
+                'resita': 'Caras-Severin', 'reșița': 'Caras-Severin',
+                'braila': 'Braila', 'brăila': 'Braila',
+                'targoviste': 'Dambovita', 'târgoviște': 'Dambovita',
+                'giurgiu': 'Giurgiu', 'slobozia': 'Ialomita',
+                'calarasi': 'Calarasi', 'călărași': 'Calarasi',
+                'alexandria': 'Teleorman', 'tulcea': 'Tulcea',
+                'ramnicu valcea': 'Valcea', 'râmnicu vâlcea': 'Valcea',
+                'vaslui': 'Vaslui',
+                'focsani': 'Vrancea', 'focșani': 'Vrancea',
+                'piatra neamt': 'Neamt', 'piatra neamț': 'Neamt',
+                'miercurea ciuc': 'Harghita',
+                'sfantu gheorghe': 'Covasna',
+                'zalau': 'Salaj', 'zalău': 'Salaj',
+                // ---- Tulcea / Danube Delta ----
+                'sulina': 'Tulcea', 'murighiol': 'Tulcea', 'sfantu gheorghe delta': 'Tulcea',
+            };
+
             if (!data.location_county && data.location_city) {
-                const cityCountyMap: Record<string, string> = {
-                    'bucuresti': 'Bucuresti', 'bucharest': 'Bucuresti',
-                    'constanta': 'Constanta', 'constanța': 'Constanta',
-                    'cluj-napoca': 'Cluj', 'cluj': 'Cluj',
-                    'timisoara': 'Timis', 'timișoara': 'Timis',
-                    'iasi': 'Iasi', 'iași': 'Iasi',
-                    'brasov': 'Brasov', 'brașov': 'Brasov',
-                    'craiova': 'Dolj', 'galati': 'Galati', 'galați': 'Galati',
-                    'ploiesti': 'Prahova', 'ploiești': 'Prahova',
-                    'oradea': 'Bihor', 'arad': 'Arad',
-                    'pitesti': 'Arges', 'pitești': 'Arges',
-                    'sibiu': 'Sibiu', 'bacau': 'Bacau', 'bacău': 'Bacau',
-                    'buzau': 'Buzau', 'buzău': 'Buzau',
-                    'baia mare': 'Maramures', 'suceava': 'Suceava',
-                    'botosani': 'Botosani', 'botoșani': 'Botosani',
-                    'satu mare': 'Satu Mare', 'targu mures': 'Mures', 'târgu mureș': 'Mures',
-                    'alba iulia': 'Alba', 'deva': 'Hunedoara',
-                    'resita': 'Caras-Severin', 'reșița': 'Caras-Severin',
-                    'braila': 'Braila', 'brăila': 'Braila',
-                    'targoviste': 'Dambovita', 'târgoviște': 'Dambovita',
-                    'giurgiu': 'Giurgiu', 'slobozia': 'Ialomita',
-                    'calarasi': 'Calarasi', 'călărași': 'Calarasi',
-                    'alexandria': 'Teleorman', 'tulcea': 'Tulcea',
-                    'ramnicu valcea': 'Valcea', 'râmnicu vâlcea': 'Valcea',
-                    'vaslui': 'Vaslui', 'focsani': 'Vrancea', 'focșani': 'Vrancea',
-                    'piatra neamt': 'Neamt', 'piatra neamț': 'Neamt',
-                    'miercurea ciuc': 'Harghita', 'sfantu gheorghe': 'Covasna',
-                    'zalau': 'Salaj', 'zalău': 'Salaj',
-                    'pantelimon': 'Ilfov', 'bragadiru': 'Ilfov', 'voluntari': 'Ilfov',
-                    'popesti-leordeni': 'Ilfov', 'otopeni': 'Ilfov', 'chitila': 'Ilfov',
-                    'micesti': 'Arges', 'urseni': 'Timis',
-                };
                 const cityLower = data.location_city.toLowerCase().normalize('NFC');
                 data.location_county = cityCountyMap[cityLower] || '';
+            }
+
+            // 3b. Region Filter: Skip properties that don't match the configured region
+            const fluxSettings = settings?.fluxmls_integration;
+            const regionFilter = fluxSettings?.region_filter?.trim();
+            if (regionFilter && data.location_county) {
+                const filterLower = regionFilter.toLowerCase();
+                const countyLower = data.location_county.toLowerCase();
+                if (filterLower !== countyLower) {
+                    // Property is outside the configured region — skip it
+                    console.log(`[FluxMLS] SKIPPING property in ${data.location_city} (${data.location_county}) — region filter is "${regionFilter}"`);
+                    return { error: `REGION_SKIP: Property in ${data.location_city} (${data.location_county}) does not match region filter "${regionFilter}"` };
+                }
             }
 
             // 4. Build a clean address from parsed components (deduplicate city/county)

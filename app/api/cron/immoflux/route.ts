@@ -241,6 +241,40 @@ export async function GET(request: NextRequest) {
                 let citySplit = cleanedLocation.split(',');
                 let parsedCity = citySplit[0] ? citySplit[0].trim() : 'Timisoara';
 
+                // Determine county from city name dynamically
+                const cityCountyMap: Record<string, string> = {
+                    'bucuresti': 'Bucuresti', 'bucharest': 'Bucuresti',
+                    'constanta': 'Constanta', 'constanța': 'Constanta',
+                    'costinesti': 'Constanta', 'costinești': 'Constanta',
+                    'mamaia': 'Constanta', 'eforie': 'Constanta', 'eforie nord': 'Constanta',
+                    'eforie sud': 'Constanta', 'neptun': 'Constanta', 'mangalia': 'Constanta',
+                    'navodari': 'Constanta', 'techirghiol': 'Constanta', 'medgidia': 'Constanta',
+                    'vama veche': 'Constanta', 'olimp': 'Constanta', 'jupiter': 'Constanta',
+                    'venus': 'Constanta', 'saturn': 'Constanta', 'cap aurora': 'Constanta',
+                    'timisoara': 'Timis', 'timișoara': 'Timis',
+                    'lugoj': 'Timis', 'urseni': 'Timis', 'giroc': 'Timis',
+                    'dumbravita': 'Timis', 'ghiroda': 'Timis', 'giarmata': 'Timis',
+                    'cluj-napoca': 'Cluj', 'cluj': 'Cluj', 'turda': 'Cluj',
+                    'iasi': 'Iasi', 'iași': 'Iasi',
+                    'brasov': 'Brasov', 'brașov': 'Brasov',
+                    'craiova': 'Dolj', 'oradea': 'Bihor', 'arad': 'Arad',
+                    'pitesti': 'Arges', 'sibiu': 'Sibiu', 'tulcea': 'Tulcea',
+                    'ploiesti': 'Prahova', 'galati': 'Galati',
+                    'pantelimon': 'Ilfov', 'bragadiru': 'Ilfov', 'voluntari': 'Ilfov',
+                    'micesti': 'Arges', 'ratesti': 'Arges',
+                };
+                const parsedCounty = cityCountyMap[parsedCity.toLowerCase().normalize('NFC')] || config.region_filter || 'Timis';
+
+                // Region filter: skip properties outside configured region
+                if (config.region_filter) {
+                    const filterLower = config.region_filter.toLowerCase();
+                    const countyLower = parsedCounty.toLowerCase();
+                    if (filterLower !== countyLower) {
+                        console.log(`[Immoflux] SKIPPING property in ${parsedCity} (${parsedCounty}) — region filter is "${config.region_filter}"`);
+                        return; // Skip this property (return exits .each callback iteration)
+                    }
+                }
+
                 let rooms = 0;
                 const roomsMatch = roomsText.match(/\d+/);
                 if (roomsMatch) rooms = parseInt(roomsMatch[0], 10);
@@ -263,9 +297,9 @@ export async function GET(request: NextRequest) {
                         type: propertyType,
                         listing_type: listingType,
                         description,
-                        address: cleanedLocation || config.region_filter || 'Timis',
+                        address: cleanedLocation ? `${cleanedLocation}, ${parsedCounty}, Romania` : `${parsedCity}, ${parsedCounty}, Romania`,
                         location_city: parsedCity,
-                        location_county: 'Timis',
+                        location_county: parsedCounty,
                         latitude: null,
                         longitude: null,
                         rooms,
