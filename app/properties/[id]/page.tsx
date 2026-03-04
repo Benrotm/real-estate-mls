@@ -541,7 +541,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             <OpenHouseWidget
                                 events={propertyEvents}
                                 propertyTitle={property.title}
-                                propertyAddress={property.address}
+                                propertyAddress={property.address || ''}
                             />
                         </div>
                     )}
@@ -747,7 +747,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         <ContactForm
                             propertyId={property.id}
                             propertyTitle={property.title}
-                            propertyAddress={property.address}
+                            propertyAddress={property.address || ''}
                             agentName={agent.name}
                             showMakeOffer={showMakeOffer}
                             currency={property.currency}
