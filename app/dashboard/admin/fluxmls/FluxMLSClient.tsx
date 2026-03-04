@@ -220,7 +220,8 @@ export default function FluxMLSClient({ initialSettings }: { initialSettings: Ad
                     linkSelector: 'a',
                     extractSelectors: config.mapping,
                     platformUser: config.username,
-                    platformPassword: config.password
+                    platformPassword: config.password,
+                    regionFilter: config.region_filter
                 })
             });
 

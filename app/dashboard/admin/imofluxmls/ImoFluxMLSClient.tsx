@@ -211,7 +211,8 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                     linkSelector: 'a', // Immoflux links are standard anchor tags
                     extractSelectors: config.mapping,
                     platformUser: config.username,
-                    platformPassword: config.password
+                    platformPassword: config.password,
+                    regionFilter: config.region_filter
                 })
             });
 
@@ -608,7 +609,7 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                 )}
             </div>
 
-            
+
         </div>
     );
 }
