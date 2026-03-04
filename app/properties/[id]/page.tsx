@@ -385,7 +385,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                 </h1>
                                 <div className="text-slate-500 font-medium flex items-center gap-2">
                                     <MapPin className="w-4 h-4" />
-                                    {property.address}, {property.location_city}
+                                    {property.address}
                                 </div>
                             </div>
 
@@ -541,7 +541,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                             <OpenHouseWidget
                                 events={propertyEvents}
                                 propertyTitle={property.title}
-                                propertyAddress={`${property.address}, ${property.location_city}`}
+                                propertyAddress={property.address}
                             />
                         </div>
                     )}
@@ -715,6 +715,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                                         title: property.title
                                     }
                                 ]}
+                                propertyAddress={property.address}
                             />
                         </div>
                     </div>
@@ -746,7 +747,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                         <ContactForm
                             propertyId={property.id}
                             propertyTitle={property.title}
-                            propertyAddress={`${property.address}, ${property.location_city}`}
+                            propertyAddress={property.address}
                             agentName={agent.name}
                             showMakeOffer={showMakeOffer}
                             currency={property.currency}
