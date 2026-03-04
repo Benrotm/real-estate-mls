@@ -905,7 +905,8 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
             if (!data.location_county && data.location_city) {
                 const cityLower = data.location_city.toLowerCase().normalize('NFC');
-                data.location_county = cityCountyMap[cityLower] || '';
+                // Never default to the region_filter. Set to 'Unknown' so the filter catches it instead of letting it pass as a false positive.
+                data.location_county = cityCountyMap[cityLower] || 'Unknown';
             }
 
             // 3b. Region Filter: Skip properties that don't match the configured region
@@ -915,9 +916,13 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 const filterLower = regionFilter.toLowerCase();
                 const countyLower = data.location_county.toLowerCase();
                 if (filterLower !== countyLower) {
-                    // Property is outside the configured region — skip it
-                    console.log(`[FluxMLS] SKIPPING property in ${data.location_city} (${data.location_county}) — region filter is "${regionFilter}"`);
-                    return { error: `REGION_SKIP: Property in ${data.location_city} (${data.location_county}) does not match region filter "${regionFilter}"` };
+                    if (data.location_county === 'Unknown') {
+                        console.log(`[FluxMLS] SKIPPING property in ${data.location_city} (Unknown County) — city is not mapped to "${regionFilter}"`);
+                        return { error: `REGION_SKIP: Property in ${data.location_city} (Unknown County) does not match region filter "${regionFilter}"` };
+                    } else {
+                        console.log(`[FluxMLS] SKIPPING property in ${data.location_city} (${data.location_county}) — region filter is "${regionFilter}"`);
+                        return { error: `REGION_SKIP: Property in ${data.location_city} (${data.location_county}) does not match region filter "${regionFilter}"` };
+                    }
                 }
             }
 

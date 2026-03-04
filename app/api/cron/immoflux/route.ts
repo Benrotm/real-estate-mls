@@ -263,7 +263,7 @@ export async function GET(request: NextRequest) {
                     'pantelimon': 'Ilfov', 'bragadiru': 'Ilfov', 'voluntari': 'Ilfov',
                     'micesti': 'Arges', 'ratesti': 'Arges',
                 };
-                const parsedCounty = cityCountyMap[parsedCity.toLowerCase().normalize('NFC')] || config.region_filter || 'Timis';
+                const parsedCounty = cityCountyMap[parsedCity.toLowerCase().normalize('NFC')] || 'Unknown';
 
                 // Region filter: skip properties outside configured region
                 if (config.region_filter) {
