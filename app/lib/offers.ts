@@ -138,7 +138,7 @@ export async function submitOffer(propertyId: string, amount: number) {
                 if (conversationId) {
                     // 2. Send Automated Message
                     const currencySymbol = propertyData.currency === 'USD' ? '$' : '€';
-                    const messageContent = `👋 Hi! I just submitted an offer of ${currencySymbol}${amount.toLocaleString()} for "${propertyData.title}".`;
+                    const messageContent = `👋 Hi! I just submitted an offer of ${currencySymbol}${amount.toLocaleString()} for "${propertyData.title}" (ID: ${propertyId}).`;
 
                     await sendMessage(conversationId, user.id, messageContent);
                 } else if (convoError) {

@@ -329,10 +329,10 @@ export async function submitPropertyInquiry(propertyId: string, data: {
         return { success: false, error: 'You must be logged in to submit an inquiry.' };
     }
 
-    // 1. Get property owner ID
+    // 1. Get property owner ID and title
     const { data: property, error: propError } = await supabase
         .from('properties')
-        .select('owner_id')
+        .select('owner_id, title')
         .eq('id', propertyId)
         .single();
 
@@ -415,7 +415,7 @@ export async function submitPropertyInquiry(propertyId: string, data: {
                 await supabaseAdmin.from('messages').insert({
                     conversation_id: conversationId,
                     sender_id: user.id,
-                    content: `Inquiry regarding property: "${data.message}"`
+                    content: `Inquiry regarding property "${property.title}" (ID: ${propertyId}):\n\n${data.message}`
                 });
 
                 // Update conversation updated_at
