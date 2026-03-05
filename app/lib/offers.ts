@@ -61,7 +61,7 @@ export async function submitOffer(propertyId: string, amount: number) {
             // Fetch property owner_id if we don't have it (we only had property_id)
             const { data: propertyData } = await supabaseAdmin
                 .from('properties')
-                .select('owner_id')
+                .select('owner_id, friendly_id, title')
                 .eq('id', propertyId)
                 .single();
 
@@ -86,8 +86,8 @@ export async function submitOffer(propertyId: string, amount: number) {
                             email: profile?.email || user.email,
                             phone: profile?.phone || null,
                             status: 'new', // Lowercase to match DB constraint
-                            source: 'Property Offer',
-                            notes: `Auto-generated from offer of ${amount} EUR on property ID: ${propertyId}`,
+                            source: `Property Offer: ${propertyData?.friendly_id || propertyData?.title || propertyId} (https://www.imobum.com/properties/${propertyId})`,
+                            notes: `Auto-generated from offer of ${amount} EUR on property: ${propertyData?.title || propertyId}`,
                             created_by: propertyData.owner_id
                         })
                         .select()

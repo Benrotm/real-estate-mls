@@ -466,8 +466,8 @@ export async function submitPropertyInquiry(propertyId: string, data: {
                     email: data.email,
                     phone: data.phone || null,
                     status: 'new', // Lowercase to match DB constraint
-                    source: 'Property Inquiry',
-                    notes: `Auto-generated from inquiry on property: ${propertyId}\nMessage: ${data.message || 'No message'}`,
+                    source: `Property Inquiry: ${property.friendly_id || property.title || propertyId} (https://www.imobum.com/properties/${propertyId})`,
+                    notes: `Auto-generated from inquiry on property: ${property.title || propertyId}\nMessage: ${data.message || 'No message'}`,
                     created_by: property.owner_id // Set creator as owner to maintain RLS consistency if viewing as agent
                 })
                 .select()
