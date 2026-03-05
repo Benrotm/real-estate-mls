@@ -29,6 +29,13 @@ export async function POST(req: Request) {
 
         // Merge extra data from microservice (e.g. agent info from FluxMLS listing table)
         if (extraData) {
+            // Carefully merge array values like features so we don't accidentally overwrite scraped data
+            if (extraData.features && Array.isArray(extraData.features)) {
+                const existingFeatures = Array.isArray(dataToSave.features) ? dataToSave.features : [];
+                dataToSave.features = Array.from(new Set([...existingFeatures, ...extraData.features]));
+                // Remove features from extraData so it doesn't overwrite it in Object.assign
+                delete extraData.features;
+            }
             Object.assign(dataToSave, extraData);
         }
 

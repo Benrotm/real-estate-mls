@@ -1432,3 +1432,12 @@ Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
  GET /dashboard/admin/imofluxmls 200 in 266ms (compile: 4ms, proxy.ts: 212ms, render: 50ms)
  GET /dashboard/admin/imofluxmls 200 in 783ms (compile: 5ms, proxy.ts: 396ms, render: 382ms)
  GET /dashboard/admin/imofluxmls 200 in 448ms (compile: 3ms, proxy.ts: 93ms, render: 351ms)
+
+-----
+[1m[31mFATAL[39m[0m: An unexpected Turbopack error occurred. A panic log has been written to C:\Users\bensi\AppData\Local\Temp\next-panic-f765ef8abceed941c6723ef85c01514d.log.
+
+To help make Turbopack better, report this error by clicking here: https://github.com/vercel/next.js/discussions/new?category=turbopack-error-report&title=Turbopack%20Error%3A%20%5Bproject%5D%2Fapp%2Fglobals.css%20%5Bapp-client%5D%20%28css%29&body=Turbopack%20version%3A%20%60da605e0c%60%0ANext.js%20version%3A%20%600.0.0%60%0A%0AError%20message%3A%0A%60%60%60%0ATurbopack%20Error%3A%20%5Bproject%5D%2Fapp%2Fglobals.css%20%5Bapp-client%5D%20%28css%29%0A%60%60%60&labels=Turbopack,Turbopack%20Panic%20Backtrace
+-----
+
+✓ Compiled in 9.6s
+✓ Finished writing to filesystem cache in 13.7s
