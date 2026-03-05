@@ -153,8 +153,7 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
             *,
             owner:profiles(full_name)
         `, { count: 'exact' })
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .eq('status', 'active');
 
     // Apply filters
     // Apply filters
@@ -203,40 +202,12 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         }
 
         // Media Filters
-        if (filters.has_video === 'true') {
+        if (filters.has_video === 'true' || filters.has_video === true) {
             // Check if either youtube_video_url OR video_url OR virtual_tour_url is present ??
             // Or just youtube_video_url. The prompt said "video link".
             // Supabase doesn't support complex ORs easily in chain without 'or'.
             // Let's just check youtube_video_url for now as that's the main "video".
             query = query.not('youtube_video_url', 'is', null);
-        }
-
-        // Sort
-        if (filters.sort) {
-            switch (filters.sort) {
-                case 'score_desc':
-                    query = query.order('score', { ascending: false });
-                    break;
-                case 'price_asc':
-                    query = query.order('price', { ascending: true });
-                    break;
-                case 'price_desc':
-                    query = query.order('price', { ascending: false });
-                    break;
-                case 'newest':
-                    query = query.order('created_at', { ascending: false });
-                    break;
-                case 'oldest':
-                    query = query.order('created_at', { ascending: true });
-                    break;
-                default:
-                    query = query.order('created_at', { ascending: false });
-            }
-        } else {
-            // Default to Best Score if no sort is specified? 
-            // Or keep newest as default? The user said "Best Score / New Added / Price".
-            // I'll keep newest as default but allow explicit score_desc.
-            query = query.order('created_at', { ascending: false });
         }
 
         // Boolean / Content Checks
@@ -267,6 +238,28 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         if (featureTags.length > 0) {
             query = query.contains('features', featureTags);
         }
+    }
+
+    // Apply Sorting (After all filters)
+    const sortVal = filters?.sort || 'newest';
+    switch (sortVal) {
+        case 'score_desc':
+            query = query.order('score', { ascending: false }).order('created_at', { ascending: false });
+            break;
+        case 'price_asc':
+            query = query.order('price', { ascending: true }).order('created_at', { ascending: false });
+            break;
+        case 'price_desc':
+            query = query.order('price', { ascending: false }).order('created_at', { ascending: false });
+            break;
+        case 'newest':
+            query = query.order('created_at', { ascending: false });
+            break;
+        case 'oldest':
+            query = query.order('created_at', { ascending: true });
+            break;
+        default:
+            query = query.order('created_at', { ascending: false });
     }
 
     // Apply per-page limit and offset for pagination
