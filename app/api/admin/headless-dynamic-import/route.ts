@@ -63,6 +63,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: saveResult.error || 'Failed to save to database' });
         }
 
+        // 3. Prevent Duplication: Insert generic URLs into the `scraped_urls` tracking table.
+        // The Scraper Microservice macro searches this table during runs to determine if it should skip fetching an ad.
+        if (url && url !== 'immoflux_batch') {
+            const adminClient = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            );
+
+            await adminClient.from('scraped_urls').upsert({
+                url: url,
+                status: 'success'
+            }, { onConflict: 'url' });
+        }
+
         return NextResponse.json({
             success: true,
             id: saveResult.data?.id,
