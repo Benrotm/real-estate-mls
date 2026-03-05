@@ -127,7 +127,7 @@ export async function submitOffer(propertyId: string, amount: number) {
             // Fetch property details if not already available (owner_id and title)
             const { data: propertyData } = await supabaseAdmin
                 .from('properties')
-                .select('owner_id, title, currency')
+                .select('owner_id, title, currency, friendly_id')
                 .eq('id', propertyId)
                 .single();
 
@@ -138,7 +138,8 @@ export async function submitOffer(propertyId: string, amount: number) {
                 if (conversationId) {
                     // 2. Send Automated Message
                     const currencySymbol = propertyData.currency === 'USD' ? '$' : '€';
-                    const messageContent = `👋 Hi! I just submitted an offer of ${currencySymbol}${amount.toLocaleString()} for "${propertyData.title}" (ID: ${propertyId}).`;
+                    const refId = propertyData.friendly_id || propertyData.title;
+                    const messageContent = `👋 Hi! I just submitted an offer of ${currencySymbol}${amount.toLocaleString()} for "${propertyData.title}" (Ref: ${refId}).`;
 
                     await sendMessage(conversationId, user.id, messageContent);
                 } else if (convoError) {

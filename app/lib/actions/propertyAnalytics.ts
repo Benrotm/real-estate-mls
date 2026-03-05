@@ -332,7 +332,7 @@ export async function submitPropertyInquiry(propertyId: string, data: {
     // 1. Get property owner ID and title
     const { data: property, error: propError } = await supabase
         .from('properties')
-        .select('owner_id, title')
+        .select('owner_id, title, friendly_id')
         .eq('id', propertyId)
         .single();
 
@@ -412,10 +412,11 @@ export async function submitPropertyInquiry(propertyId: string, data: {
 
             // 3. Send initial message if conversation exists
             if (conversationId && data.message) {
+                const refId = property.friendly_id || property.title;
                 await supabaseAdmin.from('messages').insert({
                     conversation_id: conversationId,
                     sender_id: user.id,
-                    content: `Inquiry regarding property "${property.title}" (ID: ${propertyId}):\n\n${data.message}`
+                    content: `Inquiry regarding property "${property.title}" (Ref: ${refId}):\n\n${data.message}`
                 });
 
                 // Update conversation updated_at
