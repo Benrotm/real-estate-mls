@@ -214,6 +214,9 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         // Sort
         if (filters.sort) {
             switch (filters.sort) {
+                case 'score_desc':
+                    query = query.order('score', { ascending: false });
+                    break;
                 case 'price_asc':
                     query = query.order('price', { ascending: true });
                     break;
@@ -230,6 +233,9 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
                     query = query.order('created_at', { ascending: false });
             }
         } else {
+            // Default to Best Score if no sort is specified? 
+            // Or keep newest as default? The user said "Best Score / New Added / Price".
+            // I'll keep newest as default but allow explicit score_desc.
             query = query.order('created_at', { ascending: false });
         }
 

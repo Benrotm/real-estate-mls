@@ -5,6 +5,7 @@ import PropertyCard from '@/app/components/PropertyCard';
 import { Suspense } from 'react';
 import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 import PerPageSelector from '@/app/components/PerPageSelector';
+import PropertySortToggle from '@/app/components/PropertySortToggle';
 import Pagination from '@/app/components/Pagination';
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
@@ -34,11 +35,14 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                     <PropertySearchFilters />
                 </Suspense>
 
-                <div className="mb-4 flex items-center justify-between">
-                    <span className="font-bold text-slate-700">
+                <div className="mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <span className="font-bold text-slate-700 order-1">
                         {totalCount} Properties Found
                     </span>
-                    <PerPageSelector currentValue={currentPerPage} />
+                    <div className="flex items-center gap-4 order-3 md:order-2">
+                        <PropertySortToggle />
+                        <PerPageSelector currentValue={currentPerPage} />
+                    </div>
                 </div>
 
                 {properties.length === 0 ? (
