@@ -165,10 +165,16 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         if (filters.minPrice) query = query.gte('price', filters.minPrice);
         if (filters.maxPrice) query = query.lte('price', filters.maxPrice);
 
+        // Keywords (Search across Title, City, and Ref ID)
+        if (filters.keywords) {
+            const ks = `%${filters.keywords}%`;
+            query = query.or(`title.ilike.${ks},location_city.ilike.${ks},friendly_id.ilike.${ks}`);
+        }
+
         // Location
         if (filters.location_county) query = query.ilike('location_county', `%${filters.location_county}%`);
         if (filters.city) query = query.ilike('location_city', `%${filters.city}%`); // keeping 'city' param support if used elsewhere
-        if (filters.location_city) query = query.ilike('location_city', `%${filters.location_city}%`);
+        if (filters.location_city && !filters.keywords) query = query.ilike('location_city', `%${filters.location_city}%`);
         if (filters.location_area) query = query.ilike('location_area', `%${filters.location_area}%`);
 
         // Specs
@@ -326,8 +332,12 @@ export async function getUserProperties(filters?: any) {
         if (filters.type) query = query.eq('type', filters.type);
         if (filters.minPrice) query = query.gte('price', filters.minPrice);
         if (filters.maxPrice) query = query.lte('price', filters.maxPrice);
+        if (filters.keywords) {
+            const ks = `%${filters.keywords}%`;
+            query = query.or(`title.ilike.${ks},location_city.ilike.${ks},friendly_id.ilike.${ks}`);
+        }
         if (filters.location_county) query = query.ilike('location_county', `%${filters.location_county}%`);
-        if (filters.location_city) query = query.ilike('location_city', `%${filters.location_city}%`);
+        if (filters.location_city && !filters.keywords) query = query.ilike('location_city', `%${filters.location_city}%`);
         if (filters.location_area) query = query.ilike('location_area', `%${filters.location_area}%`);
         if (filters.rooms) query = query.gte('rooms', filters.rooms);
         if (filters.bathrooms) query = query.gte('bathrooms', filters.bathrooms);

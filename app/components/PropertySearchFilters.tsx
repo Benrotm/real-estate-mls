@@ -18,6 +18,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
     const initialFeatures = searchParams.getAll('features');
 
     const [filters, setFilters] = useState({
+        keywords: searchParams.get('keywords') || '',
         listing_type: searchParams.get('listing_type') || '',
         type: searchParams.get('type') || '',
         location_county: searchParams.get('location_county') || '',
@@ -57,6 +58,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
     // Sync state with URL params
     useEffect(() => {
         setFilters({
+            keywords: searchParams.get('keywords') || '',
             listing_type: searchParams.get('listing_type') || '',
             type: searchParams.get('type') || '',
             location_county: searchParams.get('location_county') || '',
@@ -114,7 +116,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
 
     const clearFilters = () => {
         setFilters({
-            listing_type: '', type: '', location_county: '', location_city: '', location_area: '',
+            keywords: '', listing_type: '', type: '', location_county: '', location_city: '', location_area: '',
             minPrice: '', maxPrice: '', rooms: '', area: '', bathrooms: '',
             year_built: '', floor: '', partitioning: '', comfort: '',
             building_type: '', interior_condition: '', furnishing: '',
@@ -225,10 +227,10 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="City, Area, Name..."
+                                    placeholder="Ref ID, Title, City..."
                                     className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 placeholder:text-slate-400"
-                                    value={filters.location_city || filters.location_area ? `${filters.location_city} ${filters.location_area}`.trim() : ''}
-                                    onChange={(e) => handleChange('location_city', e.target.value)}
+                                    value={filters.keywords}
+                                    onChange={(e) => handleChange('keywords', e.target.value)}
                                 />
                             </div>
 
