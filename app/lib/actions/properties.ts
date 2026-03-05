@@ -592,7 +592,7 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             building_type: data.building_type || '',
             interior_condition: data.interior_condition || '',
             furnishing: data.furnishing || '',
-            features: data.features || [],
+            features: Array.isArray(data.features) ? data.features : [],
             updated_at: new Date().toISOString()
         };
 
