@@ -3,6 +3,8 @@ import { Trash2, MapPin, ExternalLink, User, Edit, Globe } from 'lucide-react';
 import Link from 'next/link';
 import PerPageSelector from '@/app/components/PerPageSelector';
 import Pagination from '@/app/components/Pagination';
+import PropertySearchFilters from '@/app/components/PropertySearchFilters';
+import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +18,11 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
     let errorMsg = null;
 
     try {
-        const result = await fetchAllPropertiesAdmin({ page: currentPage, perPage: currentPerPage });
+        const result = await fetchAllPropertiesAdmin({
+            page: currentPage,
+            perPage: currentPerPage,
+            filters: filters
+        });
         properties = result.properties;
         totalCount = result.totalCount;
     } catch (err: any) {
@@ -47,6 +53,12 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                         <Globe className="w-4 h-4" /> Import Listings
                     </Link>
                 </div>
+            </div>
+
+            <div className="mb-8">
+                <Suspense fallback={<div className="p-4 bg-white rounded-xl shadow-sm border border-slate-200">Loading filters...</div>}>
+                    <PropertySearchFilters basePath="/dashboard/admin/properties" />
+                </Suspense>
             </div>
 
             <div className="mb-4 flex items-center justify-between">

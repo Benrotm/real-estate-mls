@@ -56,7 +56,7 @@ export async function deleteLeadAdmin(leadId: string) {
 
 // --- PROPERTIES ---
 
-export async function fetchAllPropertiesAdmin(params?: { page?: number; perPage?: number }): Promise<{ properties: any[]; totalCount: number }> {
+export async function fetchAllPropertiesAdmin(params?: { page?: number; perPage?: number; filters?: any }): Promise<{ properties: any[]; totalCount: number }> {
     const { supabase } = await checkAdmin();
 
     const perPage = Math.min(params?.perPage || 15, 50);
@@ -64,12 +64,54 @@ export async function fetchAllPropertiesAdmin(params?: { page?: number; perPage?
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
-    const { data, error, count } = await supabase
+    let query = supabase
         .from('properties')
         .select(`
             *,
             owner:profiles(full_name)
-        `, { count: 'exact' })
+        `, { count: 'exact' });
+
+    // Apply filters (logic synced from properties.ts getProperties)
+    const filters = params?.filters;
+    if (filters) {
+        if (filters.listing_type) query = query.eq('listing_type', filters.listing_type);
+        if (filters.type) query = query.eq('type', filters.type);
+        if (filters.minPrice) query = query.gte('price', filters.minPrice);
+        if (filters.maxPrice) query = query.lte('price', filters.maxPrice);
+        if (filters.location_county) query = query.ilike('location_county', `%${filters.location_county}%`);
+        if (filters.location_city) query = query.ilike('location_city', `%${filters.location_city}%`);
+        if (filters.location_area) query = query.ilike('location_area', `%${filters.location_area}%`);
+        if (filters.rooms) query = query.gte('rooms', filters.rooms);
+        if (filters.bathrooms) query = query.gte('bathrooms', filters.bathrooms);
+        if (filters.area) query = query.gte('area_usable', filters.area);
+        if (filters.year_built) query = query.gte('year_built', filters.year_built);
+        if (filters.floor) query = query.eq('floor', filters.floor);
+        if (filters.partitioning) query = query.eq('partitioning', filters.partitioning);
+        if (filters.comfort) query = query.eq('comfort', filters.comfort);
+        if (filters.building_type) query = query.eq('building_type', filters.building_type);
+        if (filters.interior_condition) query = query.eq('interior_condition', filters.interior_condition);
+        if (filters.furnishing) query = query.eq('furnishing', filters.furnishing);
+
+        if (filters.has_video === 'true' || filters.has_video === true) {
+            query = query.not('video_url', 'is', null);
+        }
+        if (filters.has_virtual_tour === 'true' || filters.has_virtual_tour === true) {
+            query = query.not('virtual_tour_url', 'is', null);
+        }
+
+        const featureTags = [];
+        if (filters.commission_0 === 'true' || filters.commission_0 === true) featureTags.push('Commission 0%');
+        if (filters.exclusive === 'true' || filters.exclusive === true) featureTags.push('Exclusive');
+        if (filters.luxury === 'true' || filters.luxury === true) featureTags.push('Luxury');
+        if (filters.foreclosure === 'true' || filters.foreclosure === true) featureTags.push('Foreclosure');
+        if (filters.features) {
+            if (Array.isArray(filters.features)) featureTags.push(...filters.features);
+            else if (typeof filters.features === 'string') featureTags.push(filters.features);
+        }
+        if (featureTags.length > 0) query = query.contains('features', featureTags);
+    }
+
+    const { data, error, count } = await query
         .order('created_at', { ascending: false })
         .range(from, to);
 

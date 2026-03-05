@@ -6,7 +6,7 @@ import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, P
 import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote } from 'lucide-react';
 import { saveSearch } from '@/app/lib/actions/savedSearches';
 
-export default function PropertySearchFilters() {
+export default function PropertySearchFilters({ basePath = '/properties' }: { basePath?: string }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -109,7 +109,7 @@ export default function PropertySearchFilters() {
                 params.set(key, String(value));
             }
         });
-        router.push(`/properties?${params.toString()}`);
+        router.push(`${basePath}?${params.toString()}`);
     };
 
     const clearFilters = () => {
@@ -124,7 +124,7 @@ export default function PropertySearchFilters() {
         });
         setShowAmenities(false);
         setShowMoreDetails(false);
-        router.push('/properties');
+        router.push(basePath);
     };
 
     // Save Search Logic

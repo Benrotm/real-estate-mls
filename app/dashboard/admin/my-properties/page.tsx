@@ -3,13 +3,16 @@ import ListingsCRMClient from '@/app/components/dashboard/ListingsCRMClient';
 import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { PropertyWithOffers } from '@/app/lib/actions/offers';
+import PropertySearchFilters from '@/app/components/PropertySearchFilters';
+import { Suspense } from 'react';
 
 export const metadata = {
     title: 'My Properties | Admin Dashboard',
 };
 
-export default async function MyPropertiesPage() {
-    const propertiesRaw = await getUserProperties();
+export default async function MyPropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
+    const filters = await searchParams;
+    const propertiesRaw = await getUserProperties(filters);
 
     // Manual mapping to avoid issues with getUserPropertiesWithOffers RLS/sub-queries
     const properties: PropertyWithOffers[] = propertiesRaw.map(p => ({
@@ -46,5 +49,14 @@ export default async function MyPropertiesPage() {
         </Link>
     );
 
-    return <ListingsCRMClient properties={properties} headerAction={importButton} />;
+    return (
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="mb-8">
+                <Suspense fallback={<div className="p-4 bg-white rounded-xl shadow-sm border border-slate-200">Loading filters...</div>}>
+                    <PropertySearchFilters basePath="/dashboard/admin/my-properties" />
+                </Suspense>
+            </div>
+            <ListingsCRMClient properties={properties} headerAction={importButton} />
+        </div>
+    );
 }
