@@ -52,6 +52,7 @@ export interface PropertyWithOffers {
     favorites_count: number;
     inquiries_count: number;
     shares_count: number;
+    features: string[];
     offers: PropertyOffer[];
     inquiries: PropertyInquiry[];
 }
@@ -149,6 +150,7 @@ export async function getUserPropertiesWithOffers(): Promise<PropertyWithOffers[
         favorites_count: favoritesCount[property.id] || 0,
         inquiries_count: inquiriesCount[property.id] || 0,
         shares_count: sharesCount[property.id] || 0,
+        features: property.features || [],
         offers: (offers || []).filter(o => o.property_id === property.id),
         inquiries: (detailInquiries || []).filter(i => i.property_id === property.id)
     }));

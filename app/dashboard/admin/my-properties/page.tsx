@@ -31,6 +31,7 @@ export default async function MyPropertiesPage({ searchParams }: { searchParams:
         score: p.score,
         is_published: p.status === 'active',
         created_at: p.created_at,
+        features: p.features || [],
         views_count: 0,
         favorites_count: 0,
         inquiries_count: 0,

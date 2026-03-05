@@ -99,8 +99,15 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                                             )}
                                         </div>
                                         <div className="flex flex-col">
-                                            <div className="font-bold text-slate-900 truncate max-w-xs" title={property.title}>
-                                                {property.title}
+                                            <div className="flex items-center gap-2">
+                                                <div className="font-bold text-slate-900 truncate max-w-xs" title={property.title}>
+                                                    {property.title}
+                                                </div>
+                                                {property.features?.includes('Open to Collaboration') && (
+                                                    <span className="shrink-0 bg-indigo-100 text-indigo-700 text-[10px] font-black px-1.5 py-0.5 rounded border border-indigo-200 uppercase tracking-tight">
+                                                        Collab
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
                                                 <MapPin className="w-3 h-3" />

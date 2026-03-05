@@ -255,6 +255,11 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                                         <Award className="w-2.5 h-2.5" /> Score: {property.score}
                                     </span>
                                 )}
+                                {property.features?.includes('Open to Collaboration') && (
+                                    <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 shadow-sm shadow-indigo-500/20">
+                                        Collab
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center gap-4 mt-3">
