@@ -209,7 +209,8 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                     extractSelectors: config.mapping,
                     platformUser: config.username,
                     platformPassword: config.password,
-                    regionFilter: config.region_filter
+                    regionFilter: config.region_filter,
+                    cityFilter: config.city_filter
                 })
             });
 
@@ -352,11 +353,22 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                             </div>
                             <div className="grid grid-cols-1 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Region Filter</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Region Filter (County)</label>
                                     <input
                                         type="text"
                                         value={settings.immoflux_integration.region_filter}
                                         onChange={(e) => handleImmofluxChange('region_filter', e.target.value)}
+                                        placeholder="e.g. Timis"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">City Filter</label>
+                                    <input
+                                        type="text"
+                                        value={settings.immoflux_integration.city_filter || ''}
+                                        onChange={(e) => handleImmofluxChange('city_filter', e.target.value)}
+                                        placeholder="e.g. Timisoara"
                                         className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
                                     />
                                 </div>

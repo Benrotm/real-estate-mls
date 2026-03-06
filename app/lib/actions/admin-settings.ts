@@ -15,6 +15,7 @@ export interface ImmofluxConfig {
     last_scraped_id: number;
     scrape_limit: number;
     region_filter: string;
+    city_filter?: string;
     url: string;
     username?: string;
     password?: string;
@@ -76,6 +77,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
         last_scraped_id: 1,
         scrape_limit: 50,
         region_filter: "Timis",
+        city_filter: "Timisoara",
         url: "https://blitz.immoflux.ro/approperties",
         username: "",
         password: "",
@@ -97,6 +99,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
         last_scraped_id: 1,
         scrape_limit: 50,
         region_filter: "Timis",
+        city_filter: "",
         url: "https://fluxmls.immoflux.ro/login",
         username: "alexandru.nanu@remax.ro",
         password: "",
