@@ -20,7 +20,7 @@ ALTER TABLE public.scrape_jobs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins can manage scrape_jobs" ON public.scrape_jobs
     FOR ALL
     USING (
-        (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'super_admin'
+        (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
 -- 2. Create scrape_logs table
@@ -40,7 +40,7 @@ ALTER TABLE public.scrape_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins can manage scrape_logs" ON public.scrape_logs
     FOR ALL
     USING (
-        (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'super_admin'
+        (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
 -- 3. Enable Supabase Realtime for the scrape_logs table

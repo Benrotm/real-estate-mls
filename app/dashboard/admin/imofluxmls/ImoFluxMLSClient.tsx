@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Settings2, UserPlus, Database, CloudFog, Wifi, CheckCircle2, AlertCircle, CopyCheck, RefreshCcw, Save, Loader2, Play, Square, Timer, MapPin, Plus, Edit2, Terminal, ShieldCheck, Globe } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
-import { getAdminSettings, updateImmofluxSetting, updateFluxMLSSetting, AdminSettings, ImmofluxConfig } from '@/app/lib/actions/admin-settings';
+import { getAdminSettings, updateImmofluxSetting, updateFluxMLSSetting, AdminSettings, ImmofluxConfig, createScrapeJob } from '@/app/lib/actions/admin-settings';
 
 interface LogMessage {
     id: string;
@@ -176,21 +176,18 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
         try {
             const targetPage = mode === 'watcher' ? 1 : config.last_scraped_id || 1;
 
-            // 1. Create a tracking Job in Supabase
-            const { data: jobData, error: jobError } = await supabase
-                .from('scrape_jobs')
-                .insert({
-                    category_url: config.url,
-                    status: 'running',
-                    pages_to_scrape: 1,
-                    delay_ms: (config.delay_min || 3) * 1000
-                })
-                .select()
-                .single();
+            // 1. Create a tracking Job via Server Action (bypasses RLS)
+            const result = await createScrapeJob({
+                url: config.url,
+                delay_ms: (config.delay_min || 3) * 1000,
+                pages: 1
+            });
 
-            if (jobError || !jobData) {
-                throw new Error(jobError?.message || 'Failed to create Job Tracking ID.');
+            if (!result.success || !result.data) {
+                throw new Error(result.error || 'Failed to create Job Tracking ID via server.');
             }
+
+            const jobData = result.data;
 
             const newJobId = jobData.id;
             setActiveJobId(newJobId);

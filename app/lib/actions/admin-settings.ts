@@ -147,6 +147,29 @@ export async function getAdminSettings(): Promise<AdminSettings> {
     }
 }
 
+export async function createScrapeJob(config: { url: string; delay_ms: number; pages: number }) {
+    try {
+        const { data, error } = await supabase
+            .from('scrape_jobs')
+            .insert({
+                category_url: config.url,
+                status: 'running',
+                pages_to_scrape: config.pages,
+                delay_ms: config.delay_ms
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Failed to create scrape job:", error.message);
+            return { success: false, error: error.message };
+        }
+        return { success: true, data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
 export async function updateAdminSetting(key: string, value: boolean) {
     try {
         const { error } = await supabase
