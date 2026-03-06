@@ -31,12 +31,14 @@ export default function PropertyCard({ property, showEditButton, showMakeOffer, 
         <>
             <div className="group bg-white rounded-xl overflow-hidden border border-slate-100 shadow-[0_0_50px_rgba(0,0,0,0.3)] hover:shadow-none transition-all duration-300 hover:translate-y-1">
                 <div className="relative h-64 w-full overflow-hidden">
-                    <Image
-                        src={property.images[0]}
-                        alt={property.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                    <Link href={`/properties/${property.id}`}>
+                        <Image
+                            src={property.images[0]}
+                            alt={property.title}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                    </Link>
 
                     {/* Badges */}
                     <div className="absolute top-4 left-4 flex flex-col gap-2 items-start">
