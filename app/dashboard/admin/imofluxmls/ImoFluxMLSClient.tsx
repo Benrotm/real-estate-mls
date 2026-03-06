@@ -368,7 +368,7 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                                         type="text"
                                         value={settings.immoflux_integration.city_filter || ''}
                                         onChange={(e) => handleImmofluxChange('city_filter', e.target.value)}
-                                        placeholder="e.g. Timisoara"
+                                        placeholder="All Cities (None)"
                                         className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
                                     />
                                 </div>
