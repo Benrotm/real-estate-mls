@@ -26,7 +26,8 @@ export default function DashboardClient({
     // Define menu items based on "role" (derived from URL for this demo)
     const menuItems = isAdmin ? [
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
-        { name: 'All Leads', icon: Users, href: '/dashboard/admin/leads' },
+        { name: 'Leads & CRM', icon: Users, href: '/dashboard/admin/leads' },
+        { name: 'Pipeline', icon: BarChart2, href: '/dashboard/admin/pipeline' },
         { name: 'My Properties', icon: Home, href: '/dashboard/admin/my-properties' },
         { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
         { name: 'All Virtual Tours', icon: Globe, href: '/dashboard/admin/tours' },
