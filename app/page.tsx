@@ -47,7 +47,7 @@ export default async function Home({
           <div>
             <div className="flex items-center gap-2 text-secondary font-bold uppercase tracking-wider text-sm mb-2 bg-orange-100 w-fit px-3 py-1 rounded-full text-orange-700">
               <BadgeCheck className="w-4 h-4" />
-              Best Price Property Listings (Best Match)
+              Best Price Property Listings
             </div>
           </div>
           <Link href="/properties" className="hidden md:flex items-center gap-2 text-orange-600 font-bold hover:text-orange-700 transition-colors">
