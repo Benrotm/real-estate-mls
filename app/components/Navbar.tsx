@@ -7,6 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X, Hammer } from 'lucide-react';
 import { SERVICES } from '../lib/services';
 import { UserProfile } from '../lib/auth';
+import NotificationBell from './notifications/NotificationBell';
 
 interface NavbarProps {
   user: UserProfile | null;
@@ -109,6 +110,11 @@ export default function Navbar({ user }: NavbarProps) {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
+
+            {/* Notification Bell */}
+            {isLoggedIn && user?.id && (
+              <NotificationBell userId={user.id} />
+            )}
 
             {/* Language Selector */}
             <div className="relative">

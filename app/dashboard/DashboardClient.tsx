@@ -1,10 +1,12 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
+import { supabase } from '@/app/lib/supabase/client';
+import { getUnreadNotificationsCount } from '@/app/lib/actions/notifications';
 
 export default function DashboardClient({
     children,
@@ -22,6 +24,57 @@ export default function DashboardClient({
     const isAdmin = pathname.includes('/dashboard/admin');
 
     const hasFeature = (key: string) => features.includes(key);
+
+    const [chatUnread, setChatUnread] = useState(0);
+    const [leadsUnread, setLeadsUnread] = useState(0);
+
+    const fetchCounts = useCallback(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get notifications count by type for badges
+        const { data: notifs } = await supabase
+            .from('notifications')
+            .select('type')
+            .eq('user_id', user.id)
+            .eq('is_read', false);
+
+        if (notifs) {
+            setChatUnread(notifs.filter(n => n.type === 'message').length);
+            setLeadsUnread(notifs.filter(n => n.type === 'offer' || n.type === 'inquiry' || n.type === 'lead').length);
+        }
+    }, []);
+
+    useEffect(() => {
+        const setupRealtime = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            fetchCounts();
+
+            const channel = supabase
+                .channel('dashboard-badges')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: `user_id=eq.${user.id}`
+                    },
+                    () => {
+                        fetchCounts();
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        };
+
+        setupRealtime();
+    }, [fetchCounts]);
 
     // Define menu items based on "role" (derived from URL for this demo)
     const menuItems = isAdmin ? [
@@ -114,13 +167,25 @@ export default function DashboardClient({
                             key={item.href}
                             href={item.href}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${isActive
+                            className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${isActive
                                 ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
                                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}
                         >
-                            <item.icon className="w-5 h-5" />
-                            {item.name}
+                            <div className="flex items-center gap-3">
+                                <item.icon className="w-5 h-5" />
+                                {item.name}
+                            </div>
+                            {item.name === 'Chat' && chatUnread > 0 && (
+                                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                    {chatUnread > 9 ? '9+' : chatUnread}
+                                </span>
+                            )}
+                            {item.name === 'Leads & CRM' && leadsUnread > 0 && (
+                                <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                    {leadsUnread > 9 ? '9+' : leadsUnread}
+                                </span>
+                            )}
                         </Link>
                     );
                 })}

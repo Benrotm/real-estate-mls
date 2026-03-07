@@ -334,6 +334,40 @@ export async function sendMessage(conversationId: string, senderId: string, cont
 
         if (error) throw error;
 
+        // Trigger Notification for Recipient
+        try {
+            const { createNotification } = await import('@/app/lib/actions/notifications');
+            const supabaseAdmin = createAdminClient();
+
+            // Find recipient (the other participant)
+            const { data: participants } = await supabaseAdmin
+                .from('conversation_participants')
+                .select('user_id')
+                .eq('conversation_id', conversationId)
+                .neq('user_id', senderId);
+
+            if (participants && participants.length > 0) {
+                // Get sender name for the notification
+                const { data: senderProfile } = await supabaseAdmin
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', senderId)
+                    .single();
+
+                for (const p of participants) {
+                    await createNotification({
+                        user_id: p.user_id,
+                        type: 'message',
+                        title: 'New Message',
+                        content: `${senderProfile?.full_name || 'Someone'} sent you a message: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
+                        link: `/dashboard/chat?id=${conversationId}` // Shared chat link or role-specific?
+                    });
+                }
+            }
+        } catch (notifyError) {
+            console.error('Error triggering message notification:', notifyError);
+        }
+
         // Update conversation updated_at
         // We might need admin client here if RLS prevents update, but usually participants can update?
         // Let's use admin client for the update to be safe and simple

@@ -53,6 +53,31 @@ export async function submitOffer(propertyId: string, amount: number) {
 
         if (error) throw error;
 
+        // Trigger Notification for Owner
+        try {
+            const { createNotification } = await import('./actions/notifications');
+            const { createAdminClient } = await import('./supabase/admin');
+            const supabaseAdmin = createAdminClient();
+
+            const { data: propInfo } = await supabaseAdmin
+                .from('properties')
+                .select('owner_id, title')
+                .eq('id', propertyId)
+                .single();
+
+            if (propInfo && propInfo.owner_id) {
+                await createNotification({
+                    user_id: propInfo.owner_id,
+                    type: 'offer',
+                    title: 'New Property Offer',
+                    content: `You received a new offer of ${amount} EUR for "${propInfo.title}"`,
+                    link: `/dashboard/owner/leads`
+                });
+            }
+        } catch (notifyError) {
+            console.error('Error triggering offer notification:', notifyError);
+        }
+
         // Auto-Create Lead for the Owner
         try {
             const { createAdminClient } = await import('./supabase/admin');

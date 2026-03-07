@@ -443,6 +443,22 @@ export async function submitPropertyInquiry(propertyId: string, data: {
         return { success: false, error: error.message };
     }
 
+    // Trigger Notification for Owner/Agent
+    try {
+        const { createNotification } = await import('@/app/lib/actions/notifications');
+        if (property && property.owner_id) {
+            await createNotification({
+                user_id: property.owner_id,
+                type: 'inquiry',
+                title: 'New Property Inquiry',
+                content: `${data.name} sent an inquiry for "${property.title}"`,
+                link: `/dashboard/owner/leads`
+            });
+        }
+    } catch (notifyError) {
+        console.error('Error triggering inquiry notification:', notifyError);
+    }
+
     // 4. Auto-Create Lead for the Owner
     try {
         const { createAdminClient } = await import('@/app/lib/supabase/admin');
