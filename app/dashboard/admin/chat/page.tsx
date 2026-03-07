@@ -1,6 +1,7 @@
 import ChatLayout from '@/app/components/chat/ChatLayout';
 import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
+import NotificationSync from '@/app/components/notifications/NotificationSync';
 
 export default async function AdminChatPage() {
     const profile = await getUserProfile();
@@ -11,6 +12,7 @@ export default async function AdminChatPage() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-100px)]">
+            <NotificationSync types={['message']} />
             <div className="mb-4 shrink-0">
                 <h1 className="text-2xl font-bold text-slate-900">Support Messages</h1>
                 <p className="text-slate-500">Communicate with users and resolve issues.</p>
