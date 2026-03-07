@@ -21,19 +21,14 @@ export default async function Home({
     redirect(`/auth/callback?code=${codeValue}`);
   }
 
-  // Fetch real properties
-  const { properties: allProperties } = await getProperties();
+  // Fetch properties for different sections
+  const { properties: bestRatedProperties } = await getProperties({ sort: 'score_desc', per_page: 3 });
+  const { properties: recentProperties } = await getProperties({ sort: 'newest', per_page: 3 });
 
   // Bulk check for "Make an Offer" feature for all property owners
-  const ownerIds = Array.from(new Set(allProperties.map(p => p.owner_id).filter(Boolean)));
+  const allPropertiesForOfferCheck = [...bestRatedProperties, ...recentProperties];
+  const ownerIds = Array.from(new Set(allPropertiesForOfferCheck.map(p => p.owner_id).filter(Boolean)));
   const makeOfferAccessMap = await bulkCheckUserFeatureAccess(ownerIds, SYSTEM_FEATURES.MAKE_AN_OFFER);
-
-  // Filter for featured/promoted (if we had a promoted flag, otherwise just take some)
-  // For now, let's say "Best Price" = cheapest or just the first few
-  const featuredProperties = allProperties.slice(0, 3);
-
-  // Recent = just the most recent ones (getProperties orders by created_at desc by default)
-  const recentProperties = allProperties.slice(0, 6); // Take first 6 as recent
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -59,7 +54,7 @@ export default async function Home({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {featuredProperties.slice(0, 3).map((property) => (
+          {bestRatedProperties.map((property) => (
             <div key={property.id} className="h-full">
               <PropertyCard
                 property={property}
@@ -68,8 +63,8 @@ export default async function Home({
               />
             </div>
           ))}
-          {featuredProperties.length === 0 && (
-            <p className="text-gray-500 col-span-3 text-center">No featured properties found.</p>
+          {bestRatedProperties.length === 0 && (
+            <p className="text-gray-500 col-span-3 text-center">No properties found.</p>
           )}
         </div>
 
