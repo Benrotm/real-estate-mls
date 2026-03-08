@@ -1,25 +1,18 @@
-import { fetchAllLeadsAdmin, deleteLeadAdmin } from '@/app/lib/actions/admin';
-import { User, Phone, Mail, Trash2, Calendar, Edit, ExternalLink } from 'lucide-react';
+import { fetchAllLeadsAdmin } from '@/app/lib/actions/admin';
+import { User, Phone, Mail, Calendar, Edit, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { revalidatePath } from 'next/cache';
 import NotificationSync from '@/app/components/notifications/NotificationSync';
+import DeleteLeadButton from './DeleteLeadButton';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLeadsPage() {
     const leads = await fetchAllLeadsAdmin();
 
-    async function deleteLead(formData: FormData) {
-        'use server';
-        const id = formData.get('id') as string;
-        await deleteLeadAdmin(id);
-    }
-
     return (
         <div className="p-8 max-w-7xl mx-auto">
             <NotificationSync types={['lead', 'inquiry', 'offer']} />
             <div className="mb-8 flex justify-between items-center">
-                {/* ... existing header ... */}
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">All Leads Management</h1>
                     <p className="text-slate-500">Super Admin view of all system leads.</p>
@@ -87,21 +80,7 @@ export default async function AdminLeadsPage() {
                                             View Details
                                             <ExternalLink className="w-3 h-3" />
                                         </Link>
-                                        <form action={deleteLead} className="inline-block">
-                                            <input type="hidden" name="id" value={lead.id} />
-                                            <button
-                                                type="submit"
-                                                className="text-slate-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
-                                                title="Delete Lead"
-                                                onClick={(e) => {
-                                                    if (!confirm('Are you sure you want to delete this lead?')) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </form>
+                                        <DeleteLeadButton leadId={lead.id} />
                                     </div>
                                 </td>
                             </tr>
