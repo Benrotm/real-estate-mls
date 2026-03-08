@@ -126,7 +126,7 @@ export default function ReportForm() {
                         type="text"
                         name="subject"
                         placeholder="Brief summary of the issue..."
-                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all text-slate-900"
                         required
                     />
                 </div>
@@ -137,7 +137,7 @@ export default function ReportForm() {
                         name="description"
                         placeholder="Please describe in detail..."
                         rows={5}
-                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all resize-none"
+                        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all resize-none text-slate-900"
                         required
                     ></textarea>
                 </div>

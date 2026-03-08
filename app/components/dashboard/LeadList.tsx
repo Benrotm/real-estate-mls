@@ -1,11 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle } from 'lucide-react';
+import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp } from 'lucide-react';
 import { LeadData } from '@/app/lib/types';
 import { deleteLead } from '@/app/lib/actions/leads';
 import { useRouter } from 'next/navigation';
+import {
+    PROPERTY_TYPES,
+    TRANSACTION_TYPES,
+} from '@/app/lib/properties';
 
 const STATUS_COLORS = {
     new: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -36,9 +40,61 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
     const [searchTerm, setSearchTerm] = useState('');
     const [activeStatus, setActiveStatus] = useState<string>('all');
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+    const [sortBy, setSortBy] = useState<'score' | 'budget' | 'urgency' | 'newest'>('newest');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
 
-    const filteredLeads = useMemo(() => {
-        return leads.filter(lead => {
+    const toggleExpand = (id: string) => {
+        setExpandedLeadId(expandedLeadId === id ? null : id);
+    };
+
+    // Advanced Filter State
+    const [filters, setFilters] = useState({
+        preference_type: 'all',
+        preference_listing_type: 'all',
+        city: '',
+        area: '',
+        budget_min: '',
+        budget_max: '',
+        rooms_min: '',
+        surface_min: '',
+        urgency: 'all',
+        buying_reason: 'all',
+        occupation: '',
+        source: '',
+        payment_method: 'all',
+        interest_rating: 'all'
+    });
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const resetFilters = () => {
+        setFilters({
+            preference_type: 'all',
+            preference_listing_type: 'all',
+            city: '',
+            area: '',
+            budget_min: '',
+            budget_max: '',
+            rooms_min: '',
+            surface_min: '',
+            urgency: 'all',
+            buying_reason: 'all',
+            occupation: '',
+            source: '',
+            payment_method: 'all',
+            interest_rating: 'all'
+        });
+        setSearchTerm('');
+        setActiveStatus('all');
+    };
+
+    const filteredAndSortedLeads = useMemo(() => {
+        let result = leads.filter(lead => {
             const matchesSearch =
                 (lead.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (lead.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -47,9 +103,50 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
 
             const matchesStatus = activeStatus === 'all' || lead.status === activeStatus;
 
-            return matchesSearch && matchesStatus;
+            // Advanced Filters
+            const matchesType = filters.preference_type === 'all' || lead.preference_type === filters.preference_type;
+            const matchesListingType = filters.preference_listing_type === 'all' || lead.preference_listing_type === filters.preference_listing_type;
+            const matchesCity = !filters.city || lead.preference_location_city?.toLowerCase().includes(filters.city.toLowerCase());
+            const matchesArea = !filters.area || lead.preference_location_area?.toLowerCase().includes(filters.area.toLowerCase());
+            const matchesBudgetMin = !filters.budget_min || (Number(lead.budget_max || 0) >= Number(filters.budget_min));
+            const matchesBudgetMax = !filters.budget_max || (Number(lead.budget_max || 0) <= Number(filters.budget_max));
+            const matchesRooms = !filters.rooms_min || (Number(lead.preference_rooms_min || 0) >= Number(filters.rooms_min));
+            const matchesSurface = !filters.surface_min || (Number(lead.preference_surface_min || 0) >= Number(filters.surface_min));
+            const matchesUrgency = filters.urgency === 'all' || lead.move_urgency === filters.urgency;
+            const matchesBuyingReason = filters.buying_reason === 'all' || lead.buying_reason === filters.buying_reason;
+            const matchesOccupation = !filters.occupation || lead.occupation?.toLowerCase().includes(filters.occupation.toLowerCase());
+            const matchesSource = !filters.source || lead.source?.toLowerCase().includes(filters.source.toLowerCase());
+            const matchesPayment = filters.payment_method === 'all' || lead.payment_method === filters.payment_method;
+            const matchesInterest = filters.interest_rating === 'all' || lead.agent_interest_rating === filters.interest_rating;
+
+            return matchesSearch && matchesStatus && matchesType && matchesListingType && matchesCity &&
+                matchesArea && matchesBudgetMin && matchesBudgetMax && matchesRooms && matchesSurface &&
+                matchesUrgency && matchesBuyingReason && matchesOccupation && matchesSource &&
+                matchesPayment && matchesInterest;
         });
-    }, [leads, searchTerm, activeStatus]);
+
+        // Sorting
+        return result.sort((a, b) => {
+            let comparison = 0;
+            if (sortBy === 'score') {
+                comparison = (a.score || 0) - (b.score || 0);
+            } else if (sortBy === 'budget') {
+                comparison = (Number(a.budget_max) || 0) - (Number(b.budget_max) || 0);
+            } else if (sortBy === 'urgency') {
+                const urgencyWeight: Record<string, number> = {
+                    '< 1 month (Urgent)': 3,
+                    '1-3 months (Moderate)': 2,
+                    '> 3 months (Low)': 1
+                };
+                comparison = (urgencyWeight[a.move_urgency || ''] || 0) - (urgencyWeight[b.move_urgency || ''] || 0);
+            } else {
+                // Newest (ID or created_at usually works if available, otherwise just use lead.id)
+                comparison = String(a.id).localeCompare(String(b.id));
+            }
+
+            return sortOrder === 'desc' ? -comparison : comparison;
+        });
+    }, [leads, searchTerm, activeStatus, filters, sortBy, sortOrder]);
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this lead? This action cannot be undone.')) return;
@@ -71,27 +168,61 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
     return (
         <div className="space-y-6">
             {/* Filter & Search Bar */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4 md:space-y-0 md:flex md:items-center md:justify-between gap-4">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search by name, email, or preference..."
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                    />
-                    {searchTerm && (
-                        <button
-                            onClick={() => setSearchTerm('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
-                    )}
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search by name, email, or preference..."
+                            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                            <button
+                                onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${isFiltersExpanded ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'text-slate-600 hover:bg-slate-200'}`}
+                            >
+                                <Filter className="w-3.5 h-3.5" />
+                                More Filters
+                                {isFiltersExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                            <select
+                                value={`${sortBy}-${sortOrder}`}
+                                onChange={(e) => {
+                                    const [newSort, newOrder] = e.target.value.split('-');
+                                    setSortBy(newSort as any);
+                                    setSortOrder(newOrder as any);
+                                }}
+                                className="bg-transparent text-xs font-bold text-slate-600 px-2 py-1 outline-none cursor-pointer"
+                            >
+                                <option value="newest-desc">Newest First</option>
+                                <option value="score-desc">Highest Score</option>
+                                <option value="score-asc">Lowest Score</option>
+                                <option value="budget-desc">Highest Budget</option>
+                                <option value="budget-asc">Lowest Budget</option>
+                                <option value="urgency-desc">Most Urgent</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-1 overflow-x-auto pb-2 md:pb-0 scrollbar-hide no-scrollbar">
+                <div className="flex items-center gap-1 overflow-x-auto pb-2 md:pb-0 scrollbar-hide no-scrollbar border-t border-slate-100 pt-4">
                     {statuses.map(status => (
                         <button
                             key={status}
@@ -107,6 +238,101 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                         </button>
                     ))}
                 </div>
+
+                {/* Advanced Filters Panel */}
+                {isFiltersExpanded && (
+                    <div className="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Property Type</label>
+                            <select name="preference_type" value={filters.preference_type} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Any Type</option>
+                                {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Listing Type</label>
+                            <select name="preference_listing_type" value={filters.preference_listing_type} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Any Listing</option>
+                                {TRANSACTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">City / Area</label>
+                            <div className="flex gap-2">
+                                <input type="text" name="city" value={filters.city} onChange={handleFilterChange} placeholder="City" className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                                <input type="text" name="area" value={filters.area} onChange={handleFilterChange} placeholder="Area" className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Min Rooms / Surface</label>
+                            <div className="flex gap-2">
+                                <input type="number" name="rooms_min" value={filters.rooms_min} onChange={handleFilterChange} placeholder="Rooms" className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                                <input type="number" name="surface_min" value={filters.surface_min} onChange={handleFilterChange} placeholder="Sqm" className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Budget Range (EUR)</label>
+                            <div className="flex gap-2">
+                                <input type="number" name="budget_min" value={filters.budget_min} onChange={handleFilterChange} placeholder="Min" className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                                <input type="number" name="budget_max" value={filters.budget_max} onChange={handleFilterChange} placeholder="Max" className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Urgency</label>
+                            <select name="urgency" value={filters.urgency} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Any Urgency</option>
+                                <option value="< 1 month (Urgent)">{'< 1 month (Urgent)'}</option>
+                                <option value="1-3 months (Moderate)">1-3 months (Moderate)</option>
+                                <option value="> 3 months (Low)">{'> 3 months (Low)'}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Payment Method</label>
+                            <select name="payment_method" value={filters.payment_method} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Any Method</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Credit">Credit</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Interest Level</label>
+                            <select name="interest_rating" value={filters.interest_rating} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Any Level</option>
+                                <option value="High">High</option>
+                                <option value="Moderate">Moderate</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Buying Reason</label>
+                            <select name="buying_reason" value={filters.buying_reason} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Any Reason</option>
+                                <option value="Locuinta Personala">Locuinta Personala</option>
+                                <option value="Investitie">Investitie</option>
+                                <option value="Locuinta pt copii">Locuinta pt copii</option>
+                                <option value="Locuinta de vacanta">Locuinta de vacanta</option>
+                                <option value="Sediu">Sediu</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Occupation</label>
+                            <input type="text" name="occupation" value={filters.occupation} onChange={handleFilterChange} placeholder="Filter by job..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                        </div>
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Source</label>
+                                <input type="text" name="source" value={filters.source} onChange={handleFilterChange} placeholder="Filter by source..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                            </div>
+                            <button
+                                onClick={resetFilters}
+                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold transition-colors"
+                                title="Reset all filters"
+                            >
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[400px]">
@@ -123,81 +349,312 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredLeads.length > 0 ? (
-                                filteredLeads.map((lead: any) => (
-                                    <tr key={lead.id} className="hover:bg-slate-50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold shrink-0">
-                                                    {(lead.name || '?').charAt(0).toUpperCase()}
+                            {filteredAndSortedLeads.length > 0 ? (
+                                filteredAndSortedLeads.map((lead: any) => (
+                                    <React.Fragment key={lead.id}>
+                                        <tr
+                                            onClick={() => toggleExpand(lead.id)}
+                                            className={`cursor-pointer transition-all border-l-4 ${expandedLeadId === lead.id ? 'bg-slate-50 border-orange-500' : 'bg-white border-transparent hover:bg-slate-50'}`}
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold shrink-0">
+                                                        {(lead.name || '?').charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
+                                                            {lead.name || 'Unnamed Lead'}
+                                                        </Link>
+                                                        <div className="text-xs text-slate-500">{lead.source || 'Unknown Source'}</div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
-                                                        {lead.name || 'Unnamed Lead'}
-                                                    </Link>
-                                                    <div className="text-xs text-slate-500">{lead.source || 'Unknown Source'}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_COLORS[(lead.status || 'new') as keyof typeof STATUS_COLORS] || 'text-gray-600 bg-gray-100'}`}>
-                                                {STATUS_LABELS[(lead.status || 'new') as keyof typeof STATUS_LABELS] || lead.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className={`
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_COLORS[(lead.status || 'new') as keyof typeof STATUS_COLORS] || 'text-gray-600 bg-gray-100'}`}>
+                                                    {STATUS_LABELS[(lead.status || 'new') as keyof typeof STATUS_LABELS] || lead.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className={`
                                                     w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
                                                     ${(lead.score || 0) >= 80 ? 'bg-green-100 text-green-700' :
-                                                        (lead.score || 0) >= 50 ? 'bg-orange-100 text-orange-700' :
-                                                            'bg-slate-100 text-slate-500'}
+                                                            (lead.score || 0) >= 50 ? 'bg-orange-100 text-orange-700' :
+                                                                'bg-slate-100 text-slate-500'}
                                                 `}>
-                                                    {lead.score || 0}
+                                                        {lead.score || 0}
+                                                    </div>
+                                                    {(lead.score || 0) >= 80 && <span className="text-xs text-green-600 font-medium tracking-tight">Hot Lead</span>}
                                                 </div>
-                                                {(lead.score || 0) >= 80 && <span className="text-xs text-green-600 font-medium tracking-tight">Hot Lead</span>}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-medium text-slate-900 truncate max-w-[150px]">{lead.preference_type || 'Any Property'}</div>
-                                            <div className="text-sm text-slate-500">
-                                                {lead.budget_max ? `Budget: ${Number(lead.budget_max).toLocaleString()} ${lead.currency || 'EUR'}` : 'No Budget Set'}
-                                            </div>
-                                            <div className="text-xs text-slate-400 truncate max-w-[150px]">
-                                                {lead.preference_location_city || ''} {lead.preference_location_area && `(${lead.preference_location_area})`}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1">
-                                                {lead.email && (
-                                                    <a href={`mailto:${lead.email}`} className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors">
-                                                        <Mail className="w-3.5 h-3.5 opacity-60" /> {lead.email}
-                                                    </a>
-                                                )}
-                                                {lead.phone && (
-                                                    <a href={`tel:${lead.phone}`} className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors">
-                                                        <Phone className="w-3.5 h-3.5 opacity-60" /> {lead.phone}
-                                                    </a>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                {allowEdit && (
-                                                    <Link href={`${basePath}/${lead.id}`} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-300" title="Edit Lead">
-                                                        <Edit className="w-4 h-4" />
-                                                    </Link>
-                                                )}
-                                                <button
-                                                    onClick={() => handleDelete(lead.id)}
-                                                    disabled={isDeleting === lead.id}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                                                    title="Delete Lead"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-slate-900 truncate max-w-[150px]">{lead.preference_type || 'Any Property'}</div>
+                                                <div className="text-sm text-slate-500">
+                                                    {lead.budget_max ? `Budget: ${Number(lead.budget_max).toLocaleString()} ${lead.currency || 'EUR'}` : 'No Budget Set'}
+                                                </div>
+                                                <div className="text-xs text-slate-400 truncate max-w-[150px]">
+                                                    {lead.preference_location_city || ''} {lead.preference_location_area && `(${lead.preference_location_area})`}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col gap-1">
+                                                    {lead.email && (
+                                                        <a href={`mailto:${lead.email}`} className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors">
+                                                            <Mail className="w-3.5 h-3.5 opacity-60" /> {lead.email}
+                                                        </a>
+                                                    )}
+                                                    {lead.phone && (
+                                                        <a href={`tel:${lead.phone}`} className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors">
+                                                            <Phone className="w-3.5 h-3.5 opacity-60" /> {lead.phone}
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); toggleExpand(lead.id); }}
+                                                        className={`p-2 rounded-lg transition-colors border ${expandedLeadId === lead.id ? 'bg-orange-50 text-orange-600 border-orange-200' : 'text-slate-400 hover:text-slate-900 border-transparent hover:bg-slate-100 hover:border-slate-300'}`}
+                                                        title={expandedLeadId === lead.id ? "Hide Details" : "Show Details"}
+                                                    >
+                                                        {expandedLeadId === lead.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        {/* Expanded Lead Card */}
+                                        {expandedLeadId === lead.id && (
+                                            <tr className="bg-slate-50/50">
+                                                <td colSpan={6} className="px-6 py-6 ring-1 ring-inset ring-slate-200/50">
+                                                    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                                                        {/* Card Header - Premium Gradient */}
+                                                        <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex justify-between items-center">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl font-black border border-white/20">
+                                                                    {(lead.name || '?').charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="text-xl font-black tracking-tight">{lead.name || 'Unnamed Lead'}</h3>
+                                                                    <div className="flex items-center gap-2 text-slate-300 text-sm font-medium mt-1">
+                                                                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {new Date(lead.updated_at).toLocaleDateString()}</span>
+                                                                        <span className="w-1 h-1 rounded-full bg-slate-500"></span>
+                                                                        <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id.slice(0, 8)}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="text-right mr-4">
+                                                                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Lead Score</div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className={`text-2xl font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
+                                                                            {lead.score || 0}
+                                                                        </div>
+                                                                        <Activity className={`w-6 h-6 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
+                                                                    </div>
+                                                                </div>
+                                                                <Link
+                                                                    href={`${basePath}/${lead.id}`}
+                                                                    className="px-6 py-3 bg-white text-slate-900 rounded-xl font-black hover:bg-slate-100 transition-all shadow-lg flex items-center gap-2"
+                                                                >
+                                                                    View Full Profile <ChevronRight className="w-4 h-4" />
+                                                                </Link>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                                            {/* Profile Column */}
+                                                            <div className="space-y-6">
+                                                                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                                                                    <User className="w-5 h-5 text-orange-500" />
+                                                                    <h4 className="font-black text-slate-900 text-sm uppercase tracking-wide">Consumer Profile</h4>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Occupation</label>
+                                                                        <div className="text-sm font-bold text-slate-900 truncate">{lead.occupation || 'N/A'}</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Age / Domain</label>
+                                                                        <div className="text-sm font-bold text-slate-900">{lead.age ? `${lead.age} yrs` : 'N/A'} {lead.employer && `• ${lead.employer}`}</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Marital Status</label>
+                                                                        <div className="text-sm font-bold text-slate-900">{lead.marital_status || 'N/A'}</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kids / Pets</label>
+                                                                        <div className="text-sm font-bold text-slate-900">{lead.kids_count || 0} Kids {lead.has_pets ? '• Has Pets' : ''}</div>
+                                                                    </div>
+                                                                </div>
+                                                                {/* Moved to column 3 */}
+                                                            </div>
+
+                                                            {/* Requirements Column */}
+                                                            <div className="space-y-6">
+                                                                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                                                                    <Home className="w-5 h-5 text-orange-500" />
+                                                                    <h4 className="font-black text-slate-900 text-sm uppercase tracking-wide">Property Requirements</h4>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Request</label>
+                                                                        <div className="text-sm font-bold text-slate-900">{lead.preference_listing_type} {lead.preference_type}</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location</label>
+                                                                        <div className="text-sm font-bold text-slate-900 flex items-center gap-1 capitalize"><MapPin className="w-3 h-3 text-slate-400" /> {lead.preference_location_city || 'Any City'}</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Budget (Max)</label>
+                                                                        <div className="text-lg font-black text-orange-600">{lead.budget_max ? `${Number(lead.budget_max).toLocaleString()} ${lead.currency || 'EUR'}` : 'Not Specified'}</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rooms / Surface</label>
+                                                                        <div className="text-sm font-bold text-slate-900">{lead.preference_rooms_min ? `${lead.preference_rooms_min}+ Rooms` : 'Any'} • {lead.preference_surface_min ? `${lead.preference_surface_min}+ m²` : 'Any'}</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-2 pt-2">
+                                                                    <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-full text-[10px] font-bold border border-violet-100 uppercase tracking-wider">Payment: {lead.payment_method || 'N/A'}</span>
+                                                                    <span className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-[10px] font-bold border border-orange-100 uppercase tracking-wider">Urgency: {lead.move_urgency || 'N/A'}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Intent & Interests Column */}
+                                                            <div className="space-y-6">
+                                                                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                                                                    <Zap className="w-5 h-5 text-orange-500" />
+                                                                    <h4 className="font-black text-slate-900 text-sm uppercase tracking-wide">Intent & Preferences</h4>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Reason for Buying</label>
+                                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold shadow-sm">
+                                                                        <Heart className="w-3 h-3 text-red-400 fill-red-400" />
+                                                                        {lead.buying_reason || 'Personal Home'}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Property Ownership Section */}
+                                                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                                                    <div className="flex items-center gap-2 mb-3">
+                                                                        <Building2 className="w-4 h-4 text-orange-500" />
+                                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Portfolio Status</span>
+                                                                    </div>
+
+                                                                    {!lead.already_owns_properties ? (
+                                                                        <div className="text-xs font-bold text-slate-400 italic">No existing properties owned</div>
+                                                                    ) : (
+                                                                        <div className="space-y-3">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="text-xs font-bold text-slate-700">Properties Owned</span>
+                                                                                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-md text-xs font-black">{lead.owned_properties_count || 0}</span>
+                                                                            </div>
+                                                                            <div className="flex gap-1.5 flex-wrap">
+                                                                                {lead.ownership_purpose_investment && (
+                                                                                    <span className="flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 shadow-sm">
+                                                                                        <TrendingUp className="w-3 h-3 text-orange-500" /> INVESTMENT
+                                                                                    </span>
+                                                                                )}
+                                                                                {lead.ownership_purpose_personal && (
+                                                                                    <span className="flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 shadow-sm">
+                                                                                        <User className="w-3 h-3 text-orange-500" /> PERSONAL
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Preferences & Dealing Breakers Section */}
+                                                                <div className="grid grid-cols-1 gap-4">
+                                                                    {lead.social_notes && (
+                                                                        <div className="bg-green-50 p-4 rounded-xl border border-green-200 shadow-sm transition-all hover:shadow-md animate-in fade-in slide-in-from-top-4 duration-500">
+                                                                            <div className="flex items-center gap-2 mb-2">
+                                                                                <div className="p-1.5 bg-green-100 rounded-lg">
+                                                                                    <Zap className="w-3.5 h-3.5 text-green-600" />
+                                                                                </div>
+                                                                                <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Client Preferences</span>
+                                                                            </div>
+                                                                            <p className="text-sm text-green-900 font-bold leading-relaxed italic">
+                                                                                "{lead.social_notes}"
+                                                                            </p>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {lead.negative_preferences && (
+                                                                        <div className="bg-red-50 p-4 rounded-xl border border-red-200 shadow-sm transition-all hover:shadow-md animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
+                                                                            <div className="flex items-center gap-2 mb-2">
+                                                                                <div className="p-1.5 bg-red-100 rounded-lg">
+                                                                                    <Ban className="w-3.5 h-3.5 text-red-600" />
+                                                                                </div>
+                                                                                <span className="text-[10px] font-black text-red-700 uppercase tracking-widest">Dealing Breakers</span>
+                                                                            </div>
+                                                                            <p className="text-sm text-red-900 font-bold leading-relaxed italic">
+                                                                                "{lead.negative_preferences}"
+                                                                            </p>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                {lead.points_of_interest && typeof lead.points_of_interest === 'object' && Object.values(lead.points_of_interest as Record<string, any>).filter(Boolean).length > 0 && (
+                                                                    <div className="animate-in fade-in slide-in-from-top-4 duration-500 delay-200">
+                                                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Neighborhood Interests</label>
+                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                            {Object.entries(lead.points_of_interest as Record<string, any>).filter(([_, val]) => val).map(([key, val], i) => (
+                                                                                <span key={i} className="px-2.5 py-1 bg-white border border-slate-200 text-slate-600 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1.5 capitalize">
+                                                                                    <div className="w-1 h-1 rounded-full bg-orange-400"></div>
+                                                                                    {String(val)}
+                                                                                </span>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Card Actions Footer */}
+                                                        <div className="bg-slate-50 p-6 border-t border-slate-100 flex justify-between items-center">
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Person</span>
+                                                                    <span className="text-sm font-black text-slate-900">{lead.name}</span>
+                                                                </div>
+                                                                <div className="w-px h-8 bg-slate-200"></div>
+                                                                <div className="flex items-center gap-4">
+                                                                    {lead.email && (
+                                                                        <a href={`mailto:${lead.email}`} className="flex items-center gap-2 text-slate-600 hover:text-orange-600 transition-colors">
+                                                                            <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-200"><Mail className="w-4 h-4" /></div>
+                                                                            <span className="text-xs font-bold underline decoration-slate-200 underline-offset-4">{lead.email}</span>
+                                                                        </a>
+                                                                    )}
+                                                                    {lead.phone && (
+                                                                        <a href={`tel:${lead.phone}`} className="flex items-center gap-2 text-slate-600 hover:text-orange-600 transition-colors">
+                                                                            <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-200"><Phone className="w-4 h-4" /></div>
+                                                                            <span className="text-xs font-bold underline decoration-slate-200 underline-offset-4">{lead.phone}</span>
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
+                                                                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl text-sm font-bold transition-all border border-transparent hover:border-red-100"
+                                                                >
+                                                                    Archive Lead
+                                                                </button>
+                                                                <Link
+                                                                    href={`${basePath}/${lead.id}`}
+                                                                    className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg text-sm"
+                                                                >
+                                                                    Edit Details
+                                                                </Link>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))
                             ) : (
                                 <tr>
@@ -227,7 +684,7 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
 
                 <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
                     <span className="text-sm text-slate-500">
-                        Showing {filteredLeads.length} of {leads.length} leads
+                        Showing {filteredAndSortedLeads.length} of {leads.length} leads
                     </span>
                     <div className="flex gap-2">
                         <button className="px-3 py-1 text-sm border border-slate-300 rounded-md bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-50" disabled>Previous</button>

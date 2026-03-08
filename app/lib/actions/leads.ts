@@ -37,9 +37,9 @@ export async function createLead(data: LeadData) {
     // Calculate initial score
     const score = await calculateLeadScore(data);
 
-    // Clean data - remove undefined/null values that might cause issues if not nullable in DB
+    // Clean data - remove undefined/null values. We ALLOW empty strings so users can clear fields.
     const cleanData = Object.fromEntries(
-        Object.entries(data).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null && v !== '')
+        Object.entries(data).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null)
     );
 
     const { data: lead, error } = await supabase.from('leads').insert({
@@ -57,7 +57,7 @@ export async function createLead(data: LeadData) {
 
     if (error) {
         console.error('Create Lead Error Full:', JSON.stringify(error, null, 2));
-        throw new Error(`Failed to create lead: ${error.message} (${error.code})`);
+        return { success: false, error: `Failed to create lead: ${error.message} (${error.code})` };
     }
 
     // Handle initial note if present
@@ -109,8 +109,7 @@ export async function updateLead(leadId: string, data: LeadData) {
         Object.entries(data).filter(([k, v]) =>
             !readOnlyFields.includes(k) &&
             v !== undefined &&
-            v !== null &&
-            v !== ''
+            v !== null
         )
     );
 
@@ -129,7 +128,7 @@ export async function updateLead(leadId: string, data: LeadData) {
 
     if (error) {
         console.error('Update Lead Error Full:', JSON.stringify(error, null, 2));
-        throw new Error(`Failed to update lead: ${error.message} (${error.code})`);
+        return { success: false, error: `Failed to update lead: ${error.message} (${error.code})` };
     }
 
     revalidatePath('/dashboard/agent/leads');

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban } from 'lucide-react';
+import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban, Building2, PieChart, TrendingUp } from 'lucide-react';
 import {
     PROPERTY_TYPES,
     TRANSACTION_TYPES,
@@ -42,62 +42,71 @@ interface LeadFormProps {
 
 type TabType = 'contact' | 'classification' | 'viewing' | 'profile';
 
+const DEFAULT_FORM_DATA: LeadData = {
+    name: '',
+    email: '',
+    phone: '',
+    status: 'new',
+    source: '',
+    notes: '',
+    preference_type: 'Apartment',
+    preference_listing_type: 'For Sale',
+    currency: 'EUR',
+    preference_features: [],
+
+    // New Preferences from Add Property Form
+    preference_location_city: '',
+    preference_location_area: '',
+    preference_rooms_min: 0,
+    preference_rooms_max: 0,
+    preference_bedrooms_min: 0,
+    preference_baths_min: 0,
+    preference_surface_min: 0,
+    preference_surface_max: 0,
+    preference_year_built_min: 0,
+    preference_floor_min: 0,
+    preference_floor_max: 0,
+    preference_partitioning: '',
+    preference_comfort: '',
+    preference_building_type: '',
+    preference_interior_condition: '',
+    preference_furnishing: '',
+
+    search_duration: '< 1 month',
+    viewed_count_total: '0',
+    move_urgency: '< 1 month (Urgent)',
+    payment_method: 'Credit',
+    bank_status: 'No',
+    budget_vs_market: 'Moderate',
+    agent_interest_rating: 'Moderate',
+    viewed_count_agent: 0,
+    outcome_status: 'Still Searching',
+    age: 0,
+    kids_count: 0,
+    marital_status: 'Single',
+    occupation: '',
+    employer: '',
+    living_situation: 'In Town',
+    current_city: '',
+    is_smoker: false,
+    has_pets: false,
+    pets_details: '',
+    social_notes: '',
+    points_of_interest: {},
+    buying_reason: 'Locuinta Personala',
+    negative_preferences: '',
+    already_owns_properties: false,
+    owned_properties_count: 0,
+    ownership_purpose_investment: false,
+    ownership_purpose_personal: false
+};
+
 export default function LeadForm({ initialData, isEditing = false, onCancel }: LeadFormProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('contact');
-    const [formData, setFormData] = useState<LeadData>(initialData || {
-        name: '',
-        email: '',
-        phone: '',
-        status: 'new',
-        source: '',
-        notes: '',
-        preference_type: 'Apartment',
-        preference_listing_type: 'For Sale',
-        currency: 'EUR',
-        preference_features: [],
-
-        // New Preferences from Add Property Form
-        preference_location_city: '',
-        preference_location_area: '',
-        preference_rooms_min: 0,
-        preference_rooms_max: 0,
-        preference_bedrooms_min: 0,
-        preference_baths_min: 0,
-        preference_surface_min: 0,
-        preference_surface_max: 0,
-        preference_year_built_min: 0,
-        preference_floor_min: 0,
-        preference_floor_max: 0,
-        preference_partitioning: '',
-        preference_comfort: '',
-        preference_building_type: '',
-        preference_interior_condition: '',
-        preference_furnishing: '',
-
-        search_duration: '< 1 month',
-        viewed_count_total: '0',
-        move_urgency: '< 1 month (Urgent)',
-        payment_method: 'Credit',
-        bank_status: 'No',
-        budget_vs_market: 'Moderate',
-        agent_interest_rating: 'Moderate',
-        viewed_count_agent: 0,
-        outcome_status: 'Still Searching',
-        age: 0,
-        kids_count: 0,
-        marital_status: 'Single',
-        occupation: '',
-        employer: '',
-        living_situation: 'In Town',
-        current_city: '',
-        is_smoker: false,
-        has_pets: false,
-        pets_details: '',
-        social_notes: '',
-        points_of_interest: {},
-        buying_reason: 'Locuinta Personala',
-        negative_preferences: ''
+    const [formData, setFormData] = useState<LeadData>({
+        ...DEFAULT_FORM_DATA,
+        ...initialData
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -145,11 +154,18 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
         e.preventDefault();
         setIsLoading(true);
         try {
+            let result;
             if (isEditing && initialData?.id) {
-                await updateLead(initialData.id, formData);
+                result = await updateLead(initialData.id, formData);
             } else {
-                await createLead(formData);
+                result = await createLead(formData);
             }
+
+            if (result && !result.success) {
+                alert(result.error || 'Failed to save lead. Please try again.');
+                return;
+            }
+
             if (onCancel) {
                 onCancel();
             } else {
@@ -651,6 +667,81 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                                     <option value="Locuinta de vacanta">Locuinta de vacanta</option>
                                     <option value="Sediu">Sediu</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        {/* Property Ownership Expansion */}
+                        <div className="p-6 bg-slate-900 text-white rounded-2xl border border-slate-700 shadow-xl overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Home className="w-24 h-24 rotate-12" />
+                            </div>
+
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-orange-500 rounded-lg">
+                                        <Building2 className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-black tracking-tight">Existing Property Ownership</h4>
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Client Portfolio Details</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-3 h-3 rounded-full ${formData.already_owns_properties ? 'bg-green-400 animate-pulse' : 'bg-slate-600'}`} />
+                                            <div>
+                                                <p className="text-sm font-black text-white leading-none">Already Owns Properties?</p>
+                                                <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">Current Status</p>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            name="already_owns_properties"
+                                            checked={formData.already_owns_properties || false}
+                                            onChange={handleChange}
+                                            className="w-6 h-6 rounded-lg border-white/20 bg-white/10 text-orange-500 focus:ring-orange-500 transition-all cursor-pointer"
+                                        />
+                                    </div>
+
+                                    {formData.already_owns_properties && (
+                                        <div className="animate-in zoom-in-95 fade-in duration-300">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Number of Properties Owned</label>
+                                            <div className="relative">
+                                                <PieChart className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400" />
+                                                <input
+                                                    type="number"
+                                                    name="owned_properties_count"
+                                                    value={formData.owned_properties_count || 0}
+                                                    onChange={handleChange}
+                                                    className="w-full bg-white/10 border-white/20 rounded-xl py-3 pl-12 pr-4 text-white font-black focus:border-orange-500 focus:ring-orange-500/20 transition-all"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-3">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ownership / Usage Purpose</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div
+                                                onClick={() => handleChange({ target: { name: 'ownership_purpose_investment', value: !formData.ownership_purpose_investment, type: 'checkbox', checked: !formData.ownership_purpose_investment } } as any)}
+                                                className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${formData.ownership_purpose_investment ? 'bg-orange-500 border-transparent shadow-lg shadow-orange-500/20' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                            >
+                                                <TrendingUp className={`w-5 h-5 ${formData.ownership_purpose_investment ? 'text-white' : 'text-slate-400'}`} />
+                                                <span className={`text-[10px] font-black uppercase tracking-tighter ${formData.ownership_purpose_investment ? 'text-white' : 'text-slate-400'}`}>Investment</span>
+                                            </div>
+                                            <div
+                                                onClick={() => handleChange({ target: { name: 'ownership_purpose_personal', value: !formData.ownership_purpose_personal, type: 'checkbox', checked: !formData.ownership_purpose_personal } } as any)}
+                                                className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${formData.ownership_purpose_personal ? 'bg-orange-500 border-transparent shadow-lg shadow-orange-500/20' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                            >
+                                                <User className={`w-5 h-5 ${formData.ownership_purpose_personal ? 'text-white' : 'text-slate-400'}`} />
+                                                <span className={`text-[10px] font-black uppercase tracking-tighter ${formData.ownership_purpose_personal ? 'text-white' : 'text-slate-400'}`}>Personal</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

@@ -64,6 +64,13 @@ export interface LeadData {
     points_of_interest?: Record<string, string>;
     buying_reason?: string;
     negative_preferences?: string;
+    score?: number;
+
+    // Property Ownership
+    already_owns_properties?: boolean;
+    owned_properties_count?: number;
+    ownership_purpose_investment?: boolean;
+    ownership_purpose_personal?: boolean;
 
     // Relations (optional for form, present in fetch)
     creator?: { full_name: string };
