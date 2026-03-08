@@ -397,24 +397,32 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex flex-col gap-1 items-start">
+                                                <div className="flex flex-col gap-2 items-start">
                                                     {lead.email && (
-                                                        <a
-                                                            href={`mailto:${lead.email}`}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors w-fit"
-                                                        >
-                                                            <Mail className="w-3.5 h-3.5 opacity-60" /> {lead.email}
-                                                        </a>
+                                                        <div className="flex items-center gap-2 group/link">
+                                                            <a
+                                                                href={`mailto:${lead.email}`}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="p-1.5 bg-slate-100 rounded-md text-slate-500 hover:bg-orange-100 hover:text-orange-600 transition-all border border-slate-200 hover:border-orange-200 shadow-sm"
+                                                                title={`Email ${lead.email}`}
+                                                            >
+                                                                <Mail className="w-3.5 h-3.5" />
+                                                            </a>
+                                                            <span className="text-xs font-medium text-slate-600">{lead.email}</span>
+                                                        </div>
                                                     )}
                                                     {lead.phone && (
-                                                        <a
-                                                            href={`tel:${lead.phone}`}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors w-fit"
-                                                        >
-                                                            <Phone className="w-3.5 h-3.5 opacity-60" /> {lead.phone}
-                                                        </a>
+                                                        <div className="flex items-center gap-2 group/link">
+                                                            <a
+                                                                href={`tel:${lead.phone}`}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="p-1.5 bg-slate-100 rounded-md text-slate-500 hover:bg-orange-100 hover:text-orange-600 transition-all border border-slate-200 hover:border-orange-200 shadow-sm"
+                                                                title={`Call ${lead.phone}`}
+                                                            >
+                                                                <Phone className="w-3.5 h-3.5" />
+                                                            </a>
+                                                            <span className="text-xs font-medium text-slate-600">{lead.phone}</span>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </td>
