@@ -183,7 +183,7 @@ export default function ReportListingButton({ propertyId, propertyTitle }: Repor
                                             type="text"
                                             value={brokerName}
                                             onChange={(e) => setBrokerName(e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm"
+                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm text-slate-900"
                                             placeholder="John Doe"
                                         />
                                     </div>
@@ -193,7 +193,7 @@ export default function ReportListingButton({ propertyId, propertyTitle }: Repor
                                             type="text"
                                             value={agencyName}
                                             onChange={(e) => setAgencyName(e.target.value)}
-                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm"
+                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm text-slate-900"
                                             placeholder="Best Realty"
                                         />
                                     </div>
@@ -208,7 +208,7 @@ export default function ReportListingButton({ propertyId, propertyTitle }: Repor
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     required
-                                    className="w-full h-32 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none text-sm"
+                                    className="w-full h-32 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none text-sm text-slate-900"
                                     placeholder={reportType === 'claim' ? "Please provide details verifying your ownership..." : "Please describe the issue..."}
                                 />
                             </div>
