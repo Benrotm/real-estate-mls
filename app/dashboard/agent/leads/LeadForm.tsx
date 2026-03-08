@@ -166,7 +166,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
             <div className="bg-white p-2 flex gap-2 border-b border-slate-100">
                 <TabButton id="contact" label="Contact Data" icon={User} />
                 <TabButton id="classification" label="Classification" icon={ClipboardList} />
-                <TabButton id="viewing" label="Viewing" icon={Eye} />
+                <TabButton id="viewing" label="Lead Score" icon={Eye} />
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
@@ -430,7 +430,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                         <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100 mb-6">
                             <h3 className="text-purple-800 font-bold flex items-center gap-2 mb-1">
                                 <Eye className="w-5 h-5" />
-                                Viewing History
+                                Lead Score & History
                             </h3>
                             <p className="text-purple-600/80 text-sm">Track viewings and outcome.</p>
                         </div>
@@ -588,7 +588,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
             <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-between items-center">
                 <div className="text-xs text-slate-400 font-mono">
                     {/* Optional Status text */}
-                    Tab: {activeTab.toUpperCase()}
+                    Tab: {activeTab === 'viewing' ? 'LEAD SCORE' : activeTab.toUpperCase()}
                 </div>
                 <div className="flex gap-3">
                     {onCancel && (
