@@ -35,18 +35,6 @@ export default async function OwnerLeadsPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {hasLeadsAccess ? (
                     <>
-                        {/* Summary Stats or other owner specific info could go here */}
-                        <div className="mb-6 flex flex-col md:flex-row gap-4">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search leads..."
-                                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                                />
-                            </div>
-                        </div>
-
                         <LeadList leads={leads} basePath="/dashboard/owner/leads" allowEdit={false} />
                     </>
                 ) : (

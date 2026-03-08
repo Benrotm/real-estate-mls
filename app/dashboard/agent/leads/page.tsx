@@ -24,10 +24,21 @@ export default async function LeadsPage() {
 
     // Stats Calculations
     const totalLeads = leads.length;
+
+    // Existing stats
     const newLeads = leads.filter(l => l.status === 'new').length;
-    const pendingLeads = leads.filter(l => ['contacted', 'viewing', 'negotiation'].includes(l.status)).length;
     const conversionCount = leads.filter(l => l.status === 'closed').length;
     const conversionRate = totalLeads > 0 ? Math.round((conversionCount / totalLeads) * 100) : 0;
+
+    // New "Admin Purpose" Stats
+    const avgScore = totalLeads > 0
+        ? Math.round(leads.reduce((acc, l) => acc + (Number(l.score) || 0), 0) / totalLeads)
+        : 0;
+
+    const hotLeads = leads.filter(l => (Number(l.score) || 0) >= 80).length;
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentActive = leads.filter(l => new Date(l.updated_at || l.created_at) > twentyFourHoursAgo).length;
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
@@ -48,68 +59,104 @@ export default async function LeadsPage() {
                             </Link>
                         </div>
                     </div>
-
-                    {/* Simple Client-side Search/Filter placeholders for now */}
-                    <div className="mt-6 flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Search leads..."
-                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                            />
-                        </div>
-                        <div className="flex gap-2 touch-pan-x overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                            <button className="px-4 py-2 rounded-lg text-sm font-medium border whitespace-nowrap bg-slate-900 text-white border-slate-900">All Leads</button>
-                        </div>
-                    </div>
                 </div>
             </div>
 
             {/* Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-                {/* Stats Row */}
+                {/* Main Stats Summary */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Total Leads</div>
-                            <div className="text-2xl font-bold text-slate-900 mt-1">{totalLeads}</div>
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                            <User className="w-12 h-12 text-blue-600" />
                         </div>
-                        <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                            <User className="w-5 h-5" />
+                        <div>
+                            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Leads</div>
+                            <div className="text-3xl font-black text-slate-900 leading-none">{totalLeads}</div>
+                            <div className="mt-2 text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full inline-block">Database Size</div>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider">New Lead</div>
-                            <div className="text-2xl font-bold text-slate-900 mt-1">{newLeads}</div>
+
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                            <Calendar className="w-12 h-12 text-green-600" />
                         </div>
-                        <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
-                            <Calendar className="w-5 h-5" />
+                        <div>
+                            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">New Leads</div>
+                            <div className="text-3xl font-black text-slate-900 leading-none">{newLeads}</div>
+                            <div className="mt-2 text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full inline-block">Incoming Flow</div>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Pending Action</div>
-                            <div className="text-2xl font-bold text-slate-900 mt-1">{pendingLeads}</div>
+
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                            <CheckCircle className="w-12 h-12 text-purple-600" />
                         </div>
-                        <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
-                            <Clock className="w-5 h-5" />
+                        <div>
+                            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Conversion Rate</div>
+                            <div className="text-3xl font-black text-slate-900 leading-none">{conversionRate}%</div>
+                            <div className="mt-2 text-[10px] text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-full inline-block">{conversionCount} Closed deals</div>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                        <div>
-                            <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Conversion Rate</div>
-                            <div className="text-2xl font-bold text-slate-900 mt-1">{conversionRate}%</div>
+
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
+                            <ArrowUpRight className="w-12 h-12 text-orange-600" />
                         </div>
-                        <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
-                            <CheckCircle className="w-5 h-5" />
+                        <div>
+                            <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Avg. Quality</div>
+                            <div className="text-3xl font-black text-slate-900 leading-none">{avgScore}</div>
+                            <div className="mt-2 text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full inline-block">Lead Score Avg</div>
                         </div>
                     </div>
                 </div>
 
-                {/* Leads List */}
+                {/* Admin Purpose Cards */}
+                <div className="mb-8 p-6 bg-slate-900 rounded-2xl shadow-xl shadow-slate-200 border border-slate-800">
+                    <div className="flex items-center gap-2 mb-6 text-white/90">
+                        <div className="p-2 bg-orange-500/20 text-orange-500 rounded-lg">
+                            <Filter className="w-4 h-4" />
+                        </div>
+                        <h2 className="font-bold tracking-tight">Lead Insights & Admin Overview</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="p-2 bg-red-500/20 text-red-500 rounded-lg">
+                                    <MessageSquare className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-white/70">Hot Prospecting</span>
+                            </div>
+                            <div className="text-2xl font-black text-white">{hotLeads} <span className="text-xs font-medium text-white/40">Highly Interested</span></div>
+                            <p className="text-[10px] text-white/30 mt-2 uppercase tracking-widest font-bold">Score 80-100 Range</p>
+                        </div>
+
+                        <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="p-2 bg-blue-500/20 text-blue-500 rounded-lg">
+                                    <Clock className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-white/70">Recently Active</span>
+                            </div>
+                            <div className="text-2xl font-black text-white">{recentActive} <span className="text-xs font-medium text-white/40">Last 24 Hours</span></div>
+                            <p className="text-[10px] text-white/30 mt-2 uppercase tracking-widest font-bold">Latest Interactions</p>
+                        </div>
+
+                        <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="p-2 bg-green-500/20 text-green-500 rounded-lg">
+                                    <Edit className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-white/70">Active Pipeline</span>
+                            </div>
+                            <div className="text-2xl font-black text-white">{totalLeads - conversionCount} <span className="text-xs font-medium text-white/40">Total Open</span></div>
+                            <p className="text-[10px] text-white/30 mt-2 uppercase tracking-widest font-bold">Excluding Closed/Lost</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Leads List */}
                 <LeadList leads={leads} basePath="/dashboard/agent/leads" />
             </div>
