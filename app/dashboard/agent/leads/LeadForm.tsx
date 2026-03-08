@@ -94,7 +94,8 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
         is_smoker: false,
         has_pets: false,
         pets_details: '',
-        social_notes: ''
+        social_notes: '',
+        points_of_interest: {}
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -123,6 +124,16 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                 return { ...prev, preference_features: [...features, feature] };
             }
         });
+    };
+
+    const handlePOIChange = (key: string, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            points_of_interest: {
+                ...(prev.points_of_interest || {}),
+                [key]: value
+            }
+        }));
     };
 
     const router = useRouter();
@@ -637,14 +648,14 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                                 <label className={labelClass}>Occupation / Job Title</label>
                                 <div className="relative">
                                     <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                    <input type="text" name="occupation" value={formData.occupation || ''} onChange={handleChange} className={`${inputClass} pl-11`} placeholder="e.g. Software Engineer" />
+                                    <input type="text" name="occupation" value={formData.occupation || ''} onChange={handleChange} className={`${inputClass} pl-11`} placeholder="e.g. Antreprenoeur, Project Manager, Mechanic, etc.." />
                                 </div>
                             </div>
                             <div>
-                                <label className={labelClass}>Employer / Company</label>
+                                <label className={labelClass}>Domain / Company</label>
                                 <div className="relative">
                                     <Home className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                    <input type="text" name="employer" value={formData.employer || ''} onChange={handleChange} className={`${inputClass} pl-11`} placeholder="e.g. Tech Corp" />
+                                    <input type="text" name="employer" value={formData.employer || ''} onChange={handleChange} className={`${inputClass} pl-11`} placeholder="e.g. IT, Doctor, Marketing, etc.." />
                                 </div>
                             </div>
                         </div>
@@ -694,6 +705,67 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                                     <input type="text" name="pets_details" value={formData.pets_details || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 2 Golden Retrievers" />
                                 </div>
                             )}
+                        </div>
+
+                        {/* Points of Interest */}
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="h-6 w-1 bg-indigo-500 rounded-full"></div>
+                                <h4 className="text-sm font-bold text-slate-700 uppercase tracking-widest">Points of Interest & Favorite Locations</h4>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className={labelClass}>Schools / Kindergarten (Names & Addresses)</label>
+                                    <textarea
+                                        rows={2}
+                                        value={formData.points_of_interest?.schools || ''}
+                                        onChange={(e) => handlePOIChange('schools', e.target.value)}
+                                        className={inputClass}
+                                        placeholder="e.g. British School, Str. Scolii 5..."
+                                    ></textarea>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Supermarkets / Markets</label>
+                                    <textarea
+                                        rows={2}
+                                        value={formData.points_of_interest?.supermarkets || ''}
+                                        onChange={(e) => handlePOIChange('supermarkets', e.target.value)}
+                                        className={inputClass}
+                                        placeholder="e.g. Lidl, Mega Image, Piata Unirii..."
+                                    ></textarea>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Parks / Recreation</label>
+                                    <textarea
+                                        rows={2}
+                                        value={formData.points_of_interest?.parks || ''}
+                                        onChange={(e) => handlePOIChange('parks', e.target.value)}
+                                        className={inputClass}
+                                        placeholder="e.g. Parcul Central, Gym, Tennis Court..."
+                                    ></textarea>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Office / Work Location</label>
+                                    <textarea
+                                        rows={2}
+                                        value={formData.points_of_interest?.work || ''}
+                                        onChange={(e) => handlePOIChange('work', e.target.value)}
+                                        className={inputClass}
+                                        placeholder="e.g. Business Park City, Str. Muncii 10..."
+                                    ></textarea>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className={labelClass}>Other Important Places</label>
+                                    <textarea
+                                        rows={2}
+                                        value={formData.points_of_interest?.others || ''}
+                                        onChange={(e) => handlePOIChange('others', e.target.value)}
+                                        className={inputClass}
+                                        placeholder="e.g. Hospital, Parents home, specific metro station..."
+                                    ></textarea>
+                                </div>
+                            </div>
                         </div>
 
                         <div>
