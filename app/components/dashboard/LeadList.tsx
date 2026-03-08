@@ -397,14 +397,22 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex flex-col gap-1">
+                                                <div className="flex flex-col gap-1 items-start">
                                                     {lead.email && (
-                                                        <a href={`mailto:${lead.email}`} className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors">
+                                                        <a
+                                                            href={`mailto:${lead.email}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors w-fit"
+                                                        >
                                                             <Mail className="w-3.5 h-3.5 opacity-60" /> {lead.email}
                                                         </a>
                                                     )}
                                                     {lead.phone && (
-                                                        <a href={`tel:${lead.phone}`} className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors">
+                                                        <a
+                                                            href={`tel:${lead.phone}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="text-sm text-slate-600 hover:text-orange-600 flex items-center gap-1.5 transition-colors w-fit"
+                                                        >
                                                             <Phone className="w-3.5 h-3.5 opacity-60" /> {lead.phone}
                                                         </a>
                                                     )}
