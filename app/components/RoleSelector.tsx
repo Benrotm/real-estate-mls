@@ -11,9 +11,10 @@ interface RoleSelectorProps {
     selectedRole?: UserType;
     onSelect?: (role: UserType) => void;
     title?: string;
+    verticalOnly?: boolean;
 }
 
-export default function RoleSelector({ mode, selectedRole, onSelect, title = "I am..." }: RoleSelectorProps) {
+export default function RoleSelector({ mode, selectedRole, onSelect, title = "I am...", verticalOnly = false }: RoleSelectorProps) {
     const [hoveredRole, setHoveredRole] = useState<UserType | null>(null);
 
     // Default to 'owner' if no selection is provided in navigation mode for visual consistency,
@@ -54,11 +55,11 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
     const activeRole = hoveredRole || selectedRole || 'owner';
     const activeStyle = selectorStyles[activeRole];
 
-    const RoleButton = ({ role, label, subLabel, icon: Icon, colorClass, borderClass, bgClass, textClass, shadowClass }: any) => {
+    const RoleButton = ({ role, label, subLabel, icon: Icon, colorClass, borderClass, bgClass, textClass, shadowClass, verticalOnly }: any) => {
         const isSelected = selectedRole === role;
 
         // Base classes
-        const baseClasses = `flex-1 flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left relative overflow-hidden group`;
+        const baseClasses = `${verticalOnly ? 'w-full' : 'flex-1'} flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left relative overflow-hidden group`;
         const activeClasses = isSelected
             ? `${borderClass} ${bgClass}`
             : `border-transparent hover:bg-slate-700/50`; // Default hover for non-selected
@@ -108,7 +109,7 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
             <h1 className={`text-3xl md:text-4xl font-bold ${activeStyle.text} mb-1 drop-shadow-2xl text-center mt-2 transition-all duration-500`} style={{ WebkitTextStroke: `1px ${activeStyle.stroke}`, textShadow: `0 0 20px ${activeStyle.shadow}` }}>
                 {title}
             </h1>
-            <div className="flex flex-col md:flex-row gap-2">
+            <div className={`flex flex-col ${verticalOnly ? '' : 'md:flex-row'} gap-2`}>
                 <RoleButton
                     role="owner"
                     label="Property Owner"
@@ -119,6 +120,7 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
                     bgClass="bg-cyan-500/20"
                     textClass="text-cyan-300"
                     shadowClass="shadow-cyan-500/50"
+                    verticalOnly={verticalOnly}
                 />
                 <RoleButton
                     role="client"
@@ -130,6 +132,7 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
                     bgClass="bg-rose-500/20"
                     textClass="text-rose-300"
                     shadowClass="shadow-rose-500/50"
+                    verticalOnly={verticalOnly}
                 />
                 <RoleButton
                     role="agent"
@@ -141,6 +144,7 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
                     bgClass="bg-emerald-500/20"
                     textClass="text-emerald-300"
                     shadowClass="shadow-emerald-500/50"
+                    verticalOnly={verticalOnly}
                 />
                 <RoleButton
                     role="developer"
@@ -152,6 +156,7 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
                     bgClass="bg-fuchsia-500/20"
                     textClass="text-fuchsia-300"
                     shadowClass="shadow-fuchsia-500/50"
+                    verticalOnly={verticalOnly}
                 />
             </div>
         </div>

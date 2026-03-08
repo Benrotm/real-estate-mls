@@ -113,6 +113,7 @@ export default function SignUpPage() {
                         selectedRole={role}
                         onSelect={setRole}
                         title="Choose Your Role"
+                        verticalOnly={true}
                     />
                 </div>
 
