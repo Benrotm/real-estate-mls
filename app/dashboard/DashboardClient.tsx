@@ -176,7 +176,7 @@ export default function DashboardClient({
                                 <item.icon className="w-5 h-5" />
                                 {item.name}
                             </div>
-                            {item.name === 'Chat' && chatUnread > 0 && (
+                            {(item.name === 'Chat' || item.name === 'Support Chat') && chatUnread > 0 && (
                                 <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                                     {chatUnread > 9 ? '9+' : chatUnread}
                                 </span>
