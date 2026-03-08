@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban } from 'lucide-react';
 import {
     PROPERTY_TYPES,
     TRANSACTION_TYPES,
@@ -40,7 +40,7 @@ interface LeadFormProps {
     onCancel?: () => void;
 }
 
-type TabType = 'contact' | 'classification' | 'viewing';
+type TabType = 'contact' | 'classification' | 'viewing' | 'profile';
 
 export default function LeadForm({ initialData, isEditing = false, onCancel }: LeadFormProps) {
     const [isLoading, setIsLoading] = useState(false);
@@ -83,7 +83,18 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
         budget_vs_market: 'Moderate',
         agent_interest_rating: 'Moderate',
         viewed_count_agent: 0,
-        outcome_status: 'Still Searching'
+        outcome_status: 'Still Searching',
+        age: 0,
+        kids_count: 0,
+        marital_status: 'Single',
+        occupation: '',
+        employer: '',
+        living_situation: 'In Town',
+        current_city: '',
+        is_smoker: false,
+        has_pets: false,
+        pets_details: '',
+        social_notes: ''
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -95,6 +106,9 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                 ...prev,
                 [name]: value === '' ? 0 : Number(value)
             }));
+        } else if (type === 'checkbox') {
+            const { checked } = e.target as HTMLInputElement;
+            setFormData(prev => ({ ...prev, [name]: checked }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -167,6 +181,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                 <TabButton id="contact" label="Contact Data" icon={User} />
                 <TabButton id="classification" label="Classification" icon={ClipboardList} />
                 <TabButton id="viewing" label="Lead Score" icon={Eye} />
+                <TabButton id="profile" label="Lead Profile" icon={Fingerprint} />
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
@@ -582,13 +597,125 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                         </div>
                     </div>
                 )}
+
+                {/* PROFILE TAB */}
+                {activeTab === 'profile' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 mb-6">
+                            <h3 className="text-indigo-800 font-bold flex items-center gap-2 mb-1">
+                                <Fingerprint className="w-5 h-5" />
+                                Social & Lifestyle Profile
+                            </h3>
+                            <p className="text-indigo-600/80 text-sm">Details about the lead's social status, family, and habits.</p>
+                        </div>
+
+                        {/* Personal & Family */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label className={labelClass}>Age</label>
+                                <input type="number" name="age" value={formData.age || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 35" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Marital Status</label>
+                                <select name="marital_status" value={formData.marital_status || 'Single'} onChange={handleChange} className={selectClass}>
+                                    <option value="Single">Single</option>
+                                    <option value="Married">Married</option>
+                                    <option value="In a Relationship">In a Relationship</option>
+                                    <option value="Divorced">Divorced</option>
+                                    <option value="Widowed">Widowed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Number of Kids</label>
+                                <input type="number" name="kids_count" value={formData.kids_count || 0} onChange={handleChange} className={inputClass} />
+                            </div>
+                        </div>
+
+                        {/* Employment */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className={labelClass}>Occupation / Job Title</label>
+                                <div className="relative">
+                                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input type="text" name="occupation" value={formData.occupation || ''} onChange={handleChange} className={`${inputClass} pl-11`} placeholder="e.g. Software Engineer" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Employer / Company</label>
+                                <div className="relative">
+                                    <Home className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input type="text" name="employer" value={formData.employer || ''} onChange={handleChange} className={`${inputClass} pl-11`} placeholder="e.g. Tech Corp" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Living Situation */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className={labelClass}>Living Situation</label>
+                                <select name="living_situation" value={formData.living_situation || 'In Town'} onChange={handleChange} className={selectClass}>
+                                    <option value="In Town">Lives in Town</option>
+                                    <option value="Outside Town">Lives Outside Town (Commuter)</option>
+                                    <option value="Relocating">Relocating from another city</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Current City</label>
+                                <input type="text" name="current_city" value={formData.current_city || ''} onChange={handleChange} className={inputClass} placeholder="Where do they live now?" />
+                            </div>
+                        </div>
+
+                        {/* Lifestyle Habits */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-xl border border-slate-200">
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <Ban className="w-5 h-5 text-slate-400" />
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-700">Smoker</p>
+                                        <p className="text-xs text-slate-500">Does the lead smoke?</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" name="is_smoker" checked={formData.is_smoker || false} onChange={handleChange} className="w-5 h-5 text-orange-600 rounded border-slate-300 focus:ring-orange-500" />
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <Dog className="w-5 h-5 text-slate-400" />
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-700">Has Pets</p>
+                                        <p className="text-xs text-slate-500">Dogs, cats, or others?</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" name="has_pets" checked={formData.has_pets || false} onChange={handleChange} className="w-5 h-5 text-orange-600 rounded border-slate-300 focus:ring-orange-500" />
+                            </div>
+
+                            {formData.has_pets && (
+                                <div className="md:col-span-2 animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
+                                    <label className={labelClass}>Pet Details (What kind, how many?)</label>
+                                    <input type="text" name="pets_details" value={formData.pets_details || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 2 Golden Retrievers" />
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className={labelClass}>Buyer Profile Notes & Other Data</label>
+                            <textarea
+                                name="social_notes"
+                                rows={4}
+                                placeholder="Write any other useful information for a buyer profile (e.g., hobbies, specific needs for kids, commuting preferences...)"
+                                value={formData.social_notes || ''}
+                                onChange={handleChange}
+                                className={inputClass}
+                            ></textarea>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Footer */}
             <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-between items-center">
                 <div className="text-xs text-slate-400 font-mono">
                     {/* Optional Status text */}
-                    Tab: {activeTab === 'viewing' ? 'LEAD SCORE' : activeTab.toUpperCase()}
+                    Tab: {activeTab === 'viewing' ? 'LEAD SCORE' : activeTab === 'profile' ? 'LEAD PROFILE' : activeTab.toUpperCase()}
                 </div>
                 <div className="flex gap-3">
                     {onCancel && (

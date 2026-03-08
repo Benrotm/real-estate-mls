@@ -50,7 +50,17 @@ export interface LeadData {
     last_viewing_date?: string;
     outcome_status?: string;
     next_steps_summary?: string;
-    score?: number;
+    social_notes?: string;
+    age?: number;
+    kids_count?: number;
+    marital_status?: string;
+    occupation?: string;
+    employer?: string;
+    living_situation?: string;
+    current_city?: string;
+    is_smoker?: boolean;
+    has_pets?: boolean;
+    pets_details?: string;
 
     // Relations (optional for form, present in fetch)
     creator?: { full_name: string };
