@@ -413,6 +413,21 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                                                        title="Archive Lead"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                    <Link
+                                                        href={`${basePath}/${lead.id}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all border border-transparent hover:border-slate-200"
+                                                        title="Edit Details"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Link>
+                                                    <button
                                                         onClick={(e) => { e.stopPropagation(); toggleExpand(lead.id); }}
                                                         className={`p-2 rounded-lg transition-colors border ${expandedLeadId === lead.id ? 'bg-orange-50 text-orange-600 border-orange-200' : 'text-slate-400 hover:text-slate-900 border-transparent hover:bg-slate-100 hover:border-slate-300'}`}
                                                         title={expandedLeadId === lead.id ? "Hide Details" : "Show Details"}
@@ -435,8 +450,7 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                                     {(lead.name || '?').charAt(0).toUpperCase()}
                                                                 </div>
                                                                 <div>
-                                                                    <h3 className="text-xl font-black tracking-tight">{lead.name || 'Unnamed Lead'}</h3>
-                                                                    <div className="flex items-center gap-2 text-slate-300 text-sm font-medium mt-1">
+                                                                    <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
                                                                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {new Date(lead.updated_at).toLocaleDateString()}</span>
                                                                         <span className="w-1 h-1 rounded-full bg-slate-500"></span>
                                                                         <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id.slice(0, 8)}</span>
@@ -444,7 +458,7 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-3">
-                                                                <div className="text-right mr-4">
+                                                                <div className="text-right">
                                                                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Lead Score</div>
                                                                     <div className="flex items-center gap-2">
                                                                         <div className={`text-2xl font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
@@ -453,12 +467,6 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                                         <Activity className={`w-6 h-6 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
                                                                     </div>
                                                                 </div>
-                                                                <Link
-                                                                    href={`${basePath}/${lead.id}`}
-                                                                    className="px-6 py-3 bg-white text-slate-900 rounded-xl font-black hover:bg-slate-100 transition-all shadow-lg flex items-center gap-2"
-                                                                >
-                                                                    View Full Profile <ChevronRight className="w-4 h-4" />
-                                                                </Link>
                                                             </div>
                                                         </div>
 
@@ -487,7 +495,37 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                                         <div className="text-sm font-bold text-slate-900">{lead.kids_count || 0} Kids {lead.has_pets ? '• Has Pets' : ''}</div>
                                                                     </div>
                                                                 </div>
-                                                                {/* Moved to column 3 */}
+
+                                                                {/* Property Ownership Section - Moved from Column 3 */}
+                                                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                                                    <div className="flex items-center gap-2 mb-3">
+                                                                        <Building2 className="w-4 h-4 text-orange-500" />
+                                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Portfolio Status</span>
+                                                                    </div>
+
+                                                                    {!lead.already_owns_properties ? (
+                                                                        <div className="text-xs font-bold text-slate-400 italic">No existing properties owned</div>
+                                                                    ) : (
+                                                                        <div className="space-y-3">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="text-xs font-bold text-slate-700">Properties Owned</span>
+                                                                                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-md text-xs font-black">{lead.owned_properties_count || 0}</span>
+                                                                            </div>
+                                                                            <div className="flex gap-1.5 flex-wrap">
+                                                                                {lead.ownership_purpose_investment && (
+                                                                                    <span className="flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 shadow-sm">
+                                                                                        <TrendingUp className="w-3 h-3 text-orange-500" /> INVESTMENT
+                                                                                    </span>
+                                                                                )}
+                                                                                {lead.ownership_purpose_personal && (
+                                                                                    <span className="flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 shadow-sm">
+                                                                                        <User className="w-3 h-3 text-orange-500" /> PERSONAL
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
 
                                                             {/* Requirements Column */}
@@ -532,37 +570,6 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                                         <Heart className="w-3 h-3 text-red-400 fill-red-400" />
                                                                         {lead.buying_reason || 'Personal Home'}
                                                                     </div>
-                                                                </div>
-
-                                                                {/* Property Ownership Section */}
-                                                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                                                    <div className="flex items-center gap-2 mb-3">
-                                                                        <Building2 className="w-4 h-4 text-orange-500" />
-                                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Portfolio Status</span>
-                                                                    </div>
-
-                                                                    {!lead.already_owns_properties ? (
-                                                                        <div className="text-xs font-bold text-slate-400 italic">No existing properties owned</div>
-                                                                    ) : (
-                                                                        <div className="space-y-3">
-                                                                            <div className="flex items-center justify-between">
-                                                                                <span className="text-xs font-bold text-slate-700">Properties Owned</span>
-                                                                                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-md text-xs font-black">{lead.owned_properties_count || 0}</span>
-                                                                            </div>
-                                                                            <div className="flex gap-1.5 flex-wrap">
-                                                                                {lead.ownership_purpose_investment && (
-                                                                                    <span className="flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 shadow-sm">
-                                                                                        <TrendingUp className="w-3 h-3 text-orange-500" /> INVESTMENT
-                                                                                    </span>
-                                                                                )}
-                                                                                {lead.ownership_purpose_personal && (
-                                                                                    <span className="flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 shadow-sm">
-                                                                                        <User className="w-3 h-3 text-orange-500" /> PERSONAL
-                                                                                    </span>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
                                                                 </div>
 
                                                                 {/* Preferences & Dealing Breakers Section */}
@@ -611,45 +618,6 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                                 )}
                                                             </div>
                                                         </div>
-
-                                                        {/* Card Actions Footer */}
-                                                        <div className="bg-slate-50 p-6 border-t border-slate-100 flex justify-between items-center">
-                                                            <div className="flex items-center gap-6">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contact Person</span>
-                                                                    <span className="text-sm font-black text-slate-900">{lead.name}</span>
-                                                                </div>
-                                                                <div className="w-px h-8 bg-slate-200"></div>
-                                                                <div className="flex items-center gap-4">
-                                                                    {lead.email && (
-                                                                        <a href={`mailto:${lead.email}`} className="flex items-center gap-2 text-slate-600 hover:text-orange-600 transition-colors">
-                                                                            <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-200"><Mail className="w-4 h-4" /></div>
-                                                                            <span className="text-xs font-bold underline decoration-slate-200 underline-offset-4">{lead.email}</span>
-                                                                        </a>
-                                                                    )}
-                                                                    {lead.phone && (
-                                                                        <a href={`tel:${lead.phone}`} className="flex items-center gap-2 text-slate-600 hover:text-orange-600 transition-colors">
-                                                                            <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-200"><Phone className="w-4 h-4" /></div>
-                                                                            <span className="text-xs font-bold underline decoration-slate-200 underline-offset-4">{lead.phone}</span>
-                                                                        </a>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
-                                                                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl text-sm font-bold transition-all border border-transparent hover:border-red-100"
-                                                                >
-                                                                    Archive Lead
-                                                                </button>
-                                                                <Link
-                                                                    href={`${basePath}/${lead.id}`}
-                                                                    className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg text-sm"
-                                                                >
-                                                                    Edit Details
-                                                                </Link>
-                                                            </div>
-                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -692,6 +660,6 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
