@@ -10,9 +10,10 @@ interface RoleSelectorProps {
     mode: 'navigation' | 'selection';
     selectedRole?: UserType;
     onSelect?: (role: UserType) => void;
+    title?: string;
 }
 
-export default function RoleSelector({ mode, selectedRole, onSelect }: RoleSelectorProps) {
+export default function RoleSelector({ mode, selectedRole, onSelect, title = "I am..." }: RoleSelectorProps) {
     const [hoveredRole, setHoveredRole] = useState<UserType | null>(null);
 
     // Default to 'owner' if no selection is provided in navigation mode for visual consistency,
@@ -105,7 +106,7 @@ export default function RoleSelector({ mode, selectedRole, onSelect }: RoleSelec
     return (
         <div className={`bg-slate-800 p-2 rounded-2xl shadow-2xl border-2 ${activeStyle.border} max-w-5xl mx-auto mb-4 flex flex-col gap-4 transition-colors duration-500`}>
             <h1 className={`text-3xl md:text-4xl font-bold ${activeStyle.text} mb-1 drop-shadow-2xl text-center mt-2 transition-all duration-500`} style={{ WebkitTextStroke: `1px ${activeStyle.stroke}`, textShadow: `0 0 20px ${activeStyle.shadow}` }}>
-                I am...
+                {title}
             </h1>
             <div className="flex flex-col md:flex-row gap-2">
                 <RoleButton

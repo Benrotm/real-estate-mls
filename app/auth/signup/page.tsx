@@ -4,8 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
-import { Mail, Phone, Lock, Building, Users, Briefcase, Chrome, Github, Loader2 } from 'lucide-react';
+import { Mail, Phone, Lock, Chrome, Github, Loader2 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
+import RoleSelector from '@/app/components/RoleSelector';
 
 export default function SignUpPage() {
     const router = useRouter();
@@ -106,35 +107,13 @@ export default function SignUpPage() {
                 </div>
 
                 {/* Role Selection */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <button
-                        onClick={() => setRole('client')}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${role === 'client' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
-                    >
-                        <Users className={`mb-2 w-6 h-6 ${role === 'client' ? 'text-orange-600' : 'text-slate-400'}`} />
-                        <span className={`text-xs font-bold ${role === 'client' ? 'text-orange-700' : 'text-slate-500'}`}>Client</span>
-                    </button>
-                    <button
-                        onClick={() => setRole('owner')}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${role === 'owner' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
-                    >
-                        <Building className={`mb-2 w-6 h-6 ${role === 'owner' ? 'text-orange-600' : 'text-slate-400'}`} />
-                        <span className={`text-xs font-bold ${role === 'owner' ? 'text-orange-700' : 'text-slate-500'}`}>Owner</span>
-                    </button>
-                    <button
-                        onClick={() => setRole('agent')}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${role === 'agent' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
-                    >
-                        <Briefcase className={`mb-2 w-6 h-6 ${role === 'agent' ? 'text-orange-600' : 'text-slate-400'}`} />
-                        <span className={`text-xs font-bold ${role === 'agent' ? 'text-orange-700' : 'text-slate-500'}`}>Agent</span>
-                    </button>
-                    <button
-                        onClick={() => setRole('developer')}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${role === 'developer' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
-                    >
-                        <Building className={`mb-2 w-6 h-6 ${role === 'developer' ? 'text-orange-600' : 'text-slate-400'}`} />
-                        <span className={`text-xs font-bold ${role === 'developer' ? 'text-orange-700' : 'text-slate-500'}`}>Developer</span>
-                    </button>
+                <div className="-mx-4 sm:mx-0">
+                    <RoleSelector
+                        mode="selection"
+                        selectedRole={role}
+                        onSelect={setRole}
+                        title="Choose Your Role"
+                    />
                 </div>
 
                 {/* Social Login - Moved to Top */}

@@ -795,16 +795,34 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
 
         // 3g. Specific Site Logic (FluxMLS - fluxmls.immoflux.ro)
         if (url.includes('fluxmls.immoflux.ro')) {
-            // 1. Clean description - remove "Descriere" header prefix
-            if (data.description) {
-                data.description = data.description.replace(/^\s*Descriere\s*/i, '').trim();
+            // 1. Clean Title - sometimes contains metadata or price
+            if (data.title) {
+                // Remove price if it leaked into title (e.g. "Apartament 3 camere - 120.000 EUR")
+                data.title = data.title.split('-')[0].split(' - ')[0].trim();
+                // Remove "Adaugat / Modificat" noise
+                data.title = data.title.replace(/Adaugat:.*$/i, '').replace(/Modificat:.*$/i, '').trim();
             }
 
-            // 2. Parse .property-show-zone which returns "City, Area" (e.g. "Bucuresti, P-ta Muncii")
-            const zoneText = data.location_city || getText('.property-show-zone') || '';
-            const zoneCleaned = zoneText.replace(/^\s*\uf041\s*/, '').trim(); // Remove map marker unicode
+            // 2. Clean description - remove "Descriere" header and structural noise
+            if (data.description) {
+                data.description = data.description
+                    .replace(/^\s*Descriere\s*/i, '')
+                    .replace(/Localizare\s*[\s\S]*?(?=Caracteristici|$)/i, '') // Remove localization info if it's redundant
+                    .replace(/Proximitate\s*[\s\S]*?(?=Caracteristici|$)/i, '')
+                    .replace(/Caracteristici principale\s*[\s\S]*?(?=Utilitati|$)/i, '')
+                    .trim();
+
+                // If the description became empty due to over-aggressive cleaning or were mostly headers, 
+                // we might want a fallback, but usually "Descriere" is followed by actual text.
+            }
+
+            // 3. Parse .property-show-zone which returns "City, Area"
+            // We favor this over greedy selectors to avoid technical specs leaking into address
+            const zoneText = getText('.property-show-zone') || getText('.slidePanel-inner-section .hide-on-private a') || data.location_city || '';
+            const zoneCleaned = zoneText.replace(/^\s*\uf041\s*/, '').trim();
 
             if (zoneCleaned) {
+                // Split by comma but be careful of multiple commas
                 const parts = zoneCleaned.split(',').map((p: string) => p.trim()).filter((p: string) => p);
                 if (parts.length >= 2) {
                     data.location_city = parts[0];
