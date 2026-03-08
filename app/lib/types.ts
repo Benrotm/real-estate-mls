@@ -62,6 +62,8 @@ export interface LeadData {
     has_pets?: boolean;
     pets_details?: string;
     points_of_interest?: Record<string, string>;
+    buying_reason?: string;
+    negative_preferences?: string;
 
     // Relations (optional for form, present in fetch)
     creator?: { full_name: string };

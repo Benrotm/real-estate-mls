@@ -95,7 +95,9 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
         has_pets: false,
         pets_details: '',
         social_notes: '',
-        points_of_interest: {}
+        points_of_interest: {},
+        buying_reason: 'Locuinta Personala',
+        negative_preferences: ''
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -621,7 +623,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                         </div>
 
                         {/* Personal & Family */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <div>
                                 <label className={labelClass}>Age</label>
                                 <input type="number" name="age" value={formData.age || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 35" />
@@ -639,6 +641,16 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                             <div>
                                 <label className={labelClass}>Number of Kids</label>
                                 <input type="number" name="kids_count" value={formData.kids_count || 0} onChange={handleChange} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Reason for Buying</label>
+                                <select name="buying_reason" value={formData.buying_reason || 'Locuinta Personala'} onChange={handleChange} className={selectClass}>
+                                    <option value="Locuinta Personala">Locuinta Personala</option>
+                                    <option value="Investitie">Investitie</option>
+                                    <option value="Locuinta pt copii">Locuinta pt copii</option>
+                                    <option value="Locuinta de vacanta">Locuinta de vacanta</option>
+                                    <option value="Sediu">Sediu</option>
+                                </select>
                             </div>
                         </div>
 
@@ -768,16 +780,29 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                             </div>
                         </div>
 
-                        <div>
-                            <label className={labelClass}>Buyer Profile Notes & Other Data</label>
-                            <textarea
-                                name="social_notes"
-                                rows={4}
-                                placeholder="Write any other useful information for a buyer profile (e.g., hobbies, specific needs for kids, commuting preferences...)"
-                                value={formData.social_notes || ''}
-                                onChange={handleChange}
-                                className={inputClass}
-                            ></textarea>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className={labelClass}>Preferences (Ce isi doreste)</label>
+                                <textarea
+                                    name="social_notes"
+                                    rows={4}
+                                    placeholder="e.g. High floor, quiet area, near subway..."
+                                    value={formData.social_notes || ''}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                ></textarea>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Negative Preferences (Ce NU doreste)</label>
+                                <textarea
+                                    name="negative_preferences"
+                                    rows={4}
+                                    placeholder="e.g. No ground floor, no construction sites nearby..."
+                                    value={formData.negative_preferences || ''}
+                                    onChange={handleChange}
+                                    className={inputClass}
+                                ></textarea>
+                            </div>
                         </div>
                     </div>
                 )}
