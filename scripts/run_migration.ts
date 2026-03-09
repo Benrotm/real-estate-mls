@@ -39,7 +39,8 @@ const configs = [
 
 const MIGRATIONS = [
     'supabase/migrations/20260309100000_lead_sharing_rls.sql',
-    'supabase/migrations/20260309110000_match_scoring_rules.sql'
+    'supabase/migrations/20260309110000_match_scoring_rules.sql',
+    'supabase/migrations/20260309120000_extended_match_rules.sql'
 ];
 
 async function run() {

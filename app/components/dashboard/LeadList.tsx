@@ -100,6 +100,27 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
         }
     };
 
+    const handleContactPartnerLead = async (lead: any) => {
+        if (!lead.agent?.id) {
+            alert('Partner contact info not available.');
+            return;
+        }
+
+        try {
+            const { conversationId, error } = await startConversationWithUser(lead.agent.id);
+            if (error) throw new Error(error);
+
+            if (conversationId) {
+                const message = `Hi! I'm interested in collaborating on this lead: ${lead.preference_type || 'Potential Buyer'}. Let's chat!`;
+                await sendMessage(conversationId, currentUserId!, message);
+                router.push(`/dashboard/agent/chat?id=${conversationId}`);
+            }
+        } catch (err) {
+            console.error('Error starting partner chat:', err);
+            alert('Failed to start chat with partner.');
+        }
+    };
+
     const handleShareWhatsApp = (lead: LeadData) => {
         if (selectedPropertyIds.length === 0) return;
         const selectedMatches = matches.filter(m => selectedPropertyIds.includes(m.id));
@@ -575,10 +596,10 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                         </>
                                                     ) : (
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); window.location.href = `mailto:${lead.agent?.email}?subject=Collaboration for Lead: ${lead.preference_type || 'Potential Buyer'}`; }}
+                                                            onClick={(e) => { e.stopPropagation(); handleContactPartnerLead(lead); }}
                                                             className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-lg font-bold text-xs hover:bg-orange-100 transition-colors"
                                                         >
-                                                            <Mail className="w-3.5 h-3.5" /> Contact Partner
+                                                            <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
                                                         </button>
                                                     )}
                                                     <button
