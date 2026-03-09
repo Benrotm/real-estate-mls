@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/app/lib/supabase/client';
 import { User, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -15,85 +15,79 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [creating, setCreating] = useState(false);
     const [loading, setLoading] = useState(true);
     const [rawConversations, setRawConversations] = useState<any[]>([]);
-    const [sessionReadIds, setSessionReadIds] = useState<Set<string>>(new Set());
+
+    // Expert State: Use timestamps to track when a conversation was last "seen" locally.
+    // This is more robust than a simple ID set because it survives race conditions with new messages.
+    const [lastReadAt, setLastReadAt] = useState<Record<string, string>>({});
 
     // New Chat State
     const [showNewChatInput, setShowNewChatInput] = useState(false);
     const [newChatEmail, setNewChatEmail] = useState('');
     const [newChatError, setNewChatError] = useState<string | null>(null);
 
-    const fetchConversations = async (silent = false) => {
+    const fetchConversations = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
-        // 1. Get IDs of conversations this user is in
-        const { data: myConvos } = await supabase
-            .from('conversation_participants')
-            .select('conversation_id')
-            .eq('user_id', userId);
+        try {
+            // Join conversations with participants and messages in one go for efficiency
+            const { data, error } = await supabase
+                .from('conversations')
+                .select(`
+                    *,
+                    conversation_participants!inner(
+                        user_id,
+                        user:user_id ( id, full_name, email, role, avatar_url )
+                    ),
+                    messages(
+                        content,
+                        created_at,
+                        sender_id,
+                        is_read
+                    )
+                `)
+                .eq('conversation_participants.user_id', userId);
 
-        if (!myConvos || myConvos.length === 0) {
+            if (error) throw error;
+
+            if (data) {
+                const processed = data.map(conv => {
+                    const otherParticipant = conv.conversation_participants.find((p: any) => p.user_id !== userId);
+                    const displayUser: any = otherParticipant?.user || (Array.isArray(conv.conversation_participants) ? conv.conversation_participants[0]?.user : null);
+
+                    const sortedMessages = (conv.messages || []).sort((a: any, b: any) =>
+                        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                    );
+                    const lastMsg = sortedMessages[0];
+
+                    return {
+                        ...conv,
+                        otherUser: displayUser,
+                        lastMessage: lastMsg,
+                        title: displayUser ? (displayUser.full_name || displayUser.email) : 'Support Chat'
+                    };
+                });
+                setRawConversations(processed);
+            }
+        } catch (err) {
+            console.error('Error fetching conversations:', err);
+        } finally {
             setLoading(false);
-            setRawConversations([]);
-            return;
         }
+    }, [userId]);
 
-        const ids = myConvos.map(c => c.conversation_id);
-
-        // 2. Fetch conversation details + participants + messages
-        const { data } = await supabase
-            .from('conversations')
-            .select(`
-                id, 
-                created_at,
-                updated_at,
-                conversation_participants (
-                    user_id,
-                    user:user_id ( id, full_name, email, role, avatar_url )
-                ),
-                messages (
-                    content,
-                    created_at,
-                    sender_id,
-                    is_read
-                )
-            `)
-            .in('id', ids);
-
-        if (data) {
-            // Process conversations to find the "other" participant
-            const processed = data.map(conv => {
-                // Find someone who is NOT me
-                const other = conv.conversation_participants.find((p: any) => p.user_id !== userId);
-                // If I'm chatting with myself (testing) or alone, fallback
-                const displayUser: any = other?.user || (Array.isArray(conv.conversation_participants) ? conv.conversation_participants[0]?.user : null);
-
-                // Get last message
-                const sortedMessages = (conv.messages || []).sort((a: any, b: any) =>
-                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                );
-                const lastMsg = sortedMessages[0];
-
-                return {
-                    ...conv,
-                    otherUser: displayUser,
-                    lastMessage: lastMsg,
-                    // If no other user, it's just "Conversation"
-                    title: displayUser ? (displayUser.full_name || displayUser.email) : 'Support Chat'
-                };
-            });
-
-            setRawConversations(processed);
-        }
-        setLoading(false);
-    };
-
-    // Derive display conversations (The "Brain" of the sync logic)
+    // Derive display conversations
     const displayConversations = useMemo(() => {
         const processed = rawConversations.map(conv => {
-            // It's "read" if it's currently selected OR was opened this session
-            const isRead = conv.id === selectedId || sessionReadIds.has(conv.id);
+            const localReadTime = lastReadAt[conv.id] ? new Date(lastReadAt[conv.id]).getTime() : 0;
 
-            // Calculate actual unread count from raw data
-            const unreadCount = isRead ? 0 : (conv.messages || []).filter((m: any) =>
+            // A conversation is unread if:
+            // 1. It is not currently selected
+            // 2. The DB has messages from others that are !is_read
+            // 3. AND the last message is newer than our local "last seen" timestamp
+            const hasDbUnread = (conv.messages || []).some((m: any) => m.sender_id !== userId && !m.is_read);
+            const lastMsgTime = conv.lastMessage ? new Date(conv.lastMessage.created_at).getTime() : 0;
+
+            const isReadLocally = conv.id === selectedId || (localReadTime > 0 && lastMsgTime <= localReadTime);
+            const unreadCount = isReadLocally ? 0 : (conv.messages || []).filter((m: any) =>
                 m.sender_id !== userId && !m.is_read
             ).length;
 
@@ -103,79 +97,61 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             };
         });
 
-        // Sort: Unread first, then by updated_at
+        // Priority Sorting: Unread first, then by updated_at
         processed.sort((a, b) => {
             if (a.displayUnreadCount > 0 && b.displayUnreadCount === 0) return -1;
             if (a.displayUnreadCount === 0 && b.displayUnreadCount > 0) return 1;
-            // Both read or both unread, sort by time
             return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
         });
 
         return processed;
-    }, [rawConversations, selectedId, sessionReadIds, userId]);
+    }, [rawConversations, selectedId, lastReadAt, userId]);
 
-    // Update sessionReadIds when selection changes
+    // Update lastReadAt when selecting or when new data arrives for the selected chat
     useEffect(() => {
         if (selectedId) {
-            setSessionReadIds(prev => {
-                if (prev.has(selectedId)) return prev;
-                const next = new Set(prev);
-                next.add(selectedId);
-                return next;
-            });
+            setLastReadAt(prev => ({
+                ...prev,
+                [selectedId]: new Date().toISOString()
+            }));
         }
     }, [selectedId]);
 
     useEffect(() => {
         fetchConversations(rawConversations.length > 0);
 
-        // Stabilize subscription: Use a unique channel name per user to avoid overlaps
+        // Explicit, robust subscriptions
         const channel = supabase
-            .channel(`chat-list-sync-${userId}`)
+            .channel(`chat-list-expert-${userId}`)
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'messages' },
-                (payload: any) => {
-                    // CRITICAL: If a new message arrived from someone else, 
-                    // we MUST remove it from sessionReadIds so it turns green/unread again.
-                    if (payload.eventType === 'INSERT' && payload.new?.sender_id !== userId) {
-                        const cid = payload.new.conversation_id;
-                        setSessionReadIds(prev => {
-                            if (!prev.has(cid)) return prev;
-                            const next = new Set(prev);
-                            next.delete(cid);
-                            return next;
-                        });
-                    }
-                    // Silent refresh to update the list layout/counts
-                    fetchConversations(true);
-                }
+                { event: 'INSERT', schema: 'public', table: 'messages' },
+                () => fetchConversations(true)
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'messages' },
+                () => fetchConversations(true)
             )
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'conversations' },
                 () => fetchConversations(true)
             )
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('Chat list subscription active');
-                }
-            });
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId]);
+    }, [userId, fetchConversations]);
 
     const startChatByEmail = async () => {
         if (!newChatEmail.trim()) return;
         setCreating(true);
         setNewChatError(null);
-
         try {
             const { startConversationByEmail } = await import('@/app/lib/actions/chat');
             const result = await startConversationByEmail(newChatEmail.trim());
-
             if (result.error) {
                 setNewChatError(result.error);
             } else if (result.conversationId) {
@@ -191,7 +167,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         }
     };
 
-    if (loading) {
+    if (loading && rawConversations.length === 0) {
         return <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-slate-400" /></div>;
     }
 
@@ -208,7 +184,6 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 </button>
             </div>
 
-            {/* New Chat Input Area */}
             {showNewChatInput && (
                 <div className="p-3 bg-slate-100 border-b border-slate-200 animate-in slide-in-from-top-2">
                     <div className="text-xs font-semibold text-slate-500 mb-2">START A NEW CHAT</div>
@@ -246,7 +221,6 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                             onClick={() => onSelect(conv.id)}
                             className={`w-full text-left p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors flex items-center gap-3 ${selectedId === conv.id ? 'bg-orange-50 border-l-4 border-l-orange-500' : 'border-l-4 border-l-transparent'}`}
                         >
-                            {/* Avatar / Initials */}
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-lg relative ${selectedId === conv.id ? 'bg-orange-200 text-orange-700' : 'bg-slate-200 text-slate-500'}`}>
                                 {conv.otherUser?.full_name ? conv.otherUser.full_name[0].toUpperCase() : <User className="w-6 h-6" />}
                                 {conv.displayUnreadCount > 0 && (
