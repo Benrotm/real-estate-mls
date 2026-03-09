@@ -8,8 +8,7 @@ import {
 } from 'lucide-react';
 import { fetchLeads } from '@/app/lib/actions/leads';
 import LeadList from '@/app/components/dashboard/LeadList';
-
-
+import { createClient } from '@/app/lib/supabase/server';
 
 // Ensure page is dynamic to fetch latest data
 export const dynamic = 'force-dynamic';
@@ -18,7 +17,12 @@ import { hasFeature, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 import { redirect } from 'next/navigation';
 
 export default async function LeadsPage() {
-    // Feature verification removed per user request to enable access
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect('/login');
+    }
 
     const leads = await fetchLeads();
 
@@ -158,7 +162,11 @@ export default async function LeadsPage() {
                 </div>
 
                 {/* Leads List */}
-                <LeadList leads={leads} basePath="/dashboard/agent/leads" />
+                <LeadList
+                    leads={leads}
+                    basePath="/dashboard/agent/leads"
+                    currentUserId={user?.id}
+                />
             </div>
         </div>
     );

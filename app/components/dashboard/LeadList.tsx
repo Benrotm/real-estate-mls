@@ -2,13 +2,15 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp } from 'lucide-react';
+import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp, ArrowUpRight } from 'lucide-react';
 import { LeadData } from '@/app/lib/types';
 import { deleteLead } from '@/app/lib/actions/leads';
+import { findMatchingProperties } from '@/app/lib/actions/scoring';
 import { useRouter } from 'next/navigation';
 import {
     PROPERTY_TYPES,
     TRANSACTION_TYPES,
+    Property
 } from '@/app/lib/properties';
 
 const STATUS_COLORS = {
@@ -33,9 +35,10 @@ interface LeadListProps {
     leads: LeadData[];
     basePath: string; // e.g. '/dashboard/agent/leads' or '/dashboard/owner/leads'
     allowEdit?: boolean;
+    currentUserId?: string;
 }
 
-export default function LeadList({ leads, basePath, allowEdit = true }: LeadListProps) {
+export default function LeadList({ leads, basePath, allowEdit = true, currentUserId }: LeadListProps) {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeStatus, setActiveStatus] = useState<string>('all');
@@ -44,9 +47,66 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
     const [sortBy, setSortBy] = useState<'score' | 'budget' | 'urgency' | 'newest'>('newest');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
+    const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'my' | 'partner'>('all');
+
+    // Matching State
+    const [matches, setMatches] = useState<any[]>([]);
+    const [isMatchingLoading, setIsMatchingLoading] = useState(false);
+    const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>([]);
+    const [matchError, setMatchError] = useState<string | null>(null);
+
+    const handleLoadMatches = async (leadId: string) => {
+        setIsMatchingLoading(true);
+        setMatchError(null);
+        setSelectedPropertyIds([]);
+        try {
+            const results = await findMatchingProperties(leadId);
+            setMatches(results);
+        } catch (err) {
+            setMatchError('Failed to load matching properties.');
+            console.error(err);
+        } finally {
+            setIsMatchingLoading(false);
+        }
+    };
+
+    const togglePropertySelection = (id: string) => {
+        setSelectedPropertyIds(prev =>
+            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+        );
+    };
+
+    const handleShareWhatsApp = (lead: LeadData) => {
+        if (selectedPropertyIds.length === 0) return;
+        const selectedMatches = matches.filter(m => selectedPropertyIds.includes(m.id));
+        const message = `Hello ${lead.name},\n\nI found some properties that match your requirements:\n\n` +
+            selectedMatches.map(m => `* ${m.title}\n  Price: ${m.price.toLocaleString()} ${m.currency}\n  Link: ${window.location.origin}/properties/${m.id}`).join('\n\n') +
+            `\n\nLet me know if you are interested!`;
+
+        const encoded = encodeURIComponent(message);
+        const phone = lead.phone?.replace(/\D/g, '');
+        window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+    };
+
+    const handleShareEmail = (lead: LeadData) => {
+        if (selectedPropertyIds.length === 0) return;
+        const selectedMatches = matches.filter(m => selectedPropertyIds.includes(m.id));
+        const subject = encodeURIComponent('Property Matches for You');
+        const body = encodeURIComponent(`Hello ${lead.name},\n\nI found some properties that match your requirements:\n\n` +
+            selectedMatches.map(m => `${m.title}\nPrice: ${m.price.toLocaleString()} ${m.currency}\nLink: ${window.location.origin}/properties/${m.id}`).join('\n\n') +
+            `\n\nLet me know if you are interested!`);
+
+        window.location.href = `mailto:${lead.email}?subject=${subject}&body=${body}`;
+    };
 
     const toggleExpand = (id: string) => {
-        setExpandedLeadId(expandedLeadId === id ? null : id);
+        if (expandedLeadId === id) {
+            setExpandedLeadId(null);
+            setMatches([]);
+        } else {
+            setExpandedLeadId(id);
+            handleLoadMatches(id);
+        }
     };
 
     // Advanced Filter State
@@ -95,10 +155,17 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
 
     const filteredAndSortedLeads = useMemo(() => {
         let result = leads.filter(lead => {
+            // Ownership Filter
+            if (ownershipFilter === 'my' && lead.agent_id !== currentUserId) return false;
+            if (ownershipFilter === 'partner' && lead.agent_id === currentUserId) return false;
+
+            const isOwner = lead.agent_id === currentUserId;
+            const displayName = isOwner ? (lead.name || '') : 'Partner Lead';
+
             const matchesSearch =
-                (lead.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (lead.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (lead.phone?.includes(searchTerm)) ||
+                (displayName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (isOwner && lead.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (isOwner && lead.phone?.includes(searchTerm)) ||
                 (lead.preference_type?.toLowerCase().includes(searchTerm.toLowerCase()));
 
             const matchesStatus = activeStatus === 'all' || lead.status === activeStatus;
@@ -114,10 +181,10 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
             const matchesSurface = !filters.surface_min || (Number(lead.preference_surface_min || 0) >= Number(filters.surface_min));
             const matchesUrgency = filters.urgency === 'all' || lead.move_urgency === filters.urgency;
             const matchesBuyingReason = filters.buying_reason === 'all' || lead.buying_reason === filters.buying_reason;
-            const matchesOccupation = !filters.occupation || lead.occupation?.toLowerCase().includes(filters.occupation.toLowerCase());
-            const matchesSource = !filters.source || lead.source?.toLowerCase().includes(filters.source.toLowerCase());
-            const matchesPayment = filters.payment_method === 'all' || lead.payment_method === filters.payment_method;
-            const matchesInterest = filters.interest_rating === 'all' || lead.agent_interest_rating === filters.interest_rating;
+            const matchesOccupation = !filters.occupation || (isOwner && lead.occupation?.toLowerCase().includes(filters.occupation.toLowerCase()));
+            const matchesSource = !filters.source || (isOwner && lead.source?.toLowerCase().includes(filters.source.toLowerCase()));
+            const matchesPayment = filters.payment_method === 'all' || (isOwner && lead.payment_method === filters.payment_method);
+            const matchesInterest = filters.interest_rating === 'all' || (isOwner && lead.agent_interest_rating === filters.interest_rating);
 
             return matchesSearch && matchesStatus && matchesType && matchesListingType && matchesCity &&
                 matchesArea && matchesBudgetMin && matchesBudgetMax && matchesRooms && matchesSurface &&
@@ -146,7 +213,7 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
 
             return sortOrder === 'desc' ? -comparison : comparison;
         });
-    }, [leads, searchTerm, activeStatus, filters, sortBy, sortOrder]);
+    }, [leads, searchTerm, activeStatus, filters, sortBy, sortOrder, ownershipFilter, currentUserId]);
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this lead? This action cannot be undone.')) return;
@@ -221,6 +288,29 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                         </div>
                     </div>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        onClick={() => setOwnershipFilter('my')}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'my' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                    >
+                        My Leads
+                    </button>
+                    <button
+                        onClick={() => setOwnershipFilter('all')}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'all' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                    >
+                        All Leads
+                    </button>
+                    <button
+                        onClick={() => setOwnershipFilter('partner')}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'partner' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                    >
+                        Partner Leads
+                    </button>
+                </div>
+
+                <div className="h-px bg-slate-100 my-2" />
 
                 <div className="flex items-center gap-1 overflow-x-auto pb-2 md:pb-0 scrollbar-hide no-scrollbar border-t border-slate-100 pt-4">
                     {statuses.map(status => (
@@ -359,13 +449,17 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold shrink-0">
-                                                        {(lead.name || '?').charAt(0).toUpperCase()}
+                                                        {(lead.agent_id === currentUserId ? (lead.name || '?') : 'P').charAt(0).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
-                                                            {lead.name || 'Unnamed Lead'}
-                                                        </Link>
-                                                        <div className="text-xs text-slate-500">{lead.source || 'Unknown Source'}</div>
+                                                        {lead.agent_id === currentUserId ? (
+                                                            <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
+                                                                {lead.name || 'Unnamed Lead'}
+                                                            </Link>
+                                                        ) : (
+                                                            <span className="font-bold text-slate-500 italic">Partner Lead</span>
+                                                        )}
+                                                        <div className="text-xs text-slate-500">{lead.agent_id === currentUserId ? (lead.source || 'Unknown Source') : 'Shared Lead'}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -397,52 +491,70 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex flex-col gap-2 items-start">
-                                                    {lead.email && (
-                                                        <div className="flex items-center gap-2 group/link">
-                                                            <a
-                                                                href={`mailto:${lead.email}`}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="p-1.5 bg-slate-100 rounded-md text-slate-500 hover:bg-orange-100 hover:text-orange-600 transition-all border border-slate-200 hover:border-orange-200 shadow-sm"
-                                                                title={`Email ${lead.email}`}
-                                                            >
-                                                                <Mail className="w-3.5 h-3.5" />
-                                                            </a>
-                                                            <span className="text-xs font-medium text-slate-600">{lead.email}</span>
-                                                        </div>
-                                                    )}
-                                                    {lead.phone && (
-                                                        <div className="flex items-center gap-2 group/link">
-                                                            <a
-                                                                href={`tel:${lead.phone}`}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="p-1.5 bg-slate-100 rounded-md text-slate-500 hover:bg-orange-100 hover:text-orange-600 transition-all border border-slate-200 hover:border-orange-200 shadow-sm"
-                                                                title={`Call ${lead.phone}`}
-                                                            >
-                                                                <Phone className="w-3.5 h-3.5" />
-                                                            </a>
-                                                            <span className="text-xs font-medium text-slate-600">{lead.phone}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                {lead.agent_id === currentUserId ? (
+                                                    <div className="flex flex-col gap-2 items-start">
+                                                        {lead.email && (
+                                                            <div className="flex items-center gap-2 group/link">
+                                                                <a
+                                                                    href={`mailto:${lead.email}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="p-1.5 bg-slate-100 rounded-md text-slate-500 hover:bg-orange-100 hover:text-orange-600 transition-all border border-slate-200 hover:border-orange-200 shadow-sm"
+                                                                    title={`Email ${lead.email}`}
+                                                                >
+                                                                    <Mail className="w-3.5 h-3.5" />
+                                                                </a>
+                                                                <span className="text-xs font-medium text-slate-600">{lead.email}</span>
+                                                            </div>
+                                                        )}
+                                                        {lead.phone && (
+                                                            <div className="flex items-center gap-2 group/link">
+                                                                <a
+                                                                    href={`tel:${lead.phone}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="p-1.5 bg-slate-100 rounded-md text-slate-500 hover:bg-orange-100 hover:text-orange-600 transition-all border border-slate-200 hover:border-orange-200 shadow-sm"
+                                                                    title={`Call ${lead.phone}`}
+                                                                >
+                                                                    <Phone className="w-3.5 h-3.5" />
+                                                                </a>
+                                                                <span className="text-xs font-medium text-slate-600">{lead.phone}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contact Owner</span>
+                                                        <div className="text-sm font-medium text-slate-600">{lead.agent?.full_name || 'Owner Agent'}</div>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
-                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-                                                        title="Archive Lead"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                    <Link
-                                                        href={`${basePath}/${lead.id}`}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all border border-transparent hover:border-slate-200"
-                                                        title="Edit Details"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Link>
+                                                    {lead.agent_id === currentUserId ? (
+                                                        <>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
+                                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                                                                title="Archive Lead"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                            <Link
+                                                                href={`${basePath}/${lead.id}`}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all border border-transparent hover:border-slate-200"
+                                                                title="Edit Details"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </Link>
+                                                        </>
+                                                    ) : (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); window.location.href = `mailto:${lead.agent?.email}?subject=Collaboration for Lead: ${lead.preference_type || 'Potential Buyer'}`; }}
+                                                            className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-lg font-bold text-xs hover:bg-orange-100 transition-colors"
+                                                        >
+                                                            <Mail className="w-3.5 h-3.5" /> Contact Partner
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); toggleExpand(lead.id); }}
                                                         className={`p-2 rounded-lg transition-colors border ${expandedLeadId === lead.id ? 'bg-orange-50 text-orange-600 border-orange-200' : 'text-slate-400 hover:text-slate-900 border-transparent hover:bg-slate-100 hover:border-slate-300'}`}
@@ -633,6 +745,121 @@ export default function LeadList({ leads, basePath, allowEdit = true }: LeadList
                                                                     </div>
                                                                 )}
                                                             </div>
+                                                        </div>
+
+                                                        {/* Matching Properties Section */}
+                                                        <div className="border-t border-slate-100 bg-slate-50/30 p-8">
+                                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2 bg-orange-600 rounded-lg text-white shadow-lg shadow-orange-600/20">
+                                                                        <Zap className="w-5 h-5 fill-current" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">AI Matching Properties</h4>
+                                                                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Showing top compatible properties from inventory</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                {selectedPropertyIds.length > 0 && (
+                                                                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
+                                                                        <button
+                                                                            onClick={() => handleShareWhatsApp(lead)}
+                                                                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-green-600/20"
+                                                                        >
+                                                                            <Phone className="w-4 h-4" /> Share WhatsApp ({selectedPropertyIds.length})
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleShareEmail(lead)}
+                                                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-blue-600/20"
+                                                                        >
+                                                                            <Mail className="w-4 h-4" /> Share Email
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {isMatchingLoading ? (
+                                                                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                                                                    <div className="w-12 h-12 border-4 border-orange-600/20 border-t-orange-600 rounded-full animate-spin"></div>
+                                                                    <p className="text-slate-500 text-sm font-bold animate-pulse">Scanning inventory for best matches...</p>
+                                                                </div>
+                                                            ) : matchError ? (
+                                                                <div className="p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+                                                                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+                                                                    <p className="text-red-700 font-bold">{matchError}</p>
+                                                                    <button onClick={() => handleLoadMatches(lead.id)} className="mt-4 text-sm font-black text-red-600 underline">Try Again</button>
+                                                                </div>
+                                                            ) : matches.length > 0 ? (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                                                    {matches.slice(0, 6).map((property) => (
+                                                                        <div
+                                                                            key={property.id}
+                                                                            className={`group relative bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${selectedPropertyIds.includes(property.id) ? 'border-orange-600 shadow-xl ring-4 ring-orange-50' : 'border-slate-100 hover:border-slate-300 shadow-sm'}`}
+                                                                            onClick={() => togglePropertySelection(property.id)}
+                                                                        >
+                                                                            <div className="aspect-[16/9] bg-slate-100 relative overflow-hidden">
+                                                                                <img
+                                                                                    src={property.images?.[0] || '/placeholder-property.jpg'}
+                                                                                    alt={property.title}
+                                                                                    className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                                                                                />
+                                                                                <div className="absolute top-3 left-3 flex gap-2">
+                                                                                    <div className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-black rounded-lg border border-white/20 uppercase">
+                                                                                        {property.type}
+                                                                                    </div>
+                                                                                    <div className={`px-2.5 py-1 text-white text-[10px] font-black rounded-lg border border-white/20 uppercase ${property.listing_type === 'For Sale' ? 'bg-blue-600/80' : 'bg-green-600/80'}`}>
+                                                                                        {property.listing_type}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Match Score Badge */}
+                                                                                <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded-full text-xs font-black shadow-lg border border-orange-400 drop-shadow-md">
+                                                                                    <Activity className="w-3.5 h-3.5" />
+                                                                                    {property.match_score} pts
+                                                                                </div>
+
+                                                                                {/* Selection Indicator */}
+                                                                                <div className={`absolute inset-0 bg-orange-600/20 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${selectedPropertyIds.includes(property.id) ? 'opacity-100' : 'opacity-0'}`}>
+                                                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl scale-in-center">
+                                                                                        <CheckCircle className="w-8 h-8 text-orange-600" />
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="p-4">
+                                                                                <h5 className="font-black text-slate-800 text-sm truncate mb-1">{property.title}</h5>
+                                                                                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold mb-3 uppercase tracking-wider">
+                                                                                    <MapPin className="w-3 h-3" /> {property.location_city}
+                                                                                    {property.location_area && ` • ${property.location_area}`}
+                                                                                </div>
+                                                                                <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                                                                                    <div className="text-lg font-black text-orange-600 leading-none">
+                                                                                        {property.price.toLocaleString()} {property.currency}
+                                                                                    </div>
+                                                                                    <div className="flex gap-2">
+                                                                                        <Link
+                                                                                            href={`/properties/${property.id}`}
+                                                                                            target="_blank"
+                                                                                            onClick={(e) => e.stopPropagation()}
+                                                                                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
+                                                                                            title="View Property"
+                                                                                        >
+                                                                                            <ArrowUpRight className="w-4 h-4" />
+                                                                                        </Link>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="p-12 bg-slate-100/50 rounded-2xl border-2 border-dashed border-slate-200 text-center">
+                                                                    <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                                        <Home className="w-8 h-8 text-slate-400" />
+                                                                    </div>
+                                                                    <p className="text-slate-500 font-bold">No highly compatible properties found in current inventory.</p>
+                                                                    <p className="text-slate-400 text-xs mt-1">Try adjusting the lead preferences or scoring rules in Superadmin.</p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>

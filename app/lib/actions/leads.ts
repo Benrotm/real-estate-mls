@@ -164,8 +164,11 @@ export async function fetchLeads() {
 
     const { data, error } = await supabase
         .from('leads')
-        .select('*, creator:created_by(full_name)')
-        .eq('agent_id', user.id)
+        .select(`
+            *,
+            creator:created_by(full_name),
+            agent:agent_id(full_name, email, phone, avatar_url)
+        `)
         .order('created_at', { ascending: false });
 
     if (error) {

@@ -74,6 +74,12 @@ export interface LeadData {
 
     // Relations (optional for form, present in fetch)
     creator?: { full_name: string };
+    agent?: {
+        full_name: string;
+        email?: string;
+        phone?: string;
+        avatar_url?: string;
+    };
     created_at?: string;
     updated_at?: string;
     agent_id?: string;

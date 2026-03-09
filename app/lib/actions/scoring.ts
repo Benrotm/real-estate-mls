@@ -13,10 +13,10 @@ export interface ScoringRule {
     label: string;
     weight: number;
     is_active: boolean;
-    scope: 'lead' | 'property';
+    scope: 'lead' | 'property' | 'match';
 }
 
-export async function fetchScoringRules(scope?: 'lead' | 'property') {
+export async function fetchScoringRules(scope?: 'lead' | 'property' | 'match') {
     const supabase = createAdminClient();
     let query = supabase
         .from('scoring_rules')
@@ -260,4 +260,105 @@ export async function calculatePropertyScore(property: Partial<Property>): Promi
     else if (property.floor && property.total_floors && property.floor > 0 && property.floor < property.total_floors) score += getWeight('floor_intermediate');
 
     return score;
+}
+
+export async function calculateMatchScore(lead: LeadData, property: Property, rules: ScoringRule[]): Promise<number> {
+    let score = 0;
+    const getWeight = (key: string) => rules.find(r => r.criteria_key === key && r.is_active)?.weight || 0;
+
+    // 1. Transaction Type Match (CRITICAL)
+    if (lead.preference_listing_type === property.listing_type) {
+        score += getWeight('match_listing_type');
+    } else {
+        return 0; // Absolute mismatch if one is Sale and other is Rent
+    }
+
+    // 2. Property Type Match
+    if (lead.preference_type === property.type) {
+        score += getWeight('match_type');
+    }
+
+    // 3. City Match
+    if (lead.preference_location_city?.toLowerCase() === property.location_city?.toLowerCase()) {
+        score += getWeight('match_city');
+    }
+
+    // 4. Budget Check
+    if (lead.budget_max) {
+        if (property.price <= lead.budget_max) {
+            score += getWeight('match_budget');
+        } else if (property.price <= lead.budget_max * 1.1) {
+            // Within 10% margin
+            score += Math.round(getWeight('match_budget') * 0.5);
+        }
+    }
+
+    // 5. Rooms Check
+    if (lead.preference_rooms_min && property.rooms) {
+        if (property.rooms >= lead.preference_rooms_min) {
+            score += getWeight('match_rooms');
+        }
+    }
+
+    // 6. Surface Check
+    if (lead.preference_surface_min && property.area_usable) {
+        if (property.area_usable >= lead.preference_surface_min) {
+            score += getWeight('match_surface');
+        }
+    }
+
+    // 7. Comfort / Interior / Furnishing Matching
+    if (lead.preference_comfort && property.comfort === lead.preference_comfort) {
+        score += getWeight('match_comfort');
+    }
+    if (lead.preference_furnishing && property.furnishing === lead.preference_furnishing) {
+        score += getWeight('match_furnishing');
+    }
+    if (lead.preference_partitioning && property.partitioning === lead.preference_partitioning) {
+        score += getWeight('match_partitioning');
+    }
+
+    // 8. Features Matching
+    if (lead.preference_features && lead.preference_features.length > 0 && property.features) {
+        const matchingFeatures = lead.preference_features.filter(f => property.features.includes(f));
+        score += matchingFeatures.length * getWeight('match_features');
+    }
+
+    return score;
+}
+
+export async function findMatchingProperties(leadId: string) {
+    const supabase = await createClient();
+
+    // 1. Fetch Lead
+    const { data: lead, error: leadError } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('id', leadId)
+        .single();
+
+    if (leadError || !lead) return [];
+
+    // 2. Fetch Active Properties (filtered by basic transaction/type for performance if needed)
+    // For now we fetch all active properties and score them
+    const { data: properties, error: propError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('status', 'active');
+
+    if (propError || !properties) return [];
+
+    // 3. Fetch Match Rules
+    const rules = await fetchScoringRules('match');
+
+    // 4. Calculate scores and sort
+    const matches = await Promise.all(properties.map(async (p) => {
+        const score = await calculateMatchScore(lead as LeadData, p as Property, rules);
+        return { ...p, match_score: score };
+    }));
+
+    // Return properties with significant score (> 0) sorted by score
+    return matches
+        .filter(m => m.match_score > 0)
+        .sort((a, b) => b.match_score - a.match_score);
 }
