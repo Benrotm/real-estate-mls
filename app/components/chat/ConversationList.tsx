@@ -129,24 +129,25 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     useEffect(() => {
         fetchConversations(rawConversations.length > 0);
 
-        // Subscribe to changes in messages and conversations
+        // Stabilize subscription: Use a unique channel name per user to avoid overlaps
         const channel = supabase
-            .channel(`chat_list_v4:${userId}`)
+            .channel(`chat-list-sync-${userId}`)
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'messages' },
                 (payload: any) => {
-                    // 1. If a new message arrived from someone else, remove from sessionReadIds 
-                    // so it can show as unread again (unless it's currently selected)
+                    // CRITICAL: If a new message arrived from someone else, 
+                    // we MUST remove it from sessionReadIds so it turns green/unread again.
                     if (payload.eventType === 'INSERT' && payload.new?.sender_id !== userId) {
+                        const cid = payload.new.conversation_id;
                         setSessionReadIds(prev => {
-                            if (!prev.has(payload.new.conversation_id)) return prev;
+                            if (!prev.has(cid)) return prev;
                             const next = new Set(prev);
-                            next.delete(payload.new.conversation_id);
+                            next.delete(cid);
                             return next;
                         });
                     }
-                    // 2. Refresh the conversation list data
+                    // Silent refresh to update the list layout/counts
                     fetchConversations(true);
                 }
             )
@@ -155,7 +156,11 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 { event: '*', schema: 'public', table: 'conversations' },
                 () => fetchConversations(true)
             )
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('Chat list subscription active');
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);
@@ -253,15 +258,15 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <span className={`truncate ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''}`}>
+                                    <span className={`truncate font-normal ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900 !font-semibold' : ''}`}>
                                         {conv.title}
                                     </span>
-                                    <span className={`text-[10px] shrink-0 ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                                    <span className={`text-[10px] shrink-0 font-normal ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
                                         {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <p className={`text-xs truncate pr-2 ${conv.displayUnreadCount > 0 ? 'text-green-700' : 'text-slate-500'}`}>
+                                    <p className={`text-xs truncate pr-2 font-normal ${conv.displayUnreadCount > 0 ? 'text-green-700' : 'text-slate-500'}`}>
                                         {conv.lastMessage ? (
                                             <>
                                                 {conv.lastMessage.sender_id === userId ? 'You: ' : ''}
