@@ -48,16 +48,16 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 updated_at,
                 conversation_participants (
                     user_id,
-                    user:user_id ( full_name, email, role, avatar_url )
+                    user:user_id ( id, full_name, email, role, avatar_url )
                 ),
                 messages (
                     content,
                     created_at,
-                    sender_id
+                    sender_id,
+                    is_read
                 )
             `)
-            .in('id', ids)
-            .order('updated_at', { ascending: false });
+            .in('id', ids);
 
         if (data) {
             // Process conversations to find the "other" participant
@@ -73,14 +73,28 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 );
                 const lastMsg = sortedMessages[0];
 
+                // Calculate unread count (messages from others that are NOT read)
+                const unreadCount = (conv.messages || []).filter((m: any) =>
+                    m.sender_id !== userId && !m.is_read
+                ).length;
+
                 return {
                     ...conv,
                     otherUser: displayUser,
                     lastMessage: lastMsg,
+                    unreadCount,
                     // If no other user, it's just "Conversation"
                     title: displayUser ? (displayUser.full_name || displayUser.email) : 'Support Chat'
                 };
             });
+
+            // Sort: Unread first, then by updated_at
+            processed.sort((a, b) => {
+                if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
+                if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
+                return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+            });
+
             setConversations(processed);
         }
         setLoading(false);
@@ -89,7 +103,28 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     useEffect(() => {
         fetchConversations();
 
-        // Subscription for real-time updates could go here
+        // Subscribe to messages change to update conversation list (last message, unread status, sorting)
+        const channel = supabase
+            .channel('conversation_list_updates')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'messages' },
+                () => {
+                    fetchConversations();
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'conversations' },
+                () => {
+                    fetchConversations();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [userId]);
 
     const handleCreateSupportCheck = async () => {
@@ -180,19 +215,26 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                             className={`w-full text-left p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors flex items-center gap-3 ${selectedId === conv.id ? 'bg-orange-50 border-l-4 border-l-orange-500' : 'border-l-4 border-l-transparent'}`}
                         >
                             {/* Avatar / Initials */}
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-bold text-lg ${selectedId === conv.id ? 'bg-orange-200 text-orange-700' : 'bg-slate-200 text-slate-500'}`}>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-bold text-lg relative ${selectedId === conv.id ? 'bg-orange-200 text-orange-700' : 'bg-slate-200 text-slate-500'}`}>
                                 {conv.otherUser?.full_name ? conv.otherUser.full_name[0].toUpperCase() : <User className="w-6 h-6" />}
+                                {conv.unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                                        {conv.unreadCount}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <span className={`font-semibold truncate ${selectedId === conv.id ? 'text-slate-900' : 'text-slate-700'}`}>
+                                    <span className={`truncate ${conv.unreadCount > 0 ? 'font-black text-green-600' : 'font-semibold text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''}`}>
                                         {conv.title}
                                     </span>
-                                    <span className="text-[10px] text-slate-400 shrink-0">{formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}</span>
+                                    <span className={`text-[10px] shrink-0 ${conv.unreadCount > 0 ? 'text-green-600 font-bold' : 'text-slate-400'}`}>
+                                        {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <p className="text-xs text-slate-500 truncate pr-2">
+                                    <p className={`text-xs truncate pr-2 ${conv.unreadCount > 0 ? 'text-green-700 font-bold' : 'text-slate-500'}`}>
                                         {conv.lastMessage ? (
                                             <>
                                                 {conv.lastMessage.sender_id === userId ? 'You: ' : ''}

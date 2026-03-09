@@ -6,6 +6,7 @@ import { UserProfile } from '@/app/lib/auth';
 import { Send, ArrowLeft, Loader2, Paperclip, Image as ImageIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { markMessagesAsRead } from '@/app/lib/actions/chat';
 
 interface ChatWindowProps {
     conversationId: string;
@@ -55,6 +56,10 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
 
             if (data) setMessages(data);
             setLoading(false);
+
+            // Mark as read
+            await markMessagesAsRead(conversationId, currentUser.id);
+
             setTimeout(() => scrollToBottom(true), 100);
         };
 
@@ -71,10 +76,15 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
                     table: 'messages',
                     filter: `conversation_id=eq.${conversationId}`
                 },
-                (payload) => {
+                async (payload) => {
                     const newMsg = payload.new;
                     setMessages((prev) => [...prev, newMsg]);
                     scrollToBottom();
+
+                    // If message is from someone else, mark it as read
+                    if (newMsg.sender_id !== currentUser.id) {
+                        await markMessagesAsRead(conversationId, currentUser.id);
+                    }
                 }
             )
             .subscribe();
@@ -258,9 +268,8 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
                                         <div className={`text-[10px] flex items-center justify-end gap-1 opacity-70 ${isMe ? 'text-violet-100' : 'text-slate-400'} mt-1`}>
                                             <span>{format(new Date(msg.created_at), 'MMM d, h:mm a')}</span>
                                             {isMe && (
-                                                <span className="font-bold tracking-tighter text-[11px]">
-                                                    {/* Simulate read receipt - in real app check msg.is_read */}
-                                                    ✓✓
+                                                <span className={`font-bold tracking-tighter text-[11px] ${msg.is_read ? 'text-blue-300' : 'text-violet-100/50'}`}>
+                                                    {msg.is_read ? '✓✓' : '✓'}
                                                 </span>
                                             )}
                                         </div>

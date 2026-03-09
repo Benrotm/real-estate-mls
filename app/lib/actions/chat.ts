@@ -433,3 +433,21 @@ export async function getUserSupportConversation() {
         return { error: e.message };
     }
 }
+
+export async function markMessagesAsRead(conversationId: string, userId: string) {
+    try {
+        const supabase = await createClient();
+        const { error } = await supabase
+            .from('messages')
+            .update({ is_read: true })
+            .eq('conversation_id', conversationId)
+            .neq('sender_id', userId)
+            .eq('is_read', false);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error: any) {
+        console.error('markMessagesAsRead error:', error);
+        return { success: false, error: error.message };
+    }
+}
