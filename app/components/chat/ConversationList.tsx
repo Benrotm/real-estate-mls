@@ -21,8 +21,8 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [newChatEmail, setNewChatEmail] = useState('');
     const [newChatError, setNewChatError] = useState<string | null>(null);
 
-    const fetchConversations = async () => {
-        setLoading(true);
+    const fetchConversations = async (silent = false) => {
+        if (!silent) setLoading(true);
         // 1. Get IDs of conversations this user is in
         const { data: myConvos } = await supabase
             .from('conversation_participants')
@@ -101,23 +101,30 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     };
 
     useEffect(() => {
-        fetchConversations();
+        fetchConversations(conversations.length > 0);
 
         // Subscribe to messages change to update conversation list (last message, unread status, sorting)
         const channel = supabase
             .channel('conversation_list_updates')
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'messages' },
+                { event: 'INSERT', schema: 'public', table: 'messages' },
                 () => {
-                    fetchConversations();
+                    fetchConversations(true);
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'messages' },
+                () => {
+                    fetchConversations(true);
                 }
             )
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'conversations' },
                 () => {
-                    fetchConversations();
+                    fetchConversations(true);
                 }
             )
             .subscribe();
@@ -125,7 +132,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId]);
+    }, [userId, selectedId]);
 
     const handleCreateSupportCheck = async () => {
         // If we are owner/agent, maybe we want 'Support' button separately?
@@ -226,15 +233,15 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <span className={`truncate ${conv.unreadCount > 0 ? 'font-black text-green-600' : 'font-semibold text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''}`}>
+                                    <span className={`truncate ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''} font-semibold`}>
                                         {conv.title}
                                     </span>
-                                    <span className={`text-[10px] shrink-0 ${conv.unreadCount > 0 ? 'text-green-600 font-bold' : 'text-slate-400'}`}>
+                                    <span className={`text-[10px] shrink-0 ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
                                         {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <p className={`text-xs truncate pr-2 ${conv.unreadCount > 0 ? 'text-green-700 font-bold' : 'text-slate-500'}`}>
+                                    <p className={`text-xs truncate pr-2 ${conv.unreadCount > 0 ? 'text-green-700' : 'text-slate-500'}`}>
                                         {conv.lastMessage ? (
                                             <>
                                                 {conv.lastMessage.sender_id === userId ? 'You: ' : ''}
