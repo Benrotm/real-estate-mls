@@ -17,7 +17,6 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [rawConversations, setRawConversations] = useState<any[]>([]);
 
     // Expert State: Use timestamps to track when a conversation was last "seen" locally.
-    // This is more robust than a simple ID set because it survives race conditions with new messages.
     const [lastReadAt, setLastReadAt] = useState<Record<string, string>>({});
 
     // New Chat State
@@ -28,12 +27,29 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const fetchConversations = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
         try {
-            // Join conversations with participants and messages in one go for efficiency
+            // 1. First, get IDs of conversations this user is in
+            const { data: myConvos, error: myConvosError } = await supabase
+                .from('conversation_participants')
+                .select('conversation_id')
+                .eq('user_id', userId);
+
+            if (myConvosError) throw myConvosError;
+
+            if (!myConvos || myConvos.length === 0) {
+                setLoading(false);
+                setRawConversations([]);
+                return;
+            }
+
+            const convoIds = myConvos.map(c => c.conversation_id);
+
+            // 2. Fetch full conversation details (participants + messages) for those IDs
+            // Note: We do NOT filter the sub-query here, so we get ALL participants correctly.
             const { data, error } = await supabase
                 .from('conversations')
                 .select(`
                     *,
-                    conversation_participants!inner(
+                    conversation_participants(
                         user_id,
                         user:user_id ( id, full_name, email, role, avatar_url )
                     ),
@@ -44,13 +60,15 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                         is_read
                     )
                 `)
-                .eq('conversation_participants.user_id', userId);
+                .in('id', convoIds);
 
             if (error) throw error;
 
             if (data) {
                 const processed = data.map(conv => {
+                    // Correctly find someone who is NOT me
                     const otherParticipant = conv.conversation_participants.find((p: any) => p.user_id !== userId);
+                    // Fallback to the first participant if searching for "other" fails (e.g. self-chat)
                     const displayUser: any = otherParticipant?.user || (Array.isArray(conv.conversation_participants) ? conv.conversation_participants[0]?.user : null);
 
                     const sortedMessages = (conv.messages || []).sort((a: any, b: any) =>
@@ -79,17 +97,26 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         const processed = rawConversations.map(conv => {
             const localReadTime = lastReadAt[conv.id] ? new Date(lastReadAt[conv.id]).getTime() : 0;
 
-            // A conversation is unread if:
-            // 1. It is not currently selected
-            // 2. The DB has messages from others that are !is_read
-            // 3. AND the last message is newer than our local "last seen" timestamp
-            const hasDbUnread = (conv.messages || []).some((m: any) => m.sender_id !== userId && !m.is_read);
+            // Unread Logic:
+            // 1. If currently selected, it's read (unreadCount = 0)
+            // 2. If the last message is newer than our local "seen" timestamp, it's unread
+            // 3. Otherwise, fall back to DB is_read status
             const lastMsgTime = conv.lastMessage ? new Date(conv.lastMessage.created_at).getTime() : 0;
 
-            const isReadLocally = conv.id === selectedId || (localReadTime > 0 && lastMsgTime <= localReadTime);
-            const unreadCount = isReadLocally ? 0 : (conv.messages || []).filter((m: any) =>
-                m.sender_id !== userId && !m.is_read
-            ).length;
+            let unreadCount = 0;
+            if (conv.id !== selectedId) {
+                if (localReadTime > 0 && lastMsgTime > localReadTime) {
+                    // New message arrived after we last looked
+                    unreadCount = (conv.messages || []).filter((m: any) =>
+                        m.sender_id !== userId && new Date(m.created_at).getTime() > localReadTime
+                    ).length || 1;
+                } else if (localReadTime === 0) {
+                    // Initial load or never looked, use DB is_read
+                    unreadCount = (conv.messages || []).filter((m: any) =>
+                        m.sender_id !== userId && !m.is_read
+                    ).length;
+                }
+            }
 
             return {
                 ...conv,
@@ -107,7 +134,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         return processed;
     }, [rawConversations, selectedId, lastReadAt, userId]);
 
-    // Update lastReadAt when selecting or when new data arrives for the selected chat
+    // Update lastReadAt when selection changes
     useEffect(() => {
         if (selectedId) {
             setLastReadAt(prev => ({
@@ -120,17 +147,12 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     useEffect(() => {
         fetchConversations(rawConversations.length > 0);
 
-        // Explicit, robust subscriptions
+        // Robust Real-time sync: Watching for table changes
         const channel = supabase
-            .channel(`chat-list-expert-${userId}`)
+            .channel(`chat-list-repair-${userId}`)
             .on(
                 'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'messages' },
-                () => fetchConversations(true)
-            )
-            .on(
-                'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'messages' },
+                { event: '*', schema: 'public', table: 'messages' },
                 () => fetchConversations(true)
             )
             .on(
@@ -138,7 +160,11 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 { event: '*', schema: 'public', table: 'conversations' },
                 () => fetchConversations(true)
             )
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('Chat list real-time sync active');
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);
