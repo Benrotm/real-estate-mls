@@ -131,11 +131,24 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
         // Subscribe to changes in messages and conversations
         const channel = supabase
-            .channel(`chat_list_v3:${userId}`)
+            .channel(`chat_list_v4:${userId}`)
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'messages' },
-                () => fetchConversations(true)
+                (payload: any) => {
+                    // 1. If a new message arrived from someone else, remove from sessionReadIds 
+                    // so it can show as unread again (unless it's currently selected)
+                    if (payload.eventType === 'INSERT' && payload.new?.sender_id !== userId) {
+                        setSessionReadIds(prev => {
+                            if (!prev.has(payload.new.conversation_id)) return prev;
+                            const next = new Set(prev);
+                            next.delete(payload.new.conversation_id);
+                            return next;
+                        });
+                    }
+                    // 2. Refresh the conversation list data
+                    fetchConversations(true);
+                }
             )
             .on(
                 'postgres_changes',
