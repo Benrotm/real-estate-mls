@@ -2,10 +2,11 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp, ArrowUpRight, MessageSquare, Info } from 'lucide-react';
 import { LeadData } from '@/app/lib/types';
 import { deleteLead } from '@/app/lib/actions/leads';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
+import { startConversationWithUser, sendMessage } from '@/app/lib/actions/chat';
 import { useRouter } from 'next/navigation';
 import {
     PROPERTY_TYPES,
@@ -76,6 +77,27 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
         setSelectedPropertyIds(prev =>
             prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
         );
+    };
+
+    const handleContactPartner = async (property: any, leadId: string) => {
+        if (!property.owner?.id) {
+            alert('Partner contact info not available.');
+            return;
+        }
+
+        try {
+            const { conversationId, error } = await startConversationWithUser(property.owner.id);
+            if (error) throw new Error(error);
+
+            if (conversationId) {
+                const message = `Hi! I noticed a match between my lead (${leadId}) and your property (${property.id}). Let's collaborate!`;
+                await sendMessage(conversationId, currentUserId!, message);
+                router.push(`/dashboard/agent/chat?id=${conversationId}`);
+            }
+        } catch (err) {
+            console.error('Error starting partner chat:', err);
+            alert('Failed to start chat with partner.');
+        }
     };
 
     const handleShareWhatsApp = (lead: LeadData) => {
@@ -859,6 +881,18 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                                                                 {property.price.toLocaleString()} {property.currency}
                                                                                             </div>
                                                                                             <div className="flex gap-2">
+                                                                                                {property.owner_id !== currentUserId && (
+                                                                                                    <button
+                                                                                                        onClick={(e) => {
+                                                                                                            e.stopPropagation();
+                                                                                                            handleContactPartner(property, lead.id);
+                                                                                                        }}
+                                                                                                        className="p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-colors"
+                                                                                                        title="Contact Partner"
+                                                                                                    >
+                                                                                                        <MessageSquare className="w-4 h-4" />
+                                                                                                    </button>
+                                                                                                )}
                                                                                                 <Link
                                                                                                     href={`/properties/${property.id}`}
                                                                                                     target="_blank"

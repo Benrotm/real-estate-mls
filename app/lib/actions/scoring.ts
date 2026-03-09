@@ -343,7 +343,7 @@ export async function findMatchingProperties(leadId: string) {
     // For now we fetch all active properties and score them
     const { data: properties, error: propError } = await supabase
         .from('properties')
-        .select('*')
+        .select('*, owner:profiles!properties_owner_id_fkey(id, full_name, email, phone, avatar_url)')
         .eq('status', 'active');
 
     if (propError || !properties) return [];

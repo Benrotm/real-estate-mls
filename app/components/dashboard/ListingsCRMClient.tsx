@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PropertyWithOffers, PropertyOffer, PropertyInquiry, updateOfferStatus, updateInquiryStatus, deleteInquiry } from '@/app/lib/actions/offers';
 import { deleteProperty } from '@/app/lib/actions/properties';
 import { findMatchingLeads } from '@/app/lib/actions/scoring';
+import { startConversationWithUser, sendMessage } from '@/app/lib/actions/chat';
 import { LeadData } from '@/app/lib/types';
 import {
     Eye, Heart, MessageCircle, DollarSign, Share2,
@@ -249,6 +250,27 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
         const subject = encodeURIComponent(`Property Match: ${property.title}`);
         const body = encodeURIComponent(`Hello ${lead.name},\n\nI found a property that matches your requirements: ${property.title}\nPrice: ${property.price.toLocaleString()} ${property.currency}\nLink: ${window.location.origin}/properties/${property.id}`);
         window.location.href = `mailto:${lead.email}?subject=${subject}&body=${body}`;
+    };
+
+    const handleContactPartner = async (lead: any) => {
+        if (!lead.agent?.id) {
+            alert('Partner contact info not available.');
+            return;
+        }
+
+        try {
+            const { conversationId, error } = await startConversationWithUser(lead.agent.id);
+            if (error) throw new Error(error);
+
+            if (conversationId) {
+                const message = `Hi! I noticed a match between my property (${property.id}) and your lead (${lead.id}). Let's collaborate!`;
+                await sendMessage(conversationId, currentUserId!, message);
+                router.push(`/dashboard/agent/chat?id=${conversationId}`);
+            }
+        } catch (err) {
+            console.error('Error starting partner chat:', err);
+            alert('Failed to start chat with partner.');
+        }
     };
 
     const pendingOffers = property.offers.filter(o => o.status === 'pending').length;
@@ -584,14 +606,7 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                                                 </>
                                                             ) : (
                                                                 <button
-                                                                    onClick={() => {
-                                                                        // Logic to contact partner (could open chat)
-                                                                        if (lead.agent?.phone) {
-                                                                            window.open(`tel:${lead.agent.phone}`);
-                                                                        } else {
-                                                                            alert('Partner contact info not available.');
-                                                                        }
-                                                                    }}
+                                                                    onClick={() => handleContactPartner(lead)}
                                                                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
                                                                 >
                                                                     <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
