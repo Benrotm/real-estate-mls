@@ -167,7 +167,7 @@ export async function fetchLeads() {
         .select(`
             *,
             creator:created_by(full_name),
-            agent:agent_id(full_name, email, phone, avatar_url)
+            agent:agent_id(id, full_name, email, phone, avatar_url)
         `)
         .order('created_at', { ascending: false });
 
