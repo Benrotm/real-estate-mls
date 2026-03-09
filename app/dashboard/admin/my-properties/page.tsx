@@ -5,12 +5,16 @@ import { Download } from 'lucide-react';
 import { PropertyWithOffers } from '@/app/lib/actions/offers';
 import PropertySearchFilters from '@/app/components/PropertySearchFilters';
 import { Suspense } from 'react';
+import { createClient } from '@/app/lib/supabase/server';
 
 export const metadata = {
     title: 'My Properties | Admin Dashboard',
 };
 
 export default async function MyPropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
     const filters = await searchParams;
     const propertiesRaw = await getUserProperties(filters);
 
@@ -57,7 +61,11 @@ export default async function MyPropertiesPage({ searchParams }: { searchParams:
                     <PropertySearchFilters basePath="/dashboard/admin/my-properties" />
                 </Suspense>
             </div>
-            <ListingsCRMClient properties={properties} headerAction={importButton} />
+            <ListingsCRMClient
+                properties={properties}
+                headerAction={importButton}
+                currentUserId={user?.id}
+            />
         </div>
     );
 }

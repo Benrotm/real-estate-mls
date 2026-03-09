@@ -3,7 +3,16 @@
 import { useState } from 'react';
 import { PropertyWithOffers, PropertyOffer, PropertyInquiry, updateOfferStatus, updateInquiryStatus, deleteInquiry } from '@/app/lib/actions/offers';
 import { deleteProperty } from '@/app/lib/actions/properties';
-import { Eye, Heart, MessageCircle, DollarSign, Share2, ChevronDown, ChevronUp, Check, X, Clock, Edit, ExternalLink, Plus, Building2, MapPin, Calendar, Award, MessageSquare, Trash2 } from 'lucide-react';
+import { findMatchingLeads } from '@/app/lib/actions/scoring';
+import { LeadData } from '@/app/lib/types';
+import {
+    Eye, Heart, MessageCircle, DollarSign, Share2,
+    ChevronDown, ChevronUp, Check, X, Clock, Edit,
+    ExternalLink, Plus, Building2, MapPin, Calendar,
+    Award, MessageSquare, Trash2, Zap, User, Phone,
+    Mail, AlertCircle, Info, Users, Smartphone, Send,
+    Activity
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import PropertyManageButtons from '../PropertyManageButtons';
@@ -11,6 +20,7 @@ import PropertyManageButtons from '../PropertyManageButtons';
 interface ListingsCRMClientProps {
     properties: PropertyWithOffers[];
     headerAction?: React.ReactNode;
+    currentUserId?: string;
 }
 
 function formatCurrency(amount: number, currency: string = 'EUR') {
@@ -199,11 +209,51 @@ function InquiryRow({ inquiry, onStatusUpdate }: { inquiry: PropertyInquiry; onS
     );
 }
 
-function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
+function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOffers; currentUserId?: string }) {
     const router = useRouter();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isInquiriesExpanded, setIsInquiriesExpanded] = useState(false);
+    const [isMatchesExpanded, setIsMatchesExpanded] = useState(false);
+    const [matchingLeads, setMatchingLeads] = useState<any[]>([]);
+    const [isMatchingLoading, setIsMatchingLoading] = useState(false);
+    const [matchError, setMatchError] = useState<string | null>(null);
+    const [filterMode, setFilterMode] = useState<'all' | 'my'>('all');
     const [_, forceUpdate] = useState(0);
+
+    const handleLoadMatches = async () => {
+        setIsMatchingLoading(true);
+        setMatchError(null);
+        try {
+            const results = await findMatchingLeads(property.id);
+            setMatchingLeads(results);
+        } catch (err) {
+            setMatchError('Failed to load matching leads.');
+            console.error(err);
+        } finally {
+            setIsMatchingLoading(false);
+        }
+    };
+
+    const toggleMatches = () => {
+        const next = !isMatchesExpanded;
+        setIsMatchesExpanded(next);
+        if (next && matchingLeads.length === 0) {
+            handleLoadMatches();
+        }
+    };
+
+    const handleWhatsAppLead = (lead: LeadData) => {
+        const message = `Hello ${lead.name},\n\nI found a property that matches your requirements: ${property.title}\nPrice: ${property.price.toLocaleString()} ${property.currency}\nLink: ${window.location.origin}/properties/${property.id}`;
+        const encoded = encodeURIComponent(message);
+        const phone = lead.phone?.replace(/\D/g, '');
+        window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+    };
+
+    const handleEmailLead = (lead: LeadData) => {
+        const subject = encodeURIComponent(`Property Match: ${property.title}`);
+        const body = encodeURIComponent(`Hello ${lead.name},\n\nI found a property that matches your requirements: ${property.title}\nPrice: ${property.price.toLocaleString()} ${property.currency}\nLink: ${window.location.origin}/properties/${property.id}`);
+        window.location.href = `mailto:${lead.email}?subject=${subject}&body=${body}`;
+    };
 
     const pendingOffers = property.offers.filter(o => o.status === 'pending').length;
     const acceptedOffers = property.offers.filter(o => o.status === 'accepted').length;
@@ -411,11 +461,148 @@ function PropertyCRMCard({ property }: { property: PropertyWithOffers }) {
                     )}
                 </div>
             )}
+
+            {/* Matching Section */}
+            <div className="border-t border-slate-100">
+                <button
+                    onClick={toggleMatches}
+                    className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                    <span className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-orange-500 fill-current" />
+                        AI Matched Leads
+                    </span>
+                    {isMatchesExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {isMatchesExpanded && (
+                    <div className="px-5 pb-5">
+                        <div className="flex bg-slate-100 p-1 rounded-lg w-fit mb-4">
+                            <button
+                                onClick={() => setFilterMode('all')}
+                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filterMode === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                All Compatible
+                            </button>
+                            <button
+                                onClick={() => setFilterMode('my')}
+                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filterMode === 'my' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                My Leads Only
+                            </button>
+                        </div>
+
+                        {isMatchingLoading ? (
+                            <div className="flex flex-col items-center justify-center py-8 gap-3">
+                                <Activity className="w-6 h-6 text-orange-500 animate-pulse" />
+                                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest animate-pulse">Scanning leads for compatibility...</p>
+                            </div>
+                        ) : matchError ? (
+                            <div className="p-6 bg-red-50 border border-red-100 rounded-xl text-center">
+                                <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
+                                <p className="text-red-700 text-sm font-bold">{matchError}</p>
+                                <button onClick={handleLoadMatches} className="mt-2 text-xs font-black text-red-600 underline uppercase">Retry Scan</button>
+                            </div>
+                        ) : (() => {
+                            const filtered = matchingLeads.filter(l => filterMode === 'all' || l.agent_id === currentUserId);
+
+                            if (filtered.length === 0) {
+                                return (
+                                    <div className="p-8 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 text-center">
+                                        <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                        <p className="text-slate-500 font-bold text-sm">No compatible leads found.</p>
+                                        <p className="text-slate-400 text-xs mt-1">Try adjusting matching rules in Superadmin.</p>
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div className="space-y-3">
+                                    {filtered.map((lead) => {
+                                        const isOwnLead = lead.agent_id === currentUserId;
+                                        return (
+                                            <div key={lead.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:border-orange-200 hover:shadow-md transition-all group">
+                                                <div className="flex items-center gap-3 mb-3 sm:mb-0">
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black ${isOwnLead ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                        {isOwnLead ? (lead.name?.charAt(0).toUpperCase() || '?') : <User className="w-6 h-6" />}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-slate-900">
+                                                                {isOwnLead ? lead.name : 'Partner Lead'}
+                                                            </span>
+                                                            <span className="px-2 py-0.5 bg-orange-600 text-white text-[10px] font-black rounded-lg">
+                                                                {lead.match_score} pts
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 font-medium">
+                                                            {isOwnLead ? (
+                                                                <>
+                                                                    <Smartphone className="w-3.5 h-3.5 text-slate-400" /> {lead.phone || 'No phone'}
+                                                                    <span className="mx-1">•</span>
+                                                                    <Mail className="w-3.5 h-3.5 text-slate-400" /> {lead.email || 'No email'}
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Users className="w-3.5 h-3.5 text-indigo-500" /> Agent: {lead.agent?.full_name || 'Anonymous Partner'}
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {isOwnLead ? (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleWhatsAppLead(lead)}
+                                                                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                                                            >
+                                                                <Send className="w-3.5 h-3.5" /> WhatsApp
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleEmailLead(lead)}
+                                                                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
+                                                            >
+                                                                <Mail className="w-3.5 h-3.5" /> Email
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => {
+                                                                // Logic to contact partner (could open chat)
+                                                                if (lead.agent?.phone) {
+                                                                    window.open(`tel:${lead.agent.phone}`);
+                                                                } else {
+                                                                    alert('Partner contact info not available.');
+                                                                }
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
+                                                        >
+                                                            <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
+                                                        </button>
+                                                    )}
+                                                    <Link
+                                                        href={`/dashboard/agent/leads?id=${lead.id}`}
+                                                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+                                                        title="View Requirements"
+                                                    >
+                                                        <Info className="w-4 h-4" />
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
 
-export default function ListingsCRMClient({ properties, headerAction }: ListingsCRMClientProps) {
+export default function ListingsCRMClient({ properties, headerAction, currentUserId }: ListingsCRMClientProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(15);
 
@@ -560,7 +747,7 @@ export default function ListingsCRMClient({ properties, headerAction }: Listings
                 <>
                     <div className="space-y-4">
                         {visibleProperties.map((property) => (
-                            <PropertyCRMCard key={property.id} property={property} />
+                            <PropertyCRMCard key={property.id} property={property} currentUserId={currentUserId} />
                         ))}
                     </div>
 
@@ -591,7 +778,7 @@ export default function ListingsCRMClient({ properties, headerAction }: Listings
                                 )
                             )}
                             <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
                                 disabled={currentPage >= totalPages}
                                 className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-violet-100 hover:text-violet-700 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
                             >

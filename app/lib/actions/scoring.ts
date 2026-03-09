@@ -362,3 +362,38 @@ export async function findMatchingProperties(leadId: string) {
         .filter(m => m.match_score > 0)
         .sort((a, b) => b.match_score - a.match_score);
 }
+
+export async function findMatchingLeads(propertyId: string) {
+    const supabase = await createClient();
+
+    // 1. Fetch Property
+    const { data: property, error: propError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', propertyId)
+        .single();
+
+    if (propError || !property) return [];
+
+    // 2. Fetch All Leads with Agent info
+    const { data: leads, error: leadError } = await supabase
+        .from('leads')
+        .select('*, agent:profiles!leads_agent_id_fkey(full_name, email, phone, avatar_url)')
+        .order('created_at', { ascending: false });
+
+    if (leadError || !leads) return [];
+
+    // 3. Fetch Match Rules
+    const rules = await fetchScoringRules('match');
+
+    // 4. Calculate scores and sort
+    const matches = await Promise.all(leads.map(async (l) => {
+        const score = await calculateMatchScore(l as LeadData, property as Property, rules);
+        return { ...l, match_score: score };
+    }));
+
+    // Return leads with significant score (> 0) sorted by score
+    return matches
+        .filter(m => m.match_score > 0)
+        .sort((a, b) => b.match_score - a.match_score);
+}
