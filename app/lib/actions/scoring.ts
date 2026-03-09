@@ -422,7 +422,7 @@ export async function findMatchingLeads(propertyId: string) {
     // 2. Fetch All Leads with Agent info
     const { data: leads, error: leadError } = await supabase
         .from('leads')
-        .select('*, agent:profiles!leads_agent_id_fkey(full_name, email, phone, avatar_url)')
+        .select('*, agent:profiles!leads_agent_id_fkey(id, full_name, email, phone, avatar_url)')
         .order('created_at', { ascending: false });
 
     if (leadError || !leads) return [];
