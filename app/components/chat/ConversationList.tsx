@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/app/lib/supabase/client';
 import { User, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { markMessagesAsRead } from '@/app/lib/actions/chat';
 
 interface ConversationListProps {
     userId: string;
@@ -14,10 +15,10 @@ interface ConversationListProps {
 export default function ConversationList({ userId, selectedId, onSelect }: ConversationListProps) {
     const [loading, setLoading] = useState(true);
     const [rawConversations, setRawConversations] = useState<any[]>([]);
+    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
     const loadingRef = useRef(false);
 
-    // sessionClearedIds: Temporarily hide unread status for chats opened in this session
-    // to provide "instant" feedback before the DB update propagates.
+    // Locally cleared: Track conversations cleaned in this session to provide instant feedback
     const [sessionClearedIds, setSessionClearedIds] = useState<Set<string>>(new Set());
 
     // New Chat State
@@ -26,58 +27,81 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [newChatError, setNewChatError] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
 
-    const fetchConversations = useCallback(async (silent = false) => {
+    const fetchAllData = useCallback(async (silent = false) => {
         if (loadingRef.current && silent) return;
         loadingRef.current = true;
         if (!silent) setLoading(true);
 
         try {
-            // 1. Get Conversation IDs
-            const { data: myConvos } = await supabase
+            // 1. Get Conversation IDs I participate in
+            const { data: participation } = await supabase
                 .from('conversation_participants')
                 .select('conversation_id')
                 .eq('user_id', userId);
 
-            if (!myConvos || myConvos.length === 0) {
+            if (!participation || participation.length === 0) {
                 setRawConversations([]);
+                setUnreadCounts({});
                 setLoading(false);
                 loadingRef.current = false;
                 return;
             }
 
-            const convoIds = myConvos.map(c => c.conversation_id);
+            const convoIds = participation.map(p => p.conversation_id);
 
-            // 2. Fetch full details
-            const { data, error } = await supabase
+            // 2. Fetch Unread Counts (Separate query for efficiency and bypass join limits)
+            const { data: unreadData } = await supabase
+                .from('messages')
+                .select('conversation_id')
+                .in('conversation_id', convoIds)
+                .eq('is_read', false)
+                .neq('sender_id', userId);
+
+            const counts: Record<string, number> = {};
+            unreadData?.forEach(m => {
+                counts[m.conversation_id] = (counts[m.conversation_id] || 0) + 1;
+            });
+            setUnreadCounts(counts);
+
+            // 3. Fetch Full Conversation Details (Latest message only for preview)
+            const { data: convDetails, error } = await supabase
                 .from('conversations')
                 .select(`
                     id, updated_at, created_at,
                     conversation_participants (
                         user_id,
                         user:user_id ( id, full_name, email, role, avatar_url )
-                    ),
-                    messages (
-                        id, content, created_at, sender_id, is_read
                     )
                 `)
                 .in('id', convoIds);
 
             if (error) throw error;
 
-            if (data) {
-                const processed = data.map(conv => {
-                    const otherParticipant = conv.conversation_participants.find((p: any) => p.user_id !== userId);
-                    const displayUser: any = otherParticipant?.user || (Array.isArray(conv.conversation_participants) ? conv.conversation_participants[0]?.user : null);
+            if (convDetails) {
+                // Fetch only the latest message per conversation (separately to avoid join row limits)
+                const { data: latestMessages } = await supabase
+                    .from('messages')
+                    .select('id, content, created_at, sender_id, conversation_id')
+                    .in('conversation_id', convoIds)
+                    .order('created_at', { ascending: false });
 
-                    const sortedMessages = (conv.messages || []).sort((a: any, b: any) =>
-                        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                    );
-                    const lastMsg = sortedMessages[0];
+                // Group messages by conversation (manually pick top 1 to respect row limit logic)
+                const latestMap: Record<string, any> = {};
+                latestMessages?.forEach(m => {
+                    if (!latestMap[m.conversation_id]) {
+                        latestMap[m.conversation_id] = m;
+                    }
+                });
+
+                const processed = convDetails.map(conv => {
+                    // Participant Mapping
+                    const otherParticipant = conv.conversation_participants.find((p: any) => p.user_id !== userId);
+                    const displayUser: any = otherParticipant?.user || conv.conversation_participants[0]?.user;
 
                     return {
                         ...conv,
                         otherUser: displayUser,
-                        lastMessage: lastMsg,
+                        lastMessage: latestMap[conv.id],
                         title: displayUser ? (displayUser.full_name || displayUser.email) : 'Support Chat'
                     };
                 });
@@ -94,21 +118,16 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     // Derived Display Logic
     const displayConversations = useMemo(() => {
         const processed = rawConversations.map(conv => {
-            // Count unread messages from OTHERS in the DB
-            const dbUnreadMessages = (conv.messages || []).filter((m: any) =>
-                m.sender_id !== userId && !m.is_read
-            );
+            let count = unreadCounts[conv.id] || 0;
 
-            let unreadCount = dbUnreadMessages.length;
-
-            // If it's currently selected OR was cleared in this session, override to 0
+            // Override count if it was cleared in this session
             if (conv.id === selectedId || sessionClearedIds.has(conv.id)) {
-                unreadCount = 0;
+                count = 0;
             }
 
             return {
                 ...conv,
-                displayUnreadCount: unreadCount
+                displayUnreadCount: count
             };
         });
 
@@ -120,9 +139,9 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         });
 
         return processed;
-    }, [rawConversations, selectedId, sessionClearedIds, userId]);
+    }, [rawConversations, unreadCounts, selectedId, sessionClearedIds]);
 
-    // Handle session clearing and real-time reset
+    // Cleanup session clearing on selection
     useEffect(() => {
         if (selectedId) {
             setSessionClearedIds(prev => {
@@ -131,22 +150,24 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 next.add(selectedId);
                 return next;
             });
+            // Persist the read status in DB immediately
+            markMessagesAsRead(selectedId, userId);
         }
-    }, [selectedId]);
+    }, [selectedId, userId]);
 
+    // Real-time Subscriptions
     useEffect(() => {
-        fetchConversations(rawConversations.length > 0);
+        fetchAllData(rawConversations.length > 0);
 
         const channel = supabase
-            .channel(`chat-sync-final-${userId}`)
+            .channel(`systematic-chat-${userId}`)
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'messages' },
+                { event: 'INSERT', schema: 'public', table: 'messages' },
                 (payload: any) => {
-                    // CRITICAL: If a new message arrived from someone else for a "cleared" chat,
-                    // we MUST remove it from sessionClearedIds so it can show as unread again.
-                    if (payload.eventType === 'INSERT' && payload.new?.sender_id !== userId) {
-                        const cid = payload.new.conversation_id;
+                    const cid = payload.new.conversation_id;
+                    // If a new message arrived from SOMEONE ELSE, reset the cleared state for that chat
+                    if (payload.new.sender_id !== userId) {
                         if (cid !== selectedId) {
                             setSessionClearedIds(prev => {
                                 if (!prev.has(cid)) return prev;
@@ -156,21 +177,25 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                             });
                         }
                     }
-                    // Refresh data for everyone
-                    setTimeout(() => fetchConversations(true), 150);
+                    setTimeout(() => fetchAllData(true), 200);
                 }
             )
             .on(
                 'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'messages' },
+                () => setTimeout(() => fetchAllData(true), 200)
+            )
+            .on(
+                'postgres_changes',
                 { event: '*', schema: 'public', table: 'conversations' },
-                () => setTimeout(() => fetchConversations(true), 150)
+                () => setTimeout(() => fetchAllData(true), 200)
             )
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId, fetchConversations, selectedId]);
+    }, [userId, fetchAllData, selectedId]);
 
     const startChatByEmail = async () => {
         if (!newChatEmail.trim()) return;
@@ -182,7 +207,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             if (result.error) {
                 setNewChatError(result.error);
             } else if (result.conversationId) {
-                await fetchConversations();
+                await fetchAllData();
                 onSelect(result.conversationId);
                 setShowNewChatInput(false);
                 setNewChatEmail('');
@@ -201,18 +226,18 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     return (
         <div className="flex flex-col h-full bg-slate-50">
             <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center sticky top-0 z-10">
-                <h2 className="font-bold text-slate-800 text-lg">Chats</h2>
+                <h2 className="font-bold text-slate-800 text-lg">Messages</h2>
                 <button
                     onClick={() => setShowNewChatInput(!showNewChatInput)}
                     className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition-colors"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0 1 1 0 002 0z" /></svg>
+                    <User className="h-5 w-5" />
                 </button>
             </div>
 
             {showNewChatInput && (
                 <div className="p-3 bg-slate-100 border-b border-slate-200 animate-in slide-in-from-top-1">
-                    <div className="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">New message</div>
+                    <div className="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest leading-none">New conversation</div>
                     <div className="flex gap-2">
                         <input
                             type="email"
@@ -227,7 +252,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                             disabled={creating}
                             className="bg-violet-600 text-white px-3 py-2 rounded-md text-sm hover:bg-violet-700 disabled:opacity-50"
                         >
-                            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Go'}
+                            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Start'}
                         </button>
                     </div>
                     {newChatError && <p className="text-xs text-red-500 mt-1">{newChatError}</p>}
@@ -237,8 +262,8 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             <div className="flex-1 overflow-y-auto">
                 {displayConversations.length === 0 ? (
                     <div className="p-8 text-center text-slate-400">
-                        <p className="text-sm">No conversations yet.</p>
-                        <button onClick={() => setShowNewChatInput(true)} className="text-violet-600 text-xs mt-2 hover:underline">Start a conversation</button>
+                        <p className="text-sm font-normal">No messages found.</p>
+                        <button onClick={() => setShowNewChatInput(true)} className="text-violet-600 text-xs mt-2 hover:underline font-normal">Start new chat</button>
                     </div>
                 ) : (
                     displayConversations.map((conv) => (
@@ -262,7 +287,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                                         {conv.title}
                                     </span>
                                     <span className={`text-[10px] shrink-0 font-normal ${conv.displayUnreadCount > 0 ? 'text-green-500' : 'text-slate-400'}`}>
-                                        {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
+                                        {conv.updated_at ? formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true }) : ''}
                                     </span>
                                 </div>
                                 <p className={`text-xs truncate pr-4 font-normal ${conv.displayUnreadCount > 0 ? 'text-green-700' : 'text-slate-500'}`}>
@@ -272,7 +297,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                                             {conv.lastMessage.content}
                                         </>
                                     ) : (
-                                        conv.otherUser?.email || 'No messages'
+                                        conv.otherUser?.email || 'Start chatting...'
                                     )}
                                 </p>
                             </div>
