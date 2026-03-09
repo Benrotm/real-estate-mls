@@ -6,6 +6,7 @@ import { deleteProperty } from '@/app/lib/actions/properties';
 import { findMatchingLeads } from '@/app/lib/actions/scoring';
 import { startConversationWithUser, sendMessage } from '@/app/lib/actions/chat';
 import { LeadData } from '@/app/lib/types';
+import ContactPartnerModal from '../ContactPartnerModal';
 import {
     Eye, Heart, MessageCircle, DollarSign, Share2,
     ChevronDown, ChevronUp, Check, X, Clock, Edit,
@@ -221,6 +222,10 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
     const [filterMode, setFilterMode] = useState<'all' | 'my'>('all');
     const [_, forceUpdate] = useState(0);
 
+    // Contact Partner Modal State
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [selectedLeadForContact, setSelectedLeadForContact] = useState<any>(null);
+
     const handleLoadMatches = async () => {
         setIsMatchingLoading(true);
         setMatchError(null);
@@ -252,25 +257,13 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
         window.location.href = `mailto:${lead.email}?subject=${subject}&body=${body}`;
     };
 
-    const handleContactPartner = async (lead: any) => {
+    const handleContactPartner = (lead: any) => {
         if (!lead.agent?.id) {
             alert('Partner contact info not available.');
             return;
         }
-
-        try {
-            const { conversationId, error } = await startConversationWithUser(lead.agent.id);
-            if (error) throw new Error(error);
-
-            if (conversationId) {
-                const message = `Hi! I noticed a match between my property (${property.id}) and your lead (${lead.id}). Let's collaborate!`;
-                await sendMessage(conversationId, currentUserId!, message);
-                router.push(`/dashboard/agent/chat?id=${conversationId}`);
-            }
-        } catch (err) {
-            console.error('Error starting partner chat:', err);
-            alert('Failed to start chat with partner.');
-        }
+        setSelectedLeadForContact(lead);
+        setIsContactModalOpen(true);
     };
 
     const pendingOffers = property.offers.filter(o => o.status === 'pending').length;

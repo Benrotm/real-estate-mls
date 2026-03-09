@@ -13,6 +13,7 @@ import {
     TRANSACTION_TYPES,
     Property
 } from '@/app/lib/properties';
+import ContactPartnerModal from '../ContactPartnerModal';
 
 const STATUS_COLORS = {
     new: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -57,6 +58,11 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
     const [matchError, setMatchError] = useState<string | null>(null);
     const [hasScanned, setHasScanned] = useState(false);
 
+    // Contact Partner Modal State
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [selectedPartnerForContact, setSelectedPartnerForContact] = useState<any>(null);
+    const [modalDefaultMessage, setModalDefaultMessage] = useState('');
+
     const handleLoadMatches = async (leadId: string) => {
         setIsMatchingLoading(true);
         setMatchError(null);
@@ -79,46 +85,30 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
         );
     };
 
-    const handleContactPartner = async (property: any, leadId: string) => {
+    const handleContactPartner = (property: any, leadId: string) => {
         if (!property.owner?.id) {
             alert('Partner contact info not available.');
             return;
         }
-
-        try {
-            const { conversationId, error } = await startConversationWithUser(property.owner.id);
-            if (error) throw new Error(error);
-
-            if (conversationId) {
-                const message = `Hi! I noticed a match between my lead (${leadId}) and your property (${property.id}). Let's collaborate!`;
-                await sendMessage(conversationId, currentUserId!, message);
-                router.push(`/dashboard/agent/chat?id=${conversationId}`);
-            }
-        } catch (err) {
-            console.error('Error starting partner chat:', err);
-            alert('Failed to start chat with partner.');
-        }
+        setSelectedPartnerForContact({
+            id: property.owner.id,
+            full_name: property.owner.full_name || 'Partner Agent'
+        });
+        setModalDefaultMessage(`Hi! I noticed a match between my lead (${leadId}) and your property (${property.friendly_id || property.id}). Let's collaborate!`);
+        setIsContactModalOpen(true);
     };
 
-    const handleContactPartnerLead = async (lead: any) => {
+    const handleContactPartnerLead = (lead: any) => {
         if (!lead.agent?.id) {
             alert('Partner contact info not available.');
             return;
         }
-
-        try {
-            const { conversationId, error } = await startConversationWithUser(lead.agent.id);
-            if (error) throw new Error(error);
-
-            if (conversationId) {
-                const message = `Hi! I'm interested in collaborating on this lead: ${lead.preference_type || 'Potential Buyer'}. Let's chat!`;
-                await sendMessage(conversationId, currentUserId!, message);
-                router.push(`/dashboard/agent/chat?id=${conversationId}`);
-            }
-        } catch (err) {
-            console.error('Error starting partner chat:', err);
-            alert('Failed to start chat with partner.');
-        }
+        setSelectedPartnerForContact({
+            id: lead.agent.id,
+            full_name: lead.agent.full_name || 'Partner Agent'
+        });
+        setModalDefaultMessage(`Hi! I'm interested in collaborating on this lead: ${lead.preference_type || 'Potential Buyer'}. Let's chat!`);
+        setIsContactModalOpen(true);
     };
 
     const handleShareWhatsApp = (lead: LeadData) => {
@@ -984,6 +974,20 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                     </div>
                 </div>
             </div>
+            {/* Contact Partner Modal */}
+            {selectedPartnerForContact && (
+                <ContactPartnerModal
+                    isOpen={isContactModalOpen}
+                    onClose={() => {
+                        setIsContactModalOpen(false);
+                        setSelectedPartnerForContact(null);
+                    }}
+                    partnerId={selectedPartnerForContact.id}
+                    partnerName={selectedPartnerForContact.full_name}
+                    defaultMessage={modalDefaultMessage}
+                    currentUserEmail={null}
+                />
+            )}
         </div >
     );
 }
