@@ -17,6 +17,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [rawConversations, setRawConversations] = useState<any[]>([]);
     const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
     const loadingRef = useRef(false);
+    const selectedIdRef = useRef<string | null>(selectedId);
 
     // Locally cleared: Track conversations cleaned in this session to provide instant feedback
     const [sessionClearedIds, setSessionClearedIds] = useState<Set<string>>(new Set());
@@ -26,6 +27,11 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [newChatEmail, setNewChatEmail] = useState('');
     const [newChatError, setNewChatError] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
+
+    // Synchronize ref with prop
+    useEffect(() => {
+        selectedIdRef.current = selectedId;
+    }, [selectedId]);
 
     const fetchAllData = useCallback(async (silent = false) => {
         if (loadingRef.current && silent) return;
@@ -78,14 +84,13 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             if (error) throw error;
 
             if (convDetails) {
-                // Fetch only the latest message per conversation (separately to avoid join row limits)
+                // Fetch only the latest message per conversation
                 const { data: latestMessages } = await supabase
                     .from('messages')
                     .select('id, content, created_at, sender_id, conversation_id')
                     .in('conversation_id', convoIds)
                     .order('created_at', { ascending: false });
 
-                // Group messages by conversation (manually pick top 1 to respect row limit logic)
                 const latestMap: Record<string, any> = {};
                 latestMessages?.forEach(m => {
                     if (!latestMap[m.conversation_id]) {
@@ -94,7 +99,6 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 });
 
                 const processed = convDetails.map(conv => {
-                    // Participant Mapping
                     const otherParticipant = conv.conversation_participants.find((p: any) => p.user_id !== userId);
                     const displayUser: any = otherParticipant?.user || conv.conversation_participants[0]?.user;
 
@@ -141,7 +145,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         return processed;
     }, [rawConversations, unreadCounts, selectedId, sessionClearedIds]);
 
-    // Cleanup session clearing on selection
+    // Cleanup session clearing and execute DB update on selection
     useEffect(() => {
         if (selectedId) {
             setSessionClearedIds(prev => {
@@ -155,47 +159,62 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         }
     }, [selectedId, userId]);
 
-    // Real-time Subscriptions
+    // STABLE REAL-TIME SUBSCRIPTION (Doesn't reset on selection)
     useEffect(() => {
-        fetchAllData(rawConversations.length > 0);
+        fetchAllData();
 
+        // Use a unique, stable channel per user
         const channel = supabase
-            .channel(`systematic-chat-${userId}`)
+            .channel(`realtime-chat-v3-${userId}`)
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'messages' },
                 (payload: any) => {
                     const cid = payload.new.conversation_id;
-                    // If a new message arrived from SOMEONE ELSE, reset the cleared state for that chat
-                    if (payload.new.sender_id !== userId) {
-                        if (cid !== selectedId) {
-                            setSessionClearedIds(prev => {
-                                if (!prev.has(cid)) return prev;
-                                const next = new Set(prev);
-                                next.delete(cid);
-                                return next;
-                            });
-                        }
+                    const senderId = payload.new.sender_id;
+
+                    // 1. If message is from others and NOT the currently viewed chat
+                    if (senderId !== userId && cid !== selectedIdRef.current) {
+                        // FORCE unread status in UI instantly
+                        setUnreadCounts(prev => ({
+                            ...prev,
+                            [cid]: (prev[cid] || 0) + 1
+                        }));
+
+                        // Remove from cleared session set so it turns green again
+                        setSessionClearedIds(prev => {
+                            if (!prev.has(cid)) return prev;
+                            const next = new Set(prev);
+                            next.delete(cid);
+                            return next;
+                        });
                     }
-                    setTimeout(() => fetchAllData(true), 200);
+
+                    // 2. Refresh full data in background to sync sorted positions
+                    setTimeout(() => fetchAllData(true), 150);
                 }
             )
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'messages' },
-                () => setTimeout(() => fetchAllData(true), 200)
+                (payload: any) => {
+                    // Update unread counts if a message was marked as read by others
+                    if (payload.old.is_read === false && payload.new.is_read === true) {
+                        setTimeout(() => fetchAllData(true), 150);
+                    }
+                }
             )
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'conversations' },
-                () => setTimeout(() => fetchAllData(true), 200)
+                () => setTimeout(() => fetchAllData(true), 150)
             )
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId, fetchAllData, selectedId]);
+    }, [userId, fetchAllData]); // ONLY depends on userId and stable callback
 
     const startChatByEmail = async () => {
         if (!newChatEmail.trim()) return;
@@ -275,7 +294,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-lg relative ${selectedId === conv.id ? 'bg-violet-100 text-violet-600' : 'bg-slate-200 text-slate-500'}`}>
                                 {conv.otherUser?.full_name ? conv.otherUser.full_name[0].toUpperCase() : <User className="w-6 h-6" />}
                                 {conv.displayUnreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-[10px] flex items-center justify-center rounded-full border-[2.5px] border-slate-50">
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-[10px] flex items-center justify-center rounded-full border-[2.5px] border-slate-50 shadow-sm">
                                         {conv.displayUnreadCount}
                                     </span>
                                 )}
