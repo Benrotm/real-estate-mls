@@ -436,8 +436,9 @@ export async function getUserSupportConversation() {
 
 export async function markMessagesAsRead(conversationId: string, userId: string) {
     try {
-        const supabase = await createClient();
-        const { error } = await supabase
+        // Use Admin Client to bypass RLS policies that might prevent marking others' messages as read
+        const supabaseAdmin = createAdminClient();
+        const { error } = await supabaseAdmin
             .from('messages')
             .update({ is_read: true })
             .eq('conversation_id', conversationId)
