@@ -159,7 +159,7 @@ export default function ChatWindow({ conversationId, currentUser, onBack }: Chat
             setUploadedAttachments(attachments);
         } else {
             // Update conversation updated_at for sorting
-            await supabase.from('conversations').update({ updated_at: new Date() }).eq('id', conversationId);
+            await supabase.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', conversationId);
         }
     };
 

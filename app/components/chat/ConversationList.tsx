@@ -15,6 +15,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [creating, setCreating] = useState(false);
     const [loading, setLoading] = useState(true);
     const [conversations, setConversations] = useState<any[]>([]);
+    const [locallyReadIds, setLocallyReadIds] = useState<Set<string>>(new Set());
 
     // New Chat State
     const [showNewChatInput, setShowNewChatInput] = useState(false);
@@ -74,8 +75,9 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 const lastMsg = sortedMessages[0];
 
                 // Calculate unread count (messages from others that are NOT read)
-                // If this is the currently selected conversation, treat it as read for immediate UI feedback
-                const unreadCount = selectedId === conv.id ? 0 : (conv.messages || []).filter((m: any) =>
+                // If it's the currently selected chat OR we've read it locally this session, count is 0
+                const isLocallyRead = selectedId === conv.id || locallyReadIds.has(conv.id);
+                const unreadCount = isLocallyRead ? 0 : (conv.messages || []).filter((m: any) =>
                     m.sender_id !== userId && !m.is_read
                 ).length;
 
@@ -101,17 +103,23 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         setLoading(false);
     };
 
+    // Update locallyReadIds when selection changes
+    useEffect(() => {
+        if (selectedId) {
+            setLocallyReadIds(prev => new Set(prev).add(selectedId));
+        }
+    }, [selectedId]);
+
     useEffect(() => {
         fetchConversations(conversations.length > 0);
 
         // Subscribe to any database change on messages or conversations to keep the list in sync
         const channel = supabase
-            .channel('chat_list_realtime')
+            .channel('chat_list_realtime_v2')
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'messages' },
-                (payload) => {
-                    // Trigger a re-fetch for any message change (new message, marked as read, etc.)
+                () => {
                     fetchConversations(true);
                 }
             )
@@ -119,7 +127,6 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'conversations' },
                 () => {
-                    // Trigger a re-fetch if conversation metadata changes (updated_at, etc.)
                     fetchConversations(true);
                 }
             )
@@ -128,7 +135,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId, selectedId]);
+    }, [userId]); // Decoupled from selectedId
 
     const handleCreateSupportCheck = async () => {
         // If we are owner/agent, maybe we want 'Support' button separately?
@@ -229,7 +236,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <span className={`truncate ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''} font-medium`}>
+                                    <span className={`truncate ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''}`}>
                                         {conv.title}
                                     </span>
                                     <span className={`text-[10px] shrink-0 ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
