@@ -4,10 +4,16 @@ import { useState } from 'react';
 import { ScoringRule, updateScoringRule } from '@/app/lib/actions/scoring';
 import { Loader2, Save, Target, Home, Zap } from 'lucide-react';
 
-export default function ScoringRulesEditor({ initialRules }: { initialRules: ScoringRule[] }) {
+export default function ScoringRulesEditor({
+    initialRules,
+    initialScope = 'lead'
+}: {
+    initialRules: ScoringRule[];
+    initialScope?: 'lead' | 'property' | 'match';
+}) {
     const [rules, setRules] = useState(initialRules);
     const [savingId, setSavingId] = useState<string | null>(null);
-    const [activeScope, setActiveScope] = useState<'lead' | 'property' | 'match'>('lead');
+    const [activeScope, setActiveScope] = useState<'lead' | 'property' | 'match'>(initialScope);
 
     const handleWeightChange = (id: string, newWeight: string) => {
         const weight = parseInt(newWeight) || 0;
@@ -53,8 +59,8 @@ export default function ScoringRulesEditor({ initialRules }: { initialRules: Sco
                             key={tab.id}
                             onClick={() => setActiveScope(tab.id)}
                             className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeScope === tab.id
-                                    ? 'bg-white text-orange-600 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+                                ? 'bg-white text-orange-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
                                 }`}
                         >
                             <Icon className="w-4 h-4" />

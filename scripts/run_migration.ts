@@ -4,32 +4,71 @@ import * as fs from 'fs';
 
 dotenv.config({ path: '.env.local' });
 
-let connectionString = process.env.DATABASE_URL;
+const PIN = "Imobum2026!";
+const PROJECT_REF = "cwfhcrftwsxsovexkero";
 
-if (connectionString && connectionString.includes('5432')) {
-    connectionString = connectionString.replace(':5432/', ':6543/');
-}
+const configs = [
+    // Pooler - Transaction mode (6543)
+    {
+        host: 'aws-0-eu-central-1.pooler.supabase.com',
+        port: 6543,
+        user: `postgres.${PROJECT_REF}`,
+        password: PIN,
+        database: 'postgres',
+        ssl: { rejectUnauthorized: false }
+    },
+    // Pooler - Session mode (5432)
+    {
+        host: 'aws-0-eu-central-1.pooler.supabase.com',
+        port: 5432,
+        user: `postgres.${PROJECT_REF}`,
+        password: PIN,
+        database: 'postgres',
+        ssl: { rejectUnauthorized: false }
+    },
+    // Direct connection
+    {
+        host: `db.${PROJECT_REF}.supabase.co`,
+        port: 5432,
+        user: 'postgres',
+        password: PIN,
+        database: 'postgres',
+        ssl: { rejectUnauthorized: false }
+    }
+];
 
-if (!connectionString) {
-    console.error('Missing DATABASE_URL');
-    process.exit(1);
-}
-
-const client = new Client({
-    connectionString,
-});
+const MIGRATIONS = [
+    'supabase/migrations/20260309100000_lead_sharing_rls.sql',
+    'supabase/migrations/20260309110000_match_scoring_rules.sql'
+];
 
 async function run() {
-    try {
-        await client.connect();
-        const sql = fs.readFileSync('supabase/migrations/20260223210740_add_fingerprint.sql', 'utf8');
-        await client.query(sql);
-        console.log("Migration applied successfully!");
-    } catch (err) {
-        console.error("Migration failed:", err);
-    } finally {
-        await client.end();
+    for (const config of configs) {
+        console.log(`\n--- Attempting connection to ${config.host}:${config.port} (User: ${config.user}) ---`);
+        const client = new Client(config);
+
+        try {
+            await client.connect();
+            console.log("CONNECTED!");
+
+            for (const migration of MIGRATIONS) {
+                console.log(`Applying ${migration}...`);
+                const sql = fs.readFileSync(migration, 'utf8');
+                await client.query(sql);
+                console.log(`SUCCESS: ${migration}`);
+            }
+
+            console.log("\n✅ ALL MIGRATIONS APPLIED SUCCESSFULLY!");
+            await client.end();
+            return;
+        } catch (err: any) {
+            console.error(`FAILED: ${err.message}`);
+            try { await client.end(); } catch { }
+        }
     }
+
+    console.error("\n❌ ALL CONNECTION ATTEMPTS FAILED.");
+    process.exit(1);
 }
 
 run();

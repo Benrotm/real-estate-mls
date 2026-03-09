@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -89,8 +89,9 @@ export default function DashboardClient({
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/admin/valuation/reports' },
         { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' },
         { name: 'Features', icon: Check, href: '/dashboard/admin/features' },
-        { name: 'Lead Scoring', icon: BarChart2, href: '/dashboard/admin/scoring' },
-        { name: 'Property Scoring', icon: Building, href: '/dashboard/admin/scoring/properties' },
+        { name: 'AI Lead Scoring', icon: Target, href: '/dashboard/admin/scoring' },
+        { name: 'AI Matching Engine', icon: Zap, href: '/dashboard/admin/scoring/match' },
+        { name: 'Property Quality', icon: Home, href: '/dashboard/admin/scoring/properties' },
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },

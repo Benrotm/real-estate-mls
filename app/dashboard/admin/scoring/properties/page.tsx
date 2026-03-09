@@ -13,7 +13,7 @@ export default async function PropertyScoringPage() {
                 </p>
             </div>
 
-            <ScoringRulesEditor initialRules={rules} />
+            <ScoringRulesEditor initialRules={rules} initialScope="property" />
         </div>
     );
 }
