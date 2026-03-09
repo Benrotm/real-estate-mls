@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/app/lib/supabase/client';
 import { User, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,8 +14,8 @@ interface ConversationListProps {
 export default function ConversationList({ userId, selectedId, onSelect }: ConversationListProps) {
     const [creating, setCreating] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [conversations, setConversations] = useState<any[]>([]);
-    const [locallyReadIds, setLocallyReadIds] = useState<Set<string>>(new Set());
+    const [rawConversations, setRawConversations] = useState<any[]>([]);
+    const [sessionReadIds, setSessionReadIds] = useState<Set<string>>(new Set());
 
     // New Chat State
     const [showNewChatInput, setShowNewChatInput] = useState(false);
@@ -32,15 +32,13 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
         if (!myConvos || myConvos.length === 0) {
             setLoading(false);
-            setConversations([]);
+            setRawConversations([]);
             return;
         }
 
         const ids = myConvos.map(c => c.conversation_id);
 
-        // 2. Fetch conversation details + participants + messages (limited to 1 per conversation)
-        // Note: Supabase doesn't easily support "last message" in a single select across many conversations
-        // so we'll fetch them separately or use a trick.
+        // 2. Fetch conversation details + participants + messages
         const { data } = await supabase
             .from('conversations')
             .select(`
@@ -74,76 +72,82 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 );
                 const lastMsg = sortedMessages[0];
 
-                // Calculate unread count (messages from others that are NOT read)
-                // If it's the currently selected chat OR we've read it locally this session, count is 0
-                const isLocallyRead = selectedId === conv.id || locallyReadIds.has(conv.id);
-                const unreadCount = isLocallyRead ? 0 : (conv.messages || []).filter((m: any) =>
-                    m.sender_id !== userId && !m.is_read
-                ).length;
-
                 return {
                     ...conv,
                     otherUser: displayUser,
                     lastMessage: lastMsg,
-                    unreadCount,
                     // If no other user, it's just "Conversation"
                     title: displayUser ? (displayUser.full_name || displayUser.email) : 'Support Chat'
                 };
             });
 
-            // Sort: Unread first, then by updated_at
-            processed.sort((a, b) => {
-                if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
-                if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
-                return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-            });
-
-            setConversations(processed);
+            setRawConversations(processed);
         }
         setLoading(false);
     };
 
-    // Update locallyReadIds when selection changes
+    // Derive display conversations (The "Brain" of the sync logic)
+    const displayConversations = useMemo(() => {
+        const processed = rawConversations.map(conv => {
+            // It's "read" if it's currently selected OR was opened this session
+            const isRead = conv.id === selectedId || sessionReadIds.has(conv.id);
+
+            // Calculate actual unread count from raw data
+            const unreadCount = isRead ? 0 : (conv.messages || []).filter((m: any) =>
+                m.sender_id !== userId && !m.is_read
+            ).length;
+
+            return {
+                ...conv,
+                displayUnreadCount: unreadCount
+            };
+        });
+
+        // Sort: Unread first, then by updated_at
+        processed.sort((a, b) => {
+            if (a.displayUnreadCount > 0 && b.displayUnreadCount === 0) return -1;
+            if (a.displayUnreadCount === 0 && b.displayUnreadCount > 0) return 1;
+            // Both read or both unread, sort by time
+            return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        });
+
+        return processed;
+    }, [rawConversations, selectedId, sessionReadIds, userId]);
+
+    // Update sessionReadIds when selection changes
     useEffect(() => {
         if (selectedId) {
-            setLocallyReadIds(prev => new Set(prev).add(selectedId));
+            setSessionReadIds(prev => {
+                if (prev.has(selectedId)) return prev;
+                const next = new Set(prev);
+                next.add(selectedId);
+                return next;
+            });
         }
     }, [selectedId]);
 
     useEffect(() => {
-        fetchConversations(conversations.length > 0);
+        fetchConversations(rawConversations.length > 0);
 
-        // Subscribe to any database change on messages or conversations to keep the list in sync
+        // Subscribe to changes in messages and conversations
         const channel = supabase
-            .channel('chat_list_realtime_v2')
+            .channel(`chat_list_v3:${userId}`)
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'messages' },
-                () => {
-                    fetchConversations(true);
-                }
+                () => fetchConversations(true)
             )
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'conversations' },
-                () => {
-                    fetchConversations(true);
-                }
+                () => fetchConversations(true)
             )
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId]); // Decoupled from selectedId
-
-    const handleCreateSupportCheck = async () => {
-        // If we are owner/agent, maybe we want 'Support' button separately?
-        // User asked for "WhatsApp style" - select from contacts. 
-        // For now, let's make the "+" button open the "New Chat" email input.
-        setShowNewChatInput(true);
-        setNewChatError(null);
-    };
+    }, [userId]);
 
     const startChatByEmail = async () => {
         if (!newChatEmail.trim()) return;
@@ -202,7 +206,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                         <button
                             onClick={startChatByEmail}
                             disabled={creating}
-                            className="bg-violet-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-violet-700 disabled:opacity-50"
+                            className="bg-violet-600 text-white px-3 py-2 rounded-md text-sm font-normal hover:bg-violet-700 disabled:opacity-50"
                         >
                             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Go'}
                         </button>
@@ -212,39 +216,39 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             )}
 
             <div className="flex-1 overflow-y-auto">
-                {conversations.length === 0 ? (
+                {displayConversations.length === 0 ? (
                     <div className="p-8 text-center text-slate-400">
                         <p>No conversations.</p>
-                        <button onClick={() => setShowNewChatInput(true)} className="text-violet-600 font-medium text-sm mt-2 hover:underline">Start one</button>
+                        <button onClick={() => setShowNewChatInput(true)} className="text-violet-600 text-sm mt-2 hover:underline">Start one</button>
                     </div>
                 ) : (
-                    conversations.map((conv) => (
+                    displayConversations.map((conv) => (
                         <button
                             key={conv.id}
                             onClick={() => onSelect(conv.id)}
                             className={`w-full text-left p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors flex items-center gap-3 ${selectedId === conv.id ? 'bg-orange-50 border-l-4 border-l-orange-500' : 'border-l-4 border-l-transparent'}`}
                         >
                             {/* Avatar / Initials */}
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-bold text-lg relative ${selectedId === conv.id ? 'bg-orange-200 text-orange-700' : 'bg-slate-200 text-slate-500'}`}>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-lg relative ${selectedId === conv.id ? 'bg-orange-200 text-orange-700' : 'bg-slate-200 text-slate-500'}`}>
                                 {conv.otherUser?.full_name ? conv.otherUser.full_name[0].toUpperCase() : <User className="w-6 h-6" />}
-                                {conv.unreadCount > 0 && (
+                                {conv.displayUnreadCount > 0 && (
                                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white shadow-sm">
-                                        {conv.unreadCount}
+                                        {conv.displayUnreadCount}
                                     </span>
                                 )}
                             </div>
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <span className={`truncate ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''}`}>
+                                    <span className={`truncate ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''}`}>
                                         {conv.title}
                                     </span>
-                                    <span className={`text-[10px] shrink-0 ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                                    <span className={`text-[10px] shrink-0 ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
                                         {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <p className={`text-xs truncate pr-2 ${conv.unreadCount > 0 ? 'text-green-700' : 'text-slate-500'}`}>
+                                    <p className={`text-xs truncate pr-2 ${conv.displayUnreadCount > 0 ? 'text-green-700' : 'text-slate-500'}`}>
                                         {conv.lastMessage ? (
                                             <>
                                                 {conv.lastMessage.sender_id === userId ? 'You: ' : ''}
