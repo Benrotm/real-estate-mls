@@ -74,7 +74,8 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 const lastMsg = sortedMessages[0];
 
                 // Calculate unread count (messages from others that are NOT read)
-                const unreadCount = (conv.messages || []).filter((m: any) =>
+                // If this is the currently selected conversation, treat it as read for immediate UI feedback
+                const unreadCount = selectedId === conv.id ? 0 : (conv.messages || []).filter((m: any) =>
                     m.sender_id !== userId && !m.is_read
                 ).length;
 
@@ -103,27 +104,22 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     useEffect(() => {
         fetchConversations(conversations.length > 0);
 
-        // Subscribe to messages change to update conversation list (last message, unread status, sorting)
+        // Subscribe to any database change on messages or conversations to keep the list in sync
         const channel = supabase
-            .channel('conversation_list_updates')
+            .channel('chat_list_realtime')
             .on(
                 'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'messages' },
-                () => {
+                { event: '*', schema: 'public', table: 'messages' },
+                (payload) => {
+                    // Trigger a re-fetch for any message change (new message, marked as read, etc.)
                     fetchConversations(true);
                 }
             )
             .on(
                 'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'messages' },
+                { event: '*', schema: 'public', table: 'conversations' },
                 () => {
-                    fetchConversations(true);
-                }
-            )
-            .on(
-                'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'conversations' },
-                () => {
+                    // Trigger a re-fetch if conversation metadata changes (updated_at, etc.)
                     fetchConversations(true);
                 }
             )
@@ -233,7 +229,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <span className={`truncate ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''} font-semibold`}>
+                                    <span className={`truncate ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900' : ''} font-medium`}>
                                         {conv.title}
                                     </span>
                                     <span className={`text-[10px] shrink-0 ${conv.unreadCount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
