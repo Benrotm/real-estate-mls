@@ -235,11 +235,7 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
     };
 
     const toggleMatches = () => {
-        const next = !isMatchesExpanded;
-        setIsMatchesExpanded(next);
-        if (next && matchingLeads.length === 0) {
-            handleLoadMatches();
-        }
+        setIsMatchesExpanded(!isMatchesExpanded);
     };
 
     const handleWhatsAppLead = (lead: LeadData) => {
@@ -477,124 +473,146 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
 
                 {isMatchesExpanded && (
                     <div className="px-5 pb-5">
-                        <div className="flex bg-slate-100 p-1 rounded-lg w-fit mb-4">
-                            <button
-                                onClick={() => setFilterMode('all')}
-                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filterMode === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                            >
-                                All Compatible
-                            </button>
-                            <button
-                                onClick={() => setFilterMode('my')}
-                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filterMode === 'my' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                            >
-                                My Leads Only
-                            </button>
-                        </div>
-
-                        {isMatchingLoading ? (
-                            <div className="flex flex-col items-center justify-center py-8 gap-3">
-                                <Activity className="w-6 h-6 text-orange-500 animate-pulse" />
-                                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest animate-pulse">Scanning leads for compatibility...</p>
+                        {matchingLeads.length === 0 && !isMatchingLoading && !matchError ? (
+                            <div className="py-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center px-6">
+                                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 ring-8 ring-orange-50">
+                                    <Zap className="w-8 h-8 text-orange-600 animate-pulse" />
+                                </div>
+                                <h3 className="text-slate-900 font-black text-lg mb-2">Ready to find buyers?</h3>
+                                <p className="text-slate-500 text-sm max-w-xs mb-6 font-medium">
+                                    Our AI engine will analyze your property and match it against our entire lead database.
+                                </p>
+                                <button
+                                    onClick={handleLoadMatches}
+                                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl font-black text-sm hover:scale-105 transition-all shadow-lg shadow-orange-500/25 flex items-center gap-3 active:scale-95"
+                                >
+                                    <Zap className="w-4 h-4 fill-current" />
+                                    START AI MATCH SCAN
+                                </button>
                             </div>
-                        ) : matchError ? (
-                            <div className="p-6 bg-red-50 border border-red-100 rounded-xl text-center">
-                                <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
-                                <p className="text-red-700 text-sm font-bold">{matchError}</p>
-                                <button onClick={handleLoadMatches} className="mt-2 text-xs font-black text-red-600 underline uppercase">Retry Scan</button>
-                            </div>
-                        ) : (() => {
-                            const filtered = matchingLeads.filter(l => filterMode === 'all' || l.agent_id === currentUserId);
+                        ) : (
+                            <>
+                                <div className="flex bg-slate-100 p-1 rounded-lg w-fit mb-4">
+                                    <button
+                                        onClick={() => setFilterMode('all')}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filterMode === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        All Compatible
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterMode('my')}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filterMode === 'my' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        My Leads Only
+                                    </button>
+                                </div>
 
-                            if (filtered.length === 0) {
-                                return (
-                                    <div className="p-8 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 text-center">
-                                        <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                        <p className="text-slate-500 font-bold text-sm">No compatible leads found.</p>
-                                        <p className="text-slate-400 text-xs mt-1">Try adjusting matching rules in Superadmin.</p>
+                                {isMatchingLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-8 gap-3">
+                                        <Activity className="w-6 h-6 text-orange-500 animate-pulse" />
+                                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest animate-pulse">Scanning leads for compatibility...</p>
                                     </div>
-                                );
-                            }
+                                ) : matchError ? (
+                                    <div className="p-6 bg-red-50 border border-red-100 rounded-xl text-center">
+                                        <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
+                                        <p className="text-red-700 text-sm font-bold">{matchError}</p>
+                                        <button onClick={handleLoadMatches} className="mt-2 text-xs font-black text-red-600 underline uppercase">Retry Scan</button>
+                                    </div>
+                                ) : (() => {
+                                    const filtered = matchingLeads.filter(l => filterMode === 'all' || l.agent_id === currentUserId);
 
-                            return (
-                                <div className="space-y-3">
-                                    {filtered.map((lead) => {
-                                        const isOwnLead = lead.agent_id === currentUserId;
+                                    if (filtered.length === 0) {
                                         return (
-                                            <div key={lead.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:border-orange-200 hover:shadow-md transition-all group">
-                                                <div className="flex items-center gap-3 mb-3 sm:mb-0">
-                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black ${isOwnLead ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-400'}`}>
-                                                        {isOwnLead ? (lead.name?.charAt(0).toUpperCase() || '?') : <User className="w-6 h-6" />}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-slate-900">
-                                                                {isOwnLead ? lead.name : 'Partner Lead'}
-                                                            </span>
-                                                            <span className="px-2 py-0.5 bg-orange-600 text-white text-[10px] font-black rounded-lg">
-                                                                {lead.match_score} pts
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 font-medium">
-                                                            {isOwnLead ? (
-                                                                <>
-                                                                    <Smartphone className="w-3.5 h-3.5 text-slate-400" /> {lead.phone || 'No phone'}
-                                                                    <span className="mx-1">•</span>
-                                                                    <Mail className="w-3.5 h-3.5 text-slate-400" /> {lead.email || 'No email'}
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Users className="w-3.5 h-3.5 text-indigo-500" /> Agent: {lead.agent?.full_name || 'Anonymous Partner'}
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {isOwnLead ? (
-                                                        <>
-                                                            <button
-                                                                onClick={() => handleWhatsAppLead(lead)}
-                                                                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
-                                                            >
-                                                                <Send className="w-3.5 h-3.5" /> WhatsApp
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleEmailLead(lead)}
-                                                                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
-                                                            >
-                                                                <Mail className="w-3.5 h-3.5" /> Email
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => {
-                                                                // Logic to contact partner (could open chat)
-                                                                if (lead.agent?.phone) {
-                                                                    window.open(`tel:${lead.agent.phone}`);
-                                                                } else {
-                                                                    alert('Partner contact info not available.');
-                                                                }
-                                                            }}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
-                                                        >
-                                                            <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
-                                                        </button>
-                                                    )}
-                                                    <Link
-                                                        href={`/dashboard/agent/leads?id=${lead.id}`}
-                                                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
-                                                        title="View Requirements"
-                                                    >
-                                                        <Info className="w-4 h-4" />
-                                                    </Link>
-                                                </div>
+                                            <div className="p-8 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 text-center">
+                                                <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                                <p className="text-slate-500 font-bold text-sm">No compatible leads found.</p>
+                                                <p className="text-slate-400 text-xs mt-1">Try adjusting matching rules in Superadmin.</p>
+                                                <button onClick={handleLoadMatches} className="mt-4 text-xs font-black text-orange-600 underline uppercase">Scan Again</button>
                                             </div>
                                         );
-                                    })}
-                                </div>
-                            );
-                        })()}
+                                    }
+
+                                    return (
+                                        <div className="space-y-3">
+                                            {filtered.map((lead) => {
+                                                const isOwnLead = lead.agent_id === currentUserId;
+                                                return (
+                                                    <div key={lead.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:border-orange-200 hover:shadow-md transition-all group">
+                                                        <div className="flex items-center gap-3 mb-3 sm:mb-0">
+                                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black ${isOwnLead ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                                {isOwnLead ? (lead.name?.charAt(0).toUpperCase() || '?') : <User className="w-6 h-6" />}
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-slate-900">
+                                                                        {isOwnLead ? lead.name : 'Partner Lead'}
+                                                                    </span>
+                                                                    <span className="px-2 py-0.5 bg-orange-600 text-white text-[10px] font-black rounded-lg">
+                                                                        {lead.match_score} pts
+                                                                    </span>
+                                                                </div>
+                                                                <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 font-medium">
+                                                                    {isOwnLead ? (
+                                                                        <>
+                                                                            <Smartphone className="w-3.5 h-3.5 text-slate-400" /> {lead.phone || 'No phone'}
+                                                                            <span className="mx-1">•</span>
+                                                                            <Mail className="w-3.5 h-3.5 text-slate-400" /> {lead.email || 'No email'}
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Users className="w-3.5 h-3.5 text-indigo-500" /> Agent: {lead.agent?.full_name || 'Anonymous Partner'}
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {isOwnLead ? (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleWhatsAppLead(lead)}
+                                                                        className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                                                                    >
+                                                                        <Send className="w-3.5 h-3.5" /> WhatsApp
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleEmailLead(lead)}
+                                                                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
+                                                                    >
+                                                                        <Mail className="w-3.5 h-3.5" /> Email
+                                                                    </button>
+                                                                </>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        // Logic to contact partner (could open chat)
+                                                                        if (lead.agent?.phone) {
+                                                                            window.open(`tel:${lead.agent.phone}`);
+                                                                        } else {
+                                                                            alert('Partner contact info not available.');
+                                                                        }
+                                                                    }}
+                                                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
+                                                                >
+                                                                    <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
+                                                                </button>
+                                                            )}
+                                                            <Link
+                                                                href={`/dashboard/agent/leads?id=${lead.id}`}
+                                                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+                                                                title="View Requirements"
+                                                            >
+                                                                <Info className="w-4 h-4" />
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })()}
+                            </>
+                        )}
                     </div>
                 )}
             </div>

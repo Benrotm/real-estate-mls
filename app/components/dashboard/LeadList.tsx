@@ -54,10 +54,12 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
     const [isMatchingLoading, setIsMatchingLoading] = useState(false);
     const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>([]);
     const [matchError, setMatchError] = useState<string | null>(null);
+    const [hasScanned, setHasScanned] = useState(false);
 
     const handleLoadMatches = async (leadId: string) => {
         setIsMatchingLoading(true);
         setMatchError(null);
+        setHasScanned(true);
         setSelectedPropertyIds([]);
         try {
             const results = await findMatchingProperties(leadId);
@@ -103,9 +105,11 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
         if (expandedLeadId === id) {
             setExpandedLeadId(null);
             setMatches([]);
+            setHasScanned(false);
         } else {
             setExpandedLeadId(id);
-            handleLoadMatches(id);
+            setMatches([]);
+            setHasScanned(false);
         }
     };
 
@@ -778,87 +782,109 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                                 )}
                                                             </div>
 
-                                                            {isMatchingLoading ? (
-                                                                <div className="flex flex-col items-center justify-center py-12 gap-4">
-                                                                    <div className="w-12 h-12 border-4 border-orange-600/20 border-t-orange-600 rounded-full animate-spin"></div>
-                                                                    <p className="text-slate-500 text-sm font-bold animate-pulse">Scanning inventory for best matches...</p>
-                                                                </div>
-                                                            ) : matchError ? (
-                                                                <div className="p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
-                                                                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
-                                                                    <p className="text-red-700 font-bold">{matchError}</p>
-                                                                    <button onClick={() => handleLoadMatches(lead.id)} className="mt-4 text-sm font-black text-red-600 underline">Try Again</button>
-                                                                </div>
-                                                            ) : matches.length > 0 ? (
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                                                    {matches.slice(0, 6).map((property) => (
-                                                                        <div
-                                                                            key={property.id}
-                                                                            className={`group relative bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${selectedPropertyIds.includes(property.id) ? 'border-orange-600 shadow-xl ring-4 ring-orange-50' : 'border-slate-100 hover:border-slate-300 shadow-sm'}`}
-                                                                            onClick={() => togglePropertySelection(property.id)}
-                                                                        >
-                                                                            <div className="aspect-[16/9] bg-slate-100 relative overflow-hidden">
-                                                                                <img
-                                                                                    src={property.images?.[0] || '/placeholder-property.jpg'}
-                                                                                    alt={property.title}
-                                                                                    className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
-                                                                                />
-                                                                                <div className="absolute top-3 left-3 flex gap-2">
-                                                                                    <div className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-black rounded-lg border border-white/20 uppercase">
-                                                                                        {property.type}
-                                                                                    </div>
-                                                                                    <div className={`px-2.5 py-1 text-white text-[10px] font-black rounded-lg border border-white/20 uppercase ${property.listing_type === 'For Sale' ? 'bg-blue-600/80' : 'bg-green-600/80'}`}>
-                                                                                        {property.listing_type}
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {/* Match Score Badge */}
-                                                                                <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded-full text-xs font-black shadow-lg border border-orange-400 drop-shadow-md">
-                                                                                    <Activity className="w-3.5 h-3.5" />
-                                                                                    {property.match_score} pts
-                                                                                </div>
-
-                                                                                {/* Selection Indicator */}
-                                                                                <div className={`absolute inset-0 bg-orange-600/20 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${selectedPropertyIds.includes(property.id) ? 'opacity-100' : 'opacity-0'}`}>
-                                                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl scale-in-center">
-                                                                                        <CheckCircle className="w-8 h-8 text-orange-600" />
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className="p-4">
-                                                                                <h5 className="font-black text-slate-800 text-sm truncate mb-1">{property.title}</h5>
-                                                                                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold mb-3 uppercase tracking-wider">
-                                                                                    <MapPin className="w-3 h-3" /> {property.location_city}
-                                                                                    {property.location_area && ` • ${property.location_area}`}
-                                                                                </div>
-                                                                                <div className="flex items-center justify-between border-t border-slate-50 pt-3">
-                                                                                    <div className="text-lg font-black text-orange-600 leading-none">
-                                                                                        {property.price.toLocaleString()} {property.currency}
-                                                                                    </div>
-                                                                                    <div className="flex gap-2">
-                                                                                        <Link
-                                                                                            href={`/properties/${property.id}`}
-                                                                                            target="_blank"
-                                                                                            onClick={(e) => e.stopPropagation()}
-                                                                                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
-                                                                                            title="View Property"
-                                                                                        >
-                                                                                            <ArrowUpRight className="w-4 h-4" />
-                                                                                        </Link>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
+                                                            {!hasScanned && !isMatchingLoading ? (
+                                                                <div className="py-16 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center px-6">
+                                                                    <div className="w-20 h-20 bg-orange-100 rounded-3xl flex items-center justify-center mb-6 ring-8 ring-orange-50 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                                                                        <Zap className="w-10 h-10 text-orange-600 fill-current" />
+                                                                    </div>
+                                                                    <h3 className="text-slate-900 font-black text-xl mb-2">Find the Perfect Property</h3>
+                                                                    <p className="text-slate-500 text-sm max-w-sm mb-8 font-medium">
+                                                                        Our AI engine will analyze this lead's specific requirements and scan your entire inventory for the highest compatibility matches.
+                                                                    </p>
+                                                                    <button
+                                                                        onClick={() => handleLoadMatches(lead.id)}
+                                                                        className="px-10 py-4 bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 text-white rounded-xl font-black text-sm hover:scale-105 transition-all shadow-xl shadow-orange-600/25 flex items-center gap-4 active:scale-95 group"
+                                                                    >
+                                                                        <Zap className="w-5 h-5 fill-current group-hover:animate-pulse" />
+                                                                        START AI MATCH SCAN
+                                                                    </button>
                                                                 </div>
                                                             ) : (
-                                                                <div className="p-12 bg-slate-100/50 rounded-2xl border-2 border-dashed border-slate-200 text-center">
-                                                                    <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                                        <Home className="w-8 h-8 text-slate-400" />
-                                                                    </div>
-                                                                    <p className="text-slate-500 font-bold">No highly compatible properties found in current inventory.</p>
-                                                                    <p className="text-slate-400 text-xs mt-1">Try adjusting the lead preferences or scoring rules in Superadmin.</p>
-                                                                </div>
+                                                                <>
+                                                                    {isMatchingLoading ? (
+                                                                        <div className="flex flex-col items-center justify-center py-12 gap-4">
+                                                                            <div className="w-12 h-12 border-4 border-orange-600/20 border-t-orange-600 rounded-full animate-spin"></div>
+                                                                            <p className="text-slate-500 text-sm font-bold animate-pulse uppercase tracking-widest">Scanning inventory for best matches...</p>
+                                                                        </div>
+                                                                    ) : matchError ? (
+                                                                        <div className="p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+                                                                            <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+                                                                            <p className="text-red-700 font-bold">{matchError}</p>
+                                                                            <button onClick={() => handleLoadMatches(lead.id)} className="mt-4 text-sm font-black text-red-600 underline uppercase">Retry Scan</button>
+                                                                        </div>
+                                                                    ) : matches.length > 0 ? (
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                                                            {matches.slice(0, 6).map((property) => (
+                                                                                <div
+                                                                                    key={property.id}
+                                                                                    className={`group relative bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${selectedPropertyIds.includes(property.id) ? 'border-orange-600 shadow-xl ring-4 ring-orange-50' : 'border-slate-100 hover:border-slate-300 shadow-sm'}`}
+                                                                                    onClick={() => togglePropertySelection(property.id)}
+                                                                                >
+                                                                                    <div className="aspect-[16/9] bg-slate-100 relative overflow-hidden">
+                                                                                        <img
+                                                                                            src={property.images?.[0] || '/placeholder-property.jpg'}
+                                                                                            alt={property.title}
+                                                                                            className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                                                                                        />
+                                                                                        <div className="absolute top-3 left-3 flex gap-2">
+                                                                                            <div className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-black rounded-lg border border-white/20 uppercase">
+                                                                                                {property.type}
+                                                                                            </div>
+                                                                                            <div className={`px-2.5 py-1 text-white text-[10px] font-black rounded-lg border border-white/20 uppercase ${property.listing_type === 'For Sale' ? 'bg-blue-600/80' : 'bg-green-600/80'}`}>
+                                                                                                {property.listing_type}
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {/* Match Score Badge */}
+                                                                                        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded-full text-xs font-black shadow-lg border border-orange-400 drop-shadow-md">
+                                                                                            <Activity className="w-3.5 h-3.5" />
+                                                                                            {property.match_score} pts
+                                                                                        </div>
+
+                                                                                        {/* Selection Indicator */}
+                                                                                        <div className={`absolute inset-0 bg-orange-600/20 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${selectedPropertyIds.includes(property.id) ? 'opacity-100' : 'opacity-0'}`}>
+                                                                                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl scale-in-center">
+                                                                                                <CheckCircle className="w-8 h-8 text-orange-600" />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="p-4">
+                                                                                        <h5 className="font-black text-slate-800 text-sm truncate mb-1">{property.title}</h5>
+                                                                                        <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold mb-3 uppercase tracking-wider">
+                                                                                            <MapPin className="w-3 h-3" /> {property.location_city}
+                                                                                            {property.location_area && ` • ${property.location_area}`}
+                                                                                        </div>
+                                                                                        <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                                                                                            <div className="text-lg font-black text-orange-600 leading-none">
+                                                                                                {property.price.toLocaleString()} {property.currency}
+                                                                                            </div>
+                                                                                            <div className="flex gap-2">
+                                                                                                <Link
+                                                                                                    href={`/properties/${property.id}`}
+                                                                                                    target="_blank"
+                                                                                                    onClick={(e) => e.stopPropagation()}
+                                                                                                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
+                                                                                                    title="View Property"
+                                                                                                >
+                                                                                                    <ArrowUpRight className="w-4 h-4" />
+                                                                                                </Link>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="p-12 bg-slate-100/50 rounded-2xl border-2 border-dashed border-slate-200 text-center">
+                                                                            <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                                                <Home className="w-8 h-8 text-slate-400" />
+                                                                            </div>
+                                                                            <p className="text-slate-500 font-bold">No highly compatible properties found in current inventory.</p>
+                                                                            <p className="text-slate-400 text-xs mt-1">Try adjusting the lead preferences or scoring rules in Superadmin.</p>
+                                                                            <button onClick={() => handleLoadMatches(lead.id)} className="mt-4 text-xs font-black text-orange-600 underline uppercase">Scan Again</button>
+                                                                        </div>
+                                                                    )}
+                                                                </>
                                                             )}
                                                         </div>
                                                     </div>
