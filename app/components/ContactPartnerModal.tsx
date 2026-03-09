@@ -11,6 +11,7 @@ interface ContactPartnerModalProps {
     partnerName: string;
     defaultMessage: string;
     currentUserEmail: string | null;
+    currentUserId: string | null;
 }
 
 export default function ContactPartnerModal({
@@ -19,7 +20,8 @@ export default function ContactPartnerModal({
     partnerId,
     partnerName,
     defaultMessage,
-    currentUserEmail
+    currentUserEmail,
+    currentUserId
 }: ContactPartnerModalProps) {
     const [message, setMessage] = useState(defaultMessage);
     const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +50,8 @@ export default function ContactPartnerModal({
             if (chatError) throw new Error(chatError);
 
             if (conversationId) {
-                const { error: sendError } = await sendMessage(conversationId, partnerId, message);
+                if (!currentUserId) throw new Error('You must be logged in to send messages.');
+                const { error: sendError } = await sendMessage(conversationId, currentUserId, message);
                 if (sendError) throw new Error(sendError as string);
 
                 setSuccess(true);

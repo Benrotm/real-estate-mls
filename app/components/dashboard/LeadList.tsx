@@ -986,6 +986,7 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                     partnerName={selectedPartnerForContact.full_name}
                     defaultMessage={modalDefaultMessage}
                     currentUserEmail={null}
+                    currentUserId={currentUserId || null}
                 />
             )}
         </div >

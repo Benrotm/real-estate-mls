@@ -624,6 +624,21 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                     </div>
                 )}
             </div>
+            {/* Contact Partner Modal */}
+            {selectedLeadForContact && (
+                <ContactPartnerModal
+                    isOpen={isContactModalOpen}
+                    onClose={() => {
+                        setIsContactModalOpen(false);
+                        setSelectedLeadForContact(null);
+                    }}
+                    partnerId={selectedLeadForContact.agent?.id}
+                    partnerName={selectedLeadForContact.agent?.full_name || 'Partner Agent'}
+                    defaultMessage={`Hi! I noticed a match between my property (${property.friendly_id || property.id}) and your lead. Let's collaborate!`}
+                    currentUserEmail={null}
+                    currentUserId={currentUserId || null}
+                />
+            )}
         </div>
     );
 }
