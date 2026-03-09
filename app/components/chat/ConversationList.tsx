@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/app/lib/supabase/client';
 import { User, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -15,8 +15,9 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [creating, setCreating] = useState(false);
     const [loading, setLoading] = useState(true);
     const [rawConversations, setRawConversations] = useState<any[]>([]);
+    const loadingRef = useRef(false);
 
-    // Expert State: Use timestamps to track when a conversation was last "seen" locally.
+    // Expert State: Tracking last seen timestamps per conversation locally.
     const [lastReadAt, setLastReadAt] = useState<Record<string, string>>({});
 
     // New Chat State
@@ -25,39 +26,37 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     const [newChatError, setNewChatError] = useState<string | null>(null);
 
     const fetchConversations = useCallback(async (silent = false) => {
+        if (loadingRef.current) return;
+        loadingRef.current = true;
         if (!silent) setLoading(true);
+
         try {
-            // 1. First, get IDs of conversations this user is in
-            const { data: myConvos, error: myConvosError } = await supabase
+            // 1. Get Conversation IDs first to ensure clean participant hydration later
+            const { data: myConvos } = await supabase
                 .from('conversation_participants')
                 .select('conversation_id')
                 .eq('user_id', userId);
 
-            if (myConvosError) throw myConvosError;
-
             if (!myConvos || myConvos.length === 0) {
-                setLoading(false);
                 setRawConversations([]);
+                setLoading(false);
+                loadingRef.current = false;
                 return;
             }
 
             const convoIds = myConvos.map(c => c.conversation_id);
 
-            // 2. Fetch full conversation details (participants + messages) for those IDs
-            // Note: We do NOT filter the sub-query here, so we get ALL participants correctly.
+            // 2. Fetch full conversation data with participants and latest messages
             const { data, error } = await supabase
                 .from('conversations')
                 .select(`
-                    *,
-                    conversation_participants(
+                    id, updated_at, created_at,
+                    conversation_participants (
                         user_id,
                         user:user_id ( id, full_name, email, role, avatar_url )
                     ),
-                    messages(
-                        content,
-                        created_at,
-                        sender_id,
-                        is_read
+                    messages (
+                        id, content, created_at, sender_id, is_read
                     )
                 `)
                 .in('id', convoIds);
@@ -66,9 +65,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
             if (data) {
                 const processed = data.map(conv => {
-                    // Correctly find someone who is NOT me
                     const otherParticipant = conv.conversation_participants.find((p: any) => p.user_id !== userId);
-                    // Fallback to the first participant if searching for "other" fails (e.g. self-chat)
                     const displayUser: any = otherParticipant?.user || (Array.isArray(conv.conversation_participants) ? conv.conversation_participants[0]?.user : null);
 
                     const sortedMessages = (conv.messages || []).sort((a: any, b: any) =>
@@ -86,35 +83,30 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 setRawConversations(processed);
             }
         } catch (err) {
-            console.error('Error fetching conversations:', err);
+            console.error('Expert Fetch failed:', err);
         } finally {
             setLoading(false);
+            loadingRef.current = false;
         }
     }, [userId]);
 
-    // Derive display conversations
+    // Derived State Calculation (The Brain)
     const displayConversations = useMemo(() => {
         const processed = rawConversations.map(conv => {
             const localReadTime = lastReadAt[conv.id] ? new Date(lastReadAt[conv.id]).getTime() : 0;
-
-            // Unread Logic:
-            // 1. If currently selected, it's read (unreadCount = 0)
-            // 2. If the last message is newer than our local "seen" timestamp, it's unread
-            // 3. Otherwise, fall back to DB is_read status
             const lastMsgTime = conv.lastMessage ? new Date(conv.lastMessage.created_at).getTime() : 0;
 
             let unreadCount = 0;
+            // Never show unread for the currently active chat
             if (conv.id !== selectedId) {
-                if (localReadTime > 0 && lastMsgTime > localReadTime) {
-                    // New message arrived after we last looked
-                    unreadCount = (conv.messages || []).filter((m: any) =>
-                        m.sender_id !== userId && new Date(m.created_at).getTime() > localReadTime
-                    ).length || 1;
-                } else if (localReadTime === 0) {
-                    // Initial load or never looked, use DB is_read
+                // If a message is newer than our local seen time, or if DB marks it unread
+                const hasNewerMsg = localReadTime > 0 && lastMsgTime > (localReadTime + 100); // 100ms buffer for sync
+                const hasDbUnread = (conv.messages || []).some((m: any) => m.sender_id !== userId && !m.is_read);
+
+                if (hasNewerMsg || (localReadTime === 0 && hasDbUnread)) {
                     unreadCount = (conv.messages || []).filter((m: any) =>
                         m.sender_id !== userId && !m.is_read
-                    ).length;
+                    ).length || 1;
                 }
             }
 
@@ -124,7 +116,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             };
         });
 
-        // Priority Sorting: Unread first, then by updated_at
+        // Global Sorting: Unread first, then by updated_at (Time)
         processed.sort((a, b) => {
             if (a.displayUnreadCount > 0 && b.displayUnreadCount === 0) return -1;
             if (a.displayUnreadCount === 0 && b.displayUnreadCount > 0) return 1;
@@ -134,7 +126,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         return processed;
     }, [rawConversations, selectedId, lastReadAt, userId]);
 
-    // Update lastReadAt when selection changes
+    // Local marker update
     useEffect(() => {
         if (selectedId) {
             setLastReadAt(prev => ({
@@ -147,24 +139,27 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
     useEffect(() => {
         fetchConversations(rawConversations.length > 0);
 
-        // Robust Real-time sync: Watching for table changes
+        // Expert Subscription: High-priority refresh channel
+        // Using a unique ID to avoid channel overlaps in browser tabs
+        const channelName = `expert-sync-${userId}-${Math.random().toString(36).substring(7)}`;
         const channel = supabase
-            .channel(`chat-list-repair-${userId}`)
+            .channel(channelName)
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'messages' },
-                () => fetchConversations(true)
+                () => {
+                    // Slight delay to allow Supabase DB visibility to normalize
+                    setTimeout(() => fetchConversations(true), 150);
+                }
             )
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'conversations' },
-                () => fetchConversations(true)
-            )
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('Chat list real-time sync active');
+                () => {
+                    setTimeout(() => fetchConversations(true), 150);
                 }
-            });
+            )
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
@@ -212,11 +207,11 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
             {showNewChatInput && (
                 <div className="p-3 bg-slate-100 border-b border-slate-200 animate-in slide-in-from-top-2">
-                    <div className="text-xs font-semibold text-slate-500 mb-2">START A NEW CHAT</div>
+                    <div className="text-xs font-semibold text-slate-500 mb-2 uppercase">New Chat</div>
                     <div className="flex gap-2">
                         <input
                             type="email"
-                            placeholder="Enter user email..."
+                            placeholder="User email..."
                             className="flex-1 text-sm p-2 rounded-md border border-slate-300 focus:outline-none focus:border-violet-500"
                             value={newChatEmail}
                             onChange={(e) => setNewChatEmail(e.target.value)}
@@ -247,6 +242,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                             onClick={() => onSelect(conv.id)}
                             className={`w-full text-left p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors flex items-center gap-3 ${selectedId === conv.id ? 'bg-orange-50 border-l-4 border-l-orange-500' : 'border-l-4 border-l-transparent'}`}
                         >
+                            {/* Avatar */}
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-lg relative ${selectedId === conv.id ? 'bg-orange-200 text-orange-700' : 'bg-slate-200 text-slate-500'}`}>
                                 {conv.otherUser?.full_name ? conv.otherUser.full_name[0].toUpperCase() : <User className="w-6 h-6" />}
                                 {conv.displayUnreadCount > 0 && (
@@ -256,9 +252,10 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                                 )}
                             </div>
 
+                            {/* Content */}
                             <div className="min-w-0 flex-1">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <span className={`truncate font-normal ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900 !font-semibold' : ''}`}>
+                                    <span className={`truncate text-sm font-normal ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-700'} ${selectedId === conv.id ? 'text-slate-900 !font-semibold' : ''}`}>
                                         {conv.title}
                                     </span>
                                     <span className={`text-[10px] shrink-0 font-normal ${conv.displayUnreadCount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
