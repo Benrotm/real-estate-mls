@@ -107,7 +107,12 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
             id: lead.agent.id,
             full_name: lead.agent.full_name || 'Partner Agent'
         });
-        setModalDefaultMessage(`Hi! I'm interested in collaborating on this lead: ${lead.preference_type || 'Potential Buyer'}. Let's chat!`);
+
+        const shortId = lead.id.slice(0, 8);
+        const budgetStr = lead.budget_max ? `, ${Number(lead.budget_max).toLocaleString()} ${lead.currency || 'EUR'}` : '';
+        const prefType = lead.preference_type || 'Potential Buyer';
+
+        setModalDefaultMessage(`Hi! I'm interested in collaborating on this lead: [${shortId}], [${prefType}]${budgetStr}. Let's chat!`);
         setIsContactModalOpen(true);
     };
 
@@ -203,7 +208,8 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                 (displayName.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (isOwner && lead.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (isOwner && lead.phone?.includes(searchTerm)) ||
-                (lead.preference_type?.toLowerCase().includes(searchTerm.toLowerCase()));
+                (lead.preference_type?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (lead.id?.toLowerCase().includes(searchTerm.toLowerCase()));
 
             const matchesStatus = activeStatus === 'all' || lead.status === activeStatus;
 
@@ -280,7 +286,7 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search by name, email, or preference..."
+                            placeholder="Search by ID, name, email, or preference..."
                             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all placeholder:text-slate-400"
                         />
                         {searchTerm && (
