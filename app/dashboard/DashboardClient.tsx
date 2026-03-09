@@ -89,9 +89,7 @@ export default function DashboardClient({
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/admin/valuation/reports' },
         { name: 'Plan Settings', icon: Briefcase, href: '/dashboard/admin/plans' },
         { name: 'Features', icon: Check, href: '/dashboard/admin/features' },
-        { name: 'AI Lead Scoring', icon: Target, href: '/dashboard/admin/scoring' },
         { name: 'AI Matching Engine', icon: Zap, href: '/dashboard/admin/scoring/match' },
-        { name: 'Property Quality', icon: Home, href: '/dashboard/admin/scoring/properties' },
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
