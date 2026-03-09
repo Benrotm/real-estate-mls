@@ -20,10 +20,14 @@ export default function ScoringRulesEditor({
         setRules(rules.map(r => r.id === id ? { ...r, weight } : r));
     };
 
+    const handleToggleActive = (id: string) => {
+        setRules(rules.map(r => r.id === id ? { ...r, is_active: !r.is_active } : r));
+    };
+
     const handleSave = async (rule: ScoringRule) => {
         setSavingId(rule.id);
         try {
-            await updateScoringRule(rule.id, rule.weight);
+            await updateScoringRule(rule.id, rule.weight, rule.is_active);
         } catch (error) {
             console.error('Failed to save rule', error);
             alert('Failed to save rule');
@@ -84,14 +88,28 @@ export default function ScoringRulesEditor({
                                             <p className="font-semibold text-slate-700">{rule.label}</p>
                                             <p className="text-xs text-slate-500 font-mono">{rule.criteria_key}</p>
                                         </div>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-3 pr-4 border-r border-slate-200">
+                                                <span className={`text-[10px] font-black uppercase tracking-widest ${rule.is_active ? 'text-orange-600' : 'text-slate-400'}`}>
+                                                    {rule.is_active ? 'Active' : 'Disabled'}
+                                                </span>
+                                                <button
+                                                    onClick={() => handleToggleActive(rule.id)}
+                                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${rule.is_active ? 'bg-orange-600' : 'bg-slate-200'}`}
+                                                >
+                                                    <span
+                                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${rule.is_active ? 'translate-x-5' : 'translate-x-0'}`}
+                                                    />
+                                                </button>
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <label className="text-xs text-slate-400 font-bold uppercase">Points</label>
                                                 <input
                                                     type="number"
                                                     value={rule.weight}
                                                     onChange={(e) => handleWeightChange(rule.id, e.target.value)}
-                                                    className="w-20 px-3 py-1.5 border border-slate-300 rounded-md font-bold text-slate-700 text-right focus:ring-2 focus:ring-orange-500 outline-none"
+                                                    className={`w-20 px-3 py-1.5 border border-slate-300 rounded-md font-bold text-slate-700 text-right focus:ring-2 focus:ring-orange-500 outline-none ${!rule.is_active && 'opacity-50 grayscale'}`}
+                                                    disabled={!rule.is_active}
                                                 />
                                             </div>
                                             <button
