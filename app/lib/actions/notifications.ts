@@ -142,7 +142,9 @@ export async function markAllNotificationsByTypeAsRead(types: NotificationType[]
 
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const { error } = await supabase
+    // Use Admin Client to bypass any potentially restrictive RLS on UPDATE
+    const supabaseAdmin = createAdminClient();
+    const { error } = await supabaseAdmin
         .from('notifications')
         .update({ is_read: true })
         .eq('user_id', user.id)
@@ -150,7 +152,7 @@ export async function markAllNotificationsByTypeAsRead(types: NotificationType[]
         .eq('is_read', false);
 
     if (error) {
-        console.error('Error marking notifications by type as read:', error);
+        console.error('[Notifications] Error marking notifications by type as read:', error);
         return { success: false, error: error.message };
     }
 

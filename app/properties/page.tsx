@@ -7,6 +7,7 @@ import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/feat
 import PerPageSelector from '@/app/components/PerPageSelector';
 import PropertySortToggle from '@/app/components/PropertySortToggle';
 import Pagination from '@/app/components/Pagination';
+import PropertiesClientView from '@/app/components/properties/PropertiesClientView';
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
     const filters = await searchParams;
@@ -35,36 +36,33 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                     <PropertySearchFilters />
                 </Suspense>
 
-                <div className="mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <span className="font-bold text-slate-700 order-1">
-                        {totalCount} Properties Found
-                    </span>
-                    <div className="flex items-center gap-4 order-3 md:order-2">
-                        <PropertySortToggle />
-                        <PerPageSelector currentValue={currentPerPage} />
-                    </div>
-                </div>
-
-                {properties.length === 0 ? (
-                    <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 border-dashed">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">No properties found</h3>
-                        <p className="text-slate-500">Try adjusting your filters to see more results.</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {properties.map((property: any) => (
-                                <PropertyCard
-                                    key={property.id}
-                                    property={property}
-                                    showMakeOffer={true}
-                                    isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
-                                />
-                            ))}
+                <PropertiesClientView
+                    initialProperties={properties}
+                    totalCount={totalCount}
+                    makeOfferAccessMap={makeOfferAccessMap}
+                    paginationParams={filters}
+                >
+                    {properties.length === 0 ? (
+                        <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 border-dashed">
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">No properties found</h3>
+                            <p className="text-slate-500">Try adjusting your filters to see more results.</p>
                         </div>
-                        <Pagination currentPage={currentPage} totalPages={totalPages} />
-                    </>
-                )}
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {properties.map((property: any) => (
+                                    <PropertyCard
+                                        key={property.id}
+                                        property={property}
+                                        showMakeOffer={true}
+                                        isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
+                                    />
+                                ))}
+                            </div>
+                            <Pagination currentPage={currentPage} totalPages={totalPages} />
+                        </>
+                    )}
+                </PropertiesClientView>
             </div>
         </div>
     );

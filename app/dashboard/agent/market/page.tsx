@@ -1,17 +1,33 @@
 import UpgradeBanner from '@/app/components/dashboard/UpgradeBanner';
+import MarketInsightsClient from '@/app/components/market/MarketInsightsClient';
+import { hasFeature, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 
-export default function AgentMarketPage() {
-    return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Market Insights</h1>
-            <p className="text-slate-500 mb-8">Analyze local market trends and property values.</p>
+export default async function AgentMarketPage() {
+    const hasAccess = await hasFeature(SYSTEM_FEATURES.MARKET_INSIGHTS);
 
-            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-center">
-                <p className="text-slate-600 mb-6">Market data visualisation and reporting tools.</p>
-                <button className="px-6 py-3 bg-orange-500 text-white rounded-lg font-bold hover:bg-orange-600 transition-colors">
-                    View Market Data
-                </button>
+    if (!hasAccess) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Market Insights</h1>
+                <p className="text-slate-400 mb-8">Analyze local market trends and property values.</p>
+                <UpgradeBanner
+                    title="Access Real-Time Market Insights"
+                    description="Stay ahead of the curve with detailed market trends, price fluctuations, and demand analysis for your area."
+                    buttonText="Upgrade to Pro"
+                    buttonLink="/dashboard/agent/billing"
+                />
             </div>
+        );
+    }
+
+    return (
+        <div className="max-w-7xl mx-auto p-8 space-y-8">
+            <div>
+                <h1 className="text-3xl font-bold text-slate-900">Market Insights</h1>
+                <p className="text-slate-500 mt-2">Explore actual transaction prices and market trends in your area.</p>
+            </div>
+
+            <MarketInsightsClient />
         </div>
     );
 }

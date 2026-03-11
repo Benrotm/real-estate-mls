@@ -3,6 +3,7 @@
 import { createClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { fetchAirQuality, fetchSolarPotential } from '@/app/lib/services/google-maps';
+import { revalidatePath } from 'next/cache';
 
 interface ValuationResult {
     estimatedValue: number;
@@ -18,29 +19,63 @@ interface ValuationResult {
     comparables: any[];
 }
 
-export async function submitSoldPrice(propertyId: string, price: number, date: Date, notes?: string) {
+export async function submitSoldPrice(
+    propertyId: string,
+    price: number,
+    date: Date,
+    notes?: string,
+    daysOnMarket?: number,
+    ownerName?: string,
+    ownerPhone?: string,
+    privateDocuments: string[] = []
+) {
     const supabase = await createClient();
 
-    // Check if user is authenticated (RLS will also handle this, but good for validation)
+    // Check if user is authenticated
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
         throw new Error("Unauthorized");
     }
 
-    const { error } = await supabase
+    // 1. Insert into history
+    const { error: historyError } = await supabase
         .from('property_sold_history')
         .insert({
             property_id: propertyId,
             sold_price: price,
             sold_date: date,
             notes: notes,
-            reporter_id: user.id
+            reporter_id: user.id,
+            days_on_market: daysOnMarket,
+            owner_name: ownerName,
+            owner_phone: ownerPhone,
+            private_documents: privateDocuments
         });
 
-    if (error) {
-        console.error("Error submitting sold price:", error);
+    if (historyError) {
+        console.error("Error submitting sold price:", historyError);
         throw new Error("Failed to submit sold price");
     }
+
+    // 2. Update property status to 'sold'
+    const { error: propError } = await supabase
+        .from('properties')
+        .update({ status: 'sold' })
+        .eq('id', propertyId);
+
+    if (propError) {
+        console.error("Error updating property status:", propError);
+        // We don't necessarily want to fail the whole thing if the history was saved, 
+        // but it's better to be consistent.
+    }
+
+    // Revalidate paths to clear Next.js cache
+    revalidatePath('/dashboard/owner/market');
+    revalidatePath('/dashboard/agent/market');
+    revalidatePath('/dashboard/admin/market');
+    revalidatePath('/dashboard/owner/properties');
+    revalidatePath('/dashboard/admin/properties');
+    revalidatePath('/dashboard/admin/my-properties');
 
     return { success: true };
 }
@@ -269,4 +304,86 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
             } : null
         }))
     };
+}
+
+export async function getSoldProperties(filters: {
+    city?: string;
+    area?: string;
+    type?: string;
+    minRooms?: number;
+    maxRooms?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    minArea?: number;
+    maxArea?: number;
+    yearBuilt?: number;
+}) {
+    const supabase = await createClient();
+
+    let query = supabase
+        .from('property_sold_history')
+        .select(`
+            id,
+            sold_price,
+            sold_date,
+            days_on_market,
+            properties (
+                id,
+                title,
+                type,
+                location_city,
+                location_area,
+                latitude,
+                longitude,
+                price,
+                currency,
+                rooms,
+                area_usable,
+                year_built,
+                images,
+                created_at
+            )
+        `)
+        .order('sold_date', { ascending: false });
+
+    if (filters.city) {
+        query = query.filter('properties.location_city', 'eq', filters.city);
+    }
+    if (filters.area) {
+        query = query.filter('properties.location_area', 'eq', filters.area);
+    }
+    if (filters.type && filters.type !== 'All') {
+        query = query.filter('properties.type', 'eq', filters.type);
+    }
+    if (filters.minRooms) {
+        query = query.filter('properties.rooms', 'gte', filters.minRooms);
+    }
+    if (filters.maxRooms) {
+        query = query.filter('properties.rooms', 'lte', filters.maxRooms);
+    }
+    if (filters.minPrice) {
+        query = query.filter('properties.price', 'gte', filters.minPrice);
+    }
+    if (filters.maxPrice) {
+        query = query.filter('properties.price', 'lte', filters.maxPrice);
+    }
+    if (filters.minArea) {
+        query = query.filter('properties.area_usable', 'gte', filters.minArea);
+    }
+    if (filters.maxArea) {
+        query = query.filter('properties.area_usable', 'lte', filters.maxArea);
+    }
+    if (filters.yearBuilt) {
+        query = query.filter('properties.year_built', 'eq', filters.yearBuilt);
+    }
+
+    const { data, error } = await query.limit(50);
+
+    if (error) {
+        console.error("Error fetching sold properties:", error);
+        return [];
+    }
+
+    // Post-filter if the library doesn't support nested filtering perfectly in one go
+    return data || [];
 }

@@ -3,6 +3,7 @@ import { hasFeature, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 import { fetchLeads } from '@/app/lib/actions/leads';
 import LeadList from '@/app/components/dashboard/LeadList';
 import UpgradeBanner from '@/app/components/dashboard/UpgradeBanner';
+import NotificationSync from '@/app/components/notifications/NotificationSync';
 import { ArrowUpRight, Search } from 'lucide-react';
 
 export default async function OwnerLeadsPage() {
@@ -13,6 +14,7 @@ export default async function OwnerLeadsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
+            <NotificationSync types={['lead', 'inquiry', 'offer']} />
             {/* Header Stripe */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

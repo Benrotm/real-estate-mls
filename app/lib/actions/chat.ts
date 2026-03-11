@@ -452,3 +452,34 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
         return { success: false, error: error.message };
     }
 }
+
+export async function getTotalUnreadMessagesCount(userId: string) {
+    try {
+        const supabase = await createClient();
+
+        // 1. Get Conversation IDs for the user
+        const { data: participation } = await supabase
+            .from('conversation_participants')
+            .select('conversation_id')
+            .eq('user_id', userId);
+
+        if (!participation || participation.length === 0) return 0;
+
+        const convoIds = participation.map(p => p.conversation_id);
+
+        // 2. Count messages that are NOT read and NOT sent by the current user
+        // Head: true means we only want the count, not the rows
+        const { count, error } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .in('conversation_id', convoIds)
+            .eq('is_read', false)
+            .neq('sender_id', userId);
+
+        if (error) throw error;
+        return count || 0;
+    } catch (error) {
+        console.error('[Chat] Error fetching total unread:', error);
+        return 0;
+    }
+}

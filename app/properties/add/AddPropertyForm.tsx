@@ -67,6 +67,7 @@ const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: stri
 import UpgradeModal from '@/app/components/UpgradeModal';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
 import EventClient from '@/app/components/events/EventClient';
+import ReportSoldModal from '@/app/components/properties/ReportSoldModal';
 
 export default function AddPropertyForm({ initialData, canUseVirtualTours = true }: { initialData?: Partial<Property>, canUseVirtualTours?: boolean }) {
     const router = useRouter();
@@ -78,7 +79,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const [isUploadingDocs, setIsUploadingDocs] = useState(false);
     const [success, setSuccess] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [isReportSoldModalOpen, setIsReportSoldModalOpen] = useState(false);
     const [availableTours, setAvailableTours] = useState<VirtualTour[]>([]);
 
     useEffect(() => {
@@ -961,7 +963,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
                                             {!canUseVirtualTours ? (
                                                 <div
-                                                    onClick={() => setIsUpgradeModalOpen(true)}
+                                                    onClick={() => setShowUpgradeModal(true)}
                                                     className="border border-slate-800 bg-slate-900/50 rounded-xl p-6 text-center cursor-pointer hover:bg-slate-800 transition-colors group"
                                                 >
                                                     <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
@@ -1398,19 +1400,36 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 {/* Valuation Section */}
                                 <div className="mt-8 pt-8 border-t border-slate-800">
                                     {propertyId ? (
-                                        <PropertyValuationSection
-                                            property={{
-                                                id: propertyId,
-                                                currency: formData.currency,
-                                                title: formData.title,
-                                                address: formData.address,
-                                                location_city: formData.city
-                                            }}
-                                            showMakeOffer={false}
-                                            isMakeOfferLocked={false}
-                                            showValuationWidget={false}
-                                            darkMode={true}
-                                        />
+                                        <>
+                                            <PropertyValuationSection
+                                                property={{
+                                                    id: propertyId,
+                                                    currency: formData.currency,
+                                                    title: formData.title,
+                                                    address: formData.address,
+                                                    location_city: formData.city
+                                                }}
+                                                showMakeOffer={false}
+                                                isMakeOfferLocked={false}
+                                                showValuationWidget={false}
+                                                darkMode={true}
+                                            />
+                                            <div className="mt-6 flex justify-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsReportSoldModalOpen(true)}
+                                                    className="group relative px-8 py-4 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 hover:from-emerald-600/30 hover:to-teal-600/30 border border-emerald-500/30 rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-900/10 flex items-center gap-3 overflow-hidden"
+                                                >
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                                                    <div className="text-left">
+                                                        <p className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Ad Transaction Price</p>
+                                                        <p className="text-lg font-black text-white leading-tight">Report SOLD</p>
+                                                    </div>
+                                                    <ArrowRight className="w-5 h-5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
+                                                </button>
+                                            </div>
+                                        </>
                                     ) : (
                                         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
                                             <div className="flex items-center gap-3 mb-3">
@@ -1504,13 +1523,25 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                 </form >
             </div>
 
-            <UpgradeModal
-                isOpen={isUpgradeModalOpen}
-                onClose={() => setIsUpgradeModalOpen(false)}
-                featureName="Virtual Tours"
-                description="Upload and manage 360° Virtual Tours to view interactive walkthroughs of your property."
-            />
+            {showUpgradeModal && (
+                <UpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => setShowUpgradeModal(false)}
+                    featureName="Virtual Tours"
+                    description="Upload and manage 360° Virtual Tours to view interactive walkthroughs of your property."
+                />
+            )}
+
+            {isReportSoldModalOpen && propertyId && (
+                <ReportSoldModal
+                    isOpen={isReportSoldModalOpen}
+                    onClose={() => setIsReportSoldModalOpen(false)}
+                    propertyId={propertyId}
+                    propertyTitle={formData.title}
+                    listingPrice={Number(formData.price)}
+                    currency={formData.currency}
+                />
+            )}
         </div>
     );
 }
-

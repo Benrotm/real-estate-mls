@@ -7,6 +7,7 @@ import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, M
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
 import { getUnreadNotificationsCount } from '@/app/lib/actions/notifications';
+import { getTotalUnreadMessagesCount } from '@/app/lib/actions/chat';
 
 export default function DashboardClient({
     children,
@@ -32,7 +33,11 @@ export default function DashboardClient({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Get notifications count by type for badges
+        // 1. Fetch REAL unread message count (bypassing notifications table latency)
+        const unreadMsgCount = await getTotalUnreadMessagesCount(user.id);
+        setChatUnread(unreadMsgCount);
+
+        // 2. Get Lead/CRM notifications by type for existing badges
         const { data: notifs } = await supabase
             .from('notifications')
             .select('type')
@@ -40,7 +45,6 @@ export default function DashboardClient({
             .eq('is_read', false);
 
         if (notifs) {
-            setChatUnread(notifs.filter(n => n.type === 'message').length);
             setLeadsUnread(notifs.filter(n => n.type === 'offer' || n.type === 'inquiry' || n.type === 'lead').length);
         }
     }, []);
@@ -52,24 +56,29 @@ export default function DashboardClient({
 
             fetchCounts();
 
-            const channel = supabase
-                .channel('dashboard-badges')
+            // Listener for general notifications (Leads, etc.)
+            const notifChannel = supabase
+                .channel('dashboard-badges-notifs')
                 .on(
                     'postgres_changes',
-                    {
-                        event: '*',
-                        schema: 'public',
-                        table: 'notifications',
-                        filter: `user_id=eq.${user.id}`
-                    },
-                    () => {
-                        fetchCounts();
-                    }
+                    { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+                    () => fetchCounts()
+                )
+                .subscribe();
+
+            // Listener for REALTIME messages (Chat)
+            const msgChannel = supabase
+                .channel(`dashboard-badges-msgs-${user.id}`)
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'messages' },
+                    () => fetchCounts()
                 )
                 .subscribe();
 
             return () => {
-                supabase.removeChannel(channel);
+                supabase.removeChannel(notifChannel);
+                supabase.removeChannel(msgChannel);
             };
         };
 
@@ -80,6 +89,7 @@ export default function DashboardClient({
     const menuItems = isAdmin ? [
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/admin/leads' },
+        { name: 'Market Insights', icon: Briefcase, href: '/dashboard/admin/market' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/admin/pipeline' },
         { name: 'My Properties', icon: Home, href: '/dashboard/admin/my-properties' },
         { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
@@ -176,7 +186,7 @@ export default function DashboardClient({
                                 {item.name}
                             </div>
                             {(item.name === 'Chat' || item.name === 'Support Chat') && chatUnread > 0 && (
-                                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                <span className="bg-green-500 text-white text-[10px] font-normal px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-md">
                                     {chatUnread > 9 ? '9+' : chatUnread}
                                 </span>
                             )}

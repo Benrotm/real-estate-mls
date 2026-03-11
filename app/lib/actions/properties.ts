@@ -156,8 +156,17 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         .eq('status', 'active');
 
     // Apply filters
-    // Apply filters
     if (filters) {
+        // Map Area Filter
+        if (filters.drawn_ids) {
+            if (filters.drawn_ids === 'none') {
+                query = query.in('id', ['00000000-0000-0000-0000-000000000000']);
+            } else {
+                const idsArray = filters.drawn_ids.split(',');
+                query = query.in('id', idsArray);
+            }
+        }
+
         if (filters.listing_type) query = query.eq('listing_type', filters.listing_type);
         if (filters.type) query = query.eq('type', filters.type);
 
@@ -288,6 +297,93 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
     return { properties, totalCount: count || 0 };
 }
 
+export async function getMapProperties(filters?: any): Promise<PropertyType[]> {
+    const supabase = await createClient();
+
+    let query = supabase
+        .from('properties')
+        .select(`
+            id,
+            title,
+            price,
+            currency,
+            type,
+            listing_type,
+            rooms,
+            area_usable,
+            location_city,
+            location_area,
+            latitude,
+            longitude,
+            images,
+            status,
+            created_at,
+            owner:profiles(full_name)
+        `)
+        .eq('status', 'active');
+
+    // Apply exact same filters as getProperties
+    if (filters) {
+        if (filters.listing_type) query = query.eq('listing_type', filters.listing_type);
+        if (filters.type) query = query.eq('type', filters.type);
+        if (filters.minPrice) query = query.gte('price', filters.minPrice);
+        if (filters.maxPrice) query = query.lte('price', filters.maxPrice);
+        if (filters.keywords) {
+            const ks = `%${filters.keywords}%`;
+            query = query.or(`title.ilike.${ks},location_city.ilike.${ks},friendly_id.ilike.${ks}`);
+        }
+        if (filters.location_county) query = query.ilike('location_county', `%${filters.location_county}%`);
+        if (filters.city) query = query.ilike('location_city', `%${filters.city}%`);
+        if (filters.location_city && !filters.keywords) query = query.ilike('location_city', `%${filters.location_city}%`);
+        if (filters.location_area) query = query.ilike('location_area', `%${filters.location_area}%`);
+        if (filters.rooms) query = query.gte('rooms', filters.rooms);
+        if (filters.bathrooms) query = query.gte('bathrooms', filters.bathrooms);
+        if (filters.area) query = query.gte('area_usable', filters.area);
+        if (filters.year_built) query = query.gte('year_built', filters.year_built);
+        if (filters.floor) query = query.eq('floor', filters.floor);
+        if (filters.partitioning) query = query.eq('partitioning', filters.partitioning);
+        if (filters.comfort) query = query.eq('comfort', filters.comfort);
+        if (filters.building_type) query = query.eq('building_type', filters.building_type);
+        if (filters.interior_condition) query = query.eq('interior_condition', filters.interior_condition);
+        if (filters.furnishing) query = query.eq('furnishing', filters.furnishing);
+
+        if (filters.has_video === 'true' || filters.has_video === true) {
+            query = query.not('youtube_video_url', 'is', null);
+            query = query.not('video_url', 'is', null);
+        }
+        if (filters.has_virtual_tour === 'true' || filters.has_virtual_tour === true) {
+            query = query.not('virtual_tour_url', 'is', null);
+        }
+
+        const featureTags = [];
+        if (filters.commission_0 === 'true' || filters.commission_0 === true) featureTags.push('Commission 0%');
+        if (filters.exclusive === 'true' || filters.exclusive === true) featureTags.push('Exclusive');
+        if (filters.luxury === 'true' || filters.luxury === true) featureTags.push('Luxury');
+        if (filters.foreclosure === 'true' || filters.foreclosure === true) featureTags.push('Foreclosure');
+        if (filters.features) {
+            if (Array.isArray(filters.features)) featureTags.push(...filters.features);
+            else if (typeof filters.features === 'string') featureTags.push(filters.features);
+        }
+        if (featureTags.length > 0) query = query.contains('features', featureTags);
+    }
+
+    // Limit to 500 for map performance
+    const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+    if (error) {
+        console.error('Error fetching map properties:', error);
+        return [];
+    }
+
+    return (data || []).map((p: any) => ({
+        ...p,
+        type: p.type ?? p.property_type,
+        location_city: p.location_city ?? p.city,
+    })) as PropertyType[];
+}
+
 export async function getPropertyById(id: string) {
     const supabase = await createClient();
 
@@ -323,7 +419,8 @@ export async function getUserProperties(filters?: any) {
     let query = supabase
         .from('properties')
         .select('*')
-        .eq('owner_id', user.id);
+        .eq('owner_id', user.id)
+        .neq('status', 'sold');
 
     // Apply filters (logic synced from properties.ts getProperties)
     if (filters) {

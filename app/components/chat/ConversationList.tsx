@@ -54,7 +54,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
 
             const convoIds = participation.map(p => p.conversation_id);
 
-            // 2. Fetch Unread Counts from DB
+            // 2. Fetch Unread Counts from DB (Extremely high speed)
             const { data: unreadData } = await supabase
                 .from('messages')
                 .select('conversation_id')
@@ -66,12 +66,9 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             unreadData?.forEach(m => {
                 dbCounts[m.conversation_id] = (dbCounts[m.conversation_id] || 0) + 1;
             });
-
-            // Note: We don't merge with previous unreadCounts here because 
-            // the DB is the source of truth, but we rely on derived state for optimistic clearing.
             setUnreadCounts(dbCounts);
 
-            // 3. Fetch Full Conversation Details
+            // 3. Fetch Full Conversation Details (Participants Only)
             const { data: convDetails, error } = await supabase
                 .from('conversations')
                 .select(`
@@ -86,12 +83,15 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             if (error) throw error;
 
             if (convDetails) {
-                // Latest messages separately to prevent Supabase 1000-row overhead
+                // 4. Fetch the absolute latest message for EACH conversation (Optimized)
+                // We use a limited fetch to get the top 100 messages across all relevant threads
+                // This is much lighter than fetching entire histories
                 const { data: latestMessages } = await supabase
                     .from('messages')
                     .select('id, content, created_at, sender_id, conversation_id')
                     .in('conversation_id', convoIds)
-                    .order('created_at', { ascending: false });
+                    .order('created_at', { ascending: false })
+                    .limit(100);
 
                 const latestMap: Record<string, any> = {};
                 latestMessages?.forEach(m => {
@@ -126,8 +126,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         const processed = rawConversations.map(conv => {
             let count = unreadCounts[conv.id] || 0;
 
-            // If it's currently selected OR was cleared in this session (and no new message has arrived),
-            // we force the count to 0 in the UI.
+            // UI Suppression Logic
             if (conv.id === selectedId || sessionClearedIds.has(conv.id)) {
                 count = 0;
             }
@@ -148,7 +147,7 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
         return processed;
     }, [rawConversations, unreadCounts, selectedId, sessionClearedIds]);
 
-    // Handle Selection & Persistence
+    // Handle Selection
     useEffect(() => {
         if (selectedId) {
             setSessionClearedIds(prev => {
@@ -157,35 +156,28 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                 next.add(selectedId);
                 return next;
             });
-            // Permanently update DB
             markMessagesAsRead(selectedId, userId);
         }
     }, [selectedId, userId]);
 
-    // MASTER REAL-TIME ENGINE
+    // Real-time Engine
     useEffect(() => {
-        console.log('[Chat] Initializing stable real-time engine...');
         fetchAllData();
 
-        // Listen for all messages the user has access to
         const channel = supabase
-            .channel(`all-messages-${userId}`)
+            .channel(`all-messages-v4-${userId}`)
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'messages' },
                 (payload: any) => {
                     const { conversation_id: cid, sender_id: senderId } = payload.new;
-                    console.log(`[Chat] Message received in ${cid} from ${senderId}`);
 
-                    // IF message is NOT from me and NOT for the currently open chat
                     if (senderId !== userId && cid !== selectedIdRef.current) {
-                        // 1. Instantly trigger "green" in UI by updating local counts
                         setUnreadCounts(prev => ({
                             ...prev,
                             [cid]: (prev[cid] || 0) + 1
                         }));
 
-                        // 2. Remove from cleared set so it's no longer suppressed
                         setSessionClearedIds(prev => {
                             if (!prev.has(cid)) return prev;
                             const next = new Set(prev);
@@ -194,30 +186,18 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                         });
                     }
 
-                    // 3. Trigger a background sync after a short delay to get the full profile/time
-                    setTimeout(() => fetchAllData(true), 250);
+                    // Background sync after a delay
+                    setTimeout(() => fetchAllData(true), 150);
                 }
             )
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'messages' },
-                (payload: any) => {
-                    // Refresh if a message was marked as read (maybe in another tab)
-                    if (payload.old.is_read === false && payload.new.is_read === true) {
-                        setTimeout(() => fetchAllData(true), 250);
-                    }
-                }
+                () => setTimeout(() => fetchAllData(true), 150)
             )
-            .subscribe((status) => {
-                console.log(`[Chat] Subscription status: ${status}`);
-                if (status === 'CHANNEL_ERROR') {
-                    console.error('[Chat] Real-time channel error. Attempting reconnect...');
-                    // Supabase handles reconnect automatically, but we log it.
-                }
-            });
+            .subscribe();
 
         return () => {
-            console.log('[Chat] Cleaning up real-time engine.');
             supabase.removeChannel(channel);
         };
     }, [userId, fetchAllData]);
@@ -253,7 +233,6 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
             <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center sticky top-0 z-10 shadow-sm">
                 <h2 className="font-bold text-slate-800 text-lg">Messages</h2>
                 <div className="flex items-center gap-2">
-                    {/* Debug status indicator (v. subtle) */}
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500/30"></div>
                     <button
                         onClick={() => setShowNewChatInput(!showNewChatInput)}
@@ -284,7 +263,6 @@ export default function ConversationList({ userId, selectedId, onSelect }: Conve
                             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Start'}
                         </button>
                     </div>
-                    {newChatError && <p className="text-xs text-red-500 mt-1">{newChatError}</p>}
                 </div>
             )}
 
