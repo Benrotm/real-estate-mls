@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, DollarSign, Calendar, Loader2, CheckCircle2, User, Phone, FileText, Upload, AlertCircle } from 'lucide-react';
+import { X, DollarSign, Calendar, Loader2, CheckCircle2 } from 'lucide-react';
 import { submitSoldPrice } from '@/app/lib/actions/valuation';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/app/lib/supabase/client';
@@ -27,10 +27,6 @@ export default function ReportSoldModal({
     const [soldDate, setSoldDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [notes, setNotes] = useState('');
     const [daysOnMarket, setDaysOnMarket] = useState<number>(0);
-    const [ownerName, setOwnerName] = useState('');
-    const [ownerPhone, setOwnerPhone] = useState('');
-    const [documents, setDocuments] = useState<string[]>([]);
-    const [isUploadingDocs, setIsUploadingDocs] = useState(false);
     const [createdAt, setCreatedAt] = useState<string | null>(null);
 
     const [submitting, setSubmitting] = useState(false);
@@ -43,16 +39,12 @@ export default function ReportSoldModal({
             async function fetchProperty() {
                 const { data, error } = await supabase
                     .from('properties')
-                    .select('created_at, owner_name, owner_phone, documents')
+                    .select('created_at')
                     .eq('id', propertyId)
                     .single();
 
                 if (data && !error) {
                     setCreatedAt(data.created_at);
-                    setOwnerName(data.owner_name || '');
-                    setOwnerPhone(data.owner_phone || '');
-                    // We don't necessarily want to copy existing docs to the "Sold" report specifically, 
-                    // but it might be useful as context. The user asked for owner specs from Step 4.
 
                     // Auto-calculate Days on Market initially
                     const created = new Date(data.created_at);
@@ -65,7 +57,7 @@ export default function ReportSoldModal({
         }
     }, [isOpen, propertyId]);
 
-    // Recalculate Days on Market when soldDate changes (if not manually edited or just always as a helper)
+    // Recalculate Days on Market when soldDate changes
     useEffect(() => {
         if (createdAt) {
             const created = new Date(createdAt);
@@ -77,44 +69,6 @@ export default function ReportSoldModal({
 
     if (!isOpen) return null;
 
-    const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-
-        setIsUploadingDocs(true);
-        const maxFileSize = 10 * 1024 * 1024; // 10MB
-
-        try {
-            const uploadPromises = Array.from(files).map(async (file) => {
-                if (file.size > maxFileSize) throw new Error(`File ${file.name} too large`);
-
-                const fileExt = file.name.split('.').pop();
-                const fileName = `sold_reports/${propertyId}_${Math.random().toString(36).substring(2, 11)}.${fileExt}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from('property-images')
-                    .upload(fileName, file);
-
-                if (uploadError) throw uploadError;
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('property-images')
-                    .getPublicUrl(fileName);
-
-                return publicUrl;
-            });
-
-            const uploadedUrls = await Promise.all(uploadPromises);
-            setDocuments(prev => [...prev, ...uploadedUrls]);
-        } catch (error) {
-            console.error('Upload failed:', error);
-            alert('Upload failed');
-        } finally {
-            setIsUploadingDocs(false);
-            if (e.target) e.target.value = '';
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
@@ -124,10 +78,7 @@ export default function ReportSoldModal({
                 parseFloat(soldPrice),
                 new Date(soldDate),
                 notes,
-                daysOnMarket,
-                ownerName,
-                ownerPhone,
-                documents
+                daysOnMarket
             );
             setSuccess(true);
             setTimeout(() => {
@@ -147,35 +98,34 @@ export default function ReportSoldModal({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
 
-            <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh] flex flex-col">
+            <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
                 {success ? (
                     <div className="p-12 text-center space-y-4">
                         <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                         </div>
                         <h2 className="text-2xl font-bold text-white">Property Marked as SOLD!</h2>
-                        <p className="text-slate-400">The transaction details have been recorded and will contribute to market insights.</p>
+                        <p className="text-slate-400">The transaction price has been recorded and will contribute to market insights.</p>
                         <p className="text-xs text-slate-500 pt-4">Redirecting to Market Insights...</p>
                     </div>
                 ) : (
                     <>
-                        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/50 shrink-0">
+                        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
                             <div>
                                 <h2 className="text-xl font-bold text-white">Report SOLD</h2>
-                                <p className="text-sm text-slate-400 truncate max-w-[400px]">{propertyTitle}</p>
+                                <p className="text-sm text-slate-400 truncate max-w-[300px]">{propertyTitle}</p>
                             </div>
                             <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
                             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-sm text-amber-200/80">
-                                This property will be moved to your SOLD inventory. Private information provided here will only be visible to you and admins.
+                                This property will be moved to your SOLD inventory.
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Row 1: Price and Date */}
+                            <div className="grid grid-cols-1 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">Final Transaction Price ({currency})</label>
                                     <div className="relative">
@@ -209,7 +159,6 @@ export default function ReportSoldModal({
                                     </div>
                                 </div>
 
-                                {/* Row 2: Days on Market and Owner Name */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">Days on Market</label>
                                     <div className="relative">
@@ -221,92 +170,22 @@ export default function ReportSoldModal({
                                             className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
                                         />
                                     </div>
-                                    <p className="text-[10px] text-slate-500 mt-2 italic px-1">Auto-calculated: {createdAt ? new Date(createdAt).toLocaleDateString() : 'N/A'} listing start</p>
+                                    <p className="text-[10px] text-slate-500 mt-2 italic px-1">Auto-calculated from listing start: {createdAt ? new Date(createdAt).toLocaleDateString() : '...'}</p>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Owner Name (Private)</label>
-                                    <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                                            <User className="w-5 h-5" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={ownerName}
-                                            onChange={(e) => setOwnerName(e.target.value)}
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
-                                            placeholder="Owner Full Name"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Row 3: Owner Phone and Notes */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Owner Phone (Private)</label>
-                                    <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                                            <Phone className="w-5 h-5" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={ownerPhone}
-                                            onChange={(e) => setOwnerPhone(e.target.value)}
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
-                                            placeholder="+1 (555) 000-0000"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Private Notes</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Private Notes (Optional)</label>
                                     <textarea
                                         value={notes}
                                         onChange={(e) => setNotes(e.target.value)}
-                                        rows={1}
+                                        rows={2}
                                         className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all resize-none"
-                                        placeholder="Internal sale notes..."
+                                        placeholder="Any internal notes about the sale..."
                                     />
                                 </div>
                             </div>
 
-                            {/* Documents Upload Section */}
-                            <div className="space-y-4 pt-2">
-                                <label className="block text-sm font-medium text-slate-300">Private Documents</label>
-                                <div className="flex items-center gap-4">
-                                    <label className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 font-medium text-sm transition-all cursor-pointer ${isUploadingDocs ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700 text-white hover:border-slate-600'}`}>
-                                        {isUploadingDocs ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                                        <span>{isUploadingDocs ? 'Uploading...' : 'Upload Sale Docs'}</span>
-                                        <input
-                                            type="file"
-                                            multiple
-                                            onChange={handleDocumentUpload}
-                                            disabled={isUploadingDocs}
-                                            className="hidden"
-                                        />
-                                    </label>
-                                    <span className="text-xs text-slate-500">PDF, DOC, Images (Max 10MB)</span>
-                                </div>
-
-                                {documents.length > 0 && (
-                                    <div className="space-y-2">
-                                        {documents.map((doc, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 group bg-slate-950/50 border border-slate-800 rounded-xl p-3">
-                                                <FileText className="w-4 h-4 text-violet-400 shrink-0" />
-                                                <span className="flex-1 text-slate-300 text-xs truncate">{doc.split('/').pop()}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setDocuments(prev => prev.filter((_, i) => i !== idx))}
-                                                    className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex gap-4 pt-4 shrink-0">
+                            <div className="flex gap-4 pt-4">
                                 <button
                                     type="button"
                                     onClick={onClose}
@@ -320,7 +199,7 @@ export default function ReportSoldModal({
                                     className="flex-2 px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold hover:from-emerald-500 hover:to-teal-500 transition-all shadow-lg shadow-emerald-900/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
-                                    Confirm Sale Report
+                                    Confirm Sale
                                 </button>
                             </div>
                         </form>

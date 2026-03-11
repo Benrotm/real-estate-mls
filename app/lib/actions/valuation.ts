@@ -24,10 +24,7 @@ export async function submitSoldPrice(
     price: number,
     date: Date,
     notes?: string,
-    daysOnMarket?: number,
-    ownerName?: string,
-    ownerPhone?: string,
-    privateDocuments: string[] = []
+    daysOnMarket?: number
 ) {
     const supabase = await createClient();
 
@@ -46,10 +43,7 @@ export async function submitSoldPrice(
             sold_date: date,
             notes: notes,
             reporter_id: user.id,
-            days_on_market: daysOnMarket,
-            owner_name: ownerName,
-            owner_phone: ownerPhone,
-            private_documents: privateDocuments
+            days_on_market: daysOnMarket
         });
 
     if (historyError) {
