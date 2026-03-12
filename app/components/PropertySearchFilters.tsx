@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES, INTERIOR_CONDITIONS, FURNISHING_TYPES, FEATURE_CATEGORIES } from '@/app/lib/properties';
+import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES, INTERIOR_CONDITIONS, FURNISHING_TYPES, FEATURE_CATEGORIES, CATEGORY_COLORS } from '@/app/lib/properties';
 import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote } from 'lucide-react';
 import { saveSearch } from '@/app/lib/actions/savedSearches';
 
@@ -513,27 +513,30 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
                             <div className="space-y-6 mt-4">
                                 {Object.entries(FEATURE_CATEGORIES)
                                     .filter(([category]) => category !== 'Listing Tags')
-                                    .map(([category, features]) => (
-                                        <div key={category} className="space-y-3">
-                                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                                                {category}
-                                            </h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                                                {(features as unknown as string[]).map(feature => (
-                                                    <label key={feature} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer hover:text-slate-900 bg-white p-2.5 rounded-lg border border-slate-200 hover:border-amber-300 hover:shadow-sm transition-all group/feat">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="rounded border-slate-300 text-amber-500 focus:ring-amber-500 h-4 w-4"
-                                                            checked={filters.features?.includes(feature)}
-                                                            onChange={() => handleFeatureToggle(feature)}
-                                                        />
-                                                        <span className="group-hover/feat:text-amber-700 transition-colors">{feature}</span>
-                                                    </label>
-                                                ))}
+                                    .map(([category, features]) => {
+                                        const colors = CATEGORY_COLORS[category] || CATEGORY_COLORS['Unit Features'];
+                                        return (
+                                            <div key={category} className="space-y-3">
+                                                <h4 className={`text-[10px] font-bold uppercase tracking-wider ${colors.filterText} flex items-center gap-2`}>
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${colors.filterDot}`}></div>
+                                                    {category}
+                                                </h4>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                                                    {(features as unknown as string[]).map(feature => (
+                                                        <label key={feature} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer hover:text-slate-900 bg-white p-2.5 rounded-lg border border-slate-200 hover:border-amber-300 hover:shadow-sm transition-all group/feat">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="rounded border-slate-300 text-amber-500 focus:ring-amber-500 h-4 w-4"
+                                                                checked={filters.features?.includes(feature)}
+                                                                onChange={() => handleFeatureToggle(feature)}
+                                                            />
+                                                            <span className="group-hover/feat:text-amber-700 transition-colors">{feature}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                             </div>
                         </div>
                     )}

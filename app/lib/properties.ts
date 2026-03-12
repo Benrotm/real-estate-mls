@@ -97,7 +97,10 @@ export const UNIT_FEATURES = [
     'Air Conditioning',
     'Balcony',
     'Central Heating',
+    'Elevator',
     'Fireplace',
+    'Garage',
+    'Intercom',
     'Jacuzzi',
     'Laundry',
     'Parking',
@@ -112,12 +115,12 @@ export const COMMUNITY_FEATURES = [
     'Amphitheatre',
     'Clubhouse',
     'Common Garden',
-    'Garage',
     'Jogging Track',
     'Library',
     'Park',
     'Party Hall',
-    'Playground'
+    'Playground',
+    'Visitor Parking'
 ] as const;
 
 export const SPORTS_FEATURES = [
@@ -133,24 +136,29 @@ export const SPORTS_FEATURES = [
 export const SECURITY_FEATURES = [
     '24/7 Security',
     'CCTV Surveillance',
+    'Concierge',
     'Fire Safety',
     'Gated Community',
-    'Intercom',
     'Video Door Phone'
 ] as const;
 
 export const SUSTAINABILITY_FEATURES = [
-    'Concierge',
-    'Elevator',
     'Green Building',
     'Maintenance Staff',
     'Power Backup',
     'Rainwater Harvesting',
     'Sewage Treatment',
-    'Smart Home',
-    'Solar Panels',
-    'Visitor Parking'
+    'Solar Panels'
 ] as const;
+
+export const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: string, text: string, dot: string, filterText: string, filterBg: string, filterDot: string }> = {
+    'Unit Features': { bg: 'bg-violet-600', border: 'border-violet-500', shadow: 'shadow-violet-600/20', text: 'text-violet-400', dot: 'bg-violet-500', filterText: 'text-violet-600', filterBg: 'bg-violet-50', filterDot: 'bg-violet-400' },
+    'Community & Recreation': { bg: 'bg-emerald-600', border: 'border-emerald-500', shadow: 'shadow-emerald-600/20', text: 'text-emerald-400', dot: 'bg-emerald-500', filterText: 'text-emerald-600', filterBg: 'bg-emerald-50', filterDot: 'bg-emerald-400' },
+    'Sports & Fitness': { bg: 'bg-orange-600', border: 'border-orange-500', shadow: 'shadow-orange-600/20', text: 'text-orange-400', dot: 'bg-orange-500', filterText: 'text-orange-600', filterBg: 'bg-orange-50', filterDot: 'bg-orange-400' },
+    'Security & Safety': { bg: 'bg-red-600', border: 'border-red-500', shadow: 'shadow-red-600/20', text: 'text-red-400', dot: 'bg-red-500', filterText: 'text-red-600', filterBg: 'bg-red-50', filterDot: 'bg-red-400' },
+    'Sustainability & Services': { bg: 'bg-teal-600', border: 'border-teal-500', shadow: 'shadow-teal-600/20', text: 'text-teal-400', dot: 'bg-teal-500', filterText: 'text-teal-600', filterBg: 'bg-teal-50', filterDot: 'bg-teal-400' },
+    'Listing Tags': { bg: 'bg-indigo-600', border: 'border-indigo-500', shadow: 'shadow-indigo-600/20', text: 'text-indigo-400', dot: 'bg-indigo-500', filterText: 'text-indigo-600', filterBg: 'bg-indigo-50', filterDot: 'bg-indigo-400' }
+};
 
 export const LISTING_TAGS = [
     'Commission 0%',

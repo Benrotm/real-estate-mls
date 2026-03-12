@@ -42,21 +42,15 @@ import {
     FURNISHING_TYPES,
     TRANSACTION_TYPES,
     Property,
-    FEATURE_CATEGORIES
+    FEATURE_CATEGORIES,
+    CATEGORY_COLORS
 } from '@/app/lib/properties';
 import { getVirtualTours } from '@/app/lib/actions/tours';
 import { VirtualTour } from '@/app/lib/tours';
 
 // FEATURE_CATEGORIES is now imported from @/app/lib/properties
 
-const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: string, text: string, dot: string }> = {
-    'Unit Features': { bg: 'bg-violet-600', border: 'border-violet-500', shadow: 'shadow-violet-600/20', text: 'text-violet-400', dot: 'bg-violet-500' },
-    'Community & Recreation': { bg: 'bg-emerald-600', border: 'border-emerald-500', shadow: 'shadow-emerald-600/20', text: 'text-emerald-400', dot: 'bg-emerald-500' },
-    'Sports & Fitness': { bg: 'bg-orange-600', border: 'border-orange-500', shadow: 'shadow-orange-600/20', text: 'text-orange-400', dot: 'bg-orange-500' },
-    'Security & Safety': { bg: 'bg-red-600', border: 'border-red-500', shadow: 'shadow-red-600/20', text: 'text-red-400', dot: 'bg-red-500' },
-    'Sustainability & Services': { bg: 'bg-teal-600', border: 'border-teal-500', shadow: 'shadow-teal-600/20', text: 'text-teal-400', dot: 'bg-teal-500' },
-    'Listing Tags': { bg: 'bg-indigo-600', border: 'border-indigo-500', shadow: 'shadow-indigo-600/20', text: 'text-indigo-400', dot: 'bg-indigo-500' }
-};
+// CATEGORY_COLORS is now imported from @/app/lib/properties
 
 import UpgradeModal from '@/app/components/UpgradeModal';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
