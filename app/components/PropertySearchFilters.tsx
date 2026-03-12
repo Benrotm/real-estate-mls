@@ -511,17 +511,25 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
                     {showAmenities && (
                         <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-1 bg-slate-50/50">
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                                {PROPERTY_FEATURES.map(feature => (
-                                    <label key={feature} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer hover:text-slate-900 bg-white p-2.5 rounded-lg border border-slate-200 hover:border-amber-300 hover:shadow-sm transition-all group/feat">
-                                        <input
-                                            type="checkbox"
-                                            className="rounded border-slate-300 text-amber-500 focus:ring-amber-500 h-4 w-4"
-                                            checked={filters.features?.includes(feature)}
-                                            onChange={() => handleFeatureToggle(feature)}
-                                        />
-                                        <span className="group-hover/feat:text-amber-700 transition-colors">{feature}</span>
-                                    </label>
-                                ))}
+                                {PROPERTY_FEATURES
+                                    .filter(feature => ![
+                                        'Commission 0%',
+                                        'Exclusive',
+                                        'Luxury',
+                                        'Hotel Regime',
+                                        'Open to Collaboration'
+                                    ].includes(feature))
+                                    .map(feature => (
+                                        <label key={feature} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer hover:text-slate-900 bg-white p-2.5 rounded-lg border border-slate-200 hover:border-amber-300 hover:shadow-sm transition-all group/feat">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-slate-300 text-amber-500 focus:ring-amber-500 h-4 w-4"
+                                                checked={filters.features?.includes(feature)}
+                                                onChange={() => handleFeatureToggle(feature)}
+                                            />
+                                            <span className="group-hover/feat:text-amber-700 transition-colors">{feature}</span>
+                                        </label>
+                                    ))}
                             </div>
                         </div>
                     )}
