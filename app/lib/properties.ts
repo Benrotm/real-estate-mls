@@ -154,8 +154,7 @@ export const LISTING_TAGS = [
     'Exclusive',
     'Luxury',
     'Hotel Regime',
-    'Foreclosure',
-    'Open to Collaboration'
+    'Foreclosure'
 ] as const;
 
 export const PROPERTY_FEATURES = [

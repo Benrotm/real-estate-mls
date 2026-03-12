@@ -47,7 +47,7 @@ import { getVirtualTours } from '@/app/lib/actions/tours';
 import { VirtualTour } from '@/app/lib/tours';
 
 const FEATURE_CATEGORIES = {
-    'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury', 'Open to Collaboration'],
+    'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
     'Unit Features': ['Air Conditioning', 'Balcony', 'Central Heating', 'Fireplace', 'Garage', 'Jacuzzi', 'Laundry', 'Parking', 'Private Pool', 'Sauna', 'Storage'],
     'Community & Recreation': ['Amphitheatre', 'Clubhouse', 'Common Garden', 'Jogging Track', 'Library', 'Park', 'Party Hall', 'Playground'],
     'Sports & Fitness': ['Basketball Court', 'Football Field', 'Gym', 'Squash Court', 'Swimming Pool', 'Tennis Court', 'Yoga Deck'],
@@ -836,6 +836,22 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     <div className="col-span-2">
                                         <label className="block text-sm font-medium mb-2 text-slate-300">Total Floors</label>
                                         <input type="number" name="totalFloors" placeholder="e.g., 10" value={formData.totalFloors} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                    </div>
+
+                                    {/* Open to Collaboration Checkbox */}
+                                    <div className="col-span-1 md:col-span-2 mt-2">
+                                        <label className="flex items-center gap-3 p-4 bg-slate-900/50 border border-slate-700/80 rounded-xl cursor-pointer hover:bg-slate-800/80 transition-all group">
+                                            <input
+                                                type="checkbox"
+                                                className="w-5 h-5 rounded border-slate-600 bg-slate-950 text-violet-500 focus:ring-violet-500/30 focus:ring-offset-0"
+                                                checked={formData.features.includes('Open to Collaboration')}
+                                                onChange={() => toggleFeature('Open to Collaboration')}
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-white group-hover:text-violet-400 transition-colors">Open to Collaboration</span>
+                                                <span className="text-xs text-slate-500">Enable this if you are open to working with other agents</span>
+                                            </div>
+                                        </label>
                                     </div>
 
                                 </div>

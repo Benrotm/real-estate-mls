@@ -477,6 +477,15 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
                                         <input type="checkbox" className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 h-4 w-4 transform transition-transform group-hover/check:scale-110" checked={filters.foreclosure} onChange={(e) => handleChange('foreclosure', e.target.checked)} />
                                         Foreclosure
                                     </label>
+                                    <label className="flex items-center gap-2 text-sm text-teal-600 cursor-pointer hover:text-teal-900 font-bold group/check bg-teal-50/50 px-2 py-1 rounded-md border border-teal-100/50">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-teal-300 text-teal-600 focus:ring-teal-500 h-4 w-4 transform transition-transform group-hover/check:scale-110"
+                                            checked={filters.features?.includes('Open to Collaboration')}
+                                            onChange={() => handleFeatureToggle('Open to Collaboration')}
+                                        />
+                                        Open to Collaboration
+                                    </label>
                                 </div>
                             </div>
                         </div>
