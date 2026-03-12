@@ -60,8 +60,6 @@ export default async function Home({
             <div key={property.id} className="h-full">
               <PropertyCard
                 property={property}
-                showMakeOffer={true}
-                isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
               />
             </div>
           ))}
@@ -94,8 +92,6 @@ export default async function Home({
             <div key={`recent-${property.id}`} className="h-full">
               <PropertyCard
                 property={property}
-                showMakeOffer={true}
-                isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
               />
             </div>
           ))}

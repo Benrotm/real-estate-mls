@@ -11,10 +11,9 @@ import { format } from 'date-fns';
 
 interface ValuationWidgetProps {
     property: any; // Using any to avoid strict type issues if Property definition mismatches
-    showMakeOffer?: boolean;
 }
 
-export default function ValuationWidget({ property, showMakeOffer = false }: ValuationWidgetProps) {
+export default function ValuationWidget({ property }: ValuationWidgetProps) {
     const [valuation, setValuation] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [userPlan, setUserPlan] = useState<'free' | 'paid'>('free'); // Can fetch real plan later based on requirements

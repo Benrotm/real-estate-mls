@@ -36,7 +36,6 @@ export default function FavoritesList({ favorites }: FavoritesListProps) {
                 <PropertyCard
                     key={property.id}
                     property={property}
-                    showMakeOffer={true}
                 />
             ))}
         </div>

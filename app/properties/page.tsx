@@ -54,8 +54,6 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                     <PropertyCard
                                         key={property.id}
                                         property={property}
-                                        showMakeOffer={true}
-                                        isMakeOfferLocked={property.owner_id ? !makeOfferAccessMap[property.owner_id] : true}
                                     />
                                 ))}
                             </div>

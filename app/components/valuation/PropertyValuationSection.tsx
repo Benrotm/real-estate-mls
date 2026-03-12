@@ -42,7 +42,7 @@ export default function PropertyValuationSection({ property, showMakeOffer, isMa
                 </div>
             </div>
 
-            {showValuationWidget && <ValuationWidget property={property} showMakeOffer={false} />}
+            {showValuationWidget && <ValuationWidget property={property} />}
 
 
 
