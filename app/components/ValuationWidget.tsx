@@ -22,6 +22,7 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
     const [matchingLeads, setMatchingLeads] = useState<any[]>([]);
     const [isMatchingLoading, setIsMatchingLoading] = useState(false);
     const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
+    const [isTableExpanded, setIsTableExpanded] = useState(false);
 
     useEffect(() => {
         async function loadValuation() {
@@ -534,12 +535,17 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                     {/* Potential Buyers Card */}
                     <div className="mt-12 pt-12 border-t border-slate-100">
                         <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h4 className="font-bold text-slate-900 text-xl flex items-center gap-2">
-                                    <Zap className="w-6 h-6 text-orange-500 fill-current" />
-                                    Potential Buyers
-                                </h4>
-                                <p className="text-sm text-slate-500">AI-matched leads compatible with this property</p>
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <h4 className="font-bold text-slate-900 text-xl flex items-center gap-2">
+                                        <Zap className="w-6 h-6 text-orange-500 fill-current animate-pulse" />
+                                        Potential Buyers
+                                    </h4>
+                                    <p className="text-sm text-slate-500">AI-matched leads compatible with this property</p>
+                                </div>
+                                <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-black shadow-lg shadow-indigo-500/20">
+                                    {matchingLeads.length} Found
+                                </div>
                             </div>
                             {matchingLeads.length > 0 && (
                                 <div className="text-right">
@@ -578,7 +584,7 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                             return (
                                 <div className="space-y-8">
                                     {/* Budget Distribution Graphic */}
-                                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 shadow-inner">
+                                    <div className="bg-gradient-to-br from-slate-50 to-indigo-50/30 border border-slate-100 rounded-2xl p-6 shadow-inner">
                                         <div className="flex justify-between items-center mb-4">
                                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Buyer Budget Distribution</p>
                                             <div className="flex gap-4">
@@ -642,182 +648,194 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                                     </div>
 
                                     {/* Lead List */}
-                                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-left border-collapse">
-                                                <thead>
-                                                    <tr className="bg-slate-50 border-b border-slate-200">
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Potential Buyer</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Match Score</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Budget</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Urgency</th>
-                                                        <th className="px-6 py-4"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100">
-                                                    {matchingLeads.map((lead: any) => (
-                                                        <Fragment key={lead.id}>
-                                                            <tr
-                                                                onClick={() => setExpandedLeadId(expandedLeadId === lead.id ? null : lead.id)}
-                                                                className={`cursor-pointer transition-all ${expandedLeadId === lead.id ? 'bg-indigo-50/30' : 'hover:bg-slate-50'}`}
-                                                            >
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold">
-                                                                            {(lead.name || 'P').charAt(0).toUpperCase()}
-                                                                        </div>
-                                                                        <div>
-                                                                            <div className="font-bold text-slate-900">{lead.name || 'Partner Lead'}</div>
-                                                                            <div className="text-[10px] text-slate-400 uppercase font-black">{lead.preference_type || 'Any Property'}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className={`px-2 py-0.5 rounded text-xs font-black ${lead.match_score >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                                            {lead.match_score} pts
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="font-bold text-slate-700">{formatPrice(lead.budget_max || 0)}</div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <span className="text-xs font-medium text-slate-500">{lead.move_urgency || 'Normal'}</span>
-                                                                </td>
-                                                                <td className="px-6 py-4 text-right">
-                                                                    {expandedLeadId === lead.id ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
-                                                                </td>
-                                                            </tr>
-                                                            {expandedLeadId === lead.id && (
-                                                                <tr className="bg-slate-50/50">
-                                                                    <td colSpan={5} className="px-6 py-8">
-                                                                        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-                                                                            {/* Profile Header */}
-                                                                            <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
-                                                                                <div className="flex items-center gap-4">
-                                                                                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-xl font-black">
-                                                                                        {(lead.name || 'P').charAt(0).toUpperCase()}
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <h5 className="font-bold text-lg">{lead.name || 'Partner Lead'}</h5>
-                                                                                        <div className="flex items-center gap-3 text-slate-400 text-xs font-medium">
-                                                                                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Seen {new Date().toLocaleDateString()}</span>
-                                                                                            <span className="w-1 h-1 rounded-full bg-slate-600"></span>
-                                                                                            <span>ID: {lead.id.slice(0, 8)}</span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className="text-right">
-                                                                                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Match Rating</div>
-                                                                                    <div className="text-2xl font-black text-orange-400 flex items-center gap-2">
-                                                                                        {lead.match_score}% <Activity className="w-5 h-5" />
-                                                                                    </div>
-                                                                                </div>
+                                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                        <div
+                                            className="bg-slate-900 px-6 py-4 flex justify-between items-center cursor-pointer group"
+                                            onClick={() => setIsTableExpanded(!isTableExpanded)}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest group-hover:text-white transition-colors">Potential Buyer</div>
+                                                <div className="w-px h-3 bg-slate-700 hidden md:block"></div>
+                                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest hidden md:block">Match Score</div>
+                                                <div className="w-px h-3 bg-slate-700 hidden md:block"></div>
+                                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest hidden md:block">Budget</div>
+                                                <div className="w-px h-3 bg-slate-700 hidden md:block"></div>
+                                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest hidden md:block">Urgency</div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase">{isTableExpanded ? 'Hide List' : 'Show List'}</span>
+                                                {isTableExpanded ? <ChevronUp className="w-4 h-4 text-white" /> : <ChevronDown className="w-4 h-4 text-white" />}
+                                            </div>
+                                        </div>
+                                        {isTableExpanded && (
+                                            <div className="overflow-x-auto border-t border-slate-800 animate-in slide-in-from-top-2 duration-300">
+                                                <table className="w-full text-left border-collapse">
+                                                    {/* Table Body */}
+                                                    <tbody className="divide-y divide-slate-100">
+                                                        {matchingLeads.map((lead: any, index: number) => (
+                                                            <Fragment key={lead.id}>
+                                                                <tr
+                                                                    onClick={() => setExpandedLeadId(expandedLeadId === lead.id ? null : lead.id)}
+                                                                    className={`cursor-pointer transition-all ${expandedLeadId === lead.id ? 'bg-indigo-50/30' : 'hover:bg-slate-50'}`}
+                                                                >
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-black shadow-sm">
+                                                                                B
                                                                             </div>
-
-                                                                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                                                                {/* Column 1: Profile */}
-                                                                                <div className="space-y-6">
-                                                                                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                                                                                        <User className="w-4 h-4 text-indigo-500" />
-                                                                                        <h6 className="font-black text-slate-900 text-[10px] uppercase tracking-widest">Consumer Profile</h6>
-                                                                                    </div>
-                                                                                    <div className="space-y-4">
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Occupation</label>
-                                                                                            <div className="text-sm font-bold text-slate-900">{lead.occupation || 'Executive / Professional'}</div>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Marital Status</label>
-                                                                                            <div className="text-sm font-bold text-slate-900">{lead.marital_status || 'Married'} • {lead.kids_count || 0} Kids</div>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Living Situation</label>
-                                                                                            <div className="text-sm font-bold text-slate-900">{lead.living_situation || 'Rented Apartment'}</div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {/* Column 2: Requirements */}
-                                                                                <div className="space-y-6">
-                                                                                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                                                                                        <Home className="w-4 h-4 text-indigo-500" />
-                                                                                        <h6 className="font-black text-slate-900 text-[10px] uppercase tracking-widest">Search Requirements</h6>
-                                                                                    </div>
-                                                                                    <div className="space-y-4">
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Property Type</label>
-                                                                                            <div className="text-sm font-bold text-slate-900">{lead.preference_listing_type} {lead.preference_type}</div>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Location Preference</label>
-                                                                                            <div className="text-sm font-bold text-slate-900 flex items-center gap-1"><MapPin className="w-3 h-3" /> {lead.preference_location_city || 'Central Areas'}</div>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Rooms / Space</label>
-                                                                                            <div className="text-sm font-bold text-slate-900">{lead.preference_rooms_min || 3} Rooms • {lead.preference_surface_min || 80}m²+</div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {/* Column 3: Logic & Intent */}
-                                                                                <div className="space-y-6">
-                                                                                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                                                                                        <Zap className="w-4 h-4 text-indigo-500" />
-                                                                                        <h6 className="font-black text-slate-900 text-[10px] uppercase tracking-widest">Business Intent</h6>
-                                                                                    </div>
-                                                                                    <div className="space-y-4">
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Buying Reason</label>
-                                                                                            <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-900 text-white rounded-md text-[10px] font-bold">
-                                                                                                <Heart className="w-3 h-3 text-red-400 fill-current" /> {lead.buying_reason || 'Personal Living'}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Financial Plan</label>
-                                                                                            <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                                                                                <Wallet className="w-3.5 h-3.5 text-slate-400" /> {lead.payment_method || 'Mortgage'}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <label className="block text-[10px] font-bold text-slate-400 uppercase">Contact Priority</label>
-                                                                                            <div className="text-sm font-bold text-orange-600">{lead.move_urgency || 'High'}</div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            {/* Notes Section with Premium Style */}
-                                                                            <div className="p-8 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                {lead.social_notes && (
-                                                                                    <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                                                                                        <div className="flex items-center gap-2 mb-2">
-                                                                                            <Star className="w-3 h-3 text-emerald-600 fill-current" />
-                                                                                            <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Key Preferences</span>
-                                                                                        </div>
-                                                                                        <p className="text-sm text-emerald-900 font-medium italic">"{lead.social_notes}"</p>
-                                                                                    </div>
-                                                                                )}
-                                                                                {lead.negative_preferences && (
-                                                                                    <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                                                                                        <div className="flex items-center gap-2 mb-2">
-                                                                                            <Ban className="w-3 h-3 text-red-600" />
-                                                                                            <span className="text-[10px] font-black text-red-700 uppercase tracking-widest">Deal Breakers</span>
-                                                                                        </div>
-                                                                                        <p className="text-sm text-red-900 font-medium italic">"{lead.negative_preferences}"</p>
-                                                                                    </div>
-                                                                                )}
+                                                                            <div>
+                                                                                <div className="font-bold text-slate-900">Buyer #{index + 1}</div>
+                                                                                <div className="text-[10px] text-slate-400 uppercase font-black">{lead.preference_type || 'Any Property'}</div>
                                                                             </div>
                                                                         </div>
                                                                     </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className={`px-2 py-0.5 rounded text-xs font-black ${lead.match_score >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                                                {lead.match_score} pts
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="font-bold text-slate-700">{formatPrice(lead.budget_max || 0)}</div>
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <span className="text-xs font-medium text-slate-500">{lead.move_urgency || 'Normal'}</span>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 text-right">
+                                                                        {expandedLeadId === lead.id ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                                                                    </td>
                                                                 </tr>
-                                                            )}
-                                                        </Fragment>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                                {expandedLeadId === lead.id && (
+                                                                    <tr className="bg-slate-50/50">
+                                                                        <td colSpan={5} className="px-6 py-8">
+                                                                            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                                                                                {/* Profile Header */}
+                                                                                <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
+                                                                                    <div className="flex items-center gap-4">
+                                                                                        <div className="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl font-black border border-indigo-500/30">
+                                                                                            B
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <h5 className="font-bold text-lg">Buyer #{index + 1}</h5>
+                                                                                            <div className="flex items-center gap-3 text-slate-400 text-xs font-medium">
+                                                                                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Seen {new Date().toLocaleDateString()}</span>
+                                                                                                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                                                                                                <span>ID: {lead.id.slice(0, 8)}</span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-right">
+                                                                                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Match Rating</div>
+                                                                                        <div className="text-2xl font-black text-orange-400 flex items-center gap-2">
+                                                                                            {lead.match_score}% <Activity className="w-5 h-5" />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                                                                    {/* Column 1: Profile */}
+                                                                                    <div className="space-y-6">
+                                                                                        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                                                                                            <User className="w-4 h-4 text-indigo-500" />
+                                                                                            <h6 className="font-black text-slate-900 text-[10px] uppercase tracking-widest">Consumer Profile</h6>
+                                                                                        </div>
+                                                                                        <div className="space-y-4">
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Occupation</label>
+                                                                                                <div className="text-sm font-bold text-slate-900">{lead.occupation || 'Executive / Professional'}</div>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Marital Status</label>
+                                                                                                <div className="text-sm font-bold text-slate-900">{lead.marital_status || 'Married'} • {lead.kids_count || 0} Kids</div>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Living Situation</label>
+                                                                                                <div className="text-sm font-bold text-slate-900">{lead.living_situation || 'Rented Apartment'}</div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    {/* Column 2: Requirements */}
+                                                                                    <div className="space-y-6">
+                                                                                        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                                                                                            <Home className="w-4 h-4 text-indigo-500" />
+                                                                                            <h6 className="font-black text-slate-900 text-[10px] uppercase tracking-widest">Search Requirements</h6>
+                                                                                        </div>
+                                                                                        <div className="space-y-4">
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Property Type</label>
+                                                                                                <div className="text-sm font-bold text-slate-900">{lead.preference_listing_type} {lead.preference_type}</div>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Location Preference</label>
+                                                                                                <div className="text-sm font-bold text-slate-900 flex items-center gap-1"><MapPin className="w-3 h-3" /> {lead.preference_location_city || 'Central Areas'}</div>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Rooms / Space</label>
+                                                                                                <div className="text-sm font-bold text-slate-900">{lead.preference_rooms_min || 3} Rooms • {lead.preference_surface_min || 80}m²+</div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    {/* Column 3: Logic & Intent */}
+                                                                                    <div className="space-y-6">
+                                                                                        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                                                                                            <Zap className="w-4 h-4 text-indigo-500" />
+                                                                                            <h6 className="font-black text-slate-900 text-[10px] uppercase tracking-widest">Business Intent</h6>
+                                                                                        </div>
+                                                                                        <div className="space-y-4">
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Buying Reason</label>
+                                                                                                <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-900 text-white rounded-md text-[10px] font-bold">
+                                                                                                    <Heart className="w-3 h-3 text-red-400 fill-current" /> {lead.buying_reason || 'Personal Living'}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Financial Plan</label>
+                                                                                                <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                                                                                    <Wallet className="w-3.5 h-3.5 text-slate-400" /> {lead.payment_method || 'Mortgage'}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <label className="block text-[10px] font-bold text-slate-400 uppercase">Contact Priority</label>
+                                                                                                <div className="text-sm font-bold text-orange-600">{lead.move_urgency || 'High'}</div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Notes Section with Premium Style */}
+                                                                                <div className="p-8 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                    {lead.social_notes && (
+                                                                                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                                                                                            <div className="flex items-center gap-2 mb-2">
+                                                                                                <Star className="w-3 h-3 text-emerald-600 fill-current" />
+                                                                                                <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Key Preferences</span>
+                                                                                            </div>
+                                                                                            <p className="text-sm text-emerald-900 font-medium italic">"{lead.social_notes}"</p>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    {lead.negative_preferences && (
+                                                                                        <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                                                                                            <div className="flex items-center gap-2 mb-2">
+                                                                                                <Ban className="w-3 h-3 text-red-600" />
+                                                                                                <span className="text-[10px] font-black text-red-700 uppercase tracking-widest">Deal Breakers</span>
+                                                                                            </div>
+                                                                                            <p className="text-sm text-red-900 font-medium italic">"{lead.negative_preferences}"</p>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </Fragment>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             );
