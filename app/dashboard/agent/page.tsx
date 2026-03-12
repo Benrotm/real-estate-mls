@@ -18,7 +18,9 @@ export default async function AgentDashboard() {
     const portfolioValue = await getActivePortfolioValue();
     const userProperties = await getUserProperties();
 
-    const limit = profile?.listings_limit || 5;
+    const baseLimit = profile?.listings_limit || 5;
+    const bonus = profile?.bonus_listings || 0;
+    const limit = baseLimit + bonus;
     const featuredLimit = profile?.featured_limit || 0;
 
     const usagePercent = Math.min(100, Math.round((usageCount / limit) * 100));
@@ -196,7 +198,7 @@ export default async function AgentDashboard() {
                                         style={{ width: `${usagePercent}%` }}
                                     ></div>
                                 </div>
-                                <p className="text-xs text-slate-400 text-right">{availableListings} available</p>
+                                <p className="text-xs text-slate-400 text-right">{availableListings} available{bonus > 0 && <span className="text-emerald-600 font-bold ml-1">+{bonus} Bonus</span>}</p>
                             </div>
 
                             {/* Featured Progress */}
