@@ -1,7 +1,8 @@
 import { impersonateRole } from '@/app/lib/admin';
 import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
-import { Shield, Eye } from 'lucide-react';
+import { Shield, Eye, BarChart } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function AdminDashboard() {
     const profile = await getUserProfile();
@@ -58,6 +59,31 @@ export default async function AdminDashboard() {
                                 </button>
                             </form>
                         ))}
+                    </div>
+                </section>
+
+                {/* 2. Market Systems */}
+                <section className="mb-12">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-3 bg-cyan-500/10 rounded-lg">
+                            <BarChart className="w-6 h-6 text-cyan-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold">Market Systems</h2>
+                            <p className="text-sm text-slate-400">Manage and view market data analytics.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Link href="/dashboard/admin/analytics" className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 hover:border-cyan-500 hover:bg-cyan-500/5 transition-all group">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                                    <BarChart className="w-6 h-6" />
+                                </div>
+                            </div>
+                            <h3 className="text-lg font-bold group-hover:text-cyan-400 transition-colors">Market Analytics</h3>
+                            <p className="text-sm text-slate-500 mt-1">Deep market data & system-wide trends.</p>
+                        </Link>
                     </div>
                 </section>
 

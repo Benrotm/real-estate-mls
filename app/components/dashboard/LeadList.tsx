@@ -856,30 +856,15 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                                             {matches.slice(0, 6).map((property) => (
                                                                                 <div
                                                                                     key={property.id}
-                                                                                    className={`group relative bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${selectedPropertyIds.includes(property.id) ? 'border-orange-600 shadow-xl ring-4 ring-orange-50' : 'border-slate-100 hover:border-slate-300 shadow-sm'}`}
+                                                                                    className={`group relative bg-white rounded-2xl transition-all cursor-pointer overflow-hidden ${selectedPropertyIds.includes(property.id) ? 'border-2 border-orange-600 shadow-xl ring-4 ring-orange-50' : 'shadow-sm hover:shadow-md'}`}
                                                                                     onClick={() => togglePropertySelection(property.id)}
                                                                                 >
                                                                                     <div className="aspect-[16/9] bg-slate-100 relative overflow-hidden">
                                                                                         <img
                                                                                             src={property.images?.[0] || '/placeholder-property.jpg'}
                                                                                             alt={property.title}
-                                                                                            className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                                                                                            className="w-full h-full object-cover"
                                                                                         />
-                                                                                        <div className="absolute top-3 left-3 flex gap-2">
-                                                                                            <div className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-black rounded-lg border border-white/20 uppercase">
-                                                                                                {property.type}
-                                                                                            </div>
-                                                                                            <div className={`px-2.5 py-1 text-white text-[10px] font-black rounded-lg border border-white/20 uppercase ${property.listing_type === 'For Sale' ? 'bg-blue-600/80' : 'bg-green-600/80'}`}>
-                                                                                                {property.listing_type}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        {/* Match Score Badge */}
-                                                                                        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded-full text-xs font-black shadow-lg border border-orange-400 drop-shadow-md">
-                                                                                            <Activity className="w-3.5 h-3.5" />
-                                                                                            {property.match_score} pts
-                                                                                        </div>
-
                                                                                         {/* Selection Indicator */}
                                                                                         <div className={`absolute inset-0 bg-orange-600/20 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${selectedPropertyIds.includes(property.id) ? 'opacity-100' : 'opacity-0'}`}>
                                                                                             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl scale-in-center">
@@ -888,6 +873,17 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                                                         </div>
                                                                                     </div>
                                                                                     <div className="p-4">
+                                                                                        <div className="flex flex-wrap gap-2 mb-2">
+                                                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${property.listing_type === 'For Sale' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-green-50 text-green-700 border-green-100'}`}>
+                                                                                                {property.listing_type}
+                                                                                            </span>
+                                                                                            <span className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded text-[10px] font-black uppercase border border-slate-100">
+                                                                                                {property.type}
+                                                                                            </span>
+                                                                                            <span className="px-2 py-0.5 bg-orange-50 text-orange-700 rounded text-[10px] font-black uppercase border border-orange-100 flex items-center gap-1">
+                                                                                                <Activity className="w-3 h-3" /> {property.match_score} pts
+                                                                                            </span>
+                                                                                        </div>
                                                                                         <h5 className="font-black text-slate-800 text-sm truncate mb-1">{property.title}</h5>
                                                                                         <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold mb-3 uppercase tracking-wider">
                                                                                             <MapPin className="w-3 h-3" /> {property.location_city}
@@ -928,7 +924,7 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                                     ) : (
                                                                         <div className="p-12 bg-slate-100/50 rounded-2xl border-2 border-dashed border-slate-200 text-center">
                                                                             <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                                                <Home className="w-8 h-8 text-slate-400" />
+                                                                                <Building2 className="w-8 h-8 text-slate-400" />
                                                                             </div>
                                                                             <p className="text-slate-500 font-bold">No highly compatible properties found in current inventory.</p>
                                                                             <p className="text-slate-400 text-xs mt-1">Try adjusting the lead preferences or scoring rules in Superadmin.</p>
@@ -981,20 +977,22 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                 </div>
             </div>
             {/* Contact Partner Modal */}
-            {selectedPartnerForContact && (
-                <ContactPartnerModal
-                    isOpen={isContactModalOpen}
-                    onClose={() => {
-                        setIsContactModalOpen(false);
-                        setSelectedPartnerForContact(null);
-                    }}
-                    partnerId={selectedPartnerForContact.id}
-                    partnerName={selectedPartnerForContact.full_name}
-                    defaultMessage={modalDefaultMessage}
-                    currentUserEmail={null}
-                    currentUserId={currentUserId || null}
-                />
-            )}
+            {
+                selectedPartnerForContact && (
+                    <ContactPartnerModal
+                        isOpen={isContactModalOpen}
+                        onClose={() => {
+                            setIsContactModalOpen(false);
+                            setSelectedPartnerForContact(null);
+                        }}
+                        partnerId={selectedPartnerForContact.id}
+                        partnerName={selectedPartnerForContact.full_name}
+                        defaultMessage={modalDefaultMessage}
+                        currentUserEmail={null}
+                        currentUserId={currentUserId || null}
+                    />
+                )
+            }
         </div >
     );
 }

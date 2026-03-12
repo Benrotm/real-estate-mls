@@ -12,12 +12,9 @@ import FavoriteButton from './property/FavoriteButton';
 interface PropertyCardProps {
     property: Property;
     showEditButton?: boolean;
-    showMakeOffer?: boolean;
-    isMakeOfferLocked?: boolean;
 }
 
-export default function PropertyCard({ property, showEditButton, showMakeOffer, isMakeOfferLocked }: PropertyCardProps) {
-    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+export default function PropertyCard({ property, showEditButton }: PropertyCardProps) {
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('en-US', {
@@ -29,69 +26,64 @@ export default function PropertyCard({ property, showEditButton, showMakeOffer, 
 
     return (
         <>
-            <div className="group bg-white rounded-xl overflow-hidden border border-slate-100 shadow-[0_0_50px_rgba(0,0,0,0.3)] hover:shadow-none transition-all duration-300 hover:translate-y-1">
+            <div className="group bg-white rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.3)] hover:shadow-none transition-all duration-300 hover:translate-y-1">
                 <div className="relative h-64 w-full overflow-hidden">
                     <Link href={`/properties/${property.id}`}>
                         <Image
                             src={property.images[0]}
                             alt={property.title}
                             fill
-                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            className="object-cover"
                         />
                     </Link>
-
-                    {/* Badges */}
-                    <div className="absolute top-4 left-4 flex flex-col gap-2 items-start">
-                        {property.status === 'draft' && (
-                            <span className="bg-slate-700 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md border border-slate-500">
-                                Draft - Private
-                            </span>
-                        )}
-
-
-
-                        {property.listing_type === 'For Sale' ? (
-                            <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
-                                For Sale
-                            </span>
-                        ) : property.listing_type === 'Hotel Regime' ? (
-                            <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
-                                Hotel Regime
-                            </span>
-                        ) : (
-                            <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
-                                For Rent
-                            </span>
-                        )}
-                    </div>
-
-                    <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
-                        {property.promoted && (
-                            <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
-                                Featured
-                            </div>
-                        )}
-                        {(property.score !== undefined && property.score > 0) && (
-                            <div className={`text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1 ${property.score >= 80 ? 'bg-red-600' :
-                                property.score >= 50 ? 'bg-orange-500' : 'bg-slate-500'
-                                }`}>
-                                <Award className="w-3 h-3" /> Score: {property.score}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                        <div className="text-white font-bold text-lg flex items-center justify-between">
-                            <span>{formatPrice(property.price)}</span>
-                            <FavoriteButton propertyId={property.id} className="w-8 h-8 bg-white/20 hover:bg-white text-white relative z-20" />
-                        </div>
-                    </div>
                 </div>
 
                 <div className="p-5">
-                    <h3 className="text-lg font-bold text-slate-900 mb-1 line-clamp-1 group-hover:text-violet-600 transition-colors">
-                        {property.title}
-                    </h3>
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex flex-wrap gap-2">
+                            {property.listing_type === 'For Sale' ? (
+                                <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider border border-emerald-200">
+                                    For Sale
+                                </span>
+                            ) : property.listing_type === 'Hotel Regime' ? (
+                                <span className="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider border border-purple-200">
+                                    Hotel Regime
+                                </span>
+                            ) : (
+                                <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider border border-blue-200">
+                                    For Rent
+                                </span>
+                            )}
+                            {property.status === 'draft' && (
+                                <span className="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider border border-slate-200">
+                                    Draft
+                                </span>
+                            )}
+                            {(property.score !== undefined && property.score > 0) && (
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider border flex items-center gap-1 ${property.score >= 80 ? 'bg-red-50 text-red-700 border-red-100' :
+                                    property.score >= 50 ? 'bg-orange-50 text-orange-700 border-orange-100' : 'bg-slate-50 text-slate-600 border-slate-100'
+                                    }`}>
+                                    <Award className="w-3 h-3" /> Score: {property.score}
+                                </span>
+                            )}
+                            {property.promoted && (
+                                <span className="bg-orange-50 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider border border-orange-100">
+                                    Featured
+                                </span>
+                            )}
+                        </div>
+                        <FavoriteButton propertyId={property.id} className="w-8 h-8 border border-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50" />
+                    </div>
+
+                    <div className="flex justify-between items-end mb-1">
+                        <h3 className="text-lg font-bold text-slate-900 line-clamp-1 group-hover:text-violet-600 transition-colors">
+                            {property.title}
+                        </h3>
+                        <span className="text-xl font-black text-slate-900 whitespace-nowrap ml-2">
+                            {formatPrice(property.price)}
+                        </span>
+                    </div>
+
                     <div className="flex items-center text-slate-500 mb-4 text-sm">
                         <MapPin className="w-4 h-4 mr-1 text-slate-400" />
                         {property.location_city}, {property.location_county}
@@ -113,26 +105,8 @@ export default function PropertyCard({ property, showEditButton, showMakeOffer, 
                             href={`/properties/${property.id}`}
                             className="flex-1 text-center bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 hover:shadow-lg transition-all transform active:scale-95"
                         >
-                            View
+                            View Details
                         </Link>
-                        {showMakeOffer && (
-                            isMakeOfferLocked ? (
-                                <button
-                                    onClick={() => setIsUpgradeModalOpen(true)}
-                                    className="flex-1 text-center bg-slate-100 text-slate-400 font-bold py-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-1 cursor-pointer"
-                                >
-                                    <Lock className="w-3 h-3" />
-                                    <span className="text-sm">Make Offer</span>
-                                </button>
-                            ) : (
-                                <Link
-                                    href={`/properties/${property.id}#valuation-section`}
-                                    className="flex-1 text-center bg-emerald-500 text-white font-bold py-3 rounded-xl hover:bg-emerald-600 hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-1"
-                                >
-                                    <span className="text-sm">Make Offer</span>
-                                </Link>
-                            )
-                        )}
                         {showEditButton && (
                             <Link
                                 href={`/dashboard/owner/properties/${property.id}/edit`}
@@ -147,13 +121,6 @@ export default function PropertyCard({ property, showEditButton, showMakeOffer, 
                     </div>
                 </div>
             </div>
-
-            <UpgradeModal
-                isOpen={isUpgradeModalOpen}
-                onClose={() => setIsUpgradeModalOpen(false)}
-                featureName="Make an Offer"
-                description="This property cannot receive offers because the owner's plan does not support this feature."
-            />
         </>
     );
 }
