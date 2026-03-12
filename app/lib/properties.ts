@@ -95,67 +95,79 @@ export const FURNISHING_TYPES = ['Unfurnished', 'Semi-furnished', 'Furnished', '
 
 export const UNIT_FEATURES = [
     'Air Conditioning',
-    'Central Heating',
     'Balcony',
+    'Central Heating',
     'Fireplace',
-    'Laundry',
-    'Smart Home',
-    'Storage',
-    'Solar Panels',
-    'Private Pool',
     'Jacuzzi',
-    'Parking'
+    'Laundry',
+    'Parking',
+    'Private Pool',
+    'Sauna',
+    'Smart Home',
+    'Solar Panels',
+    'Storage'
 ] as const;
 
 export const COMMUNITY_FEATURES = [
-    'Clubhouse',
-    'Park',
-    'Playground',
-    'Jogging Track',
-    'Common Garden',
-    'Party Hall',
-    'Library',
     'Amphitheatre',
-    'Garage'
+    'Clubhouse',
+    'Common Garden',
+    'Garage',
+    'Jogging Track',
+    'Library',
+    'Park',
+    'Party Hall',
+    'Playground'
 ] as const;
 
 export const SPORTS_FEATURES = [
-    'Gym',
-    'Swimming Pool',
     'Basketball Court',
-    'Tennis Court',
     'Football Field',
+    'Gym',
     'Squash Court',
+    'Swimming Pool',
+    'Tennis Court',
     'Yoga Deck'
 ] as const;
 
 export const SECURITY_FEATURES = [
     '24/7 Security',
     'CCTV Surveillance',
+    'Fire Safety',
     'Gated Community',
     'Intercom',
-    'Fire Safety',
     'Video Door Phone'
 ] as const;
 
 export const SUSTAINABILITY_FEATURES = [
+    'Concierge',
+    'Elevator',
     'Green Building',
+    'Maintenance Staff',
+    'Power Backup',
     'Rainwater Harvesting',
     'Sewage Treatment',
-    'Power Backup',
-    'Elevator',
-    'Concierge',
-    'Maintenance Staff',
+    'Smart Home',
+    'Solar Panels',
     'Visitor Parking'
 ] as const;
 
 export const LISTING_TAGS = [
     'Commission 0%',
     'Exclusive',
-    'Luxury',
+    'Foreclosure',
     'Hotel Regime',
-    'Foreclosure'
+    'Luxury'
 ] as const;
+
+export const FEATURE_CATEGORIES = {
+    'Listing Tags': LISTING_TAGS,
+    'Unit Features': UNIT_FEATURES,
+    'Community & Recreation': COMMUNITY_FEATURES,
+    'Sports & Fitness': SPORTS_FEATURES,
+    'Security & Safety': SECURITY_FEATURES,
+    'Sustainability & Services': SUSTAINABILITY_FEATURES
+} as const;
 
 export const PROPERTY_FEATURES = [
     ...UNIT_FEATURES,

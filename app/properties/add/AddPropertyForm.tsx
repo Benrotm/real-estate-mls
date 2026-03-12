@@ -41,19 +41,13 @@ import {
     INTERIOR_CONDITIONS,
     FURNISHING_TYPES,
     TRANSACTION_TYPES,
-    Property
+    Property,
+    FEATURE_CATEGORIES
 } from '@/app/lib/properties';
 import { getVirtualTours } from '@/app/lib/actions/tours';
 import { VirtualTour } from '@/app/lib/tours';
 
-const FEATURE_CATEGORIES = {
-    'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
-    'Unit Features': ['Air Conditioning', 'Balcony', 'Central Heating', 'Fireplace', 'Garage', 'Jacuzzi', 'Laundry', 'Parking', 'Private Pool', 'Sauna', 'Storage'],
-    'Community & Recreation': ['Amphitheatre', 'Clubhouse', 'Common Garden', 'Jogging Track', 'Library', 'Park', 'Party Hall', 'Playground'],
-    'Sports & Fitness': ['Basketball Court', 'Football Field', 'Gym', 'Squash Court', 'Swimming Pool', 'Tennis Court', 'Yoga Deck'],
-    'Security & Safety': ['24/7 Security', 'CCTV Surveillance', 'Fire Safety', 'Gated Community', 'Intercom', 'Shelter', 'Video Door Phone'],
-    'Sustainability & Services': ['Concierge', 'Elevator', 'Green Building', 'Maintenance Staff', 'Power Backup', 'Rainwater Harvesting', 'Sewage Treatment', 'Smart Home', 'Solar Panels', 'Visitor Parking']
-};
+// FEATURE_CATEGORIES is now imported from @/app/lib/properties
 
 const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: string, text: string, dot: string }> = {
     'Unit Features': { bg: 'bg-violet-600', border: 'border-violet-500', shadow: 'shadow-violet-600/20', text: 'text-violet-400', dot: 'bg-violet-500' },
