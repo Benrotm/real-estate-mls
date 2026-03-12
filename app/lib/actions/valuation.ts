@@ -4,6 +4,7 @@ import { createClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { fetchAirQuality, fetchSolarPotential } from '@/app/lib/services/google-maps';
 import { revalidatePath } from 'next/cache';
+import { getPropertyScoreBreakdown } from '@/app/lib/actions/scoring';
 
 interface ValuationResult {
     estimatedValue: number;
@@ -17,6 +18,9 @@ interface ValuationResult {
         offers?: { count: number; avgPrice: number; impact: number };
     };
     comparables: any[];
+    medianComparablePrice: number;
+    amenityScore: number;
+    amenityBreakdown: { category: string; label: string; points: number }[];
 }
 
 export async function submitSoldPrice(
@@ -90,6 +94,9 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
         return null; // Or throw
     }
 
+    // Scoring Breakdown
+    const { totalScore, breakdown } = await getPropertyScoreBreakdown(property);
+
     if (!property.latitude || !property.longitude || !property.area_usable) {
         // Return fallback valuation using listing price when location/size data is missing
         const listingPrice = Number(property.price) || 0;
@@ -103,7 +110,10 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
                 aqi: { value: 0, category: 'N/A', impact: 0 },
                 solar: { score: 0, kwh: 0, impact: 0 }
             },
-            comparables: []
+            comparables: [],
+            medianComparablePrice: listingPrice,
+            amenityScore: totalScore,
+            amenityBreakdown: breakdown
         };
     }
 
@@ -229,6 +239,18 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
         pricePerSqm = baseValue / (property.area_usable || 1);
     }
 
+    // Calculate median comparable price
+    let medianCompPrice = 0;
+    if (validComps.length > 0) {
+        const sortedPrices = validComps.map(c => Number(c.sold_price)).sort((a, b) => a - b);
+        const mid = Math.floor(sortedPrices.length / 2);
+        medianCompPrice = sortedPrices.length % 2 !== 0
+            ? sortedPrices[mid]
+            : (sortedPrices[mid - 1] + sortedPrices[mid]) / 2;
+    } else {
+        medianCompPrice = baseValue;
+    }
+
     // 6. Apply Lifestyle & Market Modifiers
     let metricsImpact = 0; // percentage
     let aqiImpact = 0;
@@ -296,7 +318,10 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
                 area_usable: safeNumber(comp.properties.area_usable),
                 images: comp.properties.images || []
             } : null
-        }))
+        })),
+        medianComparablePrice: Math.round(safeNumber(medianCompPrice, Number(property.price) || 0)),
+        amenityScore: totalScore,
+        amenityBreakdown: breakdown
     };
 }
 

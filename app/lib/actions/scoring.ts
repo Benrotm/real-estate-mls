@@ -441,3 +441,101 @@ export async function findMatchingLeads(propertyId: string) {
         .filter(m => m.match_score > 0)
         .sort((a, b) => b.match_score - a.match_score);
 }
+export async function getPropertyScoreBreakdown(property: Partial<Property>) {
+    const rules = await fetchScoringRules('property');
+    const breakdown: { category: string; label: string; points: number }[] = [];
+    const getWeight = (key: string) => rules.find(r => r.criteria_key === key && r.is_active)?.weight || 0;
+
+    const addPoint = (cat: string, label: string, key: string) => {
+        const weight = getWeight(key);
+        if (weight !== 0) {
+            breakdown.push({ category: cat, label, points: weight });
+        }
+    };
+
+    // --- Property Details ---
+    if (property.partitioning) addPoint('Property Details', `Partitioning: ${property.partitioning}`, `part_${property.partitioning.toLowerCase()}`);
+    if (property.comfort) addPoint('Property Details', `Comfort: ${property.comfort}`, `comfort_${property.comfort.toLowerCase()}`);
+
+    // --- Building Info ---
+    if (property.year_built && property.year_built > 2020) addPoint('Building Info', 'Newly Built (Post-2020)', 'condition_new');
+    if (property.floor !== undefined) {
+        if (property.floor === 0) addPoint('Building Info', 'Floor: Ground', 'floor_ground');
+        else if (property.floor === property.total_floors && property.total_floors && property.total_floors > 2) addPoint('Building Info', 'Floor: Top', 'floor_top');
+        else if (property.floor > 0 && property.total_floors && property.floor < property.total_floors) addPoint('Building Info', 'Floor: Intermediate', 'floor_intermediate');
+    }
+
+    // --- Exact Location ---
+    const locationStr = `${property.location_city} ${property.address || ''}`.toLowerCase();
+    if (locationStr.includes('center') || locationStr.includes('old town') || locationStr.includes('central')) {
+        addPoint('Location', 'Central Location', 'location_city_center');
+    }
+
+    // --- Condition ---
+    if (property.furnishing) addPoint('Condition', `Furnishing: ${property.furnishing}`, `furn_${property.furnishing.toLowerCase().replace(' ', '_')}`);
+    if (property.interior_condition) addPoint('Condition', `Interior: ${property.interior_condition}`, `condition_${property.interior_condition.toLowerCase().replace(' ', '_')}`);
+
+    // --- Amenities & Features ---
+    const feats = property.features || [];
+
+    // Features Mapping
+    const featureMap: Record<string, { cat: string; key: string }> = {
+        'Parking': { cat: 'Features', key: 'feature_parking' },
+        'Garage': { cat: 'Features', key: 'feature_parking' },
+        'Elevator': { cat: 'Features', key: 'feature_elevator' },
+        'Balcony': { cat: 'Features', key: 'feature_balcony' },
+        'Terrace': { cat: 'Features', key: 'feature_balcony' },
+        'Central Heating': { cat: 'Features', key: 'feature_central_heating' },
+        'Air Conditioning': { cat: 'Features', key: 'feat_air_cond' },
+        'Fireplace': { cat: 'Features', key: 'feat_fireplace' },
+        'Jacuzzi': { cat: 'Features', key: 'feat_jacuzzi' },
+        'Laundry': { cat: 'Features', key: 'feat_laundry' },
+        'Private Pool': { cat: 'Features', key: 'feat_pool_priv' },
+        'Sauna': { cat: 'Features', key: 'feat_sauna' },
+        'Storage': { cat: 'Features', key: 'feat_storage' },
+        'Smart Home': { cat: 'Features', key: 'sust_smart' },
+        'Solar Panels': { cat: 'Features', key: 'sust_solar' },
+        'Amphitheatre': { cat: 'Community', key: 'comm_amphi' },
+        'Clubhouse': { cat: 'Community', key: 'comm_club' },
+        'Common Garden': { cat: 'Community', key: 'comm_garden' },
+        'Jogging Track': { cat: 'Community', key: 'comm_jog' },
+        'Library': { cat: 'Community', key: 'comm_lib' },
+        'Park': { cat: 'Community', key: 'comm_park' },
+        'Party Hall': { cat: 'Community', key: 'comm_party' },
+        'Playground': { cat: 'Community', key: 'comm_play' },
+        'Basketball Court': { cat: 'Sports', key: 'sport_basket' },
+        'Football Field': { cat: 'Sports', key: 'sport_foot' },
+        'Gym': { cat: 'Sports', key: 'sport_gym' },
+        'Squash Court': { cat: 'Sports', key: 'sport_squash' },
+        'Swimming Pool': { cat: 'Sports', key: 'sport_swim' },
+        'Tennis Court': { cat: 'Sports', key: 'sport_tennis' },
+        'Yoga Deck': { cat: 'Sports', key: 'sport_yoga' },
+        '24/7 Security': { cat: 'Security', key: 'sec_24_7' },
+        'CCTV Surveillance': { cat: 'Security', key: 'sec_cctv' },
+        'Fire Safety': { cat: 'Security', key: 'sec_fire' },
+        'Gated Community': { cat: 'Security', key: 'sec_gated' },
+        'Intercom': { cat: 'Security', key: 'sec_intercom' },
+        'Video Door Phone': { cat: 'Security', key: 'sec_video_door' },
+        'Concierge': { cat: 'Sustainability', key: 'sust_concierge' },
+        'Green Building': { cat: 'Sustainability', key: 'sust_green' },
+        'Maintenance Staff': { cat: 'Sustainability', key: 'sust_aint' },
+        'Power Backup': { cat: 'Sustainability', key: 'sust_power' },
+        'Rainwater Harvesting': { cat: 'Sustainability', key: 'sust_rain' },
+        'Sewage Treatment': { cat: 'Sustainability', key: 'sust_sewage' },
+        'Visitor Parking': { cat: 'Sustainability', key: 'sust_visitor' },
+        'Commission 0%': { cat: 'Tags', key: 'tag_commission_0' },
+        'Exclusive': { cat: 'Tags', key: 'tag_exclusive' },
+        'Luxury': { cat: 'Tags', key: 'tag_luxury' },
+    };
+
+    feats.forEach(feat => {
+        const mapping = featureMap[feat];
+        if (mapping) {
+            addPoint(mapping.cat, feat, mapping.key);
+        }
+    });
+
+    const totalScore = breakdown.reduce((sum, item) => sum + item.points, 0);
+
+    return { totalScore, breakdown };
+}
