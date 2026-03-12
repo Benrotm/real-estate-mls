@@ -1,7 +1,7 @@
 import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Heart, Search, User, MapPin, ArrowRight, Home } from 'lucide-react';
+import { Heart, Search, User, MapPin, ArrowRight, Home, BarChart, TrendingUp } from 'lucide-react';
 
 export default async function ClientDashboard() {
     const profile = await getUserProfile();
@@ -79,6 +79,23 @@ export default async function ClientDashboard() {
                     <h3 className="text-lg font-bold text-slate-900 mb-1">My Profile</h3>
                     <p className="text-sm text-slate-500">
                         Update your personal details
+                    </p>
+                </Link>
+
+                {/* Market Analytics */}
+                <Link
+                    href="/dashboard/client/analytics"
+                    className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-cyan-200 transition-all"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-cyan-50 rounded-xl flex items-center justify-center text-cyan-600 group-hover:scale-110 transition-transform">
+                            <BarChart className="w-6 h-6" />
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-cyan-500 transition-colors" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">Market Analytics</h3>
+                    <p className="text-sm text-slate-500">
+                        Deep market data & trends
                     </p>
                 </Link>
             </div>

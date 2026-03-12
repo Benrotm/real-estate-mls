@@ -107,7 +107,7 @@ export default async function OwnerDashboard() {
                 </div>
 
                 {/* Tools & Insights */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {/* Valuation Reports */}
                     <div className="h-full">
                         <HomeValuationWidget linkPath="/dashboard/owner/valuation" />
@@ -121,6 +121,17 @@ export default async function OwnerDashboard() {
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">Market Insights</h3>
                             <p className="text-slate-500 text-sm">Track local trends.</p>
+                        </div>
+                    </Link>
+
+                    {/* Market Analytics */}
+                    <Link href="/dashboard/owner/analytics" className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group">
+                        <div className="w-16 h-16 bg-cyan-50 text-cyan-600 rounded-xl flex items-center justify-center group-hover:bg-cyan-600 group-hover:text-white transition-colors">
+                            <BarChart className="w-8 h-8" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-cyan-600 transition-colors">Market Analytics</h3>
+                            <p className="text-slate-500 text-sm">Deep market data.</p>
                         </div>
                     </Link>
 
