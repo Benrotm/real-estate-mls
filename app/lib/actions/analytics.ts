@@ -90,13 +90,14 @@ export async function getMarketAnalyticsData(filters: AnalyticsFilters): Promise
 
     // Apply Global Filters to Queries
     if (filters.propertyType && filters.propertyType !== 'All') {
-        supplyQuery = supplyQuery.eq('type', filters.propertyType);
+        // Use ILIKE for case-insensitive matching
+        supplyQuery = supplyQuery.ilike('type', filters.propertyType);
     }
     if (filters.category && filters.category !== 'All') {
         supplyQuery = supplyQuery.eq('listing_type', filters.category === 'Sale' ? 'For Sale' : 'For Rent');
     }
     if (filters.city) {
-        supplyQuery = supplyQuery.eq('location_city', filters.city);
+        supplyQuery = supplyQuery.ilike('location_city', filters.city);
     }
 
     // Apply Time Range to Sales (Supply is everything active right now)
@@ -130,25 +131,31 @@ export async function getMarketAnalyticsData(filters: AnalyticsFilters): Promise
 
     // Filter sales manually based on the joined property data
     if (filters.propertyType && filters.propertyType !== 'All') {
-        soldHistory = soldHistory.filter(s => (s.properties as any)?.type === filters.propertyType);
+        const typeLower = filters.propertyType.toLowerCase();
+        soldHistory = soldHistory.filter(s => (s.properties as any)?.type?.toLowerCase() === typeLower);
     }
     if (filters.category && filters.category !== 'All') {
         const lt = filters.category === 'Sale' ? 'For Sale' : 'For Rent';
         soldHistory = soldHistory.filter(s => (s.properties as any)?.listing_type === lt);
     }
     if (filters.city) {
-        soldHistory = soldHistory.filter(s => (s.properties as any)?.location_city === filters.city);
+        const cityLower = filters.city.toLowerCase();
+        soldHistory = soldHistory.filter(s => (s.properties as any)?.location_city?.toLowerCase() === cityLower);
     }
 
     // Filter leads manually based on their own preference columns
     if (filters.propertyType && filters.propertyType !== 'All') {
-        allLeads = allLeads.filter(l => (l as any).preference_type === filters.propertyType);
+        const typeLower = filters.propertyType.toLowerCase();
+        allLeads = allLeads.filter(l => (l as any).preference_type?.toLowerCase() === typeLower);
     }
     if (filters.category && filters.category !== 'All') {
-        allLeads = allLeads.filter(l => (l as any).preference_listing_type === filters.category);
+        // Map "Sale"/"Rent" to "For Sale"/"For Rent" explicitly
+        const lt = filters.category === 'Sale' ? 'For Sale' : 'For Rent';
+        allLeads = allLeads.filter(l => (l as any).preference_listing_type === lt);
     }
     if (filters.city) {
-        allLeads = allLeads.filter(l => (l as any).preference_location_city === filters.city);
+        const cityLower = filters.city.toLowerCase();
+        allLeads = allLeads.filter(l => (l as any).preference_location_city?.toLowerCase() === cityLower);
     }
 
     console.log(`Analytics filtered counts => Sales: ${soldHistory.length}, Leads: ${allLeads.length}`);

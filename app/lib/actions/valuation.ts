@@ -19,6 +19,8 @@ interface ValuationResult {
     };
     comparables: any[];
     medianComparablePrice: number;
+    currentSupply: any[];
+    medianSupplyPrice: number;
     amenityScore: number;
     amenityBreakdown: { category: string; label: string; points: number }[];
 }
@@ -112,6 +114,8 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
             },
             comparables: [],
             medianComparablePrice: listingPrice,
+            currentSupply: [],
+            medianSupplyPrice: listingPrice,
             amenityScore: totalScore,
             amenityBreakdown: breakdown
         };
@@ -160,9 +164,9 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
     }
 
     // 3. Find Comparables (Sold History)
-    // Radius ~2km. 1 deg lat ~ 111km. 2km ~ 0.018 deg.
-    const LAT_RANGE = 0.02;
-    const LNG_RANGE = 0.025; // Roughly adjusted for longitude at typical latitudes
+    // Radius ~5km. 1 deg lat ~ 111km. 5km ~ 0.045 deg.
+    const LAT_RANGE = 0.05;
+    const LNG_RANGE = 0.06; // Roughly adjusted for longitude at typical latitudes
 
     // We can't join explicitly easily with Supabase client syntax for complex filtering across tables efficiently without views/functions.
     // Instead, we'll fetch sold history for ALL properties, then filter by those properties' location.
@@ -198,6 +202,23 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
         comparables = soldHistory || [];
     }
 
+    // 3.5 Find Current Supply (Active Listings)
+    let currentSupply: any[] = [];
+    if (nearbyIds.length > 0) {
+        const { data: activeListings } = await supabase
+            .from('properties')
+            .select(`
+                id, title, address, rooms, area_usable, year_built, price, type, location_city, images
+            `)
+            .in('id', nearbyIds)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(15);
+
+        currentSupply = activeListings || [];
+    }
+
+
     // 4. Find Offers
     const { data: offers } = await supabase
         .from('property_offers')
@@ -219,7 +240,7 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
         const size = c.properties?.area_usable;
         if (!size) return false;
         const diff = Math.abs(size - property.area_usable) / property.area_usable;
-        return diff <= 0.2; // 20% variance
+        return diff <= 0.6; // Increased variance to 60% to show more comparables in demo
     });
 
     let baseValue = 0;
@@ -250,6 +271,26 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
     } else {
         medianCompPrice = baseValue;
     }
+
+    // Calculate median supply price
+    let medianSupplyPrice = 0;
+    const validSupply = currentSupply.filter(s => {
+        const size = s.area_usable;
+        if (!size) return false;
+        const diff = Math.abs(size - property.area_usable) / property.area_usable;
+        return diff <= 0.6; // Increased variance to 60% for supply
+    });
+
+    if (validSupply.length > 0) {
+        const sortedPrices = validSupply.map(s => Number(s.price)).sort((a, b) => a - b);
+        const mid = Math.floor(sortedPrices.length / 2);
+        medianSupplyPrice = sortedPrices.length % 2 !== 0
+            ? sortedPrices[mid]
+            : (sortedPrices[mid - 1] + sortedPrices[mid]) / 2;
+    } else {
+        medianSupplyPrice = Number(property.price) || baseValue;
+    }
+
 
     // 6. Apply Lifestyle & Market Modifiers
     let metricsImpact = 0; // percentage
@@ -320,6 +361,18 @@ export async function getSmartValuation(propertyId: string): Promise<ValuationRe
             } : null
         })),
         medianComparablePrice: Math.round(safeNumber(medianCompPrice, Number(property.price) || 0)),
+        currentSupply: currentSupply.map(s => ({
+            id: s.id,
+            title: s.title || '',
+            price: safeNumber(s.price),
+            address: s.address || '',
+            rooms: safeNumber(s.rooms),
+            area_usable: safeNumber(s.area_usable),
+            type: s.type || 'Other',
+            location_city: s.location_city || '',
+            images: s.images || []
+        })),
+        medianSupplyPrice: Math.round(safeNumber(medianSupplyPrice, Number(property.price) || 0)),
         amenityScore: totalScore,
         amenityBreakdown: breakdown
     };
