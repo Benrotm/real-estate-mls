@@ -494,12 +494,16 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                             </p>
                         </div>
 
-                        {/* Market Price Trends (Remote Change) */}
-                        <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow-sm overflow-hidden relative group">
-                            <div className="flex justify-between items-start mb-8">
+                        {/* Market Price Trends (Emerald Theme) */}
+                        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl relative overflow-hidden group">
+                            {/* Decorative background effects */}
+                            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20" />
+                            <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent" />
+
+                            <div className="flex justify-between items-start mb-8 relative z-10">
                                 <div>
-                                    <h4 className="text-sm font-black text-slate-900 mb-2 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <TrendingUp className="w-4 h-4 text-indigo-500" />
+                                    <h4 className="text-sm font-black text-white mb-2 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <Zap className="w-4 h-4 text-emerald-400" />
                                         Market PPSM Trends
                                     </h4>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -507,50 +511,50 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-xl font-black text-indigo-600">
+                                    <div className="text-xl font-black text-emerald-400">
                                         {formatPrice(valuation.pricePerSqm)}/m²
                                     </div>
-                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Current Average</div>
+                                    <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Current Average</div>
                                 </div>
                             </div>
 
-                            <div className="h-64 mt-4 -ml-4">
+                            <div className="h-64 mt-4 -ml-4 relative z-10">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={analyticsData?.trends ? [...analyticsData.trends].reverse() : chartData}>
                                         <defs>
-                                            <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} />
-                                                <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                                            <linearGradient id="colorPriceEmerald" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
                                         <XAxis
                                             dataKey={analyticsData ? "date" : "label"}
                                             axisLine={false}
                                             tickLine={false}
-                                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
+                                            tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }}
                                             dy={10}
                                         />
                                         <YAxis hide domain={['auto', 'auto']} />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: '#ffffff',
-                                                border: '1px solid #f1f5f9',
+                                                backgroundColor: '#0f172a',
+                                                border: '1px solid #1e293b',
                                                 borderRadius: '12px',
-                                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                                                 fontSize: '12px',
-                                                fontWeight: 'bold'
+                                                fontWeight: 'bold',
+                                                color: '#fff'
                                             }}
-                                            itemStyle={{ color: '#4f46e5' }}
+                                            itemStyle={{ color: '#10b981' }}
                                             formatter={(value: any) => [formatPrice(value), 'Price']}
                                         />
                                         <Area
                                             type="monotone"
                                             dataKey={analyticsData ? "avgPrice" : "price"}
-                                            stroke="#4f46e5"
+                                            stroke="#10b981"
                                             strokeWidth={3}
                                             fillOpacity={1}
-                                            fill="url(#colorPrice)"
+                                            fill="url(#colorPriceEmerald)"
                                         />
                                     </AreaChart>
                                 </ResponsiveContainer>
