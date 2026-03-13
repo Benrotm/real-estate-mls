@@ -560,50 +560,84 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
 
                     {/* Row 2: Supply/Demand & Recommendations */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mb-10">
-                        {/* Supply vs Demand Chart */}
-                        <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow-sm overflow-hidden relative group col-span-2">
-                            <div className="flex justify-between items-start mb-8">
+                        {/* Supply vs Demand Dynamics (Dark Theme) */}
+                        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl overflow-hidden relative group col-span-2">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[80px] rounded-full pointer-events-none group-hover:bg-purple-500/10 transition-all duration-700" />
+
+                            <div className="flex justify-between items-start mb-8 relative z-10">
                                 <div>
-                                    <h4 className="text-sm font-black text-slate-900 mb-2 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-purple-500" />
-                                        Supply vs Demand
-                                    </h4>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                        Buyer Interest vs Inventory
-                                    </p>
+                                    <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-1">
+                                        <Zap className="w-5 h-5 text-purple-400" />
+                                        Supply vs Demand Dynamics
+                                    </h2>
+                                    <p className="text-xs text-slate-400">Comparing active listings (bars) against incoming leads (line).</p>
                                 </div>
                                 <div className="text-right">
-                                    <div className="flex items-center gap-2 bg-purple-50 px-2 py-1 rounded border border-purple-100">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
-                                        <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest">Seller's Market</span>
+                                    <div className="text-2xl font-black text-white flex items-center gap-2 justify-end">
+                                        {formatPrice(valuation.pricePerSqm)} <span className="text-sm font-bold text-slate-400">€/m²</span>
                                     </div>
+                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Average</div>
                                 </div>
                             </div>
 
-                            <div className="h-64 mt-4 -ml-4">
+                            <div className="h-[300px] w-full relative z-10">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart data={analyticsData?.trends ? [...analyticsData.trends].reverse() : []}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <ComposedChart data={[...valuation.trends]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorSupply" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                         <XAxis
                                             dataKey="date"
+                                            stroke="#64748b"
+                                            tick={{ fill: '#64748b', fontSize: 12 }}
                                             axisLine={false}
                                             tickLine={false}
-                                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
-                                            dy={10}
                                         />
-                                        <YAxis hide />
+                                        <YAxis
+                                            yAxisId="left"
+                                            stroke="#64748b"
+                                            tick={{ fill: '#64748b', fontSize: 12 }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+                                        <YAxis
+                                            yAxisId="right"
+                                            orientation="right"
+                                            stroke="#8b5cf6"
+                                            tick={{ fill: '#8b5cf6', fontSize: 12 }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
                                         <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: '#ffffff',
-                                                border: '1px solid #f1f5f9',
-                                                borderRadius: '12px',
-                                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                                fontSize: '12px',
-                                                fontWeight: 'bold'
-                                            }}
+                                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px', color: '#fff' }}
+                                            itemStyle={{ color: '#e2e8f0' }}
                                         />
-                                        <Bar dataKey="supply" fill="#a78bfa" radius={[4, 4, 0, 0]} barSize={20} />
-                                        <Line type="monotone" dataKey="demand" stroke="#ec4899" strokeWidth={3} dot={{ r: 4, fill: '#ec4899' }} />
+                                        <Legend
+                                            wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
+                                            formatter={(value) => <span className="text-slate-400 font-medium">{value}</span>}
+                                        />
+                                        <Bar
+                                            yAxisId="left"
+                                            dataKey="supply"
+                                            name="New Supply (Listings)"
+                                            fill="url(#colorSupply)"
+                                            radius={[4, 4, 0, 0]}
+                                            barSize={16}
+                                        />
+                                        <Line
+                                            yAxisId="right"
+                                            type="monotone"
+                                            dataKey="demand"
+                                            name="Demand Volume (Leads)"
+                                            stroke="#8b5cf6"
+                                            strokeWidth={3}
+                                            dot={{ r: 4, fill: '#8b5cf6', strokeWidth: 2, stroke: '#0f172a' }}
+                                            activeDot={{ r: 6, stroke: '#c4b5fd' }}
+                                        />
                                     </ComposedChart>
                                 </ResponsiveContainer>
                             </div>
