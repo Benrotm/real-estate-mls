@@ -574,7 +574,7 @@ export default function ValuationWidget({ property }: ValuationWidgetProps) {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-2xl font-black text-white flex items-center gap-2 justify-end">
-                                        {formatPrice(valuation.pricePerSqm)} <span className="text-sm font-bold text-slate-400">€/m²</span>
+                                        {formatPrice(valuation.pricePerSqm)}<span className="text-sm font-bold text-slate-400">/m²</span>
                                     </div>
                                     <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Average</div>
                                 </div>
