@@ -10,7 +10,10 @@ export default async function AgentChatPage({ searchParams }: { searchParams: { 
         redirect('/auth/login');
     }
 
+    console.log(`[ChatPage] User ${user.id} attempting to access Agent Chat with role: ${user.role}`);
+
     if (user.role !== 'agent' && user.role !== 'super_admin') {
+        console.warn(`[ChatPage] Access denied for user ${user.id} with role ${user.role}. Redirecting to /dashboard`);
         redirect('/dashboard');
     }
 

@@ -105,6 +105,7 @@ export default function DashboardClient({
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
         { name: 'Imoflux', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
+        { name: 'Sold Imoflux', icon: Target, href: '/dashboard/admin/sold-immoflux' },
         { name: 'FluxMLS', icon: CopyCheck, href: '/dashboard/admin/fluxmls' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },

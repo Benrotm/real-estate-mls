@@ -96,17 +96,24 @@ export async function getNotifications(limit = 20) {
  */
 export async function markNotificationAsRead(id: string) {
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const { error } = await supabase
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    // Use Admin Client to bypass RLS issues on update if necessary
+    const supabaseAdmin = createAdminClient();
+    const { error } = await supabaseAdmin
         .from('notifications')
         .update({ is_read: true })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id); // Extra safety check
 
     if (error) {
         console.error('Error marking notification as read:', error);
         return { success: false, error: error.message };
     }
 
+    revalidatePath('/');
     return { success: true };
 }
 
@@ -119,7 +126,9 @@ export async function markAllNotificationsAsRead() {
 
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const { error } = await supabase
+    // Use Admin Client for bulk updates
+    const supabaseAdmin = createAdminClient();
+    const { error } = await supabaseAdmin
         .from('notifications')
         .update({ is_read: true })
         .eq('user_id', user.id)
@@ -130,6 +139,7 @@ export async function markAllNotificationsAsRead() {
         return { success: false, error: error.message };
     }
 
+    revalidatePath('/');
     return { success: true };
 }
 
@@ -156,5 +166,6 @@ export async function markAllNotificationsByTypeAsRead(types: NotificationType[]
         return { success: false, error: error.message };
     }
 
+    revalidatePath('/');
     return { success: true };
 }

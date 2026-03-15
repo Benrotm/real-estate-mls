@@ -26,6 +26,12 @@ export default function Navbar({ user }: NavbarProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const dashboardUrl = userRole === 'super_admin' ? '/dashboard/admin' :
+    userRole === 'agent' ? '/dashboard/agent' :
+    userRole === 'owner' ? '/dashboard/owner' :
+    userRole === 'developer' ? '/dashboard/developer' :
+    '/dashboard';
+
   const languages = [
     { code: 'en', label: 'English', flag: '🇺🇸' },
     { code: 'es', label: 'Español', flag: '🇪🇸' },
@@ -57,8 +63,12 @@ export default function Navbar({ user }: NavbarProps) {
             <Link href="/properties" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Properties
             </Link>
-            {userRole === 'client' && (
-              <Link href="/dashboard/client" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+            {isLoggedIn && (
+              <Link
+                href={dashboardUrl}
+                className="text-[10px] font-black bg-cyan-500/10 text-cyan-400 border border-cyan-500/50 px-3 py-1.5 rounded-lg hover:bg-cyan-500/20 hover:border-cyan-400 transition-all shadow-lg shadow-cyan-500/10 flex items-center gap-1.5 active:scale-95 group/dash uppercase tracking-wider"
+              >
+                <Home className="w-3.5 h-3.5 group-hover/dash:scale-110 transition-transform" />
                 Dashboard
               </Link>
             )}
@@ -314,9 +324,14 @@ export default function Navbar({ user }: NavbarProps) {
             <Link href="/properties" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
               Properties
             </Link>
-            {userRole === 'client' && (
-              <Link href="/dashboard/client" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
-                Dashboard
+            {isLoggedIn && (
+              <Link
+                href={dashboardUrl}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-black bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-lg shadow-cyan-500/10"
+              >
+                <Home className="w-5 h-5 text-cyan-400" />
+                DASHBOARD
               </Link>
             )}
             <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">

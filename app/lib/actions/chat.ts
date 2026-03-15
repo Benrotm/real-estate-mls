@@ -360,7 +360,7 @@ export async function sendMessage(conversationId: string, senderId: string, cont
                         type: 'message',
                         title: 'New Message',
                         content: `${senderProfile?.full_name || 'Someone'} sent you a message: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
-                        link: `/dashboard/chat?id=${conversationId}` // Shared chat link or role-specific?
+                        link: `/dashboard/chat?id=${conversationId}` // Using redirector to handle role-specific paths
                     });
                 }
             }

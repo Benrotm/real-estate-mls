@@ -531,7 +531,7 @@ export async function getActivePortfolioValue() {
         .from('properties')
         .select('price')
         .eq('owner_id', user.id)
-        .eq('status', 'active');
+        .in('status', ['active', 'pending']);
 
     if (error) {
         console.error('Error fetching portfolio value:', error);

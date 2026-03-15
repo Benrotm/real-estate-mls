@@ -58,10 +58,13 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
     // Ensure we return an object that matches UserProfile interface
     // especially since 'listings_count' might not be a column in profiles
-    return {
+    const finalProfile = {
         ...profile,
         listings_count: 0 // Default, use getUsageStats for real count
     } as UserProfile;
+
+    console.log(`[Auth] getUserProfile for ${user.id}: role=${finalProfile.role}`);
+    return finalProfile;
 }
 
 export async function isSuperAdmin(): Promise<boolean> {

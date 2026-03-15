@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Building, Users, Eye, Target, Search, Plus, MessageSquare, BarChart, Bookmark, ArrowUpRight, TrendingUp } from 'lucide-react';
-import { getUserProfile, getUsageStats, getFeaturedStats } from '../../lib/auth';
+import { getUserProfile, getUsageStats, getFeaturedStats, getActiveUsageStats } from '../../lib/auth';
 import { getRecentInquiries, getTotalPropertyViews, getActivePortfolioValue } from '../../lib/actions/propertyAnalytics';
 import { getLeadsCount } from '../../lib/actions/leads';
 import { getUserProperties } from '../../lib/actions/properties';
@@ -11,6 +11,7 @@ import RecentPropertiesWidget from '../../components/dashboard/RecentPropertiesW
 export default async function AgentDashboard() {
     const profile = await getUserProfile();
     const usageCount = profile ? await getUsageStats(profile.id) : 0;
+    const activeListingsCount = profile ? await getActiveUsageStats(profile.id) : 0;
     const featuredCount = profile ? await getFeaturedStats(profile.id) : 0;
     const recentInquiries = await getRecentInquiries(5);
     const totalViews = await getTotalPropertyViews();
@@ -59,7 +60,7 @@ export default async function AgentDashboard() {
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center justify-between">
                         <div>
                             <div className="text-xs font-medium text-slate-500 mb-1">Active Listings</div>
-                            <div className="text-3xl font-bold text-slate-900">{usageCount}</div>
+                            <div className="text-3xl font-bold text-slate-900">{activeListingsCount}</div>
                             <div className="text-xs text-green-600 font-bold mt-1">{availableListings} Available</div>
                         </div>
                         <div className="w-10 h-10 bg-orange-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/30">
@@ -112,6 +113,10 @@ export default async function AgentDashboard() {
                     </div>
 
                     <div className="flex gap-12 mt-4 md:mt-0 relative z-10 text-center">
+                        <div>
+                            <div className="text-3xl font-bold">{activeListingsCount}</div>
+                            <div className="text-xs text-orange-100">Active Listings</div>
+                        </div>
                         <div>
                             <div className="text-3xl font-bold">{usageCount}</div>
                             <div className="text-xs text-orange-100">Total Listings</div>
