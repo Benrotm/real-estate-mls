@@ -449,13 +449,68 @@ export async function getSoldProperties(filters: {
         query = query.filter('properties.year_built', 'eq', filters.yearBuilt);
     }
 
-    const { data, error } = await query.limit(50);
+    const { data: historyData, error: historyError } = await query.limit(50);
 
-    if (error) {
-        console.error("Error fetching sold properties:", error);
-        return [];
+    if (historyError) {
+        console.error("Error fetching sold history:", historyError);
     }
 
-    // Post-filter if the library doesn't support nested filtering perfectly in one go
-    return data || [];
+    // 2. Fetch from market_insights (Scraped Data)
+    let miQuery = supabase
+        .from('market_insights')
+        .select('*')
+        .order('scraped_at', { ascending: false });
+
+    if (filters.city) miQuery = miQuery.ilike('city', `%${filters.city}%`);
+    if (filters.area) miQuery = miQuery.ilike('area', `%${filters.area}%`);
+    if (filters.type && filters.type !== 'All') miQuery = miQuery.eq('property_type', filters.type);
+    if (filters.minRooms) miQuery = miQuery.gte('rooms', filters.minRooms);
+    if (filters.maxRooms) miQuery = miQuery.lte('rooms', filters.maxRooms);
+    if (filters.minPrice) miQuery = miQuery.gte('price', filters.minPrice);
+    if (filters.maxPrice) miQuery = miQuery.lte('price', filters.maxPrice);
+    if (filters.minArea) miQuery = miQuery.gte('usable_area', filters.minArea);
+    if (filters.maxArea) miQuery = miQuery.lte('usable_area', filters.maxArea);
+    if (filters.yearBuilt) miQuery = miQuery.eq('year_built', filters.yearBuilt);
+
+    const { data: miData, error: miError } = await miQuery.limit(50);
+
+    if (miError) {
+        console.error("Error fetching market insights:", miError);
+    }
+
+    // 3. Merge and Format
+    const formattedHistory = (historyData || []).map(item => ({
+        ...item,
+        source: 'internal'
+    }));
+
+    const formattedMI = (miData || []).map(mi => ({
+        id: mi.id,
+        sold_price: mi.price,
+        sold_date: mi.scraped_at,
+        days_on_market: mi.days_on_market,
+        source: 'scraped',
+        properties: {
+            id: mi.id,
+            title: mi.title,
+            type: mi.property_type || 'Apartment',
+            location_city: mi.city,
+            location_area: mi.area,
+            latitude: mi.raw_extracted_data?.lat || 0,
+            longitude: mi.raw_extracted_data?.lng || 0,
+            price: mi.price, // Fallback to sold price if listing price not available separately
+            currency: mi.currency || 'EUR',
+            rooms: mi.rooms,
+            area_usable: mi.usable_area,
+            year_built: mi.year_built,
+            images: mi.images || [],
+            created_at: mi.scraped_at
+        }
+    }));
+
+    const combined = [...formattedHistory, ...formattedMI].sort((a, b) => 
+        new Date(b.sold_date).getTime() - new Date(a.sold_date).getTime()
+    );
+
+    return combined.slice(0, 50);
 }
