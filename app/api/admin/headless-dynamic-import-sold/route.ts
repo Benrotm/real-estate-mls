@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createPropertyFromData } from '@/app/lib/actions/properties';
 
 export async function POST(req: Request) {
     try {
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
         }
 
         const dataToSave = {
-            original_url: url,
+            url: url,
             title: extraData.title || '',
             description: extraData.description || '',
             price: extraData.priceRaw 
@@ -37,29 +38,42 @@ export async function POST(req: Request) {
                     ? extraData.priceRaw 
                     : parseFloat(extraData.priceRaw.toString().replace(/[^\d.-]/g, '')) || null)
                 : null,
-            days_on_market: extraData.days_on_market ? parseInt(extraData.days_on_market) : null,
-            status: extraData.status || 'Sold',
+            status: 'sold',
             images: extraData.images || [],
             raw_extracted_data: extraData.raw_extracted_data || {},
-            created_by: finalOwnerId,
-            // Added missing fields
             rooms: extraData.rooms || null,
-            usable_area: extraData.usable_area || null,
+            area_usable: extraData.usable_area || null,
             year_built: extraData.year_built || null,
-            city: extraData.city || null,
-            area: extraData.area || null
+            location_city: extraData.city || null,
+            location_area: extraData.area || null,
+            type: 'Apartment' as any // Default, heuristic will fix it if possible
         };
 
-        const { data: result, error: saveError } = await supabaseAdmin
-            .from('market_insights')
-            .insert([dataToSave])
-            .select()
-            .single();
+        const dom = extraData.days_on_market ? parseInt(extraData.days_on_market) : null;
 
-        if (saveError) {
-            console.error('Save to Market Insights Error:', saveError);
-            return NextResponse.json({ success: false, error: saveError.message || 'Failed to save to database' });
+        // 1. Create Property
+        const saveResult = await createPropertyFromData(dataToSave, url, finalOwnerId);
+
+        if (!saveResult.success || !saveResult.data) {
+            console.error('Save to Properties Error:', saveResult.error);
+            return NextResponse.json({ success: false, error: saveResult.error || 'Failed to save property' });
         }
+
+        const newPropertyId = saveResult.data.id;
+
+        // 2. Update Status to Sold (createPropertyFromData forces to 'active')
+        await supabaseAdmin.from('properties')
+            .update({ status: 'sold' })
+            .eq('id', newPropertyId);
+
+        // 3. Create Sold History Record
+        await supabaseAdmin.from('property_sold_history')
+            .insert([{
+                property_id: newPropertyId,
+                sold_price: dataToSave.price,
+                sold_date: new Date().toISOString(),
+                days_on_market: dom
+            }]);
 
         // 3. Tracking table
         await supabaseAdmin.from('scraped_urls').upsert({
@@ -69,7 +83,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
             success: true,
-            id: result.id,
+            id: newPropertyId,
             title: dataToSave.title
         });
 
