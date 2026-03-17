@@ -41,7 +41,13 @@ export async function POST(req: Request) {
             status: extraData.status || 'Sold',
             images: extraData.images || [],
             raw_extracted_data: extraData.raw_extracted_data || {},
-            created_by: finalOwnerId
+            created_by: finalOwnerId,
+            // Added missing fields
+            rooms: extraData.rooms || null,
+            usable_area: extraData.usable_area || null,
+            year_built: extraData.year_built || null,
+            city: extraData.city || null,
+            area: extraData.area || null
         };
 
         const { data: result, error: saveError } = await supabaseAdmin
