@@ -65,11 +65,27 @@ export default async function PropertyDetailPage({
     try {
         // 1. Try to fetch from Supabase if ID is valid UUID
         if (isUuid) {
-            const { data: dbProperty } = await supabase
+            let { data: dbProperty } = await supabase
                 .from('properties')
                 .select('*')
                 .eq('id', id)
                 .single();
+
+            if (!dbProperty) {
+                // If not found, it might be a 'sold' property hidden by RLS
+                // We use the admin client to bypass RLS, but strictly enforce status === 'sold'
+                const { createAdminClient } = await import('@/app/lib/supabase/admin');
+                const adminSupabase = createAdminClient();
+                const { data: adminProp } = await adminSupabase
+                    .from('properties')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+                
+                if (adminProp && adminProp.status === 'sold') {
+                    dbProperty = adminProp;
+                }
+            }
 
             if (dbProperty) {
                 property = {
