@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 export async function POST(req: Request) {
     try {
         const payload = await req.json();
+        console.log('--- HEADLESS IMPORT SOLD PAYLOAD ---');
+        console.log(JSON.stringify(payload, null, 2));
         const { url, adminId, extraData } = payload;
 
         if (!url || !extraData) {
