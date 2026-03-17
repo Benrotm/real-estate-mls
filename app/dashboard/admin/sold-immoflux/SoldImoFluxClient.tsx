@@ -483,7 +483,10 @@ export default function SoldImoFluxClient({ initialSettings }: { initialSettings
                                     value={settings.sold_immoflux_integration.last_scraped_id || 1}
                                     onChange={(e) => handleChange('last_scraped_id', parseInt(e.target.value) || 1)}
                                     onFocus={(e) => e.target.select()}
-                                    onClick={(e) => e.currentTarget.select()}
+                                    onClick={(e) => {
+                                        const target = e.currentTarget;
+                                        setTimeout(() => target.select(), 0);
+                                    }}
                                     className="w-20 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-white focus:outline-none focus:border-fuchsia-500 transition-colors text-center"
                                 />
                             </div>
