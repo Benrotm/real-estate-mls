@@ -30,8 +30,11 @@ export async function POST(req: Request) {
             original_url: url,
             title: extraData.title || '',
             description: extraData.description || '',
-            price_raw: extraData.priceRaw || '',
-            price: extraData.priceRaw ? parseFloat(extraData.priceRaw.replace(/[^\d.-]/g, '')) || null : null,
+            price: extraData.priceRaw 
+                ? (typeof extraData.priceRaw === 'number' 
+                    ? extraData.priceRaw 
+                    : parseFloat(extraData.priceRaw.toString().replace(/[^\d.-]/g, '')) || null)
+                : null,
             days_on_market: extraData.days_on_market ? parseInt(extraData.days_on_market) : null,
             status: extraData.status || 'Sold',
             images: extraData.images || [],
