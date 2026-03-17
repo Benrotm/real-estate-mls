@@ -490,6 +490,7 @@ export async function getSoldProperties(filters: {
         sold_date: mi.scraped_at,
         days_on_market: mi.days_on_market,
         source: 'scraped',
+        original_url: mi.original_url,
         properties: {
             id: mi.id,
             title: mi.title,

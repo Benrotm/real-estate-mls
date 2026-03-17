@@ -320,9 +320,12 @@ export default function MarketInsightsClient() {
                                 const prop = item.properties;
                                 const diff = calculatePriceDiff(item.sold_price, prop?.price);
                                 const dom = calculateDaysOnMarket(item);
+                                const isScraped = item.source === 'scraped';
+                                const linkHref = (isScraped && item.original_url) ? item.original_url : `/properties/${prop?.id}`;
+                                const linkTarget = isScraped ? "_blank" : "_self";
 
                                 return (
-                                    <Link href={`/properties/${prop?.id}`} key={item.id} className={`block bg-white cursor-pointer border border-slate-100 rounded-2xl overflow-hidden group hover:border-violet-500/50 hover:shadow-2xl hover:shadow-violet-900/5 transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ${viewMode === 'list' ? 'flex items-center gap-6 p-4' : ''}`}>
+                                    <Link href={linkHref} target={linkTarget} key={item.id} className={`block bg-white cursor-pointer border border-slate-100 rounded-2xl overflow-hidden group hover:border-violet-500/50 hover:shadow-2xl hover:shadow-violet-900/5 transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ${viewMode === 'list' ? 'flex items-center gap-6 p-4' : ''}`}>
                                         {/* Image */}
                                         <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 h-32 rounded-xl shrink-0' : 'h-48 w-full'}`}>
                                             <Image
