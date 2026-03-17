@@ -38,7 +38,7 @@ export async function POST(req: Request) {
                     ? extraData.priceRaw 
                     : parseFloat(extraData.priceRaw.toString().replace(/[^\d.-]/g, '')) || null)
                 : null,
-            status: 'sold',
+            status: 'sold' as 'sold' | 'active' | 'draft' | 'pending',
             images: extraData.images || [],
             raw_extracted_data: extraData.raw_extracted_data || {},
             rooms: extraData.rooms || null,
