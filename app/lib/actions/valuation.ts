@@ -427,7 +427,11 @@ export async function getSoldProperties(filters: {
         query = query.filter('properties.location_area', 'eq', filters.area);
     }
     if (filters.type && filters.type !== 'All') {
-        query = query.filter('properties.type', 'eq', filters.type);
+        if (filters.type === 'House') {
+            query = query.or('type.eq.House,type.eq.House/Villa', { foreignTable: 'properties' });
+        } else {
+            query = query.filter('properties.type', 'eq', filters.type);
+        }
     }
     if (filters.minRooms) {
         query = query.filter('properties.rooms', 'gte', filters.minRooms);
@@ -465,7 +469,13 @@ export async function getSoldProperties(filters: {
 
     if (filters.city) miQuery = miQuery.ilike('city', `%${filters.city}%`);
     if (filters.area) miQuery = miQuery.ilike('area', `%${filters.area}%`);
-    if (filters.type && filters.type !== 'All') miQuery = miQuery.eq('property_type', filters.type);
+    if (filters.type && filters.type !== 'All') {
+        if (filters.type === 'House') {
+            miQuery = miQuery.or('property_type.eq.House,property_type.eq.House/Villa');
+        } else {
+            miQuery = miQuery.eq('property_type', filters.type);
+        }
+    }
     if (filters.minRooms) miQuery = miQuery.gte('rooms', filters.minRooms);
     if (filters.maxRooms) miQuery = miQuery.lte('rooms', filters.maxRooms);
     if (filters.minPrice) miQuery = miQuery.gte('price', filters.minPrice);

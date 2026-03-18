@@ -55,14 +55,15 @@ export default function MarketInsightsClient() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [filters.city, filters.area, filters.type, filters.minRooms, filters.maxRooms, filters.minPrice, filters.maxPrice, filters.minArea, filters.maxArea, filters.yearBuilt]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         fetchData();
     };
 
-    const formatPrice = (price: number, currency = 'EUR') => {
+    const formatPrice = (price: any, currency = 'EUR') => {
+        if (price === null || price === undefined || isNaN(price)) return 'N/A';
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: currency,
