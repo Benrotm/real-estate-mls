@@ -373,10 +373,12 @@ export default function MarketInsightsClient() {
                                                     <div className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap">
                                                         <Ruler className="w-3 h-3 text-slate-400" /> {prop?.area_usable} m²
                                                     </div>
-                                                    {(prop?.floor !== null || prop?.total_floors !== null) && (
+                                                    {(prop?.floor !== undefined && prop?.floor !== null || prop?.total_floors !== undefined && prop?.total_floors !== null) && (
                                                         <div className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap">
                                                             <Layers className="w-3 h-3 text-slate-400" /> 
-                                                            {(prop?.floor !== null && prop?.total_floors !== null) ? `${prop.floor}/${prop.total_floors}` : (prop?.floor !== null ? prop.floor : prop?.total_floors)}
+                                                            {(prop?.floor !== undefined && prop?.floor !== null && prop?.total_floors !== undefined && prop?.total_floors !== null) 
+                                                                ? `${prop.floor}/${prop.total_floors}` 
+                                                                : (prop?.floor !== undefined && prop?.floor !== null ? prop.floor : prop?.total_floors)}
                                                         </div>
                                                     )}
                                                 </div>

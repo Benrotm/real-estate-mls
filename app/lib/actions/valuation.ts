@@ -412,6 +412,8 @@ export async function getSoldProperties(filters: {
                 rooms,
                 area_usable,
                 year_built,
+                floor,
+                total_floors,
                 images,
                 created_at
             )
@@ -503,6 +505,8 @@ export async function getSoldProperties(filters: {
             currency: mi.currency || 'EUR',
             rooms: mi.rooms,
             area_usable: mi.usable_area,
+            floor: mi.floor,
+            total_floors: mi.total_floors,
             year_built: mi.year_built,
             images: mi.images || [],
             created_at: mi.scraped_at
