@@ -33,11 +33,7 @@ export async function POST(req: Request) {
             url: url,
             title: extraData.title || '',
             description: extraData.description || '',
-            price: extraData.priceRaw 
-                ? (typeof extraData.priceRaw === 'number' 
-                    ? extraData.priceRaw 
-                    : parseFloat(extraData.priceRaw.toString().replace(/[^\d.-]/g, '')) || null)
-                : null,
+            price: extraData.listingPriceRaw || extraData.priceRaw || null,
             status: 'sold' as 'sold' | 'active' | 'draft' | 'pending',
             images: extraData.images || [],
             raw_extracted_data: extraData.raw_extracted_data || {},
@@ -76,10 +72,11 @@ export async function POST(req: Request) {
             .eq('id', newPropertyId);
 
         // 3. Create Sold History Record
+        const soldPriceVal = extraData.soldPriceRaw || dataToSave.price;
         await supabaseAdmin.from('property_sold_history')
             .insert([{
                 property_id: newPropertyId,
-                sold_price: dataToSave.price,
+                sold_price: soldPriceVal,
                 sold_date: new Date().toISOString(),
                 days_on_market: dom
             }]);
