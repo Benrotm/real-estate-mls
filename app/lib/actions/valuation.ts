@@ -523,9 +523,25 @@ export async function getSoldProperties(filters: {
         }
     }));
 
-    const combined = [...formattedHistory, ...formattedMI].sort((a, b) => 
-        new Date(b.sold_date).getTime() - new Date(a.sold_date).getTime()
-    );
+    const combined = [...formattedHistory, ...formattedMI];
+    const unique: any[] = [];
+    const seen = new Set<string>();
 
-    return combined.slice(0, 50);
+    for (const item of combined) {
+        const title = item.properties?.title;
+        const city = item.properties?.location_city;
+        if (!title) {
+            unique.push(item);
+            continue;
+        }
+        const key = `${title.toLowerCase().trim()}_${(city || '').toLowerCase().trim()}`;
+        if (!seen.has(key)) {
+            unique.push(item);
+            seen.add(key);
+        }
+    }
+
+    return unique.sort((a, b) => 
+        new Date(b.sold_date).getTime() - new Date(a.sold_date).getTime()
+    ).slice(0, 50);
 }
