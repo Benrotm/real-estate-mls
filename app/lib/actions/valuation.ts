@@ -527,7 +527,7 @@ export async function getSoldProperties(filters: {
     const unique: any[] = [];
     const seen = new Set<string>();
 
-    for (const item of combined) {
+    for (const item of combined as any[]) {
         const title = item.properties?.title;
         const city = item.properties?.location_city;
         if (!title) {
