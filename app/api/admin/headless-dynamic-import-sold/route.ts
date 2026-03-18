@@ -47,6 +47,7 @@ export async function POST(req: Request) {
             location_city: extraData.city || null,
             location_area: extraData.area || null,
             address: extraData.address || null,
+            area_garden: extraData.land_area || null,
             type: (extraData.property_type || 'Apartment') as any, // Default fallback, but prioritize scraper's guess
             owner_name: extraData.owner_name || undefined,
             owner_phone: extraData.owner_phone || undefined,
