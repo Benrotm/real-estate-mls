@@ -399,7 +399,7 @@ export async function getSoldProperties(filters: {
             sold_price,
             sold_date,
             days_on_market,
-            properties (
+            properties!inner (
                 id,
                 title,
                 type,
