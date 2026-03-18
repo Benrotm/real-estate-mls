@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, MapPin, DollarSign, TrendingDown, TrendingUp, Calendar, Bed, Ruler, LayoutGrid, List as ListIcon, Loader2, Home, Map as MapIcon } from 'lucide-react';
+import { Search, Filter, MapPin, DollarSign, TrendingDown, TrendingUp, Calendar, Bed, Ruler, LayoutGrid, List as ListIcon, Loader2, Home, Map as MapIcon, Layers } from 'lucide-react';
 import { getSoldProperties } from '@/app/lib/actions/valuation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -366,13 +366,19 @@ export default function MarketInsightsClient() {
                                             </div>
 
                                             <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                                                <div className="flex gap-3 text-slate-500">
-                                                    <div className="flex items-center gap-1 text-[11px] font-bold">
+                                                <div className="flex gap-3 text-slate-500 overflow-hidden">
+                                                    <div className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap">
                                                         <Bed className="w-3 h-3 text-slate-400" /> {prop?.rooms} rooms
                                                     </div>
-                                                    <div className="flex items-center gap-1 text-[11px] font-bold">
+                                                    <div className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap">
                                                         <Ruler className="w-3 h-3 text-slate-400" /> {prop?.area_usable} m²
                                                     </div>
+                                                    {(prop?.floor !== null || prop?.total_floors !== null) && (
+                                                        <div className="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap">
+                                                            <Layers className="w-3 h-3 text-slate-400" /> 
+                                                            {(prop?.floor !== null && prop?.total_floors !== null) ? `${prop.floor}/${prop.total_floors}` : (prop?.floor !== null ? prop.floor : prop?.total_floors)}
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 {diff && (

@@ -497,9 +497,9 @@ export default async function PropertyDetailPage({
                                 { label: 'Condition', value: property.interior_condition, icon: ShieldCheck, color: 'emerald' },
                                 { label: 'Furnishing', value: property.furnishing, icon: Armchair, color: 'orange' },
                                 { label: 'Year Built', value: property.year_built, icon: Calendar, color: 'cyan' },
-                                { label: 'Floors', value: property.floor && property.total_floors ? `${property.floor}/${property.total_floors}` : (property.total_floors || property.floor), icon: Layers, color: 'violet' }
+                                { label: 'Floors', value: (property.floor !== null && property.total_floors !== null) ? `${property.floor}/${property.total_floors}` : (property.floor !== null ? property.floor : (property.total_floors || null)), icon: Layers, color: 'violet' }
                             ].map((item, i) => {
-                                if (!item.value) return null;
+                                if (item.value === null || item.value === undefined || item.value === '') return null;
 
                                 const themes: Record<string, { bg: string, text: string, iconBg: string, iconColor: string, border: string }> = {
                                     indigo: { bg: 'bg-indigo-50/50', text: 'text-indigo-900', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', border: 'border-indigo-100' },
