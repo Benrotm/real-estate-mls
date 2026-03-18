@@ -46,7 +46,10 @@ export async function POST(req: Request) {
             year_built: extraData.year_built || null,
             location_city: extraData.city || null,
             location_area: extraData.area || null,
-            type: 'Apartment' as any // Default, heuristic will fix it if possible
+            type: (extraData.property_type || 'Apartment') as any, // Default fallback, but prioritize scraper's guess
+            owner_name: extraData.owner_name || undefined,
+            owner_phone: extraData.owner_phone || undefined,
+            private_notes: extraData.private_notes || undefined,
         };
 
         const dom = extraData.days_on_market ? parseInt(extraData.days_on_market) : null;
