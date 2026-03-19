@@ -389,7 +389,7 @@ export async function getSoldProperties(filters: {
     minArea?: number;
     maxArea?: number;
     yearBuilt?: number;
-}) {
+}, page = 1, perPage = 15) {
     const supabase = await createClient();
 
     let query = supabase
@@ -455,7 +455,7 @@ export async function getSoldProperties(filters: {
         query = query.filter('properties.year_built', 'eq', filters.yearBuilt);
     }
 
-    const { data: historyData, error: historyError } = await query.limit(50);
+    const { data: historyData, error: historyError } = await query;
 
     if (historyError) {
         console.error("Error fetching sold history:", historyError);
@@ -541,7 +541,16 @@ export async function getSoldProperties(filters: {
         }
     }
 
-    return unique.sort((a, b) => 
+    const sorted = unique.sort((a, b) => 
         new Date(b.sold_date).getTime() - new Date(a.sold_date).getTime()
     );
+
+    const totalCount = sorted.length;
+    const start = (page - 1) * perPage;
+    const paginated = sorted.slice(start, start + perPage);
+
+    return { 
+        data: paginated, 
+        totalCount 
+    };
 }

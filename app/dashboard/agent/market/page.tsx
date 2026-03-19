@@ -27,7 +27,7 @@ export default async function AgentMarketPage() {
                 <p className="text-slate-500 mt-2">Explore actual transaction prices and market trends in your area.</p>
             </div>
 
-            <MarketInsightsClient />
+            <MarketInsightsClient basePath="/dashboard/agent/market" />
         </div>
     );
 }

@@ -3,14 +3,23 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, MapPin, DollarSign, TrendingDown, TrendingUp, Calendar, Bed, Ruler, LayoutGrid, List as ListIcon, Loader2, Home, Map as MapIcon, Layers } from 'lucide-react';
 import { getSoldProperties } from '@/app/lib/actions/valuation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import MarketInsightsMap from './MarketInsightsMap';
 import PropertyModal from './PropertyModal';
+import Pagination from '@/app/components/Pagination';
+import PerPageSelector from '@/app/components/PerPageSelector';
 
 const PROPERTY_TYPES = ['All', 'Apartment', 'House', 'Commercial', 'Industrial', 'Land', 'Investment', 'Business', 'Other'];
 
-export default function MarketInsightsClient() {
+export default function MarketInsightsClient({ basePath = '/dashboard/admin/market' }: { basePath?: string }) {
+    const searchParams = useSearchParams();
+    
+    // Get pagination from URL
+    const currentPage = Math.max(parseInt(searchParams.get('page') || '1'), 1);
+    const perPage = Math.min(parseInt(searchParams.get('per_page') || '15'), 50);
+
     const [filters, setFilters] = useState({
         city: '',
         area: '',
@@ -24,6 +33,7 @@ export default function MarketInsightsClient() {
         yearBuilt: ''
     });
     const [soldProperties, setSoldProperties] = useState<any[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [mapFilteredProperties, setMapFilteredProperties] = useState<any[] | null>(null);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
@@ -32,7 +42,7 @@ export default function MarketInsightsClient() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const data = await getSoldProperties({
+            const res = await getSoldProperties({
                 city: filters.city || undefined,
                 area: filters.area || undefined,
                 type: filters.type === 'All' ? undefined : filters.type,
@@ -43,8 +53,10 @@ export default function MarketInsightsClient() {
                 minArea: filters.minArea ? parseInt(filters.minArea) : undefined,
                 maxArea: filters.maxArea ? parseInt(filters.maxArea) : undefined,
                 yearBuilt: filters.yearBuilt ? parseInt(filters.yearBuilt) : undefined,
-            });
-            setSoldProperties(data);
+            }, currentPage, perPage);
+            
+            setSoldProperties(res.data);
+            setTotalCount(res.totalCount);
             setMapFilteredProperties(null); // Reset map filter when fetching new data
         } catch (error) {
             console.error(error);
@@ -55,7 +67,7 @@ export default function MarketInsightsClient() {
 
     useEffect(() => {
         fetchData();
-    }, [filters.city, filters.area, filters.type, filters.minRooms, filters.maxRooms, filters.minPrice, filters.maxPrice, filters.minArea, filters.maxArea, filters.yearBuilt]);
+    }, [filters.city, filters.area, filters.type, filters.minRooms, filters.maxRooms, filters.minPrice, filters.maxPrice, filters.minArea, filters.maxArea, filters.yearBuilt, currentPage, perPage]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -241,8 +253,9 @@ export default function MarketInsightsClient() {
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                        <div className="flex items-center gap-2">
-                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{displayedProperties.length} Properties Found</p>
+                        <div className="flex items-center gap-4">
+                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{totalCount} Properties Found</p>
+                            <PerPageSelector currentValue={perPage} basePath={basePath} />
                         </div>
                         <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
                             <button
@@ -409,6 +422,15 @@ export default function MarketInsightsClient() {
                             })}
                         </div>
                     )}
+
+                    {/* Pagination Controls */}
+                    <div className="pt-8 border-t border-slate-100">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={Math.ceil(totalCount / perPage)}
+                            basePath={basePath}
+                        />
+                    </div>
                 </div>
             )}
         </div>

@@ -8,7 +8,7 @@ export default async function AdminMarketInsightsPage() {
                 <p className="text-slate-500 mt-2">Global view of actual transaction prices and market trends across the platform.</p>
             </div>
 
-            <MarketInsightsClient />
+            <MarketInsightsClient basePath="/dashboard/admin/market" />
         </div>
     );
 }
