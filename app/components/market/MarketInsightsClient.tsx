@@ -18,7 +18,7 @@ export default function MarketInsightsClient({ basePath = '/dashboard/admin/mark
     
     // Get pagination from URL
     const currentPage = Math.max(parseInt(searchParams.get('page') || '1'), 1);
-    const perPage = Math.min(parseInt(searchParams.get('per_page') || '15'), 50);
+    const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 50);
 
     const [filters, setFilters] = useState({
         city: '',
