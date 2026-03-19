@@ -484,7 +484,7 @@ export async function getSoldProperties(filters: {
     if (filters.maxArea) miQuery = miQuery.lte('usable_area', filters.maxArea);
     if (filters.yearBuilt) miQuery = miQuery.eq('year_built', filters.yearBuilt);
 
-    const { data: miData, error: miError } = await miQuery.limit(50);
+    const { data: miData, error: miError } = await miQuery;
 
     if (miError) {
         console.error("Error fetching market insights:", miError);
@@ -543,5 +543,5 @@ export async function getSoldProperties(filters: {
 
     return unique.sort((a, b) => 
         new Date(b.sold_date).getTime() - new Date(a.sold_date).getTime()
-    ).slice(0, 50);
+    );
 }

@@ -89,7 +89,7 @@ export default function DashboardClient({
     const menuItems = isAdmin ? [
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/admin/leads' },
-        { name: 'Market Insights', icon: Briefcase, href: '/dashboard/admin/market' },
+        { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/admin/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/admin/analytics' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/admin/pipeline' },
         { name: 'My Properties', icon: Home, href: '/dashboard/admin/my-properties' },
@@ -119,7 +119,7 @@ export default function DashboardClient({
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
-        { name: 'Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
+        { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/agent/analytics' },
         { name: 'Daily Activities', icon: Calendar, href: '/dashboard/agent/activities' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/agent/chat' },
@@ -132,7 +132,7 @@ export default function DashboardClient({
         { name: 'Virtual Tours', icon: Globe, href: '/dashboard/owner/tours' },
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/owner/leads' }, // Always show for owners to upsell
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
-        { name: 'Market Insights', icon: Briefcase, href: '/dashboard/owner/market' },
+        { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/owner/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/owner/analytics' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/owner/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/owner/support-chat' },
@@ -151,7 +151,7 @@ export default function DashboardClient({
         { name: 'My Favorites', icon: Heart, href: '/dashboard/client/favorites' }, // New
         { name: 'Saved Searches', icon: Briefcase, href: '/dashboard/client/searches' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/client/valuation' },
-        { name: 'Market Insights', icon: BarChart2, href: '/dashboard/client/market' },
+        { name: 'ACP Market Insights', icon: BarChart2, href: '/dashboard/client/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/client/analytics' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/client/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/client/support-chat' },

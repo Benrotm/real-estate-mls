@@ -119,7 +119,7 @@ export default async function OwnerDashboard() {
                             <TrendingUp className="w-8 h-8" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">Market Insights</h3>
+                            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-purple-600 transition-colors">ACP Market Insights</h3>
                             <p className="text-slate-500 text-sm">Track local trends.</p>
                         </div>
                     </Link>
