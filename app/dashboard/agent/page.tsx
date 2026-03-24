@@ -7,6 +7,7 @@ import { getUserProperties } from '../../lib/actions/properties';
 import { formatCompactCurrency } from '../../lib/format';
 import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
 import RecentPropertiesWidget from '../../components/dashboard/RecentPropertiesWidget';
+import TeamInvitationBanner from '../../components/dashboard/TeamInvitationBanner';
 
 export default async function AgentDashboard() {
     const profile = await getUserProfile();
@@ -53,7 +54,8 @@ export default async function AgentDashboard() {
 
             {/* Dashboard Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
-
+                <TeamInvitationBanner />
+                
                 {/* 1. Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {/* Active Listings */}

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -12,9 +12,11 @@ import { getTotalUnreadMessagesCount } from '@/app/lib/actions/chat';
 export default function DashboardClient({
     children,
     features = [],
+    profile,
 }: {
     children: React.ReactNode;
     features: string[];
+    profile?: any;
 }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
@@ -85,6 +87,8 @@ export default function DashboardClient({
         setupRealtime();
     }, [fetchCounts]);
 
+    const isAgencyManager = isAgent && profile?.plan_tier === 'enterprise';
+
     // Define menu items based on "role" (derived from URL for this demo)
     const menuItems = isAdmin ? [
         { name: 'Console', icon: Shield, href: '/dashboard/admin' },
@@ -114,6 +118,12 @@ export default function DashboardClient({
         { name: 'Bulk Import OLX', icon: Globe, href: '/dashboard/admin/bulk-import-olx' },
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
+        ...(isAgencyManager ? [
+            { name: 'My Team', icon: Users, href: '/dashboard/agent/team' },
+            { name: 'Agency ROI', icon: TrendingUp, href: '/dashboard/agent/roi' },
+            { name: 'Team Activities', icon: Activity, href: '/dashboard/agent/team-activities' },
+        ] : []),
+        { name: 'My Finances', icon: DollarSign, href: '/dashboard/agent/finances' },
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
         { name: 'My Favorites', icon: Heart, href: '/dashboard/agent/favorites' }, // New
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },

@@ -1,4 +1,5 @@
 import { getUserFeatures } from "@/app/lib/auth/features";
+import { getUserProfile } from "@/app/lib/auth";
 import DashboardClient from "./DashboardClient";
 
 export default async function DashboardLayout({
@@ -6,10 +7,10 @@ export default async function DashboardLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const features = await getUserFeatures();
+    const [features, profile] = await Promise.all([getUserFeatures(), getUserProfile()]);
 
     return (
-        <DashboardClient features={features}>
+        <DashboardClient features={features} profile={profile}>
             {children}
         </DashboardClient>
     );

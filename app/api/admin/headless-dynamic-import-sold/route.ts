@@ -57,8 +57,28 @@ export async function POST(req: Request) {
 
         const dom = extraData.days_on_market ? parseInt(extraData.days_on_market) : null;
 
-        // 1. Create Property
-        const saveResult = await createPropertyFromData(dataToSave, url, finalOwnerId);
+        // 2. Prevent Duplication (Server-Side Hard Stop)
+        // Check if URL already exists in scraped_urls with 'success'
+        if (url && url !== 'immoflux_batch') {
+            const { data: existingUrl } = await supabaseAdmin
+                .from('scraped_urls')
+                .select('id')
+                .eq('url', url)
+                .eq('status', 'success')
+                .maybeSingle();
+
+            if (existingUrl) {
+                console.log(`[DUPLICATE SOLD BLOCKED] URL already successfully scraped: ${url}`);
+                return NextResponse.json({ 
+                    success: true, 
+                    message: 'Sold property already exists (URL match)',
+                    alreadyExists: true 
+                });
+            }
+        }
+
+        // 3. Process the sold property update
+        const saveResult = await createPropertyFromData(dataToSave, url || 'immoflux_batch', finalOwnerId);
 
         if (!saveResult.success || !saveResult.data) {
             console.error('Save to Properties Error:', saveResult.error);

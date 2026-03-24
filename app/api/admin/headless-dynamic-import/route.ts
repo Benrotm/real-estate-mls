@@ -56,7 +56,32 @@ export async function POST(req: Request) {
             finalOwnerId = adminUser?.id;
         }
 
-        // 2. Save the Property to the Database using the internal action
+        // 2. Prevent Duplication (Server-Side Hard Stop)
+        const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
+        // Check if URL already exists in scraped_urls with 'success'
+        if (url && url !== 'immoflux_batch') {
+            const { data: existingUrl } = await supabaseAdmin
+                .from('scraped_urls')
+                .select('id')
+                .eq('url', url)
+                .eq('status', 'success')
+                .maybeSingle();
+
+            if (existingUrl) {
+                console.log(`[DUPLICATE BLOCKED] URL already successfully scraped: ${url}`);
+                return NextResponse.json({ 
+                    success: true, 
+                    message: 'Property already exists (URL match)',
+                    alreadyExists: true 
+                });
+            }
+        }
+
+        // 3. Save the Property to the Database using the internal action
         const saveResult = await createPropertyFromData(dataToSave, url || 'immoflux_batch', finalOwnerId);
 
         if (!saveResult.success) {

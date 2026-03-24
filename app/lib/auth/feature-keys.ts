@@ -10,6 +10,7 @@ export const SYSTEM_FEATURES = {
     PROPERTY_INSIGHTS: 'property_insights',
     PROPERTY_PRICE_CALCULATOR: 'property_price_calculator',
     TARGET_MARKETING: 'target_marketing',
+    AGENCY_TEAM: 'agency_team',
 } as const;
 
 export type SystemFeature = typeof SYSTEM_FEATURES[keyof typeof SYSTEM_FEATURES];
