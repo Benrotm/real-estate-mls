@@ -114,8 +114,8 @@ export default function PricingClient({ allFeatures, allPlans, user }: PricingCl
 
         // Fuzzy match logic same as backend
         if (tier === 'free' && (lowerName.includes('free') || lowerName.includes('basic'))) return true;
-        if (tier === 'pro' && (lowerName.includes('premium') || lowerName.includes('pro') || lowerName.includes('growth'))) return true;
-        if (tier === 'enterprise' && (lowerName.includes('enterprise') || lowerName.includes('scale'))) return true;
+        if (tier === 'pro' && (lowerName.includes('premium') || lowerName.includes('pro') || lowerName.includes('growth') || lowerName.includes('pro real'))) return true;
+        if (tier === 'enterprise' && (lowerName.includes('enterprise') || lowerName.includes('scale') || lowerName.includes('full house agency') || lowerName.includes('ultra plan'))) return true;
 
         return false;
     };

@@ -53,24 +53,35 @@ export async function updateUserPlan(planName: string) {
 
     if (lowerName.includes('free') || lowerName.includes('basic')) {
         tier = 'free';
-    } else if (lowerName.includes('premium') || lowerName.includes('pro') || lowerName.includes('growth')) {
+    } else if (lowerName.includes('premium') || lowerName.includes('pro') || lowerName.includes('growth') || lowerName.includes('pro real')) {
         tier = 'pro';
-    } else if (lowerName.includes('enterprise') || lowerName.includes('scale')) {
+    } else if (lowerName.includes('enterprise') || lowerName.includes('scale') || lowerName.includes('full house agency') || lowerName.includes('ultra plan')) {
         tier = 'enterprise';
     }
 
     try {
+        // Fetch the actual plan details from DB to get real limits
+        const { data: planData } = await supabase
+            .from('plans')
+            .select('*')
+            .eq('name', planName)
+            .single();
+
+        const updateData: any = { plan_tier: tier };
+        
+        if (planData) {
+            if (planData.listings_limit !== undefined) updateData.listings_limit = planData.listings_limit;
+            if (planData.featured_limit !== undefined) updateData.featured_limit = planData.featured_limit;
+        } else {
+            // Hardcode fallbacks if not found (just in case)
+            if (tier === 'enterprise') { updateData.listings_limit = 500; updateData.featured_limit = 250; }
+            else if (tier === 'pro') { updateData.listings_limit = 50; updateData.featured_limit = 20; }
+            else { updateData.listings_limit = 100; updateData.featured_limit = 9; }
+        }
+
         const { error } = await supabase
             .from('profiles')
-            .update({
-                plan_tier: tier,
-                // In a real app we might also update limits here based on the plan
-                // But for now the DB trigger or manual admin update handles limits usually?
-                // Or we should update them here?
-                // The `getUserProfile` reads limits from the profile row.
-                // If we change plan_tier, we should ideally update limits too if they are stored in columns.
-                // Let's assume for now just tagging the tier is enough or the DB handles it.
-            })
+            .update(updateData)
             .eq('id', user.id);
 
         if (error) {
