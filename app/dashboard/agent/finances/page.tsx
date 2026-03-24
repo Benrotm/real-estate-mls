@@ -26,6 +26,7 @@ export default function AgentFinances() {
     const [exAmount, setExAmount] = useState('');
     const [exDesc, setExDesc] = useState('');
     const [exDate, setExDate] = useState(new Date().toISOString().split('T')[0]);
+    const [exRecurring, setExRecurring] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -82,7 +83,8 @@ export default function AgentFinances() {
                     category: exCategory,
                     amount: Number(exAmount),
                     description: exDesc,
-                    record_date: exDate
+                    record_date: exDate,
+                    is_recurring: exRecurring
                 })
             });
             setExpenseForm(false);
@@ -220,7 +222,13 @@ export default function AgentFinances() {
                                     <div><label className="text-xs font-bold text-slate-500 mb-1 block">Date</label><input type="date" required className="w-full border rounded-md p-2" value={exDate} onChange={(e)=>setExDate(e.target.value)} /></div>
                                     <div><label className="text-xs font-bold text-slate-500 mb-1 block">Description</label><input className="w-full border rounded-md p-2" value={exDesc} onChange={(e)=>setExDesc(e.target.value)} placeholder="Optional details" /></div>
                                     <div><label className="text-xs font-bold text-slate-500 mb-1 block">Amount (€)</label><input type="number" required className="w-full border rounded-md p-2" value={exAmount} onChange={(e)=>setExAmount(e.target.value)} /></div>
-                                    <div className="md:col-span-2 flex justify-end">
+                                    
+                                    <div className="md:col-span-2 flex items-center gap-2 mt-2">
+                                        <input type="checkbox" id="recurring" checked={exRecurring} onChange={(e) => setExRecurring(e.target.checked)} className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500" />
+                                        <label htmlFor="recurring" className="text-sm font-medium text-slate-700">This is a fixed monthly recurring expense</label>
+                                    </div>
+
+                                    <div className="md:col-span-2 flex justify-end mt-4">
                                         <button type="submit" className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium">Save Expense</button>
                                     </div>
                                 </form>
@@ -235,7 +243,10 @@ export default function AgentFinances() {
                                         {records.filter(r => r.record_type === 'expense').map(rec => (
                                             <tr key={rec.id} className="hover:bg-slate-50">
                                                 <td className="p-3">{new Date(rec.record_date).toLocaleDateString()}</td>
-                                                <td className="p-3 font-medium capitalize">{rec.category}</td>
+                                                <td className="p-3 font-medium capitalize">
+                                                    {rec.category}
+                                                    {rec.is_recurring && <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 uppercase tracking-wider">Recurring</span>}
+                                                </td>
                                                 <td className="p-3">{rec.description || '-'}</td>
                                                 <td className="p-3 text-right font-bold text-red-600">€{rec.amount.toLocaleString()}</td>
                                                 <td className="p-3 text-right text-xs"><button onClick={() => handleDelete(rec.id, false)} className="text-red-500 hover:underline">Delete</button></td>

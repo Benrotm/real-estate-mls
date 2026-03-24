@@ -1,0 +1,3 @@
+ALTER TABLE public.financial_records
+ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS last_recurrence_date TIMESTAMP WITH TIME ZONE;

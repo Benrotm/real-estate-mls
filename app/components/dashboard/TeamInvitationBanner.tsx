@@ -7,7 +7,7 @@ export default function TeamInvitationBanner() {
 
     const fetchInvites = async () => {
         try {
-            const res = await fetch('/api/team/invites');
+            const res = await fetch('/api/team/invites?t=' + new Date().getTime(), { cache: 'no-store' });
             const data = await res.json();
             if (data.invites) {
                 setInvites(data.invites);

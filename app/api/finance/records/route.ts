@@ -35,7 +35,55 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Failed to fetch financial records' }, { status: 500 });
         }
 
-        return NextResponse.json({ records: records || [] });
+        const safeRecords = records || [];
+
+        // Auto-generation logic for recurring expenses
+        const now = new Date();
+        const autoRecords = [];
+        const recordsToUpdate = [];
+
+        for (const rec of safeRecords) {
+            if (rec.is_recurring && rec.last_recurrence_date) {
+                const lastDate = new Date(rec.last_recurrence_date);
+                const monthDiff = (now.getFullYear() - lastDate.getFullYear()) * 12 + (now.getMonth() - lastDate.getMonth());
+                
+                if (monthDiff > 0) {
+                    let nextRecurrenceDate = new Date(lastDate);
+                    for (let i = 1; i <= monthDiff; i++) {
+                        nextRecurrenceDate = new Date(lastDate.getFullYear(), lastDate.getMonth() + i, lastDate.getDate());
+                        // Important: Only insert up to 'now' just in case of future dates
+                        if (nextRecurrenceDate <= now) {
+                            autoRecords.push({
+                                user_id: rec.user_id,
+                                agency_id: rec.agency_id,
+                                record_type: rec.record_type,
+                                category: rec.category,
+                                amount: rec.amount,
+                                description: rec.description,
+                                record_date: nextRecurrenceDate.toISOString(),
+                                is_recurring: false // The generated copies are not parents!
+                            });
+                        }
+                    }
+                    if (nextRecurrenceDate > lastDate && nextRecurrenceDate <= now) {
+                        recordsToUpdate.push({ id: rec.id, last_recurrence_date: nextRecurrenceDate.toISOString() });
+                        rec.last_recurrence_date = nextRecurrenceDate.toISOString(); 
+                    }
+                }
+            }
+        }
+
+        if (autoRecords.length > 0) {
+            const { data: inserted } = await supabaseAdmin.from('financial_records').insert(autoRecords).select('*, profiles!financial_records_user_id_fkey(full_name)');
+            if (inserted) safeRecords.push(...inserted);
+
+             for (const upd of recordsToUpdate) {
+                await supabaseAdmin.from('financial_records').update({ last_recurrence_date: upd.last_recurrence_date }).eq('id', upd.id);
+            }
+            safeRecords.sort((a, b) => new Date(b.record_date).getTime() - new Date(a.record_date).getTime());
+        }
+
+        return NextResponse.json({ records: safeRecords });
     } catch (e: any) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
@@ -44,7 +92,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { record_type, category, amount, description, record_date, is_agency_wide } = body;
+        const { record_type, category, amount, description, record_date, is_agency_wide, is_recurring } = body;
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -75,6 +123,8 @@ export async function POST(req: Request) {
                 amount: Number(amount),
                 description,
                 record_date: new Date(record_date).toISOString(),
+                is_recurring: is_recurring || false,
+                last_recurrence_date: is_recurring ? new Date(record_date).toISOString() : null
             })
             .select()
             .single();
