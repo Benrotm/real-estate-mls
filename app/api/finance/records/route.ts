@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
         let query = supabaseAdmin
             .from('financial_records')
-            .select('*, profiles!financial_records_user_id_fkey(full_name)')
+            .select('*')
             .order('record_date', { ascending: false });
 
         if (viewTeam) {
@@ -74,13 +74,22 @@ export async function GET(req: Request) {
         }
 
         if (autoRecords.length > 0) {
-            const { data: inserted } = await supabaseAdmin.from('financial_records').insert(autoRecords).select('*, profiles!financial_records_user_id_fkey(full_name)');
+            const { data: inserted } = await supabaseAdmin.from('financial_records').insert(autoRecords).select('*');
             if (inserted) safeRecords.push(...inserted);
 
              for (const upd of recordsToUpdate) {
                 await supabaseAdmin.from('financial_records').update({ last_recurrence_date: upd.last_recurrence_date }).eq('id', upd.id);
             }
             safeRecords.sort((a, b) => new Date(b.record_date).getTime() - new Date(a.record_date).getTime());
+        }
+        
+        if (safeRecords.length > 0) {
+            const userIds = [...new Set(safeRecords.map(r => r.user_id))];
+            const { data: profiles } = await supabaseAdmin.from('profiles').select('id, full_name').in('id', userIds);
+            safeRecords.forEach(rec => {
+                const profile = profiles?.find(p => p.id === rec.user_id);
+                (rec as any).profiles = profile || { full_name: 'Unknown User' };
+            });
         }
 
         return NextResponse.json({ records: safeRecords });

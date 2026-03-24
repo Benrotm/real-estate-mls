@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 
         let query = supabaseAdmin
             .from('transactions')
-            .select('*, profiles!transactions_agent_id_fkey(full_name)')
+            .select('*')
             .order('transaction_date', { ascending: false });
 
         if (agentIdParam) {
@@ -57,8 +57,19 @@ export async function GET(req: Request) {
             console.error('[Finance Transactions GET] DB error:', error);
             return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 });
         }
+        
+        const safeTxs = transactions || [];
+        
+        if (safeTxs.length > 0) {
+            const agentIds = [...new Set(safeTxs.map(t => t.agent_id))];
+            const { data: profiles } = await supabaseAdmin.from('profiles').select('id, full_name').in('id', agentIds);
+            safeTxs.forEach(tx => {
+                const profile = profiles?.find(p => p.id === tx.agent_id);
+                (tx as any).profiles = profile || { full_name: 'Unknown Agent' };
+            });
+        }
 
-        return NextResponse.json({ transactions: transactions || [] });
+        return NextResponse.json({ transactions: safeTxs });
     } catch (e: any) {
         console.error('[Finance Transactions GET] Fatal Error:', e);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
