@@ -8,6 +8,10 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const monthStr = searchParams.get('month'); // YYYY-MM
         const specificAgentId = searchParams.get('agentId'); // optional
+        const dateStr = searchParams.get('date');
+        const startDateParam = searchParams.get('startDate');
+        const endDateParam = searchParams.get('endDate');
+        const agentIdsStr = searchParams.get('agentIds');
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -28,16 +32,31 @@ export async function GET(req: Request) {
         const { data: teamMembers } = await supabaseAdmin.from('profiles').select('id, full_name').eq('agency_id', user.id);
         const teamIds = teamMembers?.map(m => m.id) || [];
         
-        if (teamIds.length === 0) {
-            return NextResponse.json({ teamActivities: [], members: [] });
+        let finalTeamIds = teamIds;
+        if (agentIdsStr) {
+            const selectedIds = agentIdsStr.split(',').filter(Boolean);
+            if (selectedIds.length > 0) {
+                finalTeamIds = teamIds.filter(id => selectedIds.includes(id));
+            }
+        }
+        
+        if (finalTeamIds.length === 0) {
+            return NextResponse.json({ teamActivities: [], members: teamMembers || [], autoListingsRaw: [], autoLeadsRaw: [] });
         }
 
-        let query = supabaseAdmin.from('agent_activities').select('*').in('agent_id', teamIds);
-
-        let propQuery = supabaseAdmin.from('properties').select('created_at, owner_id').in('owner_id', teamIds);
-        let leadQuery = supabaseAdmin.from('leads').select('created_at, agent_id').in('agent_id', teamIds);
+        let query = supabaseAdmin.from('agent_activities').select('*').in('agent_id', finalTeamIds);
+        let propQuery = supabaseAdmin.from('properties').select('created_at, owner_id').in('owner_id', finalTeamIds);
+        let leadQuery = supabaseAdmin.from('leads').select('created_at, agent_id').in('agent_id', finalTeamIds);
         
-        if (monthStr) {
+        if (dateStr) {
+            query = query.eq('date', dateStr);
+            propQuery = propQuery.gte('created_at', `${dateStr}T00:00:00Z`).lte('created_at', `${dateStr}T23:59:59Z`);
+            leadQuery = leadQuery.gte('created_at', `${dateStr}T00:00:00Z`).lte('created_at', `${dateStr}T23:59:59Z`);
+        } else if (startDateParam && endDateParam) {
+            query = query.gte('date', startDateParam).lte('date', endDateParam);
+            propQuery = propQuery.gte('created_at', `${startDateParam}T00:00:00Z`).lte('created_at', `${endDateParam}T23:59:59Z`);
+            leadQuery = leadQuery.gte('created_at', `${startDateParam}T00:00:00Z`).lte('created_at', `${endDateParam}T23:59:59Z`);
+        } else if (monthStr) {
             const year = parseInt(monthStr.split('-')[0]);
             const month = parseInt(monthStr.split('-')[1]);
             const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -50,7 +69,7 @@ export async function GET(req: Request) {
             leadQuery = leadQuery.gte('created_at', `${startDate}T00:00:00Z`).lt('created_at', `${endDateExcl}T00:00:00Z`);
         }
 
-        if (specificAgentId && teamIds.includes(specificAgentId)) {
+        if (specificAgentId && finalTeamIds.includes(specificAgentId)) {
             query = query.eq('agent_id', specificAgentId);
         }
 
