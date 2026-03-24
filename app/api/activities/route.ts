@@ -20,27 +20,28 @@ export async function GET(req: Request) {
 
         let query = supabaseAdmin.from('agent_activities').select('*').eq('agent_id', user.id);
 
-        if (dateStr) {
-            query = query.eq('date', dateStr);
-        } else if (monthStr) {
-            query = query.like('date', `${monthStr}-%`);
-        }
-
-        const { data: manualActivities, error } = await query;
-        if (error) throw error;
-
-        // Auto-Generate Stats logic:
-        // We will fetch properties and leads created by this user in that timeframe
         let propQuery = supabaseAdmin.from('properties').select('created_at').eq('owner_id', user.id);
         let leadQuery = supabaseAdmin.from('leads').select('created_at').eq('agent_id', user.id); // Assuming agent_id tracks lead ownership
 
         if (dateStr) {
+            query = query.eq('date', dateStr);
             propQuery = propQuery.gte('created_at', `${dateStr}T00:00:00Z`).lt('created_at', `${dateStr}T23:59:59Z`);
             leadQuery = leadQuery.gte('created_at', `${dateStr}T00:00:00Z`).lt('created_at', `${dateStr}T23:59:59Z`);
         } else if (monthStr) {
-            propQuery = propQuery.gte('created_at', `${monthStr}-01T00:00:00Z`).lt('created_at', `${monthStr}-31T23:59:59Z`);
-            leadQuery = leadQuery.gte('created_at', `${monthStr}-01T00:00:00Z`).lt('created_at', `${monthStr}-31T23:59:59Z`);
+            const year = parseInt(monthStr.split('-')[0]);
+            const month = parseInt(monthStr.split('-')[1]);
+            const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+            const nextMonth = month === 12 ? 1 : month + 1;
+            const nextMonthYear = month === 12 ? year + 1 : year;
+            const endDateExcl = `${nextMonthYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+            query = query.gte('date', startDate).lt('date', endDateExcl);
+            propQuery = propQuery.gte('created_at', `${startDate}T00:00:00Z`).lt('created_at', `${endDateExcl}T00:00:00Z`);
+            leadQuery = leadQuery.gte('created_at', `${startDate}T00:00:00Z`).lt('created_at', `${endDateExcl}T00:00:00Z`);
         }
+
+        const { data: manualActivities, error } = await query;
+        if (error) throw error;
 
         const { data: props } = await propQuery;
         const { data: leads } = await leadQuery;

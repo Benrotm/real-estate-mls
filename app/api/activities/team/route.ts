@@ -34,27 +34,28 @@ export async function GET(req: Request) {
 
         let query = supabaseAdmin.from('agent_activities').select('*').in('agent_id', teamIds);
 
-        if (monthStr) {
-            query = query.like('date', `${monthStr}-%`);
-        }
+        let propQuery = supabaseAdmin.from('properties').select('created_at, owner_id').in('owner_id', teamIds);
+        let leadQuery = supabaseAdmin.from('leads').select('created_at, agent_id').in('agent_id', teamIds);
         
+        if (monthStr) {
+            const year = parseInt(monthStr.split('-')[0]);
+            const month = parseInt(monthStr.split('-')[1]);
+            const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+            const nextMonth = month === 12 ? 1 : month + 1;
+            const nextMonthYear = month === 12 ? year + 1 : year;
+            const endDateExcl = `${nextMonthYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+            query = query.gte('date', startDate).lt('date', endDateExcl);
+            propQuery = propQuery.gte('created_at', `${startDate}T00:00:00Z`).lt('created_at', `${endDateExcl}T00:00:00Z`);
+            leadQuery = leadQuery.gte('created_at', `${startDate}T00:00:00Z`).lt('created_at', `${endDateExcl}T00:00:00Z`);
+        }
+
         if (specificAgentId && teamIds.includes(specificAgentId)) {
             query = query.eq('agent_id', specificAgentId);
         }
 
         const { data: manualActivities, error } = await query;
         if (error) throw error;
-
-        // Optionally, auto-gen stats can be fetched for team, but for large arrays it's best batched.
-        // For simplicity, we just aggregate manual activities. 
-        // If they want team auto-gen, we query properties.owner_id in (teamIds).
-        let propQuery = supabaseAdmin.from('properties').select('created_at, owner_id').in('owner_id', teamIds);
-        let leadQuery = supabaseAdmin.from('leads').select('created_at, agent_id').in('agent_id', teamIds);
-        
-        if (monthStr) {
-            propQuery = propQuery.gte('created_at', `${monthStr}-01T00:00:00Z`).lt('created_at', `${monthStr}-31T23:59:59Z`);
-            leadQuery = leadQuery.gte('created_at', `${monthStr}-01T00:00:00Z`).lt('created_at', `${monthStr}-31T23:59:59Z`);
-        }
 
         const { data: props } = await propQuery;
         const { data: leads } = await leadQuery;
