@@ -104,36 +104,38 @@ export default function TeamActivities() {
             </div>
 
             {/* Filter Hub */}
-            <div className="bg-white border rounded-xl overflow-visible shadow-sm">
-                <div className="p-4 border-b bg-slate-50 flex items-center gap-2">
-                    <Filter className="w-5 h-5 text-slate-500" />
-                    <h3 className="font-bold text-slate-800">Analytics Filters</h3>
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-visible shadow-lg shadow-slate-200/50">
+                <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                        <Filter className="w-4 h-4 text-slate-600" />
+                    </div>
+                    <h3 className="font-bold text-slate-800 text-lg tracking-tight">Analytics Filters</h3>
                 </div>
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-10">
                     {/* Timeframe Filter */}
                     <div className="space-y-4">
-                        <label className="text-sm font-bold tracking-wide uppercase text-slate-500">1. Select Timeframe</label>
-                        <div className="flex gap-2">
-                            <button onClick={()=>setFilterType('monthly')} className={`flex-1 py-2 text-sm font-medium rounded-lg border ${filterType === 'monthly' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>Monthly</button>
-                            <button onClick={()=>setFilterType('daily')} className={`flex-1 py-2 text-sm font-medium rounded-lg border ${filterType === 'daily' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>Daily</button>
-                            <button onClick={()=>setFilterType('custom')} className={`flex-1 py-2 text-sm font-medium rounded-lg border ${filterType === 'custom' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>Custom Period</button>
+                        <label className="text-xs font-bold tracking-widest uppercase text-slate-400">1. Select Timeframe</label>
+                        <div className="flex bg-slate-100 p-1 rounded-xl">
+                            <button onClick={()=>setFilterType('monthly')} className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${filterType === 'monthly' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>Monthly</button>
+                            <button onClick={()=>setFilterType('daily')} className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${filterType === 'daily' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>Daily</button>
+                            <button onClick={()=>setFilterType('custom')} className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${filterType === 'custom' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>Custom Period</button>
                         </div>
                         <div className="pt-2 flex gap-3">
                             {filterType === 'monthly' && (
-                                <input type="month" value={month} onChange={e=>setMonth(e.target.value)} className="flex-1 bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm shadow-sm focus:ring-2 focus:ring-orange-500 outline-none" />
+                                <input type="month" value={month} onChange={e=>setMonth(e.target.value)} className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none text-slate-700 font-medium" />
                             )}
                             {filterType === 'daily' && (
-                                <input type="date" value={date} onChange={e=>setDate(e.target.value)} className="flex-1 bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm shadow-sm focus:ring-2 focus:ring-orange-500 outline-none" />
+                                <input type="date" value={date} onChange={e=>setDate(e.target.value)} className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none text-slate-700 font-medium" />
                             )}
                             {filterType === 'custom' && (
                                 <>
                                     <div className="flex-1 relative">
-                                        <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] uppercase font-bold text-slate-400">Start Date</label>
-                                        <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-sm shadow-sm focus:ring-2 focus:ring-orange-500 outline-none" />
+                                        <label className="absolute -top-2.5 left-3 bg-white px-2 text-[10px] uppercase font-bold text-slate-400">Start Date</label>
+                                        <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none text-slate-700 font-medium" />
                                     </div>
                                     <div className="flex-1 relative">
-                                        <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] uppercase font-bold text-slate-400">End Date</label>
-                                        <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-sm shadow-sm focus:ring-2 focus:ring-orange-500 outline-none" />
+                                        <label className="absolute -top-2.5 left-3 bg-white px-2 text-[10px] uppercase font-bold text-slate-400">End Date</label>
+                                        <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none text-slate-700 font-medium" />
                                     </div>
                                 </>
                             )}
@@ -142,18 +144,18 @@ export default function TeamActivities() {
 
                     {/* Agent Filter */}
                     <div className="space-y-4">
-                        <label className="text-sm font-bold tracking-wide uppercase text-slate-500 flex justify-between">
+                        <label className="text-xs font-bold tracking-widest uppercase text-slate-400 flex justify-between items-center">
                             <span>2. Filter by Agents</span>
-                            <button onClick={()=>setSelectedAgents([])} className="text-blue-600 hover:underline capitalize font-medium">Select All</button>
+                            <button onClick={()=>setSelectedAgents([])} className="text-blue-600 hover:text-blue-700 hover:underline capitalize font-semibold tracking-normal text-sm">Select All</button>
                         </label>
-                        <div className="border border-slate-200 rounded-lg p-3 max-h-[120px] overflow-y-auto bg-slate-50 flex flex-wrap gap-2">
-                            {agents.length === 0 && <span className="text-sm text-slate-400 p-2">No agents in agency.</span>}
+                        <div className="border-2 border-slate-100 rounded-xl p-4 max-h-[140px] overflow-y-auto bg-slate-50/50 flex flex-wrap gap-2 shadow-inner">
+                            {agents.length === 0 && <span className="text-sm text-slate-400 p-2 font-medium">No agents in agency.</span>}
                             {agents.map((ag: any) => {
                                 const isSelected = selectedAgents.length === 0 || selectedAgents.includes(ag.id);
                                 return (
-                                    <label key={ag.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm cursor-pointer transition-colors ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-100'}`}>
+                                    <label key={ag.id} className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 text-sm font-semibold cursor-pointer transition-all duration-200 ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/20' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
                                         <input type="checkbox" className="hidden" checked={selectedAgents.includes(ag.id)} onChange={() => toggleAgent(ag.id)} />
-                                        <span className="truncate max-w-[120px] font-medium">{ag.full_name}</span>
+                                        <span className="truncate max-w-[140px]">{ag.full_name}</span>
                                     </label>
                                 );
                             })}
@@ -163,70 +165,81 @@ export default function TeamActivities() {
             </div>
 
             {/* Leaderboard Table */}
-            <div className="bg-white border rounded-xl shadow-sm overflow-hidden relative">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/40 overflow-hidden relative">
                 {loading && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center">
-                        <div className="px-4 py-2 bg-white border shadow-lg rounded-full text-sm font-bold text-slate-700 animate-pulse">Refreshing Metrics...</div>
+                    <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-30 flex items-center justify-center transition-all duration-300">
+                        <div className="px-6 py-3 bg-white border-2 border-slate-200 shadow-xl rounded-full text-sm font-bold text-slate-700 animate-pulse flex items-center gap-3">
+                            <div className="w-4 h-4 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
+                            Refreshing Metrics...
+                        </div>
                     </div>
                 )}
-                <div className="p-4 border-b bg-slate-50 flex items-center gap-2">
-                    <BarChart2 className="w-5 h-5 text-slate-500" />
-                    <h2 className="text-lg font-bold text-slate-800">
+                <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                        <BarChart2 className="w-4 h-4 text-slate-600" />
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-800 tracking-tight">
                         Detailed Breakdown 
-                        <span className="text-sm font-normal text-slate-500 ml-2">
+                        <span className="text-sm font-medium text-slate-400 ml-3">
                             ({filterType === 'monthly' ? format(new Date(`${month}-01`), 'MMMM yyyy') : filterType === 'daily' ? format(new Date(date), 'MMM do, yyyy') : 'Custom Period'})
                         </span>
                     </h2>
                 </div>
                 
-                <div className="overflow-x-auto pb-4">
+                <div className="overflow-x-auto">
                     <table className="w-full text-left whitespace-nowrap">
-                        <thead className="bg-slate-50 border-b text-slate-500 font-bold text-xs uppercase tracking-wide">
+                        <thead className="text-xs uppercase tracking-wider font-bold">
                             <tr>
-                                <th className="p-4 sticky left-0 bg-slate-50 z-20 shadow-[1px_0_0_0_#e2e8f0]">Agent Name</th>
-                                <th className="p-4 border-l text-center bg-slate-50 text-blue-800" colSpan={2}>Auto-Gen</th>
-                                <th className="p-4 border-l text-center bg-indigo-50 text-indigo-800" colSpan={4}>Prospecting Activity</th>
-                                <th className="p-4 border-l text-center bg-orange-50 text-orange-800" colSpan={3}>Lead Follow-ups</th>
+                                <th className="p-4 sticky left-0 bg-slate-50 border-b border-r border-slate-200 z-20 text-slate-500 align-bottom shadow-[1px_0_0_0_#e2e8f0]">Agent Name</th>
+                                <th className="p-4 border-b border-slate-200 text-center bg-blue-50/50 text-blue-700 border-r" colSpan={2}>Auto-Gen</th>
+                                <th className="p-4 border-b border-slate-200 text-center bg-indigo-50/50 text-indigo-700 border-r" colSpan={4}>Prospecting Activity</th>
+                                <th className="p-4 border-b border-slate-200 text-center bg-orange-50/50 text-orange-700" colSpan={3}>Lead Follow-ups</th>
                             </tr>
-                            <tr className="border-t text-[10px]">
-                                <th className="p-3 sticky left-0 bg-slate-50 z-20 shadow-[1px_0_0_0_#e2e8f0]"></th>
-                                <th className="p-3 border-l text-center text-blue-600">Listings</th>
-                                <th className="p-3 text-center text-blue-600">Leads</th>
+                            <tr className="border-b-2 border-slate-200 text-[10px] bg-slate-50/30">
+                                <th className="p-3 sticky left-0 bg-white border-r border-slate-200 z-20 shadow-[1px_0_0_0_#e2e8f0]"></th>
+                                <th className="p-3 border-r border-slate-100 text-center text-blue-500">Listings</th>
+                                <th className="p-3 border-r border-slate-200 text-center text-blue-500">Leads</th>
                                 
-                                <th className="p-3 border-l text-center text-indigo-600">Calls</th>
-                                <th className="p-3 text-center text-indigo-600">Appts Sch.</th>
-                                <th className="p-3 text-center text-indigo-600">Appts Real.</th>
-                                <th className="p-3 text-center text-green-600">Contracts</th>
+                                <th className="p-3 border-r border-slate-100 text-center text-indigo-500">Calls</th>
+                                <th className="p-3 border-r border-slate-100 text-center text-indigo-500">Appts Sch.</th>
+                                <th className="p-3 border-r border-slate-100 text-center text-indigo-500">Appts Real.</th>
+                                <th className="p-3 border-r border-slate-200 text-center text-emerald-500">Contracts</th>
 
-                                <th className="p-3 border-l text-center text-orange-600">Calls</th>
-                                <th className="p-3 text-center text-orange-600">Appts Sch.</th>
-                                <th className="p-3 text-center text-rose-600">Appts Real.</th>
+                                <th className="p-3 border-r border-slate-100 text-center text-orange-500">Calls</th>
+                                <th className="p-3 border-r border-slate-100 text-center text-orange-500">Appts Sch.</th>
+                                <th className="p-3 text-center text-rose-500">Appts Real.</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y text-slate-700 text-sm">
+                        <tbody className="divide-y divide-slate-100 text-sm bg-white">
                             {Object.values(agentMap).map((agent: any, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50">
-                                    <td className="p-4 font-bold text-slate-900 flex items-center gap-3 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-slate-50">
-                                        <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-600 shrink-0">{agent.name.charAt(0)}</div>
+                                <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
+                                    <td className="p-4 font-bold text-slate-800 flex items-center gap-3 sticky left-0 bg-white border-r border-slate-100 z-10 shadow-[1px_0_0_0_#f1f5f9] group-hover:bg-slate-50/80 transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 shadow-inner flex items-center justify-center text-xs text-slate-600 shrink-0 font-bold">{agent.name.charAt(0)}</div>
                                         {agent.name}
                                     </td>
-                                    <td className="p-3 text-center border-l bg-blue-50/30 font-medium">{agent.listings}</td>
-                                    <td className="p-3 text-center bg-blue-50/30 font-medium">{agent.leads}</td>
+                                    <td className="p-3 text-center border-r border-slate-100 bg-blue-50/10 font-semibold text-slate-700">{agent.listings}</td>
+                                    <td className="p-3 text-center border-r border-slate-100 bg-blue-50/10 font-semibold text-slate-700">{agent.leads}</td>
                                     
-                                    <td className="p-3 text-center border-l bg-indigo-50/30 font-medium">{agent.p_calls}</td>
-                                    <td className="p-3 text-center bg-indigo-50/30 font-medium">{agent.p_appts_sch}</td>
-                                    <td className="p-3 text-center bg-indigo-50/30 font-medium">{agent.p_appts_real}</td>
-                                    <td className="p-3 text-center bg-green-50/30 font-bold text-green-700">{agent.p_contracts}</td>
+                                    <td className="p-3 text-center border-r border-slate-100 bg-indigo-50/10 font-semibold text-slate-700">{agent.p_calls}</td>
+                                    <td className="p-3 text-center border-r border-slate-100 bg-indigo-50/10 font-semibold text-slate-700">{agent.p_appts_sch}</td>
+                                    <td className="p-3 text-center border-r border-slate-100 bg-indigo-50/10 font-semibold text-slate-700">{agent.p_appts_real}</td>
+                                    <td className="p-3 text-center border-r border-slate-100 bg-emerald-50/20 font-bold text-emerald-700">{agent.p_contracts}</td>
 
-                                    <td className="p-3 text-center border-l bg-orange-50/30 font-medium">{agent.l_calls}</td>
-                                    <td className="p-3 text-center bg-orange-50/30 font-medium">{agent.l_appts_sch}</td>
-                                    <td className="p-3 text-center bg-orange-50/30 font-medium">{agent.l_appts_real}</td>
+                                    <td className="p-3 text-center border-r border-slate-100 bg-orange-50/10 font-semibold text-slate-700">{agent.l_calls}</td>
+                                    <td className="p-3 text-center border-r border-slate-100 bg-orange-50/10 font-semibold text-slate-700">{agent.l_appts_sch}</td>
+                                    <td className="p-3 text-center bg-rose-50/10 font-semibold text-slate-700">{agent.l_appts_real}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                     {agents.length === 0 && (
-                        <div className="p-12 text-center text-slate-500">No agents found in your team. Send invites from the "My Team" tab.</div>
+                        <div className="p-16 text-center">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                                <Users className="w-8 h-8 text-slate-300" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-700">No agents found</h3>
+                            <p className="text-slate-500 mt-1 max-w-sm mx-auto">You do not have any active agents in your team. Send invites from the "My Team" tab.</p>
+                        </div>
                     )}
                 </div>
             </div>
