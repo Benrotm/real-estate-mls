@@ -18,6 +18,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import PropertyManageButtons from '../PropertyManageButtons';
+import LeadProfileDetails from './LeadProfileDetails';
 
 interface ListingsCRMClientProps {
     properties: PropertyWithOffers[];
@@ -220,6 +221,7 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
     const [isMatchingLoading, setIsMatchingLoading] = useState(false);
     const [matchError, setMatchError] = useState<string | null>(null);
     const [filterMode, setFilterMode] = useState<'all' | 'my'>('all');
+    const [expandedMatchedLeadId, setExpandedMatchedLeadId] = useState<string | null>(null);
     const [_, forceUpdate] = useState(0);
 
     // Contact Partner Modal State
@@ -242,6 +244,10 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
 
     const toggleMatches = () => {
         setIsMatchesExpanded(!isMatchesExpanded);
+    };
+
+    const toggleExpandMatchedLead = (id: string) => {
+        setExpandedMatchedLeadId(prev => prev === id ? null : id);
     };
 
     const handleWhatsAppLead = (lead: LeadData) => {
@@ -552,67 +558,81 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                             {filtered.map((lead) => {
                                                 const isOwnLead = lead.agent_id === currentUserId;
                                                 return (
-                                                    <div key={lead.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:border-orange-200 hover:shadow-md transition-all group">
-                                                        <div className="flex items-center gap-3 mb-3 sm:mb-0">
-                                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black ${isOwnLead ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-400'}`}>
-                                                                {isOwnLead ? (lead.name?.charAt(0).toUpperCase() || '?') : <User className="w-6 h-6" />}
-                                                            </div>
-                                                            <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-bold text-slate-900">
-                                                                        {isOwnLead ? lead.name : 'Partner Lead'}
-                                                                    </span>
-                                                                    <span className="px-2 py-0.5 bg-orange-600 text-white text-[10px] font-black rounded-lg">
-                                                                        {lead.match_score} pts
-                                                                    </span>
+                                                    <div key={lead.id} className={`bg-white border transition-all group overflow-hidden ${expandedMatchedLeadId === lead.id ? 'border-orange-300 ring-2 ring-orange-400/20 shadow-md rounded-2xl' : 'border-slate-100 hover:border-orange-200 hover:shadow-md rounded-xl'}`}>
+                                                        <div 
+                                                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer"
+                                                            onClick={() => toggleExpandMatchedLead(lead.id)}
+                                                        >
+                                                            <div className="flex items-center gap-3 mb-3 sm:mb-0">
+                                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black ${isOwnLead ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                                    {isOwnLead ? (lead.name?.charAt(0).toUpperCase() || '?') : <User className="w-6 h-6" />}
                                                                 </div>
-                                                                <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 font-medium">
-                                                                    {isOwnLead ? (
-                                                                        <>
-                                                                            <Smartphone className="w-3.5 h-3.5 text-slate-400" /> {lead.phone || 'No phone'}
-                                                                            <span className="mx-1">•</span>
-                                                                            <Mail className="w-3.5 h-3.5 text-slate-400" /> {lead.email || 'No email'}
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <Users className="w-3.5 h-3.5 text-indigo-500" /> Agent: {lead.agent?.full_name || 'Anonymous Partner'}
-                                                                        </>
-                                                                    )}
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-bold text-slate-900">
+                                                                            {isOwnLead ? lead.name : 'Partner Lead'}
+                                                                        </span>
+                                                                        <span className="px-2 py-0.5 bg-orange-600 text-white text-[10px] font-black rounded-lg shadow-sm">
+                                                                            {lead.match_score} pts
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 font-medium">
+                                                                        {isOwnLead ? (
+                                                                            <>
+                                                                                <Smartphone className="w-3.5 h-3.5 text-slate-400" /> {lead.phone || 'No phone'}
+                                                                                <span className="mx-1">•</span>
+                                                                                <Mail className="w-3.5 h-3.5 text-slate-400" /> {lead.email || 'No email'}
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Users className="w-3.5 h-3.5 text-indigo-500" /> Agent: {lead.agent?.full_name || 'Anonymous Partner'}
+                                                                            </>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            {isOwnLead ? (
-                                                                <>
+                                                            <div className="flex items-center gap-2">
+                                                                {isOwnLead ? (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={(e) => { e.stopPropagation(); handleWhatsAppLead(lead); }}
+                                                                            className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                                                                        >
+                                                                            <Send className="w-3.5 h-3.5" /> WhatsApp
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={(e) => { e.stopPropagation(); handleEmailLead(lead); }}
+                                                                            className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
+                                                                        >
+                                                                            <Mail className="w-3.5 h-3.5" /> Email
+                                                                        </button>
+                                                                    </>
+                                                                ) : (
                                                                     <button
-                                                                        onClick={() => handleWhatsAppLead(lead)}
-                                                                        className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                                                                        onClick={(e) => { e.stopPropagation(); handleContactPartner(lead); }}
+                                                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
                                                                     >
-                                                                        <Send className="w-3.5 h-3.5" /> WhatsApp
+                                                                        <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
                                                                     </button>
-                                                                    <button
-                                                                        onClick={() => handleEmailLead(lead)}
-                                                                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
-                                                                    >
-                                                                        <Mail className="w-3.5 h-3.5" /> Email
-                                                                    </button>
-                                                                </>
-                                                            ) : (
+                                                                )}
                                                                 <button
-                                                                    onClick={() => handleContactPartner(lead)}
-                                                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
+                                                                    onClick={(e) => { e.stopPropagation(); toggleExpandMatchedLead(lead.id); }}
+                                                                    className={`p-2 rounded-lg transition-colors border ${expandedMatchedLeadId === lead.id ? 'bg-orange-50 text-orange-600 border-orange-200' : 'text-slate-400 hover:text-slate-900 border-transparent hover:bg-slate-100 hover:border-slate-300'}`}
+                                                                    title={expandedMatchedLeadId === lead.id ? "Hide Details" : "Show Details"}
                                                                 >
-                                                                    <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
+                                                                    {expandedMatchedLeadId === lead.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                                                 </button>
-                                                            )}
-                                                            <Link
-                                                                href={`/dashboard/agent/leads?id=${lead.id}`}
-                                                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
-                                                                title="View Requirements"
-                                                            >
-                                                                <Info className="w-4 h-4" />
-                                                            </Link>
+                                                            </div>
                                                         </div>
+
+                                                        {/* Expanded Profile Details */}
+                                                        {expandedMatchedLeadId === lead.id && (
+                                                            <div className="bg-slate-50 border-t border-slate-100 pb-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                <div className="p-2 sm:p-5">
+                                                                    <LeadProfileDetails lead={lead} />
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 );
                                             })}
