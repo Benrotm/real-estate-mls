@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, endOfMonth, parseISO } from 'date-fns';
 import { Users, BarChart2, Filter, Calendar, Settings } from 'lucide-react';
+import ActivityConsistencyTable from '@/app/components/dashboard/ActivityConsistencyTable';
 
 export default function TeamActivities() {
     const [filterType, setFilterType] = useState<'monthly' | 'daily' | 'custom'>('monthly');
@@ -229,6 +230,28 @@ export default function TeamActivities() {
                     )}
                 </div>
             </div>
+
+            {/* Consistency Table Component */}
+            {(() => {
+                let derivedStartDate = startDate;
+                let derivedEndDate = endDate;
+                if (filterType === 'monthly') {
+                    derivedStartDate = `${month}-01`;
+                    derivedEndDate = format(endOfMonth(parseISO(`${month}-01`)), 'yyyy-MM-dd');
+                } else if (filterType === 'daily') {
+                    derivedStartDate = date;
+                    derivedEndDate = date;
+                }
+                
+                return (
+                    <ActivityConsistencyTable 
+                        activities={activities} 
+                        agents={activeAgents} 
+                        startDateStr={derivedStartDate} 
+                        endDateStr={derivedEndDate} 
+                    />
+                );
+            })()}
         </div>
     );
 }

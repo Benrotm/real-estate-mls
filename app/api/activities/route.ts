@@ -8,6 +8,8 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const dateStr = searchParams.get('date'); // YYYY-MM-DD
         const monthStr = searchParams.get('month'); // YYYY-MM
+        const startDateParam = searchParams.get('startDate');
+        const endDateParam = searchParams.get('endDate');
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -27,6 +29,10 @@ export async function GET(req: Request) {
             query = query.eq('date', dateStr);
             propQuery = propQuery.gte('created_at', `${dateStr}T00:00:00Z`).lt('created_at', `${dateStr}T23:59:59Z`);
             leadQuery = leadQuery.gte('created_at', `${dateStr}T00:00:00Z`).lt('created_at', `${dateStr}T23:59:59Z`);
+        } else if (startDateParam && endDateParam) {
+            query = query.gte('date', startDateParam).lte('date', endDateParam);
+            propQuery = propQuery.gte('created_at', `${startDateParam}T00:00:00Z`).lte('created_at', `${endDateParam}T23:59:59Z`);
+            leadQuery = leadQuery.gte('created_at', `${startDateParam}T00:00:00Z`).lte('created_at', `${endDateParam}T23:59:59Z`);
         } else if (monthStr) {
             const year = parseInt(monthStr.split('-')[0]);
             const month = parseInt(monthStr.split('-')[1]);

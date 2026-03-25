@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Check, Phone, Calendar, FileText, Home, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import PersonalConsistencyWidget from '@/app/components/dashboard/PersonalConsistencyWidget';
 
 type ActivityConfig = {
     key: string;
@@ -179,6 +180,8 @@ export default function AgentActivities() {
                             {LEADS_CONFIG.map(renderActivityBlock)}
                         </div>
                     </div>
+
+                    <PersonalConsistencyWidget />
                 </>
             )}
         </div>
