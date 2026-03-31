@@ -171,7 +171,7 @@ export default async function LeadsPage() {
                     leads={leads}
                     basePath="/dashboard/agent/leads"
                     currentUserId={user?.id}
-                    teamMemberIds={teamMembers ? teamMembers.map((m: any) => m.member_id) : [user?.id]}
+                    teamMemberIds={teamMembers || [user?.id]}
                 />
             </div>
         </div>
