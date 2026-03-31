@@ -42,7 +42,10 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
         'Visit Made': 'bg-emerald-100 text-emerald-700 border-emerald-200',
         'Not Interested': 'bg-slate-200 text-slate-700 border-slate-300',
         'Negotiations': 'bg-indigo-100 text-indigo-700 border-indigo-200',
-        'Lost': 'bg-zinc-200 text-zinc-700 border-zinc-300'
+        'Closed': 'bg-green-100 text-green-700 border-green-200',
+        'Lost': 'bg-zinc-200 text-zinc-700 border-zinc-300',
+        'WhatsApp': 'bg-[#25D366]/20 text-[#128C7E] border-[#25D366]/30',
+        'Email': 'bg-sky-100 text-sky-700 border-sky-200'
     };
 
     const TAGS = Object.keys(TAG_STYLES);

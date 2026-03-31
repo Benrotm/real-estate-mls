@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Phone, Mail, MessageCircle } from 'lucide-react';
-import { logLeadActivity } from '@/app/lib/actions/leads';
+import { logLeadActivity, createNote } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 
 interface LeadContactActionsProps {
@@ -28,6 +28,7 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
         
         try {
             await logLeadActivity(lead.id!, 'contacted', message);
+            await createNote(lead.id!, `[WhatsApp] ${message}`);
         } catch (error) {
             console.error('Failed to log WhatsApp activity:', error);
         }
@@ -38,6 +39,7 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
     const handleCallClick = async () => {
         try {
             await logLeadActivity(lead.id!, 'contacted', 'Initiated a phone call');
+            await createNote(lead.id!, '[Call] Initiated a phone call');
         } catch (error) {
             console.error('Failed to log Call activity:', error);
         }
@@ -46,6 +48,7 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
     const handleEmailClick = async () => {
         try {
             await logLeadActivity(lead.id!, 'contacted', 'Initiated an email');
+            await createNote(lead.id!, '[Email] Initiated an email');
         } catch (error) {
             console.error('Failed to log Email activity:', error);
         }
