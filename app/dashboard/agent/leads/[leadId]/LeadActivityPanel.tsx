@@ -39,13 +39,16 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
     const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
     const [calendarEventType, setCalendarEventType] = useState<'Visit Scheduled' | 'To Recall'>('Visit Scheduled');
     const [eventDate, setEventDate] = useState('');
+    
+    // WhatsApp Modal State
+    const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
     const [propertyId, setPropertyId] = useState('');
 
     const TAG_STYLES: Record<string, string> = {
         'Calibration Call': 'bg-blue-100 text-blue-700 border-blue-200',
         'To Recall': 'bg-orange-100 text-orange-700 border-orange-200',
         'Not Responding': 'bg-indigo-100 text-indigo-700 border-indigo-200',
-        'Propose Properties': 'bg-purple-100 text-purple-700 border-purple-200',
+        'Propose Properties': 'bg-[#25D366]/20 text-[#128C7E] border-[#25D366]/30',
         'Visit Scheduled': 'bg-teal-100 text-teal-700 border-teal-200',
         'Visit Made': 'bg-emerald-100 text-emerald-700 border-emerald-200',
         'Not Interested': 'bg-slate-200 text-slate-700 border-slate-300',
@@ -138,8 +141,15 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
         window.open(gcalUrl, '_blank', 'noopener,noreferrer');
     };
 
-    const handleProposePropertiesClick = async () => {
-        const propId = window.prompt("Enter Property ID (e.g. P137) to propose via WhatsApp, or leave blank to just open WhatsApp:");
+    const handleProposePropertiesClick = () => {
+        setPropertyId(''); // Clear previous input
+        setIsWhatsAppModalOpen(true);
+    };
+
+    const submitWhatsAppPropose = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        const propId = propertyId;
         
         let message = '';
         let url = '';
@@ -165,6 +175,8 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
             console.error('Failed to log Propose Properties activity:', error);
         }
         
+        setIsWhatsAppModalOpen(false);
+        setPropertyId('');
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
@@ -340,6 +352,43 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                             <div className="pt-2">
                                 <button type="submit" className="w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors">
                                     Schedule & Log Note
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* WhatsApp/Propose Properties Modal */}
+            {isWhatsAppModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
+                            <div className="flex items-center gap-2 text-slate-800 font-bold">
+                                <MessageSquare className="w-5 h-5 text-[#25D366]" />
+                                Propose Properties
+                            </div>
+                            <button onClick={() => setIsWhatsAppModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={submitWhatsAppPropose} className="p-5 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Property ID (Optional)</label>
+                                <input 
+                                    type="text" 
+                                    value={propertyId}
+                                    onChange={(e) => setPropertyId(e.target.value)}
+                                    placeholder="e.g. P137"
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
+                                />
+                                <p className="text-xs text-slate-500 mt-2">
+                                    Leave blank to just open WhatsApp and log the note.
+                                </p>
+                            </div>
+                            <div className="pt-2">
+                                <button type="submit" className="w-full px-4 py-2.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2">
+                                    <MessageSquare className="w-4 h-4" /> Open WhatsApp
                                 </button>
                             </div>
                         </form>

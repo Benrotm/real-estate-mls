@@ -11,21 +11,35 @@ interface LeadContactActionsProps {
 
 export default function LeadContactActions({ lead }: LeadContactActionsProps) {
     const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
-    const [eventType, setEventType] = useState<'Visit Scheduled' | 'To Recall'>('Visit Scheduled');
+    const [calendarEventType, setCalendarEventType] = useState<'Visit Scheduled' | 'To Recall'>('Visit Scheduled');
     const [eventDate, setEventDate] = useState('');
+    
+    // WhatsApp Modal State
+    const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
     const [propertyId, setPropertyId] = useState('');
 
-    const handleWhatsAppClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const handleWhatsAppClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        setPropertyId('');
+        setIsWhatsAppModalOpen(true);
+    };
+
+    const submitWhatsAppAction = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        const propertyId = window.prompt("Enter Property ID (e.g. P137) if sharing a property, or leave blank to just open WhatsApp:");
+        const propId = propertyId;
         
         let message = '';
-        let url = `https://wa.me/${lead.phone?.replace(/\D/g, '')}`;
+        let url = '';
+        if (lead?.phone) {
+            url = `https://wa.me/${lead.phone.replace(/\D/g, '')}`;
+        } else {
+            alert("No phone number saved for this lead.");
+            return;
+        }
         
-        if (propertyId && propertyId.trim() !== '') {
-            const propertyLink = `${window.location.origin}/properties/${propertyId.trim()}`;
-            message = `Shared Property [${propertyId.trim()}] (${propertyLink}) via WhatsApp`;
+        if (propId && propId.trim() !== '') {
+            const propertyLink = `${window.location.origin}/properties/${propId.trim()}`;
+            message = `Shared Property [${propId.trim()}] (${propertyLink}) via WhatsApp`;
             url += `?text=${encodeURIComponent(`Check out this property: ${propertyLink}`)}`;
         } else {
             message = 'Opened WhatsApp chat';
@@ -38,6 +52,8 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
             console.error('Failed to log WhatsApp activity:', error);
         }
         
+        setIsWhatsAppModalOpen(false);
+        setPropertyId('');
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
@@ -75,19 +91,19 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
         const startStr = formatGoogleDate(dateObj);
         const endStr = formatGoogleDate(endDateObj);
 
-        const title = propertyId.trim() ? `${eventType} - ${propertyId.trim()} - ${lead.name || 'Client'}` : `${eventType} - ${lead.name || 'Client'}`;
+        const title = propertyId.trim() ? `${calendarEventType} - ${propertyId.trim()} - ${lead.name || 'Client'}` : `${calendarEventType} - ${lead.name || 'Client'}`;
         const description = `Phone: ${lead.phone || 'N/A'}\nEmail: ${lead.email || 'N/A'}`;
         
         const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(description)}`;
 
         // Log the note
         const noteContent = propertyId.trim() 
-            ? `[${eventType}] for property ${propertyId.trim()} at ${dateObj.toLocaleString()}`
-            : `[${eventType}] at ${dateObj.toLocaleString()}`;
+            ? `[${calendarEventType}] for property ${propertyId.trim()} at ${dateObj.toLocaleString()}`
+            : `[${calendarEventType}] at ${dateObj.toLocaleString()}`;
 
         try {
             await createNote(lead.id!, noteContent);
-            await logLeadActivity(lead.id!, 'meeting', `Scheduled: ${eventType}`);
+            await logLeadActivity(lead.id!, 'meeting', `Scheduled: ${calendarEventType}`);
         } catch (error) {
             console.error('Failed to log scheduled event:', error);
         }
@@ -126,13 +142,12 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
                 <Calendar className="w-4 h-4" /> Calendar
             </button>
             {lead.phone && (
-                <a 
-                    href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`} 
+                <button 
                     onClick={handleWhatsAppClick}
                     className="px-4 py-2 bg-[#25D366] text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#128C7E] transition-colors shadow-sm"
                 >
                     <MessageCircle className="w-4 h-4" /> WhatsApp
-                </a>
+                </button>
             )}
 
             {/* Calendar Modal */}
@@ -152,8 +167,8 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Event Type</label>
                                 <select 
-                                    value={eventType} 
-                                    onChange={(e) => setEventType(e.target.value as any)}
+                                    value={calendarEventType} 
+                                    onChange={(e) => setCalendarEventType(e.target.value as any)}
                                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 >
                                     <option value="Visit Scheduled">Visit Scheduled</option>
@@ -183,6 +198,43 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
                             <div className="pt-2">
                                 <button type="submit" className="w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors">
                                     Schedule & Log Note
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* WhatsApp Modal */}
+            {isWhatsAppModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
+                            <div className="flex items-center gap-2 text-slate-800 font-bold">
+                                <MessageCircle className="w-5 h-5 text-[#25D366]" />
+                                Open WhatsApp
+                            </div>
+                            <button onClick={() => setIsWhatsAppModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={submitWhatsAppAction} className="p-5 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Property ID (Optional)</label>
+                                <input 
+                                    type="text" 
+                                    value={propertyId}
+                                    onChange={(e) => setPropertyId(e.target.value)}
+                                    placeholder="e.g. P137"
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:border-transparent"
+                                />
+                                <p className="text-xs text-slate-500 mt-2">
+                                    Leave blank to just open WhatsApp and log the note.
+                                </p>
+                            </div>
+                            <div className="pt-2">
+                                <button type="submit" className="w-full px-4 py-2.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2">
+                                    <MessageCircle className="w-4 h-4" /> Open WhatsApp
                                 </button>
                             </div>
                         </form>
