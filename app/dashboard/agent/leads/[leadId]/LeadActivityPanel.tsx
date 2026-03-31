@@ -138,6 +138,36 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
         window.open(gcalUrl, '_blank', 'noopener,noreferrer');
     };
 
+    const handleProposePropertiesClick = async () => {
+        const propId = window.prompt("Enter Property ID (e.g. P137) to propose via WhatsApp, or leave blank to just open WhatsApp:");
+        
+        let message = '';
+        let url = '';
+        if (lead?.phone) {
+            url = `https://wa.me/${lead.phone.replace(/\D/g, '')}`;
+        } else {
+            alert("No phone number saved for this lead.");
+            return;
+        }
+        
+        if (propId && propId.trim() !== '') {
+            const propertyLink = `${window.location.origin}/properties/${propId.trim()}`;
+            message = `Shared Property [${propId.trim()}] (${propertyLink}) via WhatsApp`;
+            url += `?text=${encodeURIComponent(`Check out this property: ${propertyLink}`)}`;
+        } else {
+            message = 'Opened WhatsApp chat to propose properties';
+        }
+        
+        try {
+            await logLeadActivity(leadId, 'contacted', message);
+            await createNote(leadId, `[Propose Properties] ${message}`);
+        } catch (error) {
+            console.error('Failed to log Propose Properties activity:', error);
+        }
+        
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
             {/* Tabs Header */}
@@ -231,6 +261,8 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                                     if (tag === 'Visit Scheduled' || tag === 'To Recall') {
                                         setCalendarEventType(tag as 'Visit Scheduled' | 'To Recall');
                                         setIsCalendarModalOpen(true);
+                                    } else if (tag === 'Propose Properties') {
+                                        handleProposePropertiesClick();
                                     } else {
                                         setSelectedTag(selectedTag === tag ? null : tag);
                                     }
