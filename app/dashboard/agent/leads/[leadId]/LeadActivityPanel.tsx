@@ -48,7 +48,7 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
         'Email': 'bg-sky-100 text-sky-700 border-sky-200'
     };
 
-    const TAGS = Object.keys(TAG_STYLES);
+    const TAGS = Object.keys(TAG_STYLES).filter(tag => tag !== 'WhatsApp' && tag !== 'Email');
 
     const renderNoteContent = (content: string) => {
         const match = content.match(/^\[(.*?)\]\s*(.*)$/si); // Allow multi-line matches
