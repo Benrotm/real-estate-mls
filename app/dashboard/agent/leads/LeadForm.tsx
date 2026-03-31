@@ -38,6 +38,7 @@ interface LeadFormProps {
     initialData?: LeadData;
     isEditing?: boolean;
     onCancel?: () => void;
+    readOnly?: boolean;
 }
 
 type TabType = 'contact' | 'classification' | 'viewing' | 'profile';
@@ -101,8 +102,9 @@ const DEFAULT_FORM_DATA: LeadData = {
     ownership_purpose_personal: false
 };
 
-export default function LeadForm({ initialData, isEditing = false, onCancel }: LeadFormProps) {
+export default function LeadForm({ initialData, isEditing = false, onCancel, readOnly = false }: LeadFormProps) {
     const [isLoading, setIsLoading] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('contact');
     const [formData, setFormData] = useState<LeadData>({
         ...DEFAULT_FORM_DATA,
@@ -168,8 +170,13 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
 
             if (onCancel) {
                 onCancel();
+            } else if (isEditing) {
+                // Show success message and stay on page
+                setIsSuccess(true);
+                setTimeout(() => setIsSuccess(false), 3000);
+                router.refresh();
             } else {
-                // If not in a modal (e.g. on separate page), redirect
+                // If not in a modal and creating a new lead, redirect
                 router.push('/dashboard/agent/leads');
                 router.refresh();
             }
@@ -213,7 +220,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                 <TabButton id="profile" label="Lead Profile" icon={Fingerprint} />
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+            <fieldset disabled={readOnly} className="p-6 overflow-y-auto flex-1 custom-scrollbar">
 
                 {/* CONTACT TAB */}
                 {activeTab === 'contact' && (
@@ -897,7 +904,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                         </div>
                     </div>
                 )}
-            </div>
+            </fieldset>
 
             {/* Footer */}
             <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-between items-center">
@@ -905,20 +912,27 @@ export default function LeadForm({ initialData, isEditing = false, onCancel }: L
                     {/* Optional Status text */}
                     Tab: {activeTab === 'viewing' ? 'LEAD SCORE' : activeTab === 'profile' ? 'LEAD PROFILE' : activeTab.toUpperCase()}
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 items-center">
+                    {isSuccess && (
+                        <span className="text-sm font-bold text-green-600 flex items-center gap-1 animate-in fade-in slide-in-from-right-4 mr-2">
+                            <Check className="w-4 h-4" /> Saved changes
+                        </span>
+                    )}
                     {onCancel && (
                         <button type="button" onClick={onCancel} className="px-6 py-2 border border-slate-300 rounded-lg font-bold text-slate-600 hover:bg-white transition-colors">
                             Cancel
                         </button>
                     )}
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="px-6 py-2 bg-orange-600 text-white rounded-lg font-bold hover:bg-orange-700 transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
-                    >
-                        <Save className="w-4 h-4" />
-                        {isLoading ? 'Saving...' : (isEditing ? 'Update Lead' : 'Create Client')}
-                    </button>
+                    {!readOnly && (
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="px-6 py-2 bg-orange-600 text-white rounded-lg font-bold hover:bg-orange-700 transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
+                        >
+                            <Save className="w-4 h-4" />
+                            {isLoading ? 'Saving...' : (isEditing ? 'Update Lead' : 'Create Client')}
+                        </button>
+                    )}
                 </div>
             </div>
         </form>

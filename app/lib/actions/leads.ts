@@ -119,10 +119,7 @@ export async function updateLead(leadId: string, data: LeadData) {
         .update({ ...cleanData, score })
         .eq('id', leadId);
 
-    // Only restrict by agent_id if NOT super_admin
-    if (!isSuperAdmin) {
-        query = query.eq('agent_id', user.id);
-    }
+    // The RLS policy natively handles if this user is allowed to update (owner or manager)
 
     const { error } = await query;
 
@@ -147,8 +144,7 @@ export async function deleteLead(leadId: string) {
     const { error } = await supabase
         .from('leads')
         .delete()
-        .eq('id', leadId)
-        .eq('agent_id', user.id);
+        .eq('id', leadId);
 
     if (error) throw new Error('Failed to delete lead');
     revalidatePath('/dashboard/agent/leads');
@@ -186,8 +182,7 @@ export async function getLeadsCount() {
 
     const { count, error } = await supabase
         .from('leads')
-        .select('*', { count: 'exact', head: true })
-        .eq('agent_id', user.id);
+        .select('*', { count: 'exact', head: true });
 
     if (error) {
         console.error('Error fetching leads count:', error);
@@ -211,10 +206,7 @@ export async function fetchLead(leadId: string) {
         .select('*, creator:created_by(full_name)')
         .eq('id', leadId);
 
-    // Only restrict by agent_id if NOT super_admin
-    if (!isSuperAdmin) {
-        query = query.eq('agent_id', user.id);
-    }
+    // The RLS policy natively handles if this user is allowed to view (team member or manager)
 
     const { data, error } = await query.single();
 
@@ -256,6 +248,26 @@ export async function createNote(leadId: string, content: string) {
     });
 
     if (error) throw new Error('Failed to create note');
+    revalidatePath(`/dashboard/agent/leads/${leadId}`);
+}
+
+export async function logLeadActivity(leadId: string, type: string, description: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) throw new Error('Unauthorized');
+
+    const { error } = await supabase.from('lead_activities').insert({
+        lead_id: leadId,
+        type,
+        description,
+        created_by: user.id
+    });
+
+    if (error) {
+        console.error('Failed to log lead activity:', error);
+        throw new Error('Failed to log lead activity');
+    }
     revalidatePath(`/dashboard/agent/leads/${leadId}`);
 }
 

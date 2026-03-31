@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Clock, MessageSquare, List } from 'lucide-react';
-import { createNote } from '@/app/lib/actions/leads';
+import { createNote, logLeadActivity } from '@/app/lib/actions/leads';
 
 interface Activity {
     id: string;
@@ -30,7 +30,10 @@ interface Props {
 export default function LeadActivityPanel({ leadId, initialNotes, initialActivities }: Props) {
     const [activeTab, setActiveTab] = useState<'notes' | 'activities'>('notes');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const formRef = useRef<HTMLFormElement>(null);
+
+    const TAGS = ['Call', 'To Recall', 'Not Responding', 'Propose Properties', 'Visit Scheduled', 'Visit Made', 'Not Interested', 'Negotiations', 'Lost'];
 
     async function handleOnSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -40,11 +43,17 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
         setIsSubmitting(true);
         try {
             const formData = new FormData(e.currentTarget);
-            const content = formData.get('content') as string;
-            if (content && content.trim()) {
-                await createNote(leadId, content);
+            const rawContent = formData.get('content') as string;
+            if (rawContent && rawContent.trim()) {
+                const finalContent = selectedTag ? `[${selectedTag}] ${rawContent}` : rawContent;
+                await createNote(leadId, finalContent);
+                
+                // Log activity
+                const activityDesc = selectedTag ? `Added note with tag: ${selectedTag}` : 'Added a note';
+                await logLeadActivity(leadId, 'note', activityDesc);
             }
             formRef.current?.reset();
+            setSelectedTag(null);
         } catch (error) {
             console.error('Failed to add note:', error);
         } finally {
@@ -136,6 +145,18 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
             {/* Input Area - Only for Notes */}
             {activeTab === 'notes' && (
                 <div className="p-4 bg-white border-t border-slate-200 animate-in fade-in duration-300">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        {TAGS.map(tag => (
+                            <button
+                                key={tag}
+                                type="button"
+                                onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-colors ${selectedTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700'}`}
+                            >
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
                     <form ref={formRef} onSubmit={handleOnSubmit} className="relative">
                         <textarea
                             name="content"

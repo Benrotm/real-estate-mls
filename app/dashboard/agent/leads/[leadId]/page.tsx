@@ -1,10 +1,12 @@
 import Link from 'next/link';
-import { ArrowLeft, Phone, Mail, Clock } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, Clock, MessageCircle } from 'lucide-react';
 import { fetchLead, fetchNotes, fetchActivities } from '@/app/lib/actions/leads';
 import { notFound } from 'next/navigation';
+import { createClient } from '@/app/lib/supabase/server';
 import LeadForm from '../LeadForm';
 import { revalidatePath } from 'next/cache';
 import LeadActivityPanel from './LeadActivityPanel';
+import LeadContactActions from './LeadContactActions';
 
 export default async function LeadDetailsPage({ params }: { params: Promise<{ leadId: string }> }) {
     const { leadId } = await params;
@@ -16,7 +18,25 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
         notFound();
     }
 
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
+    let isReadOnly = true;
+    if (user) {
+        if (user.id === lead.agent_id) {
+            isReadOnly = false;
+        } else {
+            const { data: viewerProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            if (viewerProfile?.role === 'super_admin' || viewerProfile?.role === 'admin') {
+                isReadOnly = false;
+            } else {
+                const { data: ownerProfile } = await supabase.from('profiles').select('agency_id').eq('id', lead.agent_id).single();
+                if (ownerProfile?.agency_id === user.id) {
+                    isReadOnly = false;
+                }
+            }
+        }
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen pb-20">
@@ -38,14 +58,7 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
                         </p>
                     </div>
                 </div>
-                <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-50">
-                        <Phone className="w-4 h-4" /> Call
-                    </button>
-                    <button className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-50">
-                        <Mail className="w-4 h-4" /> Email
-                    </button>
-                </div>
+                <LeadContactActions lead={lead} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -57,7 +70,7 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
                         </div>
                         <div className="p-0">
                             {/* We reuse the LeadForm but perhaps with a "Save" button visible naturally */}
-                            <LeadForm initialData={lead} isEditing={true} />
+                            <LeadForm initialData={lead} isEditing={true} readOnly={isReadOnly} />
                         </div>
                     </div>
                 </div>
