@@ -26,6 +26,9 @@ export default async function LeadsPage() {
     }
 
     const leads = await fetchLeads();
+    
+    // Get user team members to distinguish between team leads and partner leads
+    const { data: teamMembers } = await supabase.rpc('get_user_team_members', { user_id: user.id });
 
     // Stats Calculations
     const totalLeads = leads.length;
@@ -168,6 +171,7 @@ export default async function LeadsPage() {
                     leads={leads}
                     basePath="/dashboard/agent/leads"
                     currentUserId={user?.id}
+                    teamMemberIds={teamMembers ? teamMembers.map((m: any) => m.member_id) : [user?.id]}
                 />
             </div>
         </div>

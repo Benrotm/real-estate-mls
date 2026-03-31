@@ -39,9 +39,10 @@ interface LeadListProps {
     basePath: string; // e.g. '/dashboard/agent/leads' or '/dashboard/owner/leads'
     allowEdit?: boolean;
     currentUserId?: string;
+    teamMemberIds?: string[];
 }
 
-export default function LeadList({ leads, basePath, allowEdit = true, currentUserId }: LeadListProps) {
+export default function LeadList({ leads, basePath, allowEdit = true, currentUserId, teamMemberIds = [] }: LeadListProps) {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeStatus, setActiveStatus] = useState<string>('all');
@@ -500,12 +501,14 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                             <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
                                                                 {lead.name || 'Unnamed Lead'}
                                                             </Link>
-                                                        ) : (
+                                                        ) : teamMemberIds.includes(lead.agent_id) ? (
                                                             <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-500 italic hover:text-orange-600 transition-colors">
                                                                 Team Lead
                                                             </Link>
+                                                        ) : (
+                                                            <span className="font-bold text-slate-500 italic">Partner Lead</span>
                                                         )}
-                                                        <div className="text-xs text-slate-500">{lead.agent_id === currentUserId ? (lead.source || 'Unknown Source') : 'Team Member Lead'}</div>
+                                                        <div className="text-xs text-slate-500">{lead.agent_id === currentUserId ? (lead.source || 'Unknown Source') : teamMemberIds.includes(lead.agent_id) ? 'Team Member Lead' : 'Shared Lead'}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -593,7 +596,7 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                                 <Edit className="w-4 h-4" />
                                                             </Link>
                                                         </>
-                                                    ) : (
+                                                    ) : teamMemberIds.includes(lead.agent_id) ? (
                                                         <div className="flex items-center gap-2">
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleContactPartnerLead(lead); }}
@@ -610,6 +613,13 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                                 <Eye className="w-3.5 h-3.5" /> View
                                                             </Link>
                                                         </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleContactPartnerLead(lead); }}
+                                                            className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-lg font-bold text-xs hover:bg-orange-100 transition-colors"
+                                                        >
+                                                            <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
+                                                        </button>
                                                     )}
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); toggleExpand(lead.id); }}
