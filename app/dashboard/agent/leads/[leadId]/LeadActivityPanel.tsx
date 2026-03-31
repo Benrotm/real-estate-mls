@@ -33,7 +33,37 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const formRef = useRef<HTMLFormElement>(null);
 
-    const TAGS = ['Call', 'To Recall', 'Not Responding', 'Propose Properties', 'Visit Scheduled', 'Visit Made', 'Not Interested', 'Negotiations', 'Lost'];
+    const TAG_STYLES: Record<string, string> = {
+        'Call': 'bg-blue-100 text-blue-700 border-blue-200',
+        'To Recall': 'bg-orange-100 text-orange-700 border-orange-200',
+        'Not Responding': 'bg-red-100 text-red-700 border-red-200',
+        'Propose Properties': 'bg-purple-100 text-purple-700 border-purple-200',
+        'Visit Scheduled': 'bg-teal-100 text-teal-700 border-teal-200',
+        'Visit Made': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        'Not Interested': 'bg-slate-200 text-slate-700 border-slate-300',
+        'Negotiations': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+        'Lost': 'bg-zinc-200 text-zinc-700 border-zinc-300'
+    };
+
+    const TAGS = Object.keys(TAG_STYLES);
+
+    const renderNoteContent = (content: string) => {
+        const match = content.match(/^\[(.*?)\]\s*(.*)$/si); // Allow multi-line matches
+        if (match) {
+            const tag = match[1];
+            if (TAG_STYLES[tag]) {
+                return (
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                        <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${TAG_STYLES[tag]} inline-block`}>
+                            {tag}
+                        </span>
+                        <span className="mt-0.5 whitespace-pre-wrap">{match[2]}</span>
+                    </div>
+                );
+            }
+        }
+        return <span className="whitespace-pre-wrap">{content}</span>;
+    };
 
     async function handleOnSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -103,7 +133,7 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
                                             <span className="text-xs text-slate-400">{new Date(note.created_at).toLocaleString()}</span>
                                         </div>
                                         <div className="text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 shadow-sm">
-                                            {note.content}
+                                            {renderNoteContent(note.content)}
                                         </div>
                                     </div>
                                 </div>
@@ -151,7 +181,7 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
                                 key={tag}
                                 type="button"
                                 onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-colors ${selectedTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700'}`}
+                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all ${selectedTag === tag ? `${TAG_STYLES[tag]} ring-2 ring-offset-1 ring-orange-500` : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700'}`}
                             >
                                 {tag}
                             </button>
