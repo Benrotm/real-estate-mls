@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp, ArrowUpRight, MessageSquare, Info } from 'lucide-react';
+import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp, ArrowUpRight, MessageSquare, Info, Eye } from 'lucide-react';
 import { LeadData } from '@/app/lib/types';
 import { deleteLead } from '@/app/lib/actions/leads';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -501,9 +501,11 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                                 {lead.name || 'Unnamed Lead'}
                                                             </Link>
                                                         ) : (
-                                                            <span className="font-bold text-slate-500 italic">Partner Lead</span>
+                                                            <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-500 italic hover:text-orange-600 transition-colors">
+                                                                Team Lead
+                                                            </Link>
                                                         )}
-                                                        <div className="text-xs text-slate-500">{lead.agent_id === currentUserId ? (lead.source || 'Unknown Source') : 'Shared Lead'}</div>
+                                                        <div className="text-xs text-slate-500">{lead.agent_id === currentUserId ? (lead.source || 'Unknown Source') : 'Team Member Lead'}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -592,12 +594,22 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                             </Link>
                                                         </>
                                                     ) : (
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleContactPartnerLead(lead); }}
-                                                            className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-lg font-bold text-xs hover:bg-orange-100 transition-colors"
-                                                        >
-                                                            <MessageSquare className="w-3.5 h-3.5" /> Contact Partner
-                                                        </button>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleContactPartnerLead(lead); }}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-lg font-bold text-xs hover:bg-orange-100 transition-colors"
+                                                            >
+                                                                <MessageSquare className="w-3.5 h-3.5" /> Contact
+                                                            </button>
+                                                            <Link
+                                                                href={`${basePath}/${lead.id}`}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-100 transition-colors"
+                                                                title="View Details"
+                                                            >
+                                                                <Eye className="w-3.5 h-3.5" /> View
+                                                            </Link>
+                                                        </div>
                                                     )}
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); toggleExpand(lead.id); }}
