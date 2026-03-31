@@ -42,7 +42,7 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
     const [propertyId, setPropertyId] = useState('');
 
     const TAG_STYLES: Record<string, string> = {
-        'Call': 'bg-blue-100 text-blue-700 border-blue-200',
+        'Calibration Call': 'bg-blue-100 text-blue-700 border-blue-200',
         'To Recall': 'bg-orange-100 text-orange-700 border-orange-200',
         'Not Responding': 'bg-indigo-100 text-indigo-700 border-indigo-200',
         'Propose Properties': 'bg-purple-100 text-purple-700 border-purple-200',

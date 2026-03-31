@@ -44,7 +44,7 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
     const handleCallClick = async () => {
         try {
             await logLeadActivity(lead.id!, 'contacted', 'Initiated a phone call');
-            await createNote(lead.id!, '[Call] Initiated a phone call');
+            await createNote(lead.id!, '[Calibration Call] Initiated a phone call');
         } catch (error) {
             console.error('Failed to log Call activity:', error);
         }
