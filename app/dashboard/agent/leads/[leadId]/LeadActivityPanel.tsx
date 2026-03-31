@@ -36,12 +36,12 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
     const TAG_STYLES: Record<string, string> = {
         'Call': 'bg-blue-100 text-blue-700 border-blue-200',
         'To Recall': 'bg-orange-100 text-orange-700 border-orange-200',
-        'Not Responding': 'bg-red-100 text-red-700 border-red-200',
+        'Not Responding': 'bg-indigo-100 text-indigo-700 border-indigo-200',
         'Propose Properties': 'bg-purple-100 text-purple-700 border-purple-200',
         'Visit Scheduled': 'bg-teal-100 text-teal-700 border-teal-200',
         'Visit Made': 'bg-emerald-100 text-emerald-700 border-emerald-200',
         'Not Interested': 'bg-slate-200 text-slate-700 border-slate-300',
-        'Negotiations': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+        'Negotiations': 'bg-red-100 text-red-700 border-red-200',
         'Closed': 'bg-green-100 text-green-700 border-green-200',
         'Lost': 'bg-zinc-200 text-zinc-700 border-zinc-300',
         'WhatsApp': 'bg-[#25D366]/20 text-[#128C7E] border-[#25D366]/30',
@@ -184,7 +184,7 @@ export default function LeadActivityPanel({ leadId, initialNotes, initialActivit
                                 key={tag}
                                 type="button"
                                 onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all ${selectedTag === tag ? `${TAG_STYLES[tag]} ring-2 ring-offset-1 ring-orange-500` : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700'}`}
+                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all hover:brightness-95 ${TAG_STYLES[tag]} ${selectedTag === tag ? 'ring-2 ring-offset-1 ring-orange-500 shadow-sm' : 'opacity-80'}`}
                             >
                                 {tag}
                             </button>
