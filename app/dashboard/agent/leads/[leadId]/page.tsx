@@ -80,8 +80,9 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
                     <div className="space-y-6">
                         <LeadActivityPanel
                             leadId={leadId}
-                            initialNotes={notes}
-                            initialActivities={activities}
+                            lead={lead}
+                            initialNotes={notes as any[]}
+                            initialActivities={activities as any[]}
                         />
                     </div>
                 </div>
