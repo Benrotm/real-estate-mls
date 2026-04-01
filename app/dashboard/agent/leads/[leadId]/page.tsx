@@ -81,9 +81,7 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
                     </div>
 
                     {/* AI Matching Section */}
-                    {!isReadOnly && (
-                        <LeadAIMatching lead={lead} currentUserId={user?.id} />
-                    )}
+                    <LeadAIMatching lead={lead} currentUserId={user?.id} />
                 </div>
 
                 {/* Right Column: Notes & Activity */}
