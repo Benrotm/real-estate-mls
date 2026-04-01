@@ -61,6 +61,32 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
 
     const TAGS = Object.keys(TAG_STYLES).filter(tag => tag !== 'WhatsApp' && tag !== 'Email');
 
+    const formatNoteText = (text: string) => {
+        // Match the pattern: [PropertyID] (URL) 
+        // e.g., "Shared Property [p123334] (https://www.imobum.com/properties/p123334)"
+        const parts = text.split(/(\[[a-zA-Z0-9_-]+\]\s*\([^\)]+\))/g);
+        
+        return parts.map((part, i) => {
+            const match = part.match(/\[([a-zA-Z0-9_-]+)\]\s*\(([^\)]+)\)/);
+            if (match) {
+                const propId = match[1];
+                const url = match[2];
+                return (
+                    <a 
+                        key={i} 
+                        href={url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-white bg-slate-800 hover:bg-slate-700 px-1.5 py-0.5 rounded text-xs font-bold transition-colors inline-block tracking-wide mx-0.5 shadow-sm"
+                    >
+                        {propId.toUpperCase()}
+                    </a>
+                );
+            }
+            return <span key={i}>{part}</span>;
+        });
+    };
+
     const renderNoteContent = (content: string) => {
         const match = content.match(/^\[(.*?)\]\s*(.*)$/si); // Allow multi-line matches
         if (match) {
@@ -71,12 +97,12 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                         <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border ${TAG_STYLES[tag]} inline-block`}>
                             {tag}
                         </span>
-                        <span className="mt-0.5 whitespace-pre-wrap">{match[2]}</span>
+                        <span className="mt-0.5 whitespace-pre-wrap leading-relaxed">{formatNoteText(match[2])}</span>
                     </div>
                 );
             }
         }
-        return <span className="whitespace-pre-wrap">{content}</span>;
+        return <span className="whitespace-pre-wrap leading-relaxed">{formatNoteText(content)}</span>;
     };
 
     async function handleOnSubmit(e: React.FormEvent<HTMLFormElement>) {
