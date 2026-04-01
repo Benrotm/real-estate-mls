@@ -496,25 +496,42 @@ export async function updateUserRoleAndPlan(userId: string, role: string, planTi
     revalidatePath('/dashboard/admin/users');
 }
 
-export async function deleteUser(userId: string) {
-    await verifyAdmin();
+export async function deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await verifyAdmin();
 
-    const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
             }
+        );
+
+        // Optional: Manual cleanup of child records to prevent FK constraint failures
+        const supabase = await createClient();
+        
+        // Let's attempt to delete associated data first. If there's an error, we can log it but proceed to try auth user deletion.
+        await supabase.from('properties').delete().eq('owner_id', userId);
+        await supabase.from('leads').delete().eq('agent_id', userId);
+        await supabase.from('team_members').delete().eq('user_id', userId);
+        await supabase.from('team_members').delete().eq('agency_id', userId);
+        await supabase.from('notifications').delete().eq('user_id', userId);
+        await supabase.from('messages').delete().eq('sender_id', userId);
+        await supabase.from('messages').delete().eq('receiver_id', userId);
+        
+        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+        if (error) {
+            return { success: false, error: error.message };
         }
-    );
 
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-
-    if (error) {
-        throw new Error(error.message);
+        revalidatePath('/dashboard/admin/users');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Unknown Server Error' };
     }
-
-    revalidatePath('/dashboard/admin/users');
 }

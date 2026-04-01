@@ -64,12 +64,15 @@ export default function UserActions({ user }: UserActionsProps) {
     const handleDeleteUser = () => {
         startTransition(async () => {
             try {
-                await deleteUser(user.id);
-                // No alert needed if page revalidates and row disappears, but safe to add one.
-                alert('User deleted permanently.');
-                setShowDeleteModal(false);
+                const res = await deleteUser(user.id);
+                if (!res.success) {
+                    alert('Failed to delete user: ' + res.error);
+                } else {
+                    alert('User deleted permanently.');
+                    setShowDeleteModal(false);
+                }
             } catch (e: any) {
-                alert('Failed to delete user: ' + e.message);
+                alert('Request failed: ' + e.message);
             }
         });
     };
