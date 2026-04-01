@@ -7,6 +7,7 @@ import LeadForm from '../LeadForm';
 import { revalidatePath } from 'next/cache';
 import LeadActivityPanel from './LeadActivityPanel';
 import LeadContactActions from './LeadContactActions';
+import LeadAIMatching from '@/app/components/dashboard/LeadAIMatching';
 
 export default async function LeadDetailsPage({ params }: { params: Promise<{ leadId: string }> }) {
     const { leadId } = await params;
@@ -66,13 +67,23 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                            <h2 className="font-bold text-slate-900">Lead Details & Preferences</h2>
+                            <h2 className="font-bold text-slate-900 flex items-center gap-3">
+                                Lead Details & Preferences
+                                <span className="px-2 py-0.5 bg-slate-200 text-slate-600 rounded text-[10px] font-black uppercase tracking-widest border border-slate-300">
+                                    ID: {lead.id.slice(0, 8)}
+                                </span>
+                            </h2>
                         </div>
                         <div className="p-0">
                             {/* We reuse the LeadForm but perhaps with a "Save" button visible naturally */}
                             <LeadForm initialData={lead} isEditing={true} readOnly={isReadOnly} />
                         </div>
                     </div>
+
+                    {/* AI Matching Section */}
+                    {!isReadOnly && (
+                        <LeadAIMatching lead={lead} currentUserId={user?.id} />
+                    )}
                 </div>
 
                 {/* Right Column: Notes & Activity */}
