@@ -158,7 +158,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         longitude: initialData?.longitude || 26.1025,
         city: initialData?.location_city || '',
         state: initialData?.location_county || '',
-        zip: '',
+        area: initialData?.location_area || '',
         rooms: initialData?.rooms?.toString() || '',
         beds: initialData?.bedrooms?.toString() || '',
         baths: initialData?.bathrooms?.toString() || '',
@@ -219,6 +219,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
             buildingType: data.building_type || prev.buildingType,
             city: data.location_city || prev.city,
             state: data.location_county || prev.state,
+            area: data.location_area || prev.area,
             latitude: data.latitude || prev.latitude,
             longitude: data.longitude || prev.longitude,
             ownerName: data.owner_name || prev.ownerName,
@@ -403,7 +404,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         formDataToSend.append('address', formData.address || '');
         formDataToSend.append('location_city', formData.city || '');
         formDataToSend.append('location_county', formData.state || ''); // Using state input for county
-        formDataToSend.append('location_area', ''); // Not in form yet, empty for now
+        formDataToSend.append('location_area', formData.area || '');
         formDataToSend.append('latitude', formData.latitude.toString());
         formDataToSend.append('longitude', formData.longitude.toString());
 
@@ -739,8 +740,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             <input type="text" name="state" required value={formData.state} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
                                         <div className="col-span-2 md:col-span-1">
-                                            <label className="block text-sm font-medium mb-2 text-slate-300">ZIP Code</label>
-                                            <input type="text" name="zip" required value={formData.zip} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Area / Neighbourhood</label>
+                                            <input type="text" name="area" placeholder="e.g., Fratelia, Complex" value={formData.area} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
                                     </div>
 

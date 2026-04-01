@@ -14,6 +14,7 @@ export interface ScoringRule {
     weight: number;
     is_active: boolean;
     scope: 'lead' | 'property' | 'match';
+    config?: Record<string, any>;
 }
 
 export async function fetchScoringRules(scope?: 'lead' | 'property' | 'match') {
@@ -37,13 +38,16 @@ export async function fetchScoringRules(scope?: 'lead' | 'property' | 'match') {
     return (data || []) as ScoringRule[];
 }
 
-export async function updateScoringRule(id: string, weight: number, is_active?: boolean) {
+export async function updateScoringRule(id: string, weight: number, is_active?: boolean, config?: Record<string, any>) {
     const supabase = await createClient();
     // In a real app, verify admin role here
 
     const updateData: any = { weight };
     if (is_active !== undefined) {
         updateData.is_active = is_active;
+    }
+    if (config !== undefined) {
+        updateData.config = config;
     }
 
     const { error } = await supabase
@@ -269,54 +273,125 @@ export async function calculatePropertyScore(property: Partial<Property>): Promi
 
 export async function calculateMatchScore(lead: LeadData, property: Property, rules: ScoringRule[]): Promise<number> {
     let score = 0;
+    const getRule = (key: string) => rules.find(r => r.criteria_key === key);
     const getWeight = (key: string) => {
-        const rule = rules.find(r => r.criteria_key === key);
+        const rule = getRule(key);
         return (rule && rule.is_active) ? rule.weight : 0;
+    };
+    const isActive = (key: string) => {
+        const rule = getRule(key);
+        return rule ? rule.is_active : false;
+    };
+    const getConfig = (key: string) => {
+        const rule = getRule(key);
+        return rule?.config || {};
     };
 
     // 1. Transaction Type Match (CRITICAL - Hard requirement)
-    if (lead.preference_listing_type !== property.listing_type) {
-        return 0; // Absolute mismatch if one is Sale and other is Rent
+    if (isActive('match_listing_type') && lead.preference_listing_type) {
+        if (lead.preference_listing_type !== property.listing_type) {
+            return 0; // Absolute mismatch
+        }
+        score += getWeight('match_listing_type');
+    } else if (lead.preference_listing_type && lead.preference_listing_type !== property.listing_type) {
+        // If inactive but conflicts horribly, still logical to return 0, but user said core toggled off = flexible.
+        // We will strictly obey "isActive" for the 0 return.
     }
-    score += getWeight('match_listing_type');
 
     // 2. Property Type Match
-    if (lead.preference_type === property.type) {
+    if (isActive('match_type') && lead.preference_type) {
+        if (lead.preference_type !== property.type) return 0;
         score += getWeight('match_type');
     }
 
     // 3. City Match
-    if (lead.preference_location_city?.toLowerCase() === property.location_city?.toLowerCase()) {
+    if (isActive('match_city') && lead.preference_location_city) {
+        if (lead.preference_location_city.toLowerCase() !== property.location_city?.toLowerCase()) return 0;
         score += getWeight('match_city');
     }
 
-    // 4. Area Match
-    if (lead.preference_location_area && property.location_area &&
-        lead.preference_location_area.toLowerCase() === property.location_area.toLowerCase()) {
+    // 4. Area Match (Intersection of arrays)
+    if (isActive('match_area') && lead.preference_location_area) {
+        const leadAreas = lead.preference_location_area.toLowerCase().split(',').map(a => a.trim()).filter(Boolean);
+        const propArea = property.location_area?.toLowerCase().trim();
+        
+        let areaMatched = false;
+        if (propArea && leadAreas.length > 0) {
+            areaMatched = leadAreas.some(area => propArea.includes(area) || area.includes(propArea));
+        }
+        
+        if (!areaMatched) return 0; // Strict mismatch
         score += getWeight('match_area');
     }
 
     // 5. Budget Check
-    if (lead.budget_max) {
-        if (property.price <= lead.budget_max) {
-            score += getWeight('match_budget');
-        } else if (property.price <= lead.budget_max * 1.1) {
-            // Within 10% margin
-            score += Math.round(getWeight('match_budget') * 0.5);
+    if (isActive('match_budget')) {
+        const config = getConfig('match_budget');
+        const minMargin = config.budget_margin_min_percent !== undefined ? config.budget_margin_min_percent : 10;
+        const maxMargin = config.budget_margin_max_percent !== undefined ? config.budget_margin_max_percent : 10;
+
+        let budgetMatched = false;
+        let skipBudget = true;
+
+        if (lead.budget_max) {
+             skipBudget = false;
+             const maxAllowed = lead.budget_max * (1 + maxMargin / 100);
+             if (property.price > maxAllowed) return 0;
+             budgetMatched = true; // Passed max
+        }
+        if (lead.budget_min) {
+             skipBudget = false;
+             const minAllowed = lead.budget_min * (1 - minMargin / 100);
+             if (property.price < minAllowed) return 0;
+             budgetMatched = true; // Passed min
+        }
+        
+        if (budgetMatched || skipBudget) {
+             score += getWeight('match_budget');
         }
     }
 
-    // 6. Rooms Check
-    if (lead.preference_rooms_min && property.rooms) {
-        if (property.rooms >= lead.preference_rooms_min) {
+    // 6. Surface Check
+    if (isActive('match_surface')) {
+        const config = getConfig('match_surface');
+        const minMargin = config.surface_margin_min_percent !== undefined ? config.surface_margin_min_percent : 0;
+        const maxMargin = config.surface_margin_max_percent !== undefined ? config.surface_margin_max_percent : 0;
+
+        let surfaceMatched = false;
+        let skipSurface = true;
+
+        if (lead.preference_surface_min && property.area_usable) {
+            skipSurface = false;
+            const minAllowed = lead.preference_surface_min * (1 - minMargin / 100);
+            if (property.area_usable < minAllowed) return 0;
+            surfaceMatched = true;
+        }
+        if (lead.preference_surface_max && property.area_usable) {
+            skipSurface = false;
+            const maxAllowed = lead.preference_surface_max * (1 + maxMargin / 100);
+            if (property.area_usable > maxAllowed) return 0;
+            surfaceMatched = true;
+        }
+
+        if (surfaceMatched || skipSurface) {
+             score += getWeight('match_surface');
+        }
+    }
+
+    // 7. Rooms Check (Polymorphic Property Type Constraints)
+    const nonResidentialTypes = ['Land', 'Commercial', 'Industrial', 'Business', 'Fields'];
+    const isResidential = property.type ? !nonResidentialTypes.includes(property.type) : true;
+
+    if (isActive('match_rooms')) {
+        if (isResidential) {
+            if (lead.preference_rooms_min && property.rooms) {
+                if (property.rooms < lead.preference_rooms_min) return 0;
+                score += getWeight('match_rooms');
+            }
+        } else {
+            // For non-residential, bypass the 0 penalty completely.
+            // Option to grant it points automatically so it doesn't fall behind in score.
             score += getWeight('match_rooms');
-        }
-    }
-
-    // 7. Surface Check
-    if (lead.preference_surface_min && property.area_usable) {
-        if (property.area_usable >= lead.preference_surface_min) {
-            score += getWeight('match_surface');
         }
     }
 

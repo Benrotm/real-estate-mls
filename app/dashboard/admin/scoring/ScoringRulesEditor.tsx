@@ -27,7 +27,7 @@ export default function ScoringRulesEditor({
     const handleSave = async (rule: ScoringRule) => {
         setSavingId(rule.id);
         try {
-            await updateScoringRule(rule.id, rule.weight, rule.is_active);
+            await updateScoringRule(rule.id, rule.weight, rule.is_active, rule.config);
         } catch (error) {
             console.error('Failed to save rule', error);
             alert('Failed to save rule');
@@ -83,48 +83,81 @@ export default function ScoringRulesEditor({
                             </h3>
                             <div className="space-y-4">
                                 {categoryRules.map((rule) => (
-                                    <div key={rule.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                                        <div>
-                                            <p className="font-semibold text-slate-700">{rule.label}</p>
-                                            <p className="text-xs text-slate-500 font-mono">{rule.criteria_key}</p>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-3 pr-4 border-r border-slate-200">
-                                                <span className={`text-[10px] font-black uppercase tracking-widest ${rule.is_active ? 'text-orange-600' : 'text-slate-400'}`}>
-                                                    {rule.is_active ? 'Active' : 'Disabled'}
-                                                </span>
-                                                <button
-                                                    onClick={() => handleToggleActive(rule.id)}
-                                                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${rule.is_active ? 'bg-orange-600' : 'bg-slate-200'}`}
-                                                >
-                                                    <span
-                                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${rule.is_active ? 'translate-x-5' : 'translate-x-0'}`}
+                                    <div key={rule.id} className="flex flex-col p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors gap-3">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="font-semibold text-slate-700">{rule.label}</p>
+                                                <p className="text-xs text-slate-500 font-mono">{rule.criteria_key}</p>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-3 pr-4 border-r border-slate-200">
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${rule.is_active ? 'text-orange-600' : 'text-slate-400'}`}>
+                                                        {rule.is_active ? 'Active' : 'Disabled'}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleToggleActive(rule.id)}
+                                                        className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${rule.is_active ? 'bg-orange-600' : 'bg-slate-200'}`}
+                                                    >
+                                                        <span
+                                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${rule.is_active ? 'translate-x-5' : 'translate-x-0'}`}
+                                                        />
+                                                    </button>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <label className="text-xs text-slate-400 font-bold uppercase">Points</label>
+                                                    <input
+                                                        type="number"
+                                                        value={rule.weight}
+                                                        onChange={(e) => handleWeightChange(rule.id, e.target.value)}
+                                                        className={`w-20 px-3 py-1.5 border border-slate-300 rounded-md font-bold text-slate-700 text-right focus:ring-2 focus:ring-orange-500 outline-none ${!rule.is_active && 'opacity-50 grayscale'}`}
+                                                        disabled={!rule.is_active}
                                                     />
+                                                </div>
+                                                <button
+                                                    onClick={() => handleSave(rule)}
+                                                    disabled={savingId === rule.id}
+                                                    className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all"
+                                                    title="Save Change"
+                                                >
+                                                    {savingId === rule.id ? (
+                                                        <Loader2 className="w-5 h-5 animate-spin text-orange-600" />
+                                                    ) : (
+                                                        <Save className="w-5 h-5" />
+                                                    )}
                                                 </button>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-400 font-bold uppercase">Points</label>
-                                                <input
-                                                    type="number"
-                                                    value={rule.weight}
-                                                    onChange={(e) => handleWeightChange(rule.id, e.target.value)}
-                                                    className={`w-20 px-3 py-1.5 border border-slate-300 rounded-md font-bold text-slate-700 text-right focus:ring-2 focus:ring-orange-500 outline-none ${!rule.is_active && 'opacity-50 grayscale'}`}
-                                                    disabled={!rule.is_active}
-                                                />
-                                            </div>
-                                            <button
-                                                onClick={() => handleSave(rule)}
-                                                disabled={savingId === rule.id}
-                                                className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all"
-                                                title="Save Change"
-                                            >
-                                                {savingId === rule.id ? (
-                                                    <Loader2 className="w-5 h-5 animate-spin text-orange-600" />
-                                                ) : (
-                                                    <Save className="w-5 h-5" />
-                                                )}
-                                            </button>
                                         </div>
+
+                                        {/* Dynamic Configurations for Specific Core Rules */}
+                                        {rule.config && Object.keys(rule.config).length > 0 && (
+                                            <div className="mt-2 pt-3 border-t border-slate-200 grid grid-cols-2 gap-4 bg-orange-50/50 p-3 rounded-lg border border-orange-100/50">
+                                                {Object.keys(rule.config).map(configKey => {
+                                                    const niceLabel = configKey
+                                                        .replace('_percent', ' (%)')
+                                                        .split('_')
+                                                        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                                                        .join(' ');
+                                                    
+                                                    return (
+                                                        <div key={configKey} className="flex items-center justify-between">
+                                                            <label className="text-xs font-semibold text-slate-600">{niceLabel}</label>
+                                                            <input
+                                                                type="number"
+                                                                value={rule.config?.[configKey] || 0}
+                                                                onChange={(e) => {
+                                                                    const numVal = parseInt(e.target.value) || 0;
+                                                                    setRules(rules.map(r => r.id === rule.id ? { 
+                                                                        ...r, 
+                                                                        config: { ...(r.config || {}), [configKey]: numVal } 
+                                                                    } : r));
+                                                                }}
+                                                                className="w-20 px-3 py-1 text-sm border border-slate-300 rounded-md font-bold text-slate-700 text-right focus:ring-2 focus:ring-orange-500 outline-none"
+                                                            />
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
