@@ -70,3 +70,52 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function DELETE(req: Request) {
+    try {
+        const { inviteId } = await req.json();
+
+        if (!inviteId) {
+            return NextResponse.json({ error: 'Invite ID is required' }, { status: 400 });
+        }
+
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const supabaseAdmin = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
+        // Verify the invite belongs to this agency
+        const { data: invite } = await supabaseAdmin
+            .from('team_invitations')
+            .select('agency_id')
+            .eq('id', inviteId)
+            .single();
+
+        if (invite?.agency_id !== user.id) {
+            return NextResponse.json({ error: 'Unauthorized to delete this invite' }, { status: 403 });
+        }
+
+        // Delete the invite
+        const { error } = await supabaseAdmin
+            .from('team_invitations')
+            .delete()
+            .eq('id', inviteId);
+
+        if (error) {
+            console.error('[Team Invite DELETE API] delete error:', error);
+            return NextResponse.json({ error: 'Failed to delete invite' }, { status: 500 });
+        }
+
+        return NextResponse.json({ message: 'Invite deleted successfully' });
+    } catch (e: any) {
+        console.error('[Team Invite DELETE API] Fatal Error:', e);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}

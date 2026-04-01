@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Users, Mail, UserMinus, Plus, ShieldCheck } from 'lucide-react';
+import { Users, Mail, UserMinus, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 
 export default function AgencyTeamManagement() {
     const [members, setMembers] = useState<any[]>([]);
@@ -68,6 +68,25 @@ export default function AgencyTeamManagement() {
         }
     };
 
+    const removeInvite = async (inviteId: string) => {
+        if (!confirm('Are you sure you want to cancel this pending invite?')) return;
+        try {
+            const res = await fetch('/api/team/invite', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inviteId })
+            });
+            if (res.ok) {
+                fetchData();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to delete invite');
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     if (loading) return <div className="p-8">Loading team...</div>;
 
     return (
@@ -118,7 +137,16 @@ export default function AgencyTeamManagement() {
                                 {invites.map(inv => (
                                     <div key={inv.id} className="text-sm bg-slate-50 p-3 rounded-lg border flex justify-between items-center">
                                         <div className="truncate text-slate-600 font-medium">{inv.invitee_email}</div>
-                                        <div className="text-xs bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded">Pending</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-xs bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded">Pending</div>
+                                            <button 
+                                                onClick={() => removeInvite(inv.id)}
+                                                className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                                                title="Cancel Invite"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
