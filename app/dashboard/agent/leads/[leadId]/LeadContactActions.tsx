@@ -31,7 +31,13 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
         let message = '';
         let url = '';
         if (lead?.phone) {
-            url = `https://wa.me/${lead.phone.replace(/\D/g, '')}`;
+            // Strip non-digits
+            let cleanPhone = lead.phone.replace(/\D/g, '');
+            // Auto-format Romanian numbers starting with 0 (e.g., 07xx -> 407xx)
+            if (cleanPhone.startsWith('0') && cleanPhone.length === 10) {
+                cleanPhone = '40' + cleanPhone.substring(1);
+            }
+            url = `https://api.whatsapp.com/send/?phone=${cleanPhone}`;
         } else {
             alert("No phone number saved for this lead.");
             return;
@@ -40,7 +46,7 @@ export default function LeadContactActions({ lead }: LeadContactActionsProps) {
         if (propId && propId.trim() !== '') {
             const propertyLink = `${window.location.origin}/properties/${propId.trim()}`;
             message = `Shared Property [${propId.trim()}] (${propertyLink}) via WhatsApp`;
-            url += `?text=${encodeURIComponent(`Check out this property: ${propertyLink}`)}`;
+            url += `&text=${encodeURIComponent(`Check out this property: ${propertyLink}`)}`;
         } else {
             message = 'Opened WhatsApp chat';
         }
