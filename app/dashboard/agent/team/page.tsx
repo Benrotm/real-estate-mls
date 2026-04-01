@@ -158,6 +158,9 @@ export default function AgencyTeamManagement() {
                                                     {member.full_name}
                                                     {member.plan_tier === 'enterprise' && <span title="Agency Manager"><ShieldCheck className="w-4 h-4 text-orange-500" /></span>}
                                                 </div>
+                                                {member.email && (
+                                                    <div className="text-xs text-slate-500 mt-0.5">{member.email}</div>
+                                                )}
                                                 <div className="text-sm text-slate-500 flex gap-4 mt-1">
                                                     <span>{member.listings_count} Listings</span>
                                                     <span className="capitalize">{member.plan_tier || 'Free'} Plan</span>

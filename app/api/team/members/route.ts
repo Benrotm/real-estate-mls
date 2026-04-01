@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
         const { data: members, error } = await supabaseAdmin
             .from('profiles')
-            .select('id, full_name, avatar_url, role, plan_tier, listings_count')
+            .select('id, full_name, avatar_url, role, plan_tier, listings_count, email')
             .eq('agency_id', user.id);
 
         if (error) {
