@@ -146,7 +146,7 @@ export async function calculatePropertyScore(property: Partial<Property>): Promi
     if (property.type === 'Commercial') score += getWeight('type_commercial');
     if (property.type === 'Industrial') score += getWeight('type_industrial');
     if (property.type === 'Land') score += getWeight('type_land');
-    if (property.type === 'Investment') score += getWeight('type_investment');
+
     if (property.type === 'Business') score += getWeight('type_business');
     if (property.type === 'Other') score += getWeight('type_other');
 

@@ -11,7 +11,7 @@ import PropertyModal from './PropertyModal';
 import Pagination from '@/app/components/Pagination';
 import PerPageSelector from '@/app/components/PerPageSelector';
 
-const PROPERTY_TYPES = ['All', 'Apartment', 'House', 'Commercial', 'Industrial', 'Land', 'Investment', 'Business', 'Other'];
+const PROPERTY_TYPES = ['All', 'Apartment', 'House', 'Commercial', 'Industrial', 'Land', 'Business', 'Other'];
 
 export default function MarketInsightsClient({ basePath = '/dashboard/admin/market' }: { basePath?: string }) {
     const searchParams = useSearchParams();
