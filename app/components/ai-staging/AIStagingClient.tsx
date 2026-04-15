@@ -314,11 +314,25 @@ function VirtualStagingTool() {
   const [isPending, startTransition] = useTransition();
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
+  
   const [imageUrl, setImageUrl] = useState('');
-  const [roomType, setRoomType] = useState('Living Room');
+  const [roomType, setRoomType] = useState('Living');
   const [style, setStyle] = useState('Modern');
+  const [additionalOptions, setAdditionalOptions] = useState<string[]>(['Plante', 'Lumină naturală']);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
+
+  const stylesData = [
+    { id: 'Modern', icon: '🏠' },
+    { id: 'Scandinav', icon: '🌿' },
+    { id: 'Lux', icon: '✨' },
+    { id: 'Industrial', icon: '🔩' },
+    { id: 'Clasic', icon: '🏛️' },
+    { id: 'Boho', icon: '🪴' },
+    { id: 'Mediteranean', icon: '🌊' },
+    { id: 'Zen', icon: '⛩️' },
+    { id: 'Art Deco', icon: '💎' },
+  ];
 
   const submitAction = () => {
     if (!imageUrl) {
@@ -328,7 +342,7 @@ function VirtualStagingTool() {
     setError('');
     
     startTransition(async () => {
-      const res = await generateVirtualStaging({ imageUrl, roomType, style }, provider, apiKey);
+      const res = await generateVirtualStaging({ imageUrl, roomType, style, additionalOptions }, provider, apiKey);
       if (res.error) setError(res.error);
       else setResult(res.resultUrl || '');
     });
@@ -344,7 +358,7 @@ function VirtualStagingTool() {
         />
 
         <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2">Încarcă Imagine (spațiu gol/la roșu/la gri)</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-widest">1. Încarcă Imagine</label>
           <FileUploader 
              label="Încarcă Imagine Principală" 
              accept="image/*" 
@@ -352,30 +366,77 @@ function VirtualStagingTool() {
           />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-6 bg-black/20 p-5 rounded-2xl border border-white/5">
+          {/* Room Type */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Tip Încăpere</label>
-            <select value={roomType} onChange={e => setRoomType(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-cyan-500/50">
-              <optgroup className="bg-slate-900 text-white">
-                  <option>Living Room</option>
-                  <option>Dormitor</option>
-                  <option>Bucătărie</option>
-                  <option>Baie</option>
-                  <option>Birou</option>
-              </optgroup>
-            </select>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">2. Tipul camerei</label>
+            <div className="flex flex-wrap gap-2">
+              {['Living', 'Dormitor', 'Bucătărie', 'Birou', 'Dining', 'Baie'].map(rt => (
+                <button
+                  key={rt}
+                  onClick={() => setRoomType(rt)}
+                  className={`px-4 py-2 rounded-full text-sm border transition-all ${
+                    roomType === rt
+                      ? 'border-orange-400 text-orange-400 bg-orange-400/10'
+                      : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300'
+                  }`}
+                >
+                  {rt}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Style */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Stil Design</label>
-            <select value={style} onChange={e => setStyle(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-cyan-500/50">
-               <optgroup className="bg-slate-900 text-white">
-                  <option>Modern</option>
-                  <option>Minimalist</option>
-                  <option>Scandinav</option>
-                  <option>Industrial</option>
-                  <option>Lux</option>
-               </optgroup>
-            </select>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">3. Stilul de mobilare</label>
+            <div className="grid grid-cols-3 gap-3">
+              {stylesData.map(st => (
+                <button
+                  key={st.id}
+                  onClick={() => setStyle(st.id)}
+                  className={`relative p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all group ${
+                    style === st.id
+                      ? 'border-orange-400 bg-orange-400/5 shadow-[0_0_15px_rgba(251,146,60,0.15)]'
+                      : 'border-white/10 bg-black/40 hover:bg-black/60 hover:border-white/20'
+                  }`}
+                >
+                  {style === st.id && (
+                     <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-orange-400 flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3 text-white" />
+                     </div>
+                  )}
+                  <span className="text-2xl group-hover:scale-110 transition-transform">{st.icon}</span>
+                  <span className={`text-xs font-medium ${style === st.id ? 'text-orange-400' : 'text-slate-400'}`}>{st.id}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Additional Options */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">4. Opțiuni suplimentare</label>
+            <div className="flex flex-wrap gap-2">
+              {['Plante', 'Lumină naturală', 'Seară', 'Tablouri', 'Covor lux'].map(opt => {
+                const isActive = additionalOptions.includes(opt);
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => {
+                      if (isActive) setAdditionalOptions(prev => prev.filter(p => p !== opt));
+                      else setAdditionalOptions(prev => [...prev, opt]);
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm border transition-all ${
+                      isActive
+                        ? 'border-orange-400 text-orange-400 bg-orange-400/10'
+                        : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
         

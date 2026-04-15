@@ -1,10 +1,10 @@
 'use server';
 
-export async function generateVirtualStaging(payload: { imageUrl: string, roomType: string, style: string }, provider: string, apiKey: string) {
+export async function generateVirtualStaging(payload: { imageUrl: string, roomType: string, style: string, additionalOptions: string[] }, provider: string, apiKey: string) {
     if (!apiKey) return { error: "API Key is required to process the request." };
 
     try {
-        console.log(`[VirtualStaging] Hooking to ${provider}...`);
+        console.log(`[VirtualStaging] Hooking to ${provider} with additional options `, payload.additionalOptions);
         
         // PLACEHOLDER: Real Implementation Example
         if (provider === 'replicate') {
