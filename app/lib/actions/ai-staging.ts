@@ -77,11 +77,11 @@ export async function generateDescription(payload: { propertyType: string, surfa
     }
 }
 
-export async function generateRoomAnimation(payload: { imageUrl: string, speed: number, pan: boolean }, provider: string, apiKey: string) {
+export async function generateRoomAnimation(payload: { imageUrl: string, speed: number, pan: boolean, selectedFurniture: string[], ambientColor: string }, provider: string, apiKey: string) {
     if (!apiKey) return { error: "API Key is required to process the request." };
 
     try {
-        console.log(`[RoomAnimation] Hooking to ${provider}...`);
+        console.log(`[RoomBuilder] Hooking to ${provider} with furniture schema: `, payload.selectedFurniture);
         await new Promise(resolve => setTimeout(resolve, 4500));
         return { success: true, resultUrl: "https://www.w3schools.com/html/mov_bbb.mp4", message: "Animation generated successfully" };
     } catch (e: any) {

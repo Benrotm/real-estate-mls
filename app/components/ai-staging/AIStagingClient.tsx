@@ -870,83 +870,185 @@ function RoomBuilderTool() {
   const [imageUrl, setImageUrl] = useState('');
   const [speed, setSpeed] = useState(1.5);
   const [pan, setPan] = useState(true);
+  
+  // New States matching picture
+  const [selectedFurniture, setSelectedFurniture] = useState<string[]>([]);
+  const [ambientColor, setAmbientColor] = useState('Cald');
+
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
   const submitAction = () => {
     if (!imageUrl) { setError('Încărcați o imagine inițială.'); return; }
+    if (selectedFurniture.length === 0) { setError('Selectați cel puțin o piesă de mobilier.'); return; }
     setError('');
     startTransition(async () => {
-      const res = await generateRoomAnimation({ imageUrl, speed, pan }, provider, apiKey);
+      const res = await generateRoomAnimation({ imageUrl, speed, pan, selectedFurniture, ambientColor }, provider, apiKey);
       if (res.error) setError(res.error);
       else setResult(res.resultUrl || '');
     });
   };
 
+  const toggleFurniture = (id: string) => {
+    if (selectedFurniture.includes(id)) {
+        setSelectedFurniture(prev => prev.filter(f => f !== id));
+    } else {
+        setSelectedFurniture(prev => [...prev, id]);
+    }
+  };
+
+  const renderFurnitureGrid = (items: {id: string, icon: string}[]) => (
+    <div className="grid grid-cols-2 gap-3">
+        {items.map(item => {
+            const isActive = selectedFurniture.includes(item.id);
+            return (
+                <button
+                   key={item.id}
+                   onClick={() => toggleFurniture(item.id)}
+                   className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                       isActive 
+                         ? 'border-pink-500 bg-pink-500/5 shadow-[0_0_15px_rgba(236,72,153,0.1)]'
+                         : 'border-white/10 bg-[#1A1816]/50 hover:bg-black/60 hover:border-white/30'
+                   }`}
+                >
+                   <span className="text-2xl drop-shadow-md">{item.icon}</span>
+                   <span className={`text-xs ${isActive ? 'text-pink-400 font-medium' : 'text-slate-400'}`}>{item.id}</span>
+                </button>
+            )
+        })}
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Furniture Sidebar Scrollable Panel */}
+      <div className="bg-[#1C1A17] border border-yellow-900/30 rounded-2xl p-6 h-fit max-h-[850px] overflow-y-auto custom-scrollbar space-y-6">
+         <div>
+            <h3 className="text-yellow-600 font-bold text-[11px] tracking-widest uppercase mb-2">Mobilier Disponibil</h3>
+            <p className="text-slate-400 text-xs mb-4">Click pe piese pentru a le adăuga în animație</p>
+         </div>
+
+         <div>
+             <h4 className="text-yellow-600/80 font-bold text-[10px] tracking-widest uppercase mb-3">Living / Dining</h4>
+             {renderFurnitureGrid([
+                 {id: 'Canapea', icon: '🛋️'}, {id: 'Fotoliu', icon: '🪑'}, {id: 'TV', icon: '📺'},
+                 {id: 'Plantă', icon: '🪴'}, {id: 'Măsuță', icon: '☕'}, {id: 'Tablou', icon: '🖼️'},
+                 {id: 'Lampă', icon: '💡'}, {id: 'Oglindă', icon: '🪞'}
+             ])}
+         </div>
+
+         <div>
+             <h4 className="text-yellow-600/80 font-bold text-[10px] tracking-widest uppercase mb-3 mt-6">Dormitor</h4>
+             {renderFurnitureGrid([
+                 {id: 'Pat', icon: '🛏️'}, {id: 'Noptieră', icon: '🗄️'}, {id: 'Șifonier', icon: '👔'},
+                 {id: 'Oglindă', icon: '🪞'}, {id: 'Veioză', icon: '💡'}, {id: 'Plantă ', icon: '🪴'}
+             ])}
+         </div>
+
+         <div>
+             <h4 className="text-yellow-600/80 font-bold text-[10px] tracking-widest uppercase mb-3 mt-6">Decor & Lumini</h4>
+             {renderFurnitureGrid([
+                 {id: 'Lumânări', icon: '🕯️'}, {id: 'Artă', icon: '🎨'}, {id: 'Cărți', icon: '📚'},
+                 {id: 'Perdele', icon: '🪟'}, {id: 'Coș', icon: '🧺'}, {id: 'Flori', icon: '🌸'},
+                 {id: 'Ceas', icon: '🕰️'}, {id: 'Covor', icon: '🛁'}
+             ])}
+         </div>
+
+         <div>
+            <h4 className="text-yellow-600/80 font-bold text-[10px] tracking-widest uppercase mb-3 mt-6">Culoare Ambient</h4>
+            <div className="flex flex-wrap gap-2">
+                {['Cald', 'Rece', 'Neutru', 'Dramatic'].map(color => (
+                    <button
+                        key={color}
+                        onClick={() => setAmbientColor(color)}
+                        className={`px-4 py-2 rounded-full text-xs border transition-all ${
+                            ambientColor === color
+                              ? 'border-yellow-500 text-yellow-500'
+                              : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300'
+                        }`}
+                    >
+                        {color}
+                    </button>
+                ))}
+            </div>
+         </div>
+      </div>
+
+      <div className="col-span-1 lg:col-span-2 space-y-6">
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'runway', name: 'Runway API'}]}
           onProviderChange={setProvider}
           onKeyChange={setApiKey}
         />
 
-        <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2">Încarcă Imagine (Spațiu Nemobilat)</label>
-          <FileUploader 
-             label="Imagine Spațiu Gol" 
-             accept="image/*" 
-             onUploadComplete={(u) => setImageUrl(u[0])}
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2">Viteză Animație & Efecte</label>
-          <div className="space-y-4 bg-black/20 p-5 rounded-xl border border-white/5">
-            <div>
-               <div className="flex justify-between text-xs text-slate-400 mb-2">
-                 <span>Viteză Apariție</span>
-                 <span>{speed.toFixed(1)} sec / obiect</span>
-               </div>
-               <input 
-                 type="range" 
-                 min="0.5" max="3" step="0.1" 
-                 value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                 className="w-full accent-pink-500 bg-black/50 rounded-full appearance-none h-2 cursor-pointer border border-white/5"
-               />
-            </div>
-            <div className="flex items-center gap-3 pt-2">
-              <input type="checkbox" id="camera-movement" checked={pan} onChange={(e) => setPan(e.target.checked)} className="w-4 h-4 accent-pink-500 rounded bg-black/50" />
-              <label htmlFor="camera-movement" className="text-slate-300 text-sm cursor-pointer">Adaugă efect de Zoom In (Camera Pan)</label>
-            </div>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">Încarcă Imagine (Spațiu Nemobilat)</label>
+                  <FileUploader 
+                     label="Imagine Spațiu Gol" 
+                     accept="image/*" 
+                     onUploadComplete={(u) => setImageUrl(u[0])}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">Viteză Animație & Efecte</label>
+                  <div className="space-y-4 bg-black/20 p-5 rounded-xl border border-white/5">
+                    <div>
+                       <div className="flex justify-between text-xs text-slate-400 mb-2">
+                         <span>Viteză Apariție</span>
+                         <span>{speed.toFixed(1)} sec / obiect</span>
+                       </div>
+                       <input 
+                         type="range" 
+                         min="0.5" max="3" step="0.1" 
+                         value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                         className="w-full accent-pink-500 bg-black/50 rounded-full appearance-none h-2 cursor-pointer border border-white/5"
+                       />
+                    </div>
+                    <div className="flex items-center gap-3 pt-2">
+                      <input type="checkbox" id="camera-movement" checked={pan} onChange={(e) => setPan(e.target.checked)} className="w-4 h-4 accent-pink-500 rounded bg-black/50" />
+                      <label htmlFor="camera-movement" className="text-slate-300 text-sm cursor-pointer">Adaugă efect de Zoom In (Camera Pan)</label>
+                    </div>
+                  </div>
+                </div>
 
-        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+                {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
 
-        <button 
-           onClick={submitAction}
-           disabled={isPending}
-           className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all flex items-center justify-center gap-2"
-        >
-          {isPending ? <><Loader2 className="w-5 h-5 animate-spin" /> Se asamblează elementele...</> : 'Pornește Generatorul de Animație'}
-        </button>
+                <button 
+                   onClick={submitAction}
+                   disabled={isPending}
+                   className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all flex items-center justify-center gap-2"
+                >
+                  {isPending ? <><Loader2 className="w-5 h-5 animate-spin" /> Se asamblează elementele...</> : 'Pornește Generatorul de Animație'}
+                </button>
+            </div>
+
+            <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px]">
+                {result ? (
+                    <video src={result} controls autoPlay loop className="w-full h-full rounded-xl bg-black" />
+                ) : (
+                    <div className="text-center px-4">
+                      {isPending ? (
+                          <>
+                            <Loader2 className="w-16 h-16 text-pink-500 animate-spin mx-auto mb-4" />
+                            <p className="text-slate-400 animate-pulse">Analiză flux spațial în curs...</p>
+                          </>
+                      ) : (
+                          <>
+                             <Wand2 className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                             <p className="text-slate-500 text-sm">Animația va fi procesată și validată aici...</p>
+                          </>
+                      )}
+                    </div>
+                )}
+            </div>
+        </div>
       </div>
-
-      <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px]">
-        {result ? (
-            <video src={result} controls autoPlay loop className="w-full h-full rounded-xl bg-black" />
-        ) : (
-            <div className="text-center">
-              {isPending ? (
-                  <>
-                    <Loader2 className="w-16 h-16 text-pink-500 animate-spin mx-auto mb-4" />
-                    <p className="text-slate-400 animate-pulse">Analiză flux spațial în curs...</p>
-                  </>
-              ) : (
-                  <>
-                     <Wand2 className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+    </div>
+  );
+}ate-600 mx-auto mb-4" />
                      <p className="text-slate-500">Animația va fi procesată și validată aici...</p>
                   </>
              )}
