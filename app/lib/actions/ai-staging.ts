@@ -48,7 +48,7 @@ export async function generate3DPlan(payload: { planUrl: string, perspective: st
     }
 }
 
-export async function generateDescription(payload: { features: string, tone: string, language: string }, provider: string, apiKey: string) {
+export async function generateDescription(payload: { propertyType: string, surface: string, rooms: string, location: string, features: string, tone: string, destination: string }, provider: string, apiKey: string) {
     if (!apiKey) return { error: "API Key is required to process the request." };
 
     try {
@@ -61,7 +61,7 @@ export async function generateDescription(payload: { features: string, tone: str
                headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
                body: JSON.stringify({
                    model: "gpt-4",
-                   messages: [{ role: "system", content: `Generate a property listing in ${payload.language} with a ${payload.tone} tone. Features: ${payload.features}` }]
+                   messages: [{ role: "system", content: `Generate a property listing for a ${payload.propertyType} destined for ${payload.destination} with a ${payload.tone} tone. Features: ${payload.features}` }]
                })
             });
             const data = await response.json();
@@ -70,7 +70,7 @@ export async function generateDescription(payload: { features: string, tone: str
         }
 
         await new Promise(resolve => setTimeout(resolve, 2000));
-        const dummyText = `Aceasta este o simulare a unei descrieri ${payload.tone} în limba ${payload.language}. Descoperă piesa de rezistență pentru stilul tău de viață având atributele: ${payload.features}. Proprietatea impresionează prin calitatea materialelor și atenția la detalii.`;
+        const dummyText = `Aceasta este o simulare a unei descrieri ${payload.tone} pentru un ${payload.propertyType}. Descoperă piesa de rezistență pentru stilul tău de viață. ${payload.features}`;
         return { success: true, resultText: dummyText, message: "Text generated successfully" };
     } catch (e: any) {
         return { error: e.message || 'Server error' };

@@ -724,24 +724,51 @@ function DescriptionGenTool() {
   const [provider, setProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
   
+  // New States matching the picture
+  const [propertyType, setPropertyType] = useState('Apartament');
+  const [surface, setSurface] = useState('');
+  const [rooms, setRooms] = useState('2');
+  const [location, setLocation] = useState('');
   const [features, setFeatures] = useState('');
-  const [tone, setTone] = useState('Profesional & Neutru');
-  const [language, setLanguage] = useState('Română');
+  const [tone, setTone] = useState('Profesional');
+  const [destination, setDestination] = useState('Portal imobiliar');
+
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
   const submitAction = () => {
-    if (!features) { setError('Introduceți atributele cheie.'); return; }
+    if (!features && !surface && !location) { 
+        setError('Introduceți câteva detalii.'); 
+        return; 
+    }
     setError('');
     startTransition(async () => {
-      const res = await generateDescription({ features, tone, language }, provider, apiKey);
+      const res = await generateDescription({ propertyType, surface, rooms, location, features, tone, destination }, provider, apiKey);
       if (res.error) setError(res.error);
       else setResult(res.resultText || '');
     });
   };
 
+  const renderPills = (options: string[], currentValue: string, setter: (val: string) => void) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          onClick={() => setter(opt)}
+          className={`px-4 py-2 rounded-full text-sm border transition-all ${
+            currentValue === opt 
+              ? 'border-yellow-600 text-yellow-500 bg-yellow-500/10 shadow-[0_0_10px_rgba(202,138,4,0.15)]' 
+              : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300 bg-transparent'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div className="space-y-6">
         <ProviderSettings 
           providerList={[{id: 'openai', name: 'OpenAI (ChatGPT)'}, {id: 'anthropic', name: 'Anthropic (Claude)'}, {id: 'gemini', name: 'Google Gemini'}]}
@@ -749,77 +776,86 @@ function DescriptionGenTool() {
           onKeyChange={setApiKey}
         />
 
-        <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2">Atribute Cheie (ex: 3 camere, centru cluj, lux)</label>
-          <textarea 
-            rows={4}
-            value={features}
-            onChange={(e) => setFeatures(e.target.value)}
-            placeholder="Scrieți câteva cuvinte cheie legate de proprietate separate prin virgulă..."
-            className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-purple-500/50 resize-none"
-          ></textarea>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Tonul Vocii</label>
-            <select value={tone} onChange={(e) => setTone(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-purple-500/50">
-               <optgroup className="bg-slate-900 text-white">
-                  <option>Profesional & Neutru</option>
-                  <option>Luxos & Exclusivist</option>
-                  <option>Călduros & Familial</option>
-                  <option>Scurt & Concis (Social Media)</option>
-               </optgroup>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Limba Tintei</label>
-            <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-purple-500/50">
-               <optgroup className="bg-slate-900 text-white">
-                  <option>Română</option>
-                  <option>Engleză</option>
-                  <option>Germană</option>
-                  <option>Spaniolă</option>
-               </optgroup>
-            </select>
-          </div>
-        </div>
+        <div className="bg-[#161513] border border-yellow-900/30 rounded-2xl p-6 space-y-6">
+           <h3 className="text-yellow-600 font-semibold text-xs tracking-widest uppercase mb-4">Detalii Proprietate</h3>
+           
+           <div>
+             <label className="block text-xs text-slate-400 uppercase tracking-widest">Tip Proprietate</label>
+             {renderPills(['Apartament', 'Casă/Vilă', 'Teren', 'Comercial'], propertyType, setPropertyType)}
+           </div>
 
-        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+           <div>
+             <label className="block text-xs text-slate-400 uppercase tracking-widest mb-2">Suprafață (MP)</label>
+             <input type="text" value={surface} onChange={e => setSurface(e.target.value)} placeholder="ex: 82" className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-yellow-500/50 text-sm" />
+           </div>
 
-        <button 
-           onClick={submitAction}
-           disabled={isPending}
-           className="w-full py-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all flex items-center justify-center gap-2"
-        >
-           {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-           {isPending ? 'Generare Descriere...' : 'Generează Text'}
-        </button>
+           <div>
+             <label className="block text-xs text-slate-400 uppercase tracking-widest">Camere</label>
+             {renderPills(['1', '2', '3', '4', '5+'], rooms, setRooms)}
+           </div>
+
+           <div>
+             <label className="block text-xs text-slate-400 uppercase tracking-widest mb-2">Zonă / Adresă</label>
+             <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="ex: Floreasca, București" className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-yellow-500/50 text-sm" />
+           </div>
+
+           <div>
+             <label className="block text-xs text-slate-400 uppercase tracking-widest mb-2">Caracteristici Cheie (Separat prin virgulă)</label>
+             <textarea rows={3} value={features} onChange={e => setFeatures(e.target.value)} placeholder="ex: renovat 2024, parcare, vedere la parc, aer condiționat, centrală proprie, condominium lux" className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-yellow-500/50 resize-none text-sm"></textarea>
+           </div>
+
+           <div>
+             <label className="block text-xs text-slate-400 uppercase tracking-widest">Tonul Descrierii</label>
+             {renderPills(['Profesional', 'Premium/Lux', 'Accesibil', 'Tehnic/Detaliat'], tone, setTone)}
+           </div>
+
+           <div>
+             <label className="block text-xs text-slate-400 uppercase tracking-widest">Destinație Anunț</label>
+             {renderPills(['Portal imobiliar', 'Social Media', 'Email client'], destination, setDestination)}
+           </div>
+
+           {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+
+           <button 
+             onClick={submitAction}
+             disabled={isPending}
+             className="w-full py-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black font-semibold rounded-xl shadow-[0_0_15px_rgba(212,175,122,0.15)] transition-all flex items-center justify-center gap-2 mt-4"
+           >
+             {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : ''}
+             {isPending ? 'Generare Descriere...' : 'Generează descriere AI'}
+           </button>
+        </div>
       </div>
 
-      <div className="bg-black/30 rounded-2xl border border-white/10 p-6 min-h-[400px] flex flex-col">
-        <label className="block text-sm font-medium text-slate-400 mb-4 border-b border-white/10 pb-4 flex justify-between items-center">
-          Rezultat Generare 
-          {result && <button onClick={() => navigator.clipboard.writeText(result)} className="text-cyan-400 text-xs hover:text-cyan-300 bg-cyan-900/30 px-3 py-1.5 rounded-lg transition-colors border border-cyan-500/20">Copiaza Text</button>}
+      <div className="bg-[#161513] rounded-2xl border border-yellow-900/30 p-6 flex flex-col min-h-[400px]">
+        <label className="block text-xs font-semibold text-yellow-600 mb-4 border-b border-white/5 pb-4 uppercase tracking-widest">
+          Descrierea Generată 
         </label>
-        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+        
+        <div className="flex-1 border border-white/5 bg-black/20 rounded-xl p-4 mb-4 relative overflow-y-auto custom-scrollbar">
             {result ? (
-               <div className="text-slate-200 leading-relaxed whitespace-pre-wrap">{result}</div>
+               <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{result}</div>
             ) : (
-                <div className="h-full flex items-center justify-center text-center">
+                <div className="absolute inset-0 flex items-center justify-center text-center">
                     {isPending ? (
                         <div>
-                           <Loader2 className="w-16 h-16 text-purple-500 animate-spin mx-auto mb-4" />
-                           <p className="text-slate-400 animate-pulse">AI scrie anunțul perfect pentru tine...</p>
+                           <Loader2 className="w-8 h-8 text-yellow-600 animate-spin mx-auto mb-4" />
+                           <p className="text-slate-400 text-sm animate-pulse">AI scrie anunțul perfect pentru tine...</p>
                         </div>
                     ) : (
-                        <div>
-                          <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                          <p className="text-slate-500 text-sm max-w-xs mx-auto">Descrierea imobiliară persuasivă va fi afișată aici, gata pentru a fi copiată.</p>
-                        </div>
+                        <p className="text-slate-500 text-sm italic px-4">Descrierea proprietății va apărea aici după generare...</p>
                     )}
                 </div>
             )}
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4 mt-auto">
+           <button onClick={() => result && navigator.clipboard.writeText(result)} className="py-3 px-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black border border-[#D4AF7A] font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors">
+              📄 Copiază
+           </button>
+           <button onClick={submitAction} disabled={!result || isPending} className="py-3 px-4 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors">
+              🔄 Regenerează
+           </button>
         </div>
       </div>
     </div>
