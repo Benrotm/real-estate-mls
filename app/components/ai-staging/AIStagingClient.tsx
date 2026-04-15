@@ -627,10 +627,11 @@ function VideoGeneratorTool() {
 
         <button 
            onClick={submitAction}
-           disabled={isPending}
-           className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all flex justify-center items-center gap-2"
+           disabled={isPending || credits < cost}
+           className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all flex flex-col justify-center items-center gap-1 disabled:opacity-50"
         >
-          {isPending ? <><Loader2 className="w-5 h-5 animate-spin" /> Procesare Video AI...</> : 'Lansează Generator Video AI'}
+          {isPending ? <div className="flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Procesare Video AI...</div> : <span className="flex items-center justify-center gap-2">Lansează Generator Video AI</span>}
+          {!isPending && <span className="text-xs text-white/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
         </button>
       </div>
 
@@ -847,11 +848,11 @@ function DescriptionGenTool() {
 
            <button 
              onClick={submitAction}
-             disabled={isPending}
-             className="w-full py-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black font-semibold rounded-xl shadow-[0_0_15px_rgba(212,175,122,0.15)] transition-all flex items-center justify-center gap-2 mt-4"
+             disabled={isPending || credits < cost}
+             className="w-full py-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black font-semibold rounded-xl shadow-[0_0_15px_rgba(212,175,122,0.15)] transition-all flex flex-col items-center justify-center gap-1 mt-4 disabled:opacity-50"
            >
-             {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : ''}
-             {isPending ? 'Generare Descriere...' : 'Generează descriere AI'}
+             {isPending ? <div className="flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Generare Descriere...</div> : <span className="flex items-center justify-center gap-2">Generează descriere AI</span>}
+             {!isPending && <span className="text-xs text-black/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
            </button>
         </div>
       </div>
