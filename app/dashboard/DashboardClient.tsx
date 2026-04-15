@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2 } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -98,6 +98,7 @@ export default function DashboardClient({
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/admin/pipeline' },
         { name: 'My Properties', icon: Home, href: '/dashboard/admin/my-properties' },
         { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
+        { name: 'AI Studio', icon: Wand2, href: '/dashboard/admin/ai-staging' },
         { name: 'All Virtual Tours', icon: Globe, href: '/dashboard/admin/tours' },
         { name: 'Tour Maker', icon: Camera, href: '/dashboard/owner/tours' },
         { name: 'Valuation Settings', icon: TrendingUp, href: '/dashboard/admin/valuation' },
@@ -128,6 +129,7 @@ export default function DashboardClient({
         { name: 'My Favorites', icon: Heart, href: '/dashboard/agent/favorites' }, // New
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
+        { name: 'AI Studio', icon: Wand2, href: '/dashboard/agent/ai-staging' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
         { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/agent/analytics' },
@@ -139,6 +141,7 @@ export default function DashboardClient({
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/owner' },
         { name: 'My Properties', icon: Home, href: '/dashboard/owner/properties' },
         { name: 'My Favorites', icon: Heart, href: '/dashboard/owner/favorites' }, // New
+        { name: 'AI Studio', icon: Wand2, href: '/dashboard/owner/ai-staging' },
         { name: 'Virtual Tours', icon: Globe, href: '/dashboard/owner/tours' },
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/owner/leads' }, // Always show for owners to upsell
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
@@ -149,6 +152,7 @@ export default function DashboardClient({
         { name: 'Report & Suggest', icon: Flag, href: '/dashboard/owner/report' },
     ] : isDeveloper ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/developer' },
+        { name: 'AI Studio', icon: Wand2, href: '/dashboard/developer/ai-staging' },
         { name: 'My Projects', icon: Building, href: '/dashboard/developer/projects' },
         ...(hasFeature(SYSTEM_FEATURES.VALUATION_REPORTS) ? [{ name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/developer/valuation' }] : []),
         { name: 'Analytics', icon: BarChart2, href: '/dashboard/developer/analytics' },
@@ -159,6 +163,7 @@ export default function DashboardClient({
         { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/client' },
         { name: 'Browse Properties', icon: Building, href: '/properties' },
         { name: 'My Favorites', icon: Heart, href: '/dashboard/client/favorites' }, // New
+        { name: 'AI Studio', icon: Wand2, href: '/dashboard/client/ai-staging' },
         { name: 'Saved Searches', icon: Briefcase, href: '/dashboard/client/searches' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/client/valuation' },
         { name: 'ACP Market Insights', icon: BarChart2, href: '/dashboard/client/market' },
