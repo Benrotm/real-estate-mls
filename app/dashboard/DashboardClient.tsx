@@ -129,7 +129,7 @@ export default function DashboardClient({
         { name: 'My Favorites', icon: Heart, href: '/dashboard/agent/favorites' }, // New
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
-        { name: 'AI Studio', icon: Wand2, href: '/dashboard/agent/ai-staging' },
+        ...(hasFeature(SYSTEM_FEATURES.AI_STUDIO) ? [{ name: 'AI Studio', icon: Wand2, href: '/dashboard/agent/ai-staging' }] : []),
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
         { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/agent/analytics' },
@@ -141,7 +141,7 @@ export default function DashboardClient({
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/owner' },
         { name: 'My Properties', icon: Home, href: '/dashboard/owner/properties' },
         { name: 'My Favorites', icon: Heart, href: '/dashboard/owner/favorites' }, // New
-        { name: 'AI Studio', icon: Wand2, href: '/dashboard/owner/ai-staging' },
+        ...(hasFeature(SYSTEM_FEATURES.AI_STUDIO) ? [{ name: 'AI Studio', icon: Wand2, href: '/dashboard/owner/ai-staging' }] : []),
         { name: 'Virtual Tours', icon: Globe, href: '/dashboard/owner/tours' },
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/owner/leads' }, // Always show for owners to upsell
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
@@ -152,7 +152,7 @@ export default function DashboardClient({
         { name: 'Report & Suggest', icon: Flag, href: '/dashboard/owner/report' },
     ] : isDeveloper ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/developer' },
-        { name: 'AI Studio', icon: Wand2, href: '/dashboard/developer/ai-staging' },
+        ...(hasFeature(SYSTEM_FEATURES.AI_STUDIO) ? [{ name: 'AI Studio', icon: Wand2, href: '/dashboard/developer/ai-staging' }] : []),
         { name: 'My Projects', icon: Building, href: '/dashboard/developer/projects' },
         ...(hasFeature(SYSTEM_FEATURES.VALUATION_REPORTS) ? [{ name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/developer/valuation' }] : []),
         { name: 'Analytics', icon: BarChart2, href: '/dashboard/developer/analytics' },
