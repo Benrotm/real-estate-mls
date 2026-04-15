@@ -267,6 +267,7 @@ export default function DashboardClient({
                     >
                         {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
+                    </div>
                 </header>
 
                 {/* Mobile Full Screen Menu Overlay */}

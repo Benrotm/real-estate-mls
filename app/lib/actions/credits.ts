@@ -94,7 +94,7 @@ export async function updateSystemFeatureDeduction(featureId: string) {
     const costsMap = (costData?.setting_value as Record<string, number>) || {};
     const cost = costsMap[featureId] || 0; // Default to 0 if not set
 
-    if (cost === 0) return { success: true, deducted: 0 };
+    if (cost === 0) return { success: true, deducted: 0, error: undefined };
 
     return await deductUserCredits(cost);
 }

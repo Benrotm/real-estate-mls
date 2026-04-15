@@ -12,7 +12,6 @@ export default function UserActions({ user }: UserActionsProps) {
     const [showMsgModal, setShowMsgModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showCreditsModal, setShowCreditsModal] = useState(false);
     const [isPending, startTransition] = useTransition();
 

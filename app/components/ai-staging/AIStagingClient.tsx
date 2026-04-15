@@ -1080,13 +1080,4 @@ function RoomBuilderTool() {
       </div>
     </div>
   );
-}ate-600 mx-auto mb-4" />
-                     <p className="text-slate-500">Animația va fi procesată și validată aici...</p>
-                  </>
-             )}
-            </div>
-        )}
-      </div>
-    </div>
-  );
 }
