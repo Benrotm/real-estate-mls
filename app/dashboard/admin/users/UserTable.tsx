@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, Shield, Database, LayoutGrid, Mail, Phone, Star, Search, Filter, X } from 'lucide-react';
+import { Users, Shield, Database, LayoutGrid, Mail, Phone, Star, Search, Filter, X, Coins } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import UserActions from './UserActions';
 
@@ -111,6 +111,7 @@ export default function UserTable({ users }: UserTableProps) {
                                 <th className="p-4 font-bold">Role</th>
                                 <th className="p-4 font-bold">Plan</th>
                                 <th className="p-4 font-bold">Listings</th>
+                                <th className="p-4 font-bold">Credits</th>
                                 <th className="p-4 font-bold text-right">Actions</th>
                             </tr>
                         </thead>
@@ -203,6 +204,14 @@ export default function UserTable({ users }: UserTableProps) {
                                                         {user.featured_limit || 0} Featured
                                                     </span>
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-1.5 bg-yellow-500/10 w-fit px-2.5 py-1 rounded-full border border-yellow-500/20">
+                                                <Coins size={12} className="text-yellow-500" />
+                                                <span className="text-xs font-bold text-yellow-500">
+                                                    {user.credits || 0}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="p-4 text-right">

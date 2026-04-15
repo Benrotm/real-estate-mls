@@ -1,6 +1,7 @@
 import { useState, useTransition } from 'react';
 import { updateUserBonus, sendNotification, updateUserRoleAndPlan, deleteUser } from '@/app/lib/admin';
-import { Gift, MessageSquare, Check, Edit, UserCog, Trash2, AlertTriangle } from 'lucide-react';
+import { grantUserCredits } from '@/app/lib/actions/credits';
+import { Gift, MessageSquare, Check, Edit, UserCog, Trash2, AlertTriangle, Coins } from 'lucide-react';
 
 interface UserActionsProps {
     user: any;
@@ -11,9 +12,12 @@ export default function UserActions({ user }: UserActionsProps) {
     const [showMsgModal, setShowMsgModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showCreditsModal, setShowCreditsModal] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     const [bonusAmount, setBonusAmount] = useState(user.bonus_listings || 0);
+    const [creditAmount, setCreditAmount] = useState(0);
     const [msgTitle, setMsgTitle] = useState('');
     const [msgBody, setMsgBody] = useState('');
 
@@ -27,6 +31,20 @@ export default function UserActions({ user }: UserActionsProps) {
                 await updateUserBonus(user.id, Number(bonusAmount));
                 alert('Bonus listings updated!');
                 setShowBonusModal(false);
+            } catch (e: any) {
+                alert('Failed: ' + e.message);
+            }
+        });
+    };
+
+    const handleCreditsSave = () => {
+        startTransition(async () => {
+            try {
+                const res = await grantUserCredits(user.id, Number(creditAmount));
+                if (res.error) throw new Error(res.error);
+                alert(`Credits granted! New Balance: ${res.newBalance}`);
+                setShowCreditsModal(false);
+                setCreditAmount(0);
             } catch (e: any) {
                 alert('Failed: ' + e.message);
             }
@@ -101,6 +119,14 @@ export default function UserActions({ user }: UserActionsProps) {
                 title="Send Message"
             >
                 <MessageSquare size={16} />
+            </button>
+
+            <button
+                onClick={() => setShowCreditsModal(true)}
+                className="p-2 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-black rounded-lg transition-colors border border-yellow-500/30"
+                title="Manage Credits"
+            >
+                <Coins size={16} />
             </button>
 
             <button
@@ -288,6 +314,45 @@ export default function UserActions({ user }: UserActionsProps) {
                                 className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold flex items-center gap-2"
                             >
                                 {isPending ? 'Deleting...' : <><Trash2 size={16} /> Delete</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Credits Modal */}
+            {showCreditsModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-700 p-6 rounded-xl w-full max-w-sm shadow-2xl">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <Coins className="text-yellow-500" /> Manage Credits
+                        </h3>
+                        <p className="text-sm text-slate-400 mb-4">
+                            Add or remove credits for <strong>{user.full_name || 'User'}</strong>. <br/>
+                            <span className="text-xs text-slate-500">(Use negative numbers to remove)</span>
+                        </p>
+                        <div className="mb-4">
+                            <label className="block text-xs uppercase text-slate-500 font-bold mb-1">Amount to Add</label>
+                            <input
+                                type="number"
+                                value={creditAmount}
+                                onChange={(e) => setCreditAmount(Number(e.target.value))}
+                                className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-yellow-500 outline-none transition-colors"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowCreditsModal(false)}
+                                className="px-4 py-2 text-slate-400 hover:text-white"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleCreditsSave}
+                                disabled={isPending || creditAmount === 0}
+                                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-black rounded-lg font-bold flex items-center gap-2 disabled:opacity-50"
+                            >
+                                {isPending ? 'Saving...' : <><Check size={16} /> Update Balance</>}
                             </button>
                         </div>
                     </div>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2 } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -30,6 +30,7 @@ export default function DashboardClient({
 
     const [chatUnread, setChatUnread] = useState(0);
     const [leadsUnread, setLeadsUnread] = useState(0);
+    const [credits, setCredits] = useState(0);
 
     const fetchCounts = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -38,6 +39,10 @@ export default function DashboardClient({
         // 1. Fetch REAL unread message count (bypassing notifications table latency)
         const unreadMsgCount = await getTotalUnreadMessagesCount(user.id);
         setChatUnread(unreadMsgCount);
+
+        // Fetch User Credits
+        const { data: profile } = await supabase.from('profiles').select('credits').eq('id', user.id).single();
+        if (profile) setCredits(profile.credits || 0);
 
         // 2. Get Lead/CRM notifications by type for existing badges
         const { data: notifs } = await supabase
@@ -109,6 +114,8 @@ export default function DashboardClient({
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
+        { name: 'Credit & Costs System', icon: Coins, href: '/dashboard/admin/credit-settings' },
+        { name: 'AI Provider Config', icon: Settings, href: '/dashboard/admin/ai-settings' },
         { name: 'Imoflux', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
         { name: 'Sold Imoflux', icon: Target, href: '/dashboard/admin/sold-immoflux' },
         { name: 'FluxMLS', icon: CopyCheck, href: '/dashboard/admin/fluxmls' },
@@ -186,6 +193,10 @@ export default function DashboardClient({
                 <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
                     {isAdmin ? 'Super Admin' : isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : isClient ? 'Client Dashboard' : 'Welcome'}
                 </p>
+                <div className="mt-4 flex items-center justify-between bg-black/30 border border-slate-700/50 p-2.5 rounded-xl">
+                    <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5"><Coins className="w-4 h-4 text-yellow-500" /> Balanță Credite</span>
+                    <span className="text-sm font-bold text-yellow-500">{credits}</span>
+                </div>
             </div>
 
             <nav className="flex-1 px-4 space-y-1">
@@ -244,10 +255,15 @@ export default function DashboardClient({
                         <span className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">D</span>
                         <span className="font-bold text-lg">Dashboard</span>
                     </div>
-                    <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-                        aria-label="Toggle Menu"
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                           <Coins className="w-3 h-3 text-yellow-500" />
+                           <span className="text-xs font-bold text-yellow-500">{credits}</span>
+                        </div>
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                            aria-label="Toggle Menu"
                     >
                         {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>

@@ -1,0 +1,63 @@
+'use server';
+
+import { createClient } from '../supabase/server';
+
+export async function getFeatureCosts() {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+        
+    if (error) return { error: error.message };
+    return { costs: data.setting_value as Record<string, number> };
+}
+
+export async function getAIKeys() {
+    const supabase = await createClient();
+    
+    // Only return keys if the requesting user is an admin/super_admin
+    // (Regular users should never see the keys, even if RLS somehow allowed it)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+    
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+        return { error: 'Insufficient permissions to read API keys' };
+    }
+
+    const { data, error } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'ai_api_keys')
+        .single();
+
+    if (error) return { error: error.message };
+    return { keys: data.setting_value as Record<string, string> };
+}
+
+export async function updateFeatureCosts(costsMap: Record<string, number>) {
+    const supabase = await createClient();
+    
+    const { error } = await supabase
+        .from('platform_settings')
+        .update({ setting_value: costsMap })
+        .eq('setting_key', 'feature_costs');
+
+    // Due to RLS, if they aren't admin, it fails silently or returns an error.
+    if (error) return { error: error.message };
+    return { success: true };
+}
+
+export async function updateAIProviderKeys(keysMap: Record<string, string>) {
+    const supabase = await createClient();
+    
+    const { error } = await supabase
+        .from('platform_settings')
+        .update({ setting_value: keysMap })
+        .eq('setting_key', 'ai_api_keys');
+
+    if (error) return { error: error.message };
+    return { success: true };
+}

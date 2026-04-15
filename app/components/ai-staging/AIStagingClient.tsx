@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect, createContext, useContext } from 'react';
 import { 
   Wand2, Video, FileImage, FileText, 
   Layers, UploadCloud, Settings, ChevronRight, 
@@ -14,6 +14,10 @@ import {
   generateDescription, 
   generateRoomAnimation 
 } from '@/app/lib/actions/ai-staging';
+import { getFeatureCosts } from '@/app/lib/actions/settings';
+import { Coins } from 'lucide-react';
+
+export const CreditsContext = createContext<{credits: number, costs: Record<string, number>}>({credits: 0, costs: {}});
 
 // Define the 5 main features corresponding to the provided link
 const AI_FEATURES = [
@@ -56,6 +60,19 @@ const AI_FEATURES = [
 
 export default function AIStagingClient({ userRole }: { userRole: string }) {
   const [activeTab, setActiveTab] = useState(AI_FEATURES[0].id);
+  const [credits, setCredits] = useState(0);
+  const [costs, setCosts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({data: {user}}) => {
+        if (!user) return;
+        const { data: p } = await supabase.from('profiles').select('credits').eq('id', user.id).single();
+        if (p) setCredits(p.credits || 0);
+
+        const costsRes = await getFeatureCosts();
+        if (costsRes.costs) setCosts(costsRes.costs);
+    });
+  }, []);
 
   const renderActiveTool = () => {
     switch (activeTab) {
@@ -75,6 +92,7 @@ export default function AIStagingClient({ userRole }: { userRole: string }) {
   };
 
   return (
+    <CreditsContext.Provider value={{credits, costs}}>
     <div className="bg-[#0a0a0f] text-slate-200 font-sans p-4 md:p-8 rounded-2xl min-h-[calc(100vh-6rem)]">
       {/* Header */}
       <div className="mb-10 text-center relative z-10">
@@ -157,6 +175,7 @@ export default function AIStagingClient({ userRole }: { userRole: string }) {
         </div>
       </div>
     </div>
+    </CreditsContext.Provider>
   );
 }
 
@@ -312,6 +331,8 @@ function ProviderSettings({
 
 function VirtualStagingTool() {
   const [isPending, startTransition] = useTransition();
+  const { credits, costs } = useContext(CreditsContext);
+  const cost = costs['ai_virtual_staging'] || 0;
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
   
@@ -444,10 +465,11 @@ function VirtualStagingTool() {
 
         <button 
           onClick={submitAction}
-          disabled={isPending}
-          className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center gap-2"
+          disabled={isPending || credits < cost}
+          className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50"
         >
-          {isPending ? <><Loader2 className="w-5 h-5 animate-spin" /> Procesare AI...</> : 'Generează Staging AI'}
+          {isPending ? <div className="flex items-center gap-2"><><Loader2 className="w-5 h-5 animate-spin" /> Procesare AI...</></div> : <span className="flex items-center gap-2">Generează Staging AI</span>}
+          {!isPending && <span className="text-xs text-white/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
         </button>
       </div>
       
@@ -476,6 +498,8 @@ function VirtualStagingTool() {
 
 function VideoGeneratorTool() {
   const [isPending, startTransition] = useTransition();
+  const { credits, costs } = useContext(CreditsContext);
+  const cost = costs['ai_video_generator'] || 0;
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
   
@@ -635,6 +659,8 @@ function VideoGeneratorTool() {
 
 function Plan3DTool() {
   const [isPending, startTransition] = useTransition();
+  const { credits, costs } = useContext(CreditsContext);
+  const cost = costs['ai_plan_3d'] || 0;
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
   
@@ -688,11 +714,12 @@ function Plan3DTool() {
         {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
 
         <button 
-           onClick={submitAction}
-           disabled={isPending}
-           className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-2"
+          onClick={submitAction}
+          disabled={isPending || credits < cost}
+          className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50"
         >
-          {isPending ? <><Loader2 className="w-5 h-5 animate-spin" /> Extragere Pereți...</> : 'Converteste în Plan 3D Mochetat'}
+          {isPending ? <div className="flex items-center gap-2"><><Loader2 className="w-5 h-5 animate-spin" /> Extragere Pereți...</></div> : <span className="flex items-center gap-2">Converteste în Plan 3D Mochetat</span>}
+          {!isPending && <span className="text-xs text-white/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
         </button>
       </div>
 
@@ -721,6 +748,8 @@ function Plan3DTool() {
 
 function DescriptionGenTool() {
   const [isPending, startTransition] = useTransition();
+  const { credits, costs } = useContext(CreditsContext);
+  const cost = costs['ai_description'] || 0;
   const [provider, setProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
   
@@ -864,6 +893,8 @@ function DescriptionGenTool() {
 
 function RoomBuilderTool() {
   const [isPending, startTransition] = useTransition();
+  const { credits, costs } = useContext(CreditsContext);
+  const cost = costs['ai_room_builder'] || 0;
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
   
@@ -1017,12 +1048,13 @@ function RoomBuilderTool() {
                 {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
 
                 <button 
-                   onClick={submitAction}
-                   disabled={isPending}
-                   className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all flex items-center justify-center gap-2"
-                >
-                  {isPending ? <><Loader2 className="w-5 h-5 animate-spin" /> Se asamblează elementele...</> : 'Pornește Generatorul de Animație'}
-                </button>
+          onClick={submitAction}
+          disabled={isPending || credits < cost}
+          className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50"
+        >
+          {isPending ? <div className="flex items-center gap-2"><><Loader2 className="w-5 h-5 animate-spin" /> Se asamblează elementele...</></div> : <span className="flex items-center gap-2">Pornește Generatorul de Animație</span>}
+          {!isPending && <span className="text-xs text-white/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
+        </button>
             </div>
 
             <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px]">
