@@ -24,11 +24,11 @@ export async function generateVirtualStaging(payload: { imageUrl: string, roomTy
     }
 }
 
-export async function generateVideo(payload: { imageUrls: string[], useVoice: boolean, useMusic: boolean, logoUrl?: string }, provider: string, apiKey: string) {
+export async function generateVideo(payload: { imageUrls: string[], musicType: string, voiceType: string, videoFormat: string, narrationDetails: string, logoUrl?: string }, provider: string, apiKey: string) {
     if (!apiKey) return { error: "API Key is required to process the request." };
 
     try {
-        console.log(`[VideoGenerator] Hooking to ${provider}...`);
+        console.log(`[VideoGenerator] Hooking to ${provider} with format ${payload.videoFormat}...`);
         await new Promise(resolve => setTimeout(resolve, 4000));
         return { success: true, resultUrl: "https://www.w3schools.com/html/mov_bbb.mp4", message: "Video generated successfully" };
     } catch (e: any) {

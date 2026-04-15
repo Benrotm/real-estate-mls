@@ -420,8 +420,12 @@ function VideoGeneratorTool() {
   
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
-  const [useVoice, setUseVoice] = useState(true);
-  const [useMusic, setUseMusic] = useState(true);
+  
+  // New State variables matching the requested options
+  const [musicType, setMusicType] = useState('Cinematic elegant');
+  const [voiceType, setVoiceType] = useState('Voce feminină');
+  const [videoFormat, setVideoFormat] = useState('16:9 (YouTube/site)');
+  const [narrationDetails, setNarrationDetails] = useState('');
 
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
@@ -432,14 +436,42 @@ function VideoGeneratorTool() {
     }
     setError('');
     startTransition(async () => {
-      const res = await generateVideo({ imageUrls, useVoice, useMusic, logoUrl }, provider, apiKey);
+      // Pass the new configuration shape to the backend
+      const res = await generateVideo({ 
+        imageUrls, 
+        musicType, 
+        voiceType, 
+        videoFormat,
+        narrationDetails,
+        logoUrl 
+      }, provider, apiKey);
+      
       if (res.error) setError(res.error);
       else setResult(res.resultUrl || '');
     });
   };
 
+  // Helper for rendering Pill selectors
+  const renderPills = (options: string[], currentValue: string, setter: (val: string) => void) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          onClick={() => setter(opt)}
+          className={`px-4 py-2 rounded-full text-sm border transition-all ${
+            currentValue === opt 
+              ? 'border-orange-400 text-orange-400 bg-orange-400/10 shadow-[0_0_10px_rgba(251,146,60,0.2)]' 
+              : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300 bg-transparent'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div className="space-y-6">
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'luma', name: 'Luma Dream Machine'}, {id: 'runway', name: 'Runway Gen-3'}]}
@@ -448,7 +480,7 @@ function VideoGeneratorTool() {
         />
 
         <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2">Încarcă Pozele Proprietății (Max 15)</label>
+          <label className="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wide">1. ÎNcarcă Pozele Proprietății (Max 15)</label>
           <FileUploader 
             label="Încarcă Poze Multiple" 
             accept="image/*" 
@@ -457,32 +489,52 @@ function VideoGeneratorTool() {
           />
         </div>
         
-        <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2">Opțiuni Audio & Logo</label>
-          <div className="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300 text-sm">Voce Narație (AI Voice)</span>
-              <input type="checkbox" checked={useVoice} onChange={(e) => setUseVoice(e.target.checked)} className="w-5 h-5 accent-orange-500 rounded bg-black/50" />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300 text-sm">Muzică Fundal (Cinematografică)</span>
-              <input type="checkbox" checked={useMusic} onChange={(e) => setUseMusic(e.target.checked)} className="w-5 h-5 accent-orange-500 rounded bg-black/50" />
-            </div>
-            <div className="flex items-center justify-between pt-3 border-t border-white/10 mt-2">
-              <span className="text-slate-300 text-sm">Atașare Logo Agenție {logoUrl && '✅'}</span>
-              <label className="text-xs bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 hover:bg-white/20 text-white transition-colors cursor-pointer">
-                Încarcă Logo
-                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if(!file) return;
-                    const { data } = await supabase.storage.from('property-images').upload(`logos/${Date.now()}_${file.name}`, file);
-                    if(data?.path) {
-                        const {data: {publicUrl}} = supabase.storage.from('property-images').getPublicUrl(data.path);
-                        setLogoUrl(publicUrl);
-                    }
-                }}/>
-              </label>
-            </div>
+        <div className="space-y-6 bg-black/20 p-5 rounded-2xl border border-white/5">
+          {/* Background Music */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">2. Muzică de fundal</label>
+            {renderPills(['Cinematic elegant', 'Modern upbeat', 'Pian moale', 'Corporate'], musicType, setMusicType)}
+          </div>
+
+          {/* AI Narration Voice */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">3. Narație AI</label>
+            {renderPills(['Voce feminină', 'Voce masculină', 'Fără narație'], voiceType, setVoiceType)}
+          </div>
+
+          {/* Video Format */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">4. Format Video</label>
+            {renderPills(['16:9 (YouTube/site)', '9:16 (Reels/TikTok)', '1:1 (Instagram)'], videoFormat, setVideoFormat)}
+          </div>
+
+          {/* Narration Details */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">5. Detalii Proprietate (pentru narație)</label>
+            <textarea 
+              rows={3}
+              value={narrationDetails}
+              onChange={e => setNarrationDetails(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-orange-500/50 resize-none text-sm"
+              placeholder="Ex: Apartament 3 camere, renovat recent, parcare inclusă..."
+            />
+          </div>
+
+          {/* Logo Option (Kept from existing logic) */}
+          <div className="flex items-center justify-between pt-4 border-t border-white/10">
+            <span className="text-slate-400 text-xs font-semibold uppercase tracking-widest">Atașare Logo Agenție {logoUrl && '✅'}</span>
+            <label className="text-xs bg-white/10 px-4 py-2 rounded-lg border border-white/20 hover:bg-white/20 text-white transition-colors cursor-pointer">
+              Încarcă Logo
+              <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if(!file) return;
+                  const { data } = await supabase.storage.from('property-images').upload(`logos/${Date.now()}_${file.name}`, file);
+                  if(data?.path) {
+                      const {data: {publicUrl}} = supabase.storage.from('property-images').getPublicUrl(data.path);
+                      setLogoUrl(publicUrl);
+                  }
+              }}/>
+            </label>
           </div>
         </div>
 
@@ -499,13 +551,13 @@ function VideoGeneratorTool() {
 
       <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px]">
         {result ? (
-            <video src={result} controls autoPlay loop className="w-full h-full rounded-xl bg-black" />
+            <video src={result} controls autoPlay loop className="w-full h-full object-contain rounded-xl bg-black" />
         ) : (
             <div className="text-center">
               {isPending ? (
                    <>
                      <Loader2 className="w-16 h-16 text-orange-500 animate-spin mx-auto mb-4" />
-                     <p className="text-slate-400 animate-pulse">Randare Video Cinematic... (poate dura până la 3 minute)</p>
+                     <p className="text-slate-400 animate-pulse">Randare Video Cinematic...</p>
                    </>
                 ) : (
                    <>
