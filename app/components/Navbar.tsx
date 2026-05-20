@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '../context/LanguageContext';
-import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X, Hammer } from 'lucide-react';
+import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X, Hammer, Calculator } from 'lucide-react';
 import { SERVICES } from '../lib/services';
 import { UserProfile } from '../lib/auth';
 import NotificationBell from './notifications/NotificationBell';
@@ -74,6 +74,10 @@ export default function Navbar({ user }: NavbarProps) {
             )}
             <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
               Upgrade Account
+            </Link>
+            <Link href="/calculator-comisioane" className="text-sm font-bold text-white hover:text-orange-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md flex items-center gap-1.5">
+              <Calculator className="w-4 h-4 text-orange-400" />
+              Calculator
             </Link>
 
             {/* Services Dropdown */}
@@ -336,6 +340,10 @@ export default function Navbar({ user }: NavbarProps) {
             )}
             <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
               Upgrade Account
+            </Link>
+            <Link href="/calculator-comisioane" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10">
+              <Calculator className="w-4 h-4" />
+              Calculator Comisioane
             </Link>
             <div className="space-y-1">
               <div className="px-3 py-2 text-base font-medium text-gray-400 uppercase text-xs tracking-wider">Services</div>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -114,6 +114,7 @@ export default function DashboardClient({
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
+        { name: 'Calculator Settings', icon: Calculator, href: '/dashboard/admin/settings/calculator-comisioane' },
         { name: 'Credit & Costs System', icon: Coins, href: '/dashboard/admin/credit-settings' },
         { name: 'AI Provider Config', icon: Settings, href: '/dashboard/admin/ai-settings' },
         { name: 'Imoflux', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
