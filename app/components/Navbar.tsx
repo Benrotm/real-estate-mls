@@ -72,9 +72,6 @@ export default function Navbar({ user }: NavbarProps) {
                 Dashboard
               </Link>
             )}
-            <Link href="/pricing" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
-              Upgrade Account
-            </Link>
             <Link href="/calculator-comisioane" className="text-sm font-bold text-white hover:text-orange-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md flex items-center gap-1.5">
               <Calculator className="w-4 h-4 text-orange-400" />
               Calculator
@@ -166,10 +163,7 @@ export default function Navbar({ user }: NavbarProps) {
             {/* Auth State Demo */}
             {isLoggedIn ? (
               <>
-                <Link href="/properties/add" className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 transition-all shadow-lg hover:-translate-y-0.5">
-                  <Plus className="w-4 h-4" />
-                  <span>List Property</span>
-                </Link>
+
 
                 {/* User Dropdown */}
                 <div className="relative">
@@ -296,14 +290,6 @@ export default function Navbar({ user }: NavbarProps) {
                   Sign Up
                 </Link>
 
-                {/* List Property - Cyan bordered button with icon */}
-                <Link
-                  href="/properties/add"
-                  className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 font-bold hover:bg-cyan-500/30 hover:border-cyan-400 transition-all"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>List Property</span>
-                </Link>
               </div>
             )}
 
@@ -338,9 +324,7 @@ export default function Navbar({ user }: NavbarProps) {
                 DASHBOARD
               </Link>
             )}
-            <Link href="/pricing" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-cyan-300 hover:bg-white/10">
-              Upgrade Account
-            </Link>
+
             <Link href="/calculator-comisioane" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10">
               <Calculator className="w-4 h-4" />
               Calculator Comisioane
