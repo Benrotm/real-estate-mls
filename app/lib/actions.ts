@@ -31,7 +31,7 @@ export async function submitContactForm(formData: FormData) {
         // 2. Send Email via Resend
         // Note: For production, you'd want to use a verified domain in Resend
         const { data: emailData, error: emailError } = await resend.emails.send({
-            from: 'PropList <onboarding@resend.dev>',
+            from: 'Real Estate MLS <onboarding@resend.dev>',
             to: [email], // In demo, we send to the user, in production to the agent/owner
             subject: `Inquiry for ${propertyTitle}`,
             html: `
@@ -42,7 +42,7 @@ export async function submitContactForm(formData: FormData) {
                 <p><strong>Message:</strong></p>
                 <p>${message}</p>
                 <hr />
-                <p>This inquiry has also been saved to your PropList Dashboard.</p>
+                <p>This inquiry has also been saved to your Real Estate MLS Dashboard.</p>
             `,
         });
 

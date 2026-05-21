@@ -162,7 +162,7 @@ function CheckoutContent() {
                         </div>
 
                         <div className="bg-orange-50 p-4 rounded-xl text-xs text-orange-800 leading-relaxed">
-                            By confirming your subscription, you allow PropList to charge your card for this payment and future payments in accordance with our terms.
+                            By confirming your subscription, you allow Real Estate MLS to charge your card for this payment and future payments in accordance with our terms.
                         </div>
                     </div>
                 </div>
