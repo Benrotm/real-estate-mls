@@ -1,17 +1,50 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BarChart } from 'lucide-react';
+import { supabase } from '@/app/lib/supabase/client';
 
 interface HomeValuationWidgetProps {
     linkPath?: string;
     variant?: 'default' | 'home';
 }
 
-export default function HomeValuationWidget({ linkPath = "/dashboard/owner/valuation", variant = 'default' }: HomeValuationWidgetProps) {
+export default function HomeValuationWidget({ linkPath, variant = 'default' }: HomeValuationWidgetProps) {
+    const [targetPath, setTargetPath] = useState<string>(linkPath || '/pricing');
+
+    useEffect(() => {
+        if (linkPath) {
+            setTargetPath(linkPath);
+            return;
+        }
+
+        // Check initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                setTargetPath('/dashboard/owner/valuation');
+            } else {
+                setTargetPath('/pricing');
+            }
+        });
+
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                setTargetPath('/dashboard/owner/valuation');
+            } else {
+                setTargetPath('/pricing');
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [linkPath]);
+
     if (variant === 'home') {
         return (
-            <Link href={linkPath} className="block w-full max-w-md mx-auto group">
+            <Link href={targetPath} className="block w-full max-w-md mx-auto group">
                 <div className="relative bg-slate-900 rounded-2xl p-6 border border-fuchsia-500/30 overflow-hidden shadow-2xl shadow-fuchsia-500/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-fuchsia-500/40">
                     {/* Background Glow */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
@@ -32,7 +65,7 @@ export default function HomeValuationWidget({ linkPath = "/dashboard/owner/valua
 
     // Default Dashboard Variant
     return (
-        <Link href={linkPath} className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group max-w-md mx-auto w-full">
+        <Link href={targetPath} className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 hover:shadow-md transition-all group max-w-md mx-auto w-full">
             <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
                 <BarChart className="w-8 h-8" />
             </div>

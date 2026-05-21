@@ -43,7 +43,7 @@ export default async function OwnerLeadsPage() {
                     <UpgradeBanner
                         title="Unlock Your Property Leads"
                         description="See exactly who is interested in your properties. Upgrade to our Pro plan to access detailed lead profiles, contact information, and manage your pipeline directly"
-                        buttonLink="/dashboard/owner/billing" // Assumed path, or just /pricing
+                        buttonLink="/pricing"
                         buttonText="Upgrade to Pro"
                     />
                 )}

@@ -16,7 +16,7 @@ export default async function MarketInsightsPage() {
                     title="Access Real-Time Market Insights"
                     description="Stay ahead of the curve with detailed market trends, price fluctuations, and demand analysis for your area."
                     buttonText="Upgrade to Pro"
-                    buttonLink="/dashboard/owner/billing"
+                    buttonLink="/pricing"
                 />
             </div>
         );

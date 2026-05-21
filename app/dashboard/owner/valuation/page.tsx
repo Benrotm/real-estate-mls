@@ -16,7 +16,7 @@ export default async function ValuationPage() {
                     title="Unlock Professional Valuation Reports"
                     description="Get detailed property valuation reports powered by AI and local market data. Make informed decisions with accurate price estimates."
                     buttonText="Upgrade to Pro"
-                    buttonLink="/dashboard/owner/billing"
+                    buttonLink="/pricing"
                 />
             </div>
         );
