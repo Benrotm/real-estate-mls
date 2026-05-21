@@ -58,6 +58,7 @@ export default async function ProfilePage() {
                         initialCompanyCui={profile.company_cui || ''}
                         initialCompanyRegCom={profile.company_reg_com || ''}
                         initialCompanyAddress={profile.company_address || ''}
+                        initialGdprConsent={profile.gdpr_consent || false}
                         userId={profile.id}
                     />
 

@@ -23,6 +23,8 @@ export interface UserProfile {
     company_cui?: string;
     company_reg_com?: string;
     company_address?: string;
+    gdpr_consent?: boolean;
+    gdpr_consent_date?: string;
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {

@@ -17,6 +17,7 @@ interface ProfileFormProps {
     initialCompanyCui?: string;
     initialCompanyRegCom?: string;
     initialCompanyAddress?: string;
+    initialGdprConsent?: boolean;
     userId: string;
 }
 
@@ -256,6 +257,7 @@ export default function ProfileForm({
     initialCompanyCui,
     initialCompanyRegCom,
     initialCompanyAddress,
+    initialGdprConsent,
     userId
 }: ProfileFormProps) {
     const [fullName, setFullName] = useState(initialFullName);
@@ -268,6 +270,7 @@ export default function ProfileForm({
     const [companyCui, setCompanyCui] = useState(initialCompanyCui || '');
     const [companyRegCom, setCompanyRegCom] = useState(initialCompanyRegCom || '');
     const [companyAddress, setCompanyAddress] = useState(initialCompanyAddress || '');
+    const [gdprConsent, setGdprConsent] = useState(initialGdprConsent || false);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUploadingFile, setIsUploadingFile] = useState(false);
@@ -328,6 +331,14 @@ export default function ProfileForm({
             return;
         }
 
+        // GDPR check if verification details are filled
+        if ((cnp || idSeriesNumber || idPhotoUrl || isCompany) && !gdprConsent) {
+            setStatus('error');
+            setErrorMessage('Pentru a salva datele de identificare / firmă, este necesar să fiți de acord cu prelucrarea datelor în conformitate cu GDPR.');
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const result = await updateUserProfile({
                 full_name: fullName,
@@ -339,7 +350,8 @@ export default function ProfileForm({
                 company_name: isCompany ? companyName : '',
                 company_cui: isCompany ? companyCui : '',
                 company_reg_com: isCompany ? companyRegCom : '',
-                company_address: isCompany ? companyAddress : ''
+                company_address: isCompany ? companyAddress : '',
+                gdpr_consent: gdprConsent
             });
 
             if (result.error) {
@@ -622,6 +634,20 @@ export default function ProfileForm({
                             <p className="text-sm text-slate-600 leading-relaxed">
                                 Datele completate în această secțiune sunt folosite strict pentru conformitatea cu reglementările legale, facturare și securizarea drepturilor dvs. de publicare pe platformă.
                             </p>
+
+                            {/* GDPR Checkbox */}
+                            <div className="flex items-start gap-3 p-3.5 bg-white border border-slate-100 rounded-xl">
+                                <input
+                                    id="gdprConsent"
+                                    type="checkbox"
+                                    checked={gdprConsent}
+                                    onChange={(e) => setGdprConsent(e.target.checked)}
+                                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                                />
+                                <label htmlFor="gdprConsent" className="text-xs text-slate-600 font-semibold leading-normal select-none cursor-pointer">
+                                    Sunt de acord ca datele mele cu caracter personal (CNP, Serie/Nr. ID, poze ID și date firmă) să fie prelucrate de Real Estate MLS strict în scopul validării contului și al facturării, conform reglementărilor GDPR.
+                                </label>
+                            </div>
 
                             <button
                                 type="submit"

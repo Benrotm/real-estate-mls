@@ -108,6 +108,7 @@ export async function updateUserProfile(data: {
     company_cui?: string;
     company_reg_com?: string;
     company_address?: string;
+    gdpr_consent?: boolean;
 }) {
     const supabase = await createClient();
 
@@ -118,20 +119,31 @@ export async function updateUserProfile(data: {
     }
 
     try {
+        const updatePayload: any = {
+            full_name: data.full_name,
+            phone: data.phone,
+            cnp: data.cnp,
+            id_series_number: data.id_series_number,
+            id_photo_url: data.id_photo_url,
+            is_company: data.is_company,
+            company_name: data.company_name,
+            company_cui: data.company_cui,
+            company_reg_com: data.company_reg_com,
+            company_address: data.company_address
+        };
+
+        if (typeof data.gdpr_consent === 'boolean') {
+            updatePayload.gdpr_consent = data.gdpr_consent;
+            if (data.gdpr_consent) {
+                updatePayload.gdpr_consent_date = new Date().toISOString();
+            } else {
+                updatePayload.gdpr_consent_date = null;
+            }
+        }
+
         const { error } = await supabase
             .from('profiles')
-            .update({
-                full_name: data.full_name,
-                phone: data.phone,
-                cnp: data.cnp,
-                id_series_number: data.id_series_number,
-                id_photo_url: data.id_photo_url,
-                is_company: data.is_company,
-                company_name: data.company_name,
-                company_cui: data.company_cui,
-                company_reg_com: data.company_reg_com,
-                company_address: data.company_address
-            })
+            .update(updatePayload)
             .eq('id', user.id);
 
         if (error) {
