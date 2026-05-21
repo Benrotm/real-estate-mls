@@ -37,6 +37,7 @@ export default function SignUpPage() {
         const password = formData.get('password') as string;
         const firstName = formData.get('first-name') as string;
         const lastName = formData.get('last-name') as string;
+        const phone = formData.get('phone') as string;
 
         // Determine plan tier
         let planTier = 'free';
@@ -56,6 +57,7 @@ export default function SignUpPage() {
                     data: {
                         first_name: firstName,
                         last_name: lastName,
+                        phone: phone,
                         role: role,
                         plan_tier: planTier,
                         referred_by: refParam || undefined

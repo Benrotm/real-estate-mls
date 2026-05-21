@@ -97,7 +97,18 @@ export async function updateUserPlan(planName: string) {
     }
 }
 
-export async function updateUserProfile(data: { full_name: string; phone: string }) {
+export async function updateUserProfile(data: {
+    full_name: string;
+    phone: string;
+    cnp?: string;
+    id_series_number?: string;
+    id_photo_url?: string;
+    is_company?: boolean;
+    company_name?: string;
+    company_cui?: string;
+    company_reg_com?: string;
+    company_address?: string;
+}) {
     const supabase = await createClient();
 
     // Get current user
@@ -111,7 +122,15 @@ export async function updateUserProfile(data: { full_name: string; phone: string
             .from('profiles')
             .update({
                 full_name: data.full_name,
-                phone: data.phone
+                phone: data.phone,
+                cnp: data.cnp,
+                id_series_number: data.id_series_number,
+                id_photo_url: data.id_photo_url,
+                is_company: data.is_company,
+                company_name: data.company_name,
+                company_cui: data.company_cui,
+                company_reg_com: data.company_reg_com,
+                company_address: data.company_address
             })
             .eq('id', user.id);
 

@@ -50,6 +50,15 @@ export default async function ProfilePage() {
                         initialFullName={profile.full_name}
                         initialPhone={profile.phone || ''}
                         email={profile.email || 'user@example.com'}
+                        initialCnp={profile.cnp || ''}
+                        initialIdSeriesNumber={profile.id_series_number || ''}
+                        initialIdPhotoUrl={profile.id_photo_url || ''}
+                        initialIsCompany={profile.is_company || false}
+                        initialCompanyName={profile.company_name || ''}
+                        initialCompanyCui={profile.company_cui || ''}
+                        initialCompanyRegCom={profile.company_reg_com || ''}
+                        initialCompanyAddress={profile.company_address || ''}
+                        userId={profile.id}
                     />
 
                     <div className="mt-8">

@@ -15,6 +15,14 @@ export interface UserProfile {
     avatar_url?: string;
     phone?: string;
     email?: string;
+    cnp?: string;
+    id_series_number?: string;
+    id_photo_url?: string;
+    is_company?: boolean;
+    company_name?: string;
+    company_cui?: string;
+    company_reg_com?: string;
+    company_address?: string;
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {
