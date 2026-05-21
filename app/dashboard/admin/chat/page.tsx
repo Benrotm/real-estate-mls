@@ -3,12 +3,14 @@ import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
 import NotificationSync from '@/app/components/notifications/NotificationSync';
 
-export default async function AdminChatPage() {
+export default async function AdminChatPage({ searchParams }: { searchParams: any }) {
     const profile = await getUserProfile();
 
     if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
         redirect('/dashboard');
     }
+
+    const conversationId = searchParams?.id;
 
     return (
         <div className="flex flex-col h-[calc(100vh-100px)]">
@@ -21,7 +23,7 @@ export default async function AdminChatPage() {
             <div className="relative group">
                 <div className="resize-y overflow-hidden h-[600px] min-h-[400px] max-h-[85vh] rounded-2xl border border-slate-200 shadow-xl bg-white pb-3">
                     <div className="h-full w-full">
-                        <ChatLayout user={profile} />
+                        <ChatLayout user={profile} initialConversationId={conversationId} />
                     </div>
                 </div>
 

@@ -61,6 +61,24 @@ export async function GET(request: Request) {
                     cookieStore.set({ name: 'signup_role', value: '', maxAge: 0, path: '/' });
                 }
 
+                // Check for signup_ref cookie
+                const signupRef = cookieStore.get('signup_ref')?.value;
+                if (signupRef) {
+                    await supabase
+                        .from('profiles')
+                        .update({ referred_by: signupRef })
+                        .eq('id', user.id);
+
+                    try {
+                        const { processReferral } = await import('@/app/lib/actions/referrals');
+                        await processReferral(user.id, signupRef);
+                    } catch (err) {
+                        console.error('Error processing referral callback:', err);
+                    }
+
+                    cookieStore.set({ name: 'signup_ref', value: '', maxAge: 0, path: '/' });
+                }
+
                 // Fallback to DB profile if missing in metadata and no cookie override
                 if (!role) {
                     const { data: profile } = await supabase

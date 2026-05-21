@@ -127,3 +127,19 @@ export async function updateUserProfile(data: { full_name: string; phone: string
         return { error: e.message };
     }
 }
+
+export async function getCurrentProfile() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+    if (error) return { error: error.message };
+    return { profile };
+}
+

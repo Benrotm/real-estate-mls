@@ -1,0 +1,403 @@
+'use client';
+
+import { useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+    Coins, 
+    ArrowLeft, 
+    CreditCard, 
+    Info, 
+    Building, 
+    CheckCircle2, 
+    XCircle, 
+    Clock, 
+    Check, 
+    AlertTriangle,
+    ShieldCheck
+} from 'lucide-react';
+import Link from 'next/link';
+import { 
+    createPendingPurchase, 
+    cancelPendingPurchase, 
+    getCompanyBankDetails, 
+    getActivePendingPurchase, 
+    getUserPurchases 
+} from '@/app/lib/actions/credit-purchases';
+import { getReferralStats } from '@/app/lib/actions/referrals';
+import { getUserCredits } from '@/app/lib/actions/credits';
+
+const PACKAGES = [
+    { credits: 50, price: 50, name: 'Pachet Mic' },
+    { credits: 100, price: 100, name: 'Pachet Standard' },
+    { credits: 250, price: 250, name: 'Pachet Popular', popular: true },
+    { credits: 500, price: 500, name: 'Pachet VIP' },
+];
+
+export default function PlatiPage() {
+    const router = useRouter();
+    const [isPending, startTransition] = useTransition();
+    const [loading, setLoading] = useState(true);
+
+    const [userCredits, setUserCredits] = useState(0);
+    const [referralBonusText, setReferralBonusText] = useState('');
+    const [companyBank, setCompanyBank] = useState({ name: '', iban: '' });
+    const [activePurchase, setActivePurchase] = useState<any | null>(null);
+    const [purchasesLog, setPurchasesLog] = useState<any[]>([]);
+    const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const loadData = async () => {
+        setLoading(true);
+        const [creditsRes, bankRes, activeRes, logRes, refRes] = await Promise.all([
+            getUserCredits(),
+            getCompanyBankDetails(),
+            getActivePendingPurchase(),
+            getUserPurchases(),
+            getReferralStats()
+        ]);
+
+        if (creditsRes && 'credits' in creditsRes) {
+            setUserCredits(creditsRes.credits || 0);
+        }
+
+        if (bankRes) {
+            setCompanyBank(bankRes);
+        }
+
+        if (activeRes && 'purchase' in activeRes) {
+            setActivePurchase(activeRes.purchase);
+        }
+
+        if (logRes && 'purchases' in logRes) {
+            setPurchasesLog(logRes.purchases || []);
+        }
+
+        if (refRes && 'settings' in refRes) {
+            const settings = refRes.settings;
+            setReferralBonusText(`Primești ${settings.referrer_bonus} credite cadou pentru fiecare prieten invitat + ${settings.commission_percentage}% comision din creditele consumate de ei.`);
+        }
+
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const handleInitiatePurchase = (pack: any) => {
+        setSelectedPackage(pack);
+        setErrorMessage(null);
+    };
+
+    const handleConfirmPurchase = () => {
+        if (!selectedPackage) return;
+        setErrorMessage(null);
+        startTransition(async () => {
+            const res = await createPendingPurchase(selectedPackage.price, selectedPackage.credits);
+            if (res.error) {
+                setErrorMessage(res.error);
+                if (res.existing) {
+                    // Load data again to sync pending order
+                    loadData();
+                }
+            } else {
+                setSelectedPackage(null);
+                loadData();
+            }
+        });
+    };
+
+    const handleCancelPurchase = (id: string) => {
+        if (!confirm('Sigur doriți să anulați această cerere de plată?')) return;
+        setErrorMessage(null);
+        startTransition(async () => {
+            const res = await cancelPendingPurchase(id);
+            if (res.error) {
+                setErrorMessage(res.error);
+            } else {
+                loadData();
+            }
+        });
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+                <div className="flex flex-col items-center gap-3">
+                    <Clock className="w-8 h-8 text-yellow-500 animate-spin" />
+                    <span>Se încarcă detaliile de plată...</span>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-slate-950 text-white p-6 sm:p-8">
+            <div className="max-w-4xl mx-auto space-y-8">
+                
+                {/* Back Navigation */}
+                <div className="flex items-center justify-between">
+                    <Link 
+                        href="/cont/profil" 
+                        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Înapoi la Profil
+                    </Link>
+                    <Link
+                        href="/dashboard"
+                        className="text-xs bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                        Panou de Control
+                    </Link>
+                </div>
+
+                {/* Main Hero Card */}
+                <header className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none" />
+                    
+                    <div className="space-y-2">
+                        <h1 className="text-3xl font-extrabold tracking-tight">Portal Alimentare Credite</h1>
+                        <p className="text-slate-400 text-sm max-w-md">
+                            Cumpără credite pentru a folosi instrumentele AI și featurile avansate ale platformei Imobum.
+                        </p>
+                    </div>
+
+                    <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-5 flex items-center gap-4 shrink-0 shadow-inner">
+                        <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-center justify-center text-yellow-500">
+                            <Coins className="w-6 h-6 animate-pulse" />
+                        </div>
+                        <div>
+                            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Credite Disponibile</div>
+                            <div className="text-2xl font-black text-yellow-500 font-mono">{userCredits}</div>
+                        </div>
+                    </div>
+                </header>
+
+                {/* Referral Program Banner */}
+                {referralBonusText && (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-4 text-xs flex items-start gap-3">
+                        <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <p>{referralBonusText}</p>
+                    </div>
+                )}
+
+                {errorMessage && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-4 text-xs flex items-start gap-3">
+                        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                        <p>{errorMessage}</p>
+                    </div>
+                )}
+
+                {/* Core Purchase / Active Payment Flow */}
+                {activePurchase ? (
+                    // Active Bank Transfer Box
+                    <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+                        <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+                            <Clock className="w-6 h-6 text-orange-400 animate-pulse" />
+                            <div>
+                                <h2 className="text-lg font-bold text-white">Plată în așteptare de validare</h2>
+                                <p className="text-xs text-slate-400">Te rugăm să finalizezi transferul bancar.</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 space-y-4">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-400">Sumă de plată:</span>
+                                <span className="font-extrabold text-white text-base">{activePurchase.amount_ron} RON</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-400">Credite de primit:</span>
+                                <span className="font-extrabold text-yellow-500 flex items-center gap-1.5"><Coins className="w-4 h-4" /> {activePurchase.credits}</span>
+                            </div>
+
+                            <hr className="border-slate-800" />
+
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Nume Beneficiar</label>
+                                    <div className="text-sm font-semibold text-white flex items-center justify-between">
+                                        <span>{companyBank.name}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Cont IBAN</label>
+                                    <div className="text-sm font-mono font-bold text-white bg-slate-900 border border-slate-800/80 px-3 py-2 rounded-lg flex items-center justify-between">
+                                        <span>{companyBank.iban}</span>
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                                    <label className="block text-[10px] uppercase font-bold text-orange-400 tracking-wider mb-1">Detalii plată / Referință (FOARTE IMPORTANT)</label>
+                                    <div className="text-base font-mono font-black text-orange-400 select-all">
+                                        {activePurchase.reference_id}
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1.5">
+                                        Menționează codul exact de mai sus la detaliile plății în aplicația ta de banking pentru a putea asocia plata contului tău.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
+                            <button
+                                disabled={isPending}
+                                className="w-full sm:flex-1 bg-emerald-500 text-black font-extrabold py-3 px-6 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/10"
+                                onClick={() => alert('Plata dvs. este în curs de verificare în extrasul bancar. Adminul o va aproba în curând.')}
+                            >
+                                <Check className="w-4 h-4" />
+                                AM EFECTUAT PLATA (ÎN AȘTEPTARE)
+                            </button>
+                            <button
+                                disabled={isPending}
+                                onClick={() => handleCancelPurchase(activePurchase.id)}
+                                className="w-full sm:w-auto bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:text-red-400 text-slate-300 font-bold py-3 px-6 rounded-xl text-sm transition-all"
+                            >
+                                ANULEAZĂ CEREREA
+                            </button>
+                        </div>
+
+                        <div className="bg-slate-950 border border-slate-900/50 p-4 rounded-xl flex gap-3 text-xs text-slate-400">
+                            <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
+                            <p>
+                                După ce efectuezi transferul bancar, adminul va verifica extrasul de cont și va aproba tranzacția. Creditele vor fi adăugate imediat în balanță.
+                            </p>
+                        </div>
+                    </section>
+                ) : selectedPackage ? (
+                    // Package Confirmation Panel
+                    <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+                        <div className="border-b border-slate-800 pb-4">
+                            <h2 className="text-lg font-bold text-white">Confirmare alimentare: {selectedPackage.name}</h2>
+                            <p className="text-xs text-slate-400">Confirmă comanda pentru a obține codul de transfer.</p>
+                        </div>
+
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-3">
+                                <Coins className="w-5 h-5 text-yellow-500" />
+                                <span className="font-semibold">{selectedPackage.credits} Credite</span>
+                            </div>
+                            <span className="font-extrabold text-white">{selectedPackage.price} RON</span>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <button
+                                disabled={isPending}
+                                onClick={handleConfirmPurchase}
+                                className="flex-1 bg-gradient-to-r from-orange-500 to-emerald-600 hover:from-orange-400 hover:to-emerald-500 text-white font-extrabold py-3 px-6 rounded-xl text-sm transition-all shadow-lg shadow-orange-500/10"
+                            >
+                                {isPending ? 'Se generează...' : 'GENEREAZĂ DETALII TRANSFER'}
+                            </button>
+                            <button
+                                disabled={isPending}
+                                onClick={() => setSelectedPackage(null)}
+                                className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 font-bold py-3 px-6 rounded-xl text-sm transition-all"
+                            >
+                                Renunță
+                            </button>
+                        </div>
+                    </section>
+                ) : (
+                    // Packages Selection Grid
+                    <section className="space-y-4">
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                            <CreditCard className="w-5 h-5 text-orange-400" />
+                            Alege un pachet de credite
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                            {PACKAGES.map((pack) => (
+                                <div 
+                                    key={pack.credits}
+                                    className={`bg-slate-900 border rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all relative ${
+                                        pack.popular 
+                                            ? 'border-yellow-500 shadow-xl shadow-yellow-500/5 hover:-translate-y-1' 
+                                            : 'border-slate-800 hover:border-slate-700 hover:-translate-y-0.5'
+                                    }`}
+                                >
+                                    {pack.popular && (
+                                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                                            Recomandat
+                                        </span>
+                                    )}
+                                    <div className="space-y-1">
+                                        <div className="text-xs text-slate-500 font-bold uppercase">{pack.name}</div>
+                                        <div className="text-3xl font-black text-white flex items-baseline gap-1 font-mono">
+                                            {pack.credits}
+                                            <span className="text-xs text-yellow-500 font-bold">CR</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="text-sm font-semibold text-slate-300">
+                                            {pack.price} RON
+                                        </div>
+                                        <button
+                                            onClick={() => handleInitiatePurchase(pack)}
+                                            className={`w-full font-bold py-2 rounded-xl text-xs transition-colors ${
+                                                pack.popular 
+                                                    ? 'bg-yellow-500 hover:bg-yellow-400 text-black' 
+                                                    : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
+                                            }`}
+                                        >
+                                            Cumpără Pachet
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Purchase Log / Orders History */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                        <Coins className="w-5 h-5 text-emerald-400" />
+                        Istoricul tranzacțiilor tale
+                    </h2>
+
+                    {purchasesLog.length === 0 ? (
+                        <p className="text-sm text-slate-500 italic">Nu ai nicio tranzacție inițiată încă.</p>
+                    ) : (
+                        <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
+                            <div className="divide-y divide-slate-800/50">
+                                {purchasesLog.map((item) => (
+                                    <div key={item.id} className="p-4 sm:px-6 flex items-center justify-between gap-4 hover:bg-slate-900/30 transition-colors">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2.5">
+                                                <span className="font-mono text-xs font-bold text-slate-300">{item.reference_id}</span>
+                                                <span className="text-[10px] text-slate-500">
+                                                    {new Date(item.created_at).toLocaleDateString('ro-RO')}
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-slate-400">
+                                                Alimentare: {item.amount_ron} RON pentru {item.credits} credite
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            {item.status === 'pending' && (
+                                                <span className="inline-flex items-center gap-1 text-xs text-orange-400 font-semibold bg-orange-400/10 px-2 py-0.5 rounded">
+                                                    <Clock className="w-3.5 h-3.5" /> În Așteptare
+                                                </span>
+                                            )}
+                                            {item.status === 'approved' && (
+                                                <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-semibold bg-emerald-400/10 px-2 py-0.5 rounded">
+                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Aprobat
+                                                </span>
+                                            )}
+                                            {item.status === 'cancelled' && (
+                                                <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-semibold bg-slate-800 px-2 py-0.5 rounded">
+                                                    <XCircle className="w-3.5 h-3.5" /> Anulat
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </section>
+            </div>
+        </div>
+    );
+}

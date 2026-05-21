@@ -46,6 +46,8 @@ export default function SignUpPage() {
             else if (lowerPlan.includes('enterprise') || lowerPlan.includes('scale')) planTier = 'enterprise';
         }
 
+        const refParam = searchParams.get('ref');
+
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
@@ -55,7 +57,8 @@ export default function SignUpPage() {
                         first_name: firstName,
                         last_name: lastName,
                         role: role,
-                        plan_tier: planTier
+                        plan_tier: planTier,
+                        referred_by: refParam || undefined
                     },
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
@@ -91,6 +94,11 @@ export default function SignUpPage() {
         try {
             // Store selected role in a cookie for the callback to read
             document.cookie = `signup_role=${role}; path=/; max-age=300; SameSite=Lax`;
+
+            const refParam = searchParams.get('ref');
+            if (refParam) {
+                document.cookie = `signup_ref=${refParam}; path=/; max-age=300; SameSite=Lax`;
+            }
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider,

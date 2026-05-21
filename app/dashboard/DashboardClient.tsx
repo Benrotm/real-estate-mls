@@ -116,6 +116,7 @@ export default function DashboardClient({
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
         { name: 'Calculator Settings', icon: Calculator, href: '/dashboard/admin/settings/calculator-comisioane' },
         { name: 'Credit & Costs System', icon: Coins, href: '/dashboard/admin/credit-settings' },
+        { name: 'Validare Plăți', icon: DollarSign, href: '/dashboard/admin/validare-plati' },
         { name: 'AI Provider Config', icon: Settings, href: '/dashboard/admin/ai-settings' },
         { name: 'Imoflux', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
         { name: 'Sold Imoflux', icon: Target, href: '/dashboard/admin/sold-immoflux' },
@@ -194,10 +195,10 @@ export default function DashboardClient({
                 <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
                     {isAdmin ? 'Super Admin' : isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : isClient ? 'Client Dashboard' : 'Welcome'}
                 </p>
-                <div className="mt-4 flex items-center justify-between bg-black/30 border border-slate-700/50 p-2.5 rounded-xl">
-                    <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5"><Coins className="w-4 h-4 text-yellow-500" /> Balanță Credite</span>
+                <Link href="/cont/plati" className="mt-4 flex items-center justify-between bg-black/30 border border-slate-700/50 hover:border-yellow-500/50 p-2.5 rounded-xl transition-colors cursor-pointer group">
+                    <span className="text-xs font-semibold text-slate-400 group-hover:text-white transition-colors flex items-center gap-1.5"><Coins className="w-4 h-4 text-yellow-500" /> Balanță Credite</span>
                     <span className="text-sm font-bold text-yellow-500">{credits}</span>
-                </div>
+                </Link>
             </div>
 
             <nav className="flex-1 px-4 space-y-1">
@@ -257,10 +258,10 @@ export default function DashboardClient({
                         <span className="font-bold text-lg">Dashboard</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                        <Link href="/cont/plati" className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 hover:border-yellow-500/50 transition-colors">
                            <Coins className="w-3 h-3 text-yellow-500" />
                            <span className="text-xs font-bold text-yellow-500">{credits}</span>
-                        </div>
+                        </Link>
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             className="p-2 hover:bg-slate-800 rounded-lg transition-colors"

@@ -17,32 +17,101 @@ export async function getUserCredits() {
     return { credits: data.credits as number };
 }
 
-export async function deductUserCredits(amount: number) {
+export async function deductUserCredits(amount: number, description: string = 'Consum servicii') {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
 
-    // Get current balance
+    // Get current balance and referrer
     const { data: profile, error: readError } = await supabase
         .from('profiles')
-        .select('credits')
+        .select('credits, referred_by, full_name')
         .eq('id', user.id)
         .single();
         
     if (readError) return { error: readError.message };
     
-    if ((profile.credits || 0) < amount) {
+    const currentCredits = profile.credits || 0;
+    if (currentCredits < amount) {
         return { error: 'Fonduri insuficiente', insufficient: true };
     }
 
-    const newBalance = (profile.credits || 0) - amount;
+    const newBalance = currentCredits - amount;
     
+    // Update balance
     const { error: updateError } = await supabase
         .from('profiles')
         .update({ credits: newBalance })
         .eq('id', user.id);
 
     if (updateError) return { error: updateError.message };
+
+    // Create transaction log for deduction
+    const { data: txn, error: logTxError } = await supabase
+        .from('credit_transactions')
+        .insert({
+            user_id: user.id,
+            amount: -amount,
+            description: description,
+            metadata: { feature_cost: amount }
+        })
+        .select()
+        .single();
+
+    // Check for referral commission
+    if (profile.referred_by && amount > 0) {
+        const referrerId = profile.referred_by;
+
+        // Fetch referral settings
+        const { data: settingsData } = await supabase
+            .from('platform_settings')
+            .select('setting_value')
+            .eq('setting_key', 'referral_settings')
+            .single();
+
+        const settings = (settingsData?.setting_value as any) || { commission_percentage: 10 };
+        const commissionPercentage = Number(settings.commission_percentage) || 0;
+
+        if (commissionPercentage > 0) {
+            const commission = Math.floor(amount * (commissionPercentage / 100));
+
+            if (commission > 0) {
+                // Fetch referrer's current balance
+                const { data: referrerProfile } = await supabase
+                    .from('profiles')
+                    .select('credits')
+                    .eq('id', referrerId)
+                    .single();
+
+                if (referrerProfile) {
+                    const referrerNewBalance = (referrerProfile.credits || 0) + commission;
+
+                    // Update referrer's credits
+                    await supabase
+                        .from('profiles')
+                        .update({ credits: referrerNewBalance })
+                        .eq('id', referrerId);
+
+                    // Log commission transaction
+                    const inviteeName = profile.full_name || 'Prieten invitat';
+                    await supabase
+                        .from('credit_transactions')
+                        .insert({
+                            user_id: referrerId,
+                            amount: commission,
+                            description: `Comision consum ${inviteeName}`,
+                            metadata: {
+                                invitee_id: user.id,
+                                invitee_name: inviteeName,
+                                commission_percentage: commissionPercentage,
+                                source_transaction_id: txn?.id
+                            }
+                        });
+                }
+            }
+        }
+    }
+
     return { success: true, remaining: newBalance };
 }
 
@@ -75,6 +144,17 @@ export async function grantUserCredits(userId: string, amount: number) {
         .eq('id', userId);
 
     if (updateError) return { error: updateError.message };
+
+    // Log transaction
+    await supabase
+        .from('credit_transactions')
+        .insert({
+            user_id: userId,
+            amount: amount,
+            description: 'Credite acordate de admin',
+            metadata: { approved_by: user.id }
+        });
+
     return { success: true, newBalance };
 }
 
@@ -96,5 +176,22 @@ export async function updateSystemFeatureDeduction(featureId: string) {
 
     if (cost === 0) return { success: true, deducted: 0, error: undefined };
 
-    return await deductUserCredits(cost);
+    return await deductUserCredits(cost, `Consum feature: ${featureId}`);
 }
+
+export async function getUserCreditTransactions() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    const { data, error } = await supabase
+        .from('credit_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+    if (error) return { error: error.message };
+    return { transactions: data || [] };
+}
+
