@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { getCalculatorSettings } from '@/app/lib/actions/calculator-settings';
 import CalculatorClient from './CalculatorClient';
+import { getUserProfile } from '@/app/lib/auth';
 
 export const metadata: Metadata = {
     title: 'Calculator Comisioane & Servicii | Real Estate Hub Timișoara',
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 export default async function CalculatorPage() {
     // Fetch initial settings from DB (with robust server fallbacks)
     const result = await getCalculatorSettings();
+    const user = await getUserProfile();
     
     return (
         <main className="min-h-screen bg-slate-950 text-white pt-24 pb-16 px-4 md:px-8">
@@ -26,7 +28,7 @@ export default async function CalculatorPage() {
                     </p>
                 </header>
                 
-                <CalculatorClient initialSettings={result.settings} />
+                <CalculatorClient initialSettings={result.settings} user={user} />
             </div>
         </main>
     );

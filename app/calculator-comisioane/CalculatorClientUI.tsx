@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
     Sliders, Shield, Activity, Info, Lock, Check, HelpCircle, 
-    AlertCircle, Sparkles, Receipt, UserCheck, ShieldCheck 
+    AlertCircle, Sparkles, Receipt, UserCheck, ShieldCheck, FileText
 } from 'lucide-react';
 
 interface Model {
@@ -40,6 +40,15 @@ interface Service {
     commAvail: Record<string, boolean>;
 }
 
+interface UserProfile {
+    id: string;
+    full_name: string;
+    role: string;
+    plan_tier: string;
+    email?: string;
+    phone?: string;
+}
+
 interface CalculatorClientUIProps {
     initialSettings: {
         commission_models: Record<string, Model>;
@@ -47,9 +56,10 @@ interface CalculatorClientUIProps {
         exclusivity_periods: ExclusivityPeriod[];
         services: Service[];
     };
+    user: UserProfile | null;
 }
 
-export default function CalculatorClientUI({ initialSettings }: CalculatorClientUIProps) {
+export default function CalculatorClientUI({ initialSettings, user }: CalculatorClientUIProps) {
     // ----------------------------------------------------
     // 1. Reactive States
     // ----------------------------------------------------
@@ -57,6 +67,7 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
     const [activeModel, setActiveModel] = useState<string>('zero-seller');
     const [isExclusive, setIsExclusive] = useState<boolean>(false);
     const [exclusivityPeriodDays, setExclusivityPeriodDays] = useState<number>(90);
+    const [showAuthAlert, setShowAuthAlert] = useState<boolean>(false);
     
     // Services status
     const [services, setServices] = useState<Service[]>(
@@ -224,6 +235,423 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
         return num.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' %';
     };
 
+    const translateRole = (role: string) => {
+        switch (role) {
+            case 'owner': return 'Proprietar';
+            case 'client': return 'Client / Cumpărător';
+            case 'agent': return 'Agent Imobiliar';
+            case 'developer': return 'Dezvoltator';
+            case 'admin': return 'Administrator';
+            case 'super_admin': return 'Super Administrator';
+            default: return role;
+        }
+    };
+
+    const handleGenerateDocument = () => {
+        if (!user) {
+            setShowAuthAlert(true);
+            return;
+        }
+
+        const now = new Date();
+        const formattedDate = now.toLocaleString('ro-RO', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        const activeModelObj = initialSettings.commission_models[activeModel] || { nm: '', desc: '' };
+        const exclusivityText = isExclusive 
+            ? `Exclusivă (${exclusivityPeriodDays} zile, ajustare ${calculations.exclusivityAdjustment >= 0 ? '+' : ''}${calculations.exclusivityAdjustment.toFixed(2)}%)` 
+            : 'Non-exclusivă';
+
+        const selectedServices = services.filter(s => s.always || s.on);
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Te rugăm să permiți ferestrele pop-up pentru a genera documentul.');
+            return;
+        }
+
+        const servicesRows = selectedServices.map(s => {
+            const mode = getEffectivePayMode(s);
+            const modeLabel = mode === 'commission' ? 'Inclus în comision' : 'Plată separată';
+            const costLabel = mode === 'commission' 
+                ? `+${formatPercent(s.coef * calculations.tierFactor)}` 
+                : formatEUR(s.cost);
+            return `
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold; font-size: 13px; color: #1e293b;">${s.nm}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">${s.dc}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 12px; font-weight: 600; color: ${mode === 'commission' ? '#10b981' : '#f59e0b'};">${modeLabel}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; font-weight: bold; text-align: right; color: #1e293b;">${costLabel}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html lang="ro">
+            <head>
+                <meta charset="UTF-8">
+                <title>Anexa - Calculator Imobiliar</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+                    body {
+                        font-family: 'Inter', sans-serif;
+                        color: #1e293b;
+                        line-height: 1.5;
+                        margin: 0;
+                        padding: 40px;
+                        background-color: #ffffff;
+                    }
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                    }
+                    .header {
+                        text-align: center;
+                        border-bottom: 2px solid #e2e8f0;
+                        padding-bottom: 20px;
+                        margin-bottom: 30px;
+                    }
+                    .logo {
+                        font-size: 20px;
+                        font-weight: 800;
+                        color: #f97316;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        margin-bottom: 5px;
+                    }
+                    .title {
+                        font-size: 28px;
+                        font-weight: 800;
+                        margin: 10px 0 5px 0;
+                        color: #0f172a;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+                    .subtitle {
+                        font-size: 14px;
+                        color: #64748b;
+                        margin: 0;
+                    }
+                    .section {
+                        margin-bottom: 25px;
+                    }
+                    .section-title {
+                        font-size: 14px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        color: #475569;
+                        border-bottom: 1px solid #cbd5e1;
+                        padding-bottom: 6px;
+                        margin-bottom: 15px;
+                        letter-spacing: 0.5px;
+                    }
+                    .grid-2 {
+                        display: flex;
+                        gap: 20px;
+                    }
+                    .data-box {
+                        flex: 1;
+                        background-color: #f8fafc;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 8px;
+                        padding: 15px;
+                    }
+                    .data-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 8px;
+                        font-size: 13px;
+                    }
+                    .data-row:last-child {
+                        margin-bottom: 0;
+                    }
+                    .data-label {
+                        color: #64748b;
+                        font-weight: 500;
+                    }
+                    .data-value {
+                        font-weight: 600;
+                        color: #0f172a;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                    }
+                    th {
+                        background-color: #f1f5f9;
+                        padding: 10px;
+                        font-size: 11px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        color: #475569;
+                        text-align: left;
+                        border-bottom: 2px solid #cbd5e1;
+                    }
+                    .financial-summary {
+                        background-color: #f0fdf4;
+                        border: 1px solid #bbf7d0;
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-top: 20px;
+                    }
+                    .financial-title {
+                        font-size: 12px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        color: #166534;
+                        margin-bottom: 12px;
+                        letter-spacing: 0.5px;
+                    }
+                    .financial-grid {
+                        display: flex;
+                        gap: 15px;
+                    }
+                    .financial-col {
+                        flex: 1;
+                    }
+                    .financial-row {
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 13px;
+                        margin-bottom: 6px;
+                    }
+                    .financial-row.total {
+                        border-top: 1px dashed #bbf7d0;
+                        padding-top: 10px;
+                        margin-top: 10px;
+                        font-size: 16px;
+                        font-weight: 800;
+                        color: #14532d;
+                    }
+                    .footer-disclaimer {
+                        font-size: 11px;
+                        color: #94a3b8;
+                        margin-top: 30px;
+                        line-height: 1.6;
+                        text-align: justify;
+                    }
+                    .signatures-area {
+                        margin-top: 50px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        page-break-inside: avoid;
+                    }
+                    .signature-block-left {
+                        width: 45%;
+                        text-align: left;
+                        font-size: 12px;
+                    }
+                    .signature-block-right {
+                        width: 45%;
+                        text-align: right;
+                        font-size: 12px;
+                    }
+                    .signature-title {
+                        font-weight: 700;
+                        color: #334155;
+                        margin-bottom: 8px;
+                        text-transform: uppercase;
+                        font-size: 11px;
+                        letter-spacing: 0.5px;
+                    }
+                    .signature-details {
+                        color: #64748b;
+                        line-height: 1.6;
+                        margin-bottom: 45px;
+                    }
+                    .signature-line {
+                        border-top: 1px solid #94a3b8;
+                        width: 220px;
+                        margin-top: 10px;
+                        padding-top: 5px;
+                        color: #64748b;
+                        font-weight: 500;
+                    }
+                    .signature-line-right {
+                        border-top: 1px solid #94a3b8;
+                        width: 220px;
+                        margin-top: 10px;
+                        padding-top: 5px;
+                        color: #64748b;
+                        font-weight: 500;
+                        margin-left: auto;
+                    }
+                    .agreement-text {
+                        font-style: italic;
+                        color: #334155;
+                        font-weight: 500;
+                        line-height: 1.5;
+                        margin-bottom: 25px;
+                    }
+                    @media print {
+                        body {
+                            padding: 20px;
+                        }
+                        button {
+                            display: none;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <div class="logo">Real Estate Hub Timișoara</div>
+                        <h1 class="title">Anexa</h1>
+                        <p class="subtitle">Document de colaborare și configurare servicii imobiliare</p>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Date Tranzacție & Configurare</div>
+                        <div class="grid-2">
+                            <div class="data-box">
+                                <div class="data-row">
+                                    <span class="data-label">Valoare Proprietate:</span>
+                                    <span class="data-value">${formatEUR(propertyValue)}</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Model Comisionare:</span>
+                                    <span class="data-value">${activeModelObj.nm}</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Regim Reprezentare:</span>
+                                    <span class="data-value">${exclusivityText}</span>
+                                </div>
+                            </div>
+                            <div class="data-box">
+                                <div class="data-row">
+                                    <span class="data-label">Factor Tier Curent:</span>
+                                    <span class="data-value">×${calculations.tierFactor.toFixed(2)}</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Interval Valoare:</span>
+                                    <span class="data-value">${calculations.activeTier.lbl}</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Ajustare Exclusivitate:</span>
+                                    <span class="data-value">${calculations.exclusivityAdjustment >= 0 ? '+' : ''}${calculations.exclusivityAdjustment.toFixed(2)}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Servicii Configurate</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Serviciu</th>
+                                    <th style="width: 45%;">Descriere</th>
+                                    <th style="width: 15%;">Mod Plată</th>
+                                    <th style="width: 15%; text-align: right;">Valoare / Coef.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${servicesRows}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Recapitulare Financiară</div>
+                        <div class="financial-summary">
+                            <div class="financial-title">Sumar Comisioane (fără TVA)</div>
+                            <div class="financial-grid">
+                                <div class="financial-col">
+                                    <div class="financial-row">
+                                        <span class="data-label">Comision Vânzător (%):</span>
+                                        <span class="data-value">${formatPercent(calculations.finalSellerPercent)}</span>
+                                    </div>
+                                    <div class="financial-row">
+                                        <span class="data-label">Comision Vânzător (€):</span>
+                                        <span class="data-value">${formatEUR(calculations.sellerCommissionEUR)}</span>
+                                    </div>
+                                </div>
+                                <div class="financial-col">
+                                    <div class="financial-row">
+                                        <span class="data-label">Comision Cumpărător (%):</span>
+                                        <span class="data-value">${formatPercent(calculations.finalBuyerPercent)}</span>
+                                    </div>
+                                    <div class="financial-row">
+                                        <span class="data-label">Comision Cumpărător (€):</span>
+                                        <span class="data-value">${formatEUR(calculations.buyerCommissionEUR)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="financial-grid" style="margin-top: 15px; border-top: 1px dashed #bbf7d0; padding-top: 15px;">
+                                <div class="financial-col">
+                                    <div class="financial-row">
+                                        <span class="data-label">Servicii plătite separat (€):</span>
+                                        <span class="data-value" style="color: #f59e0b;">${formatEUR(calculations.separateServicesCost)}</span>
+                                    </div>
+                                </div>
+                                <div class="financial-col">
+                                    <div class="financial-row">
+                                        <span class="data-label">Servicii incluse în comision:</span>
+                                        <span class="data-value" style="color: #10b981;">+${formatPercent(calculations.serviceCommissionPercentAddition)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="financial-row total">
+                                <span>Total Investit Proprietar (Vânzător):</span>
+                                <span>${formatEUR(calculations.sellerTotalOutlayEUR)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer-disclaimer">
+                        Prezentul document constituie o anexă de simulare a serviciilor și comisioanelor agreate în cadrul colaborării imobiliare. Toate comisioanele sunt exprimate în EUR și nu includ TVA (cota 19% aplicabilă conform legislației în vigoare). Prețurile serviciilor separate sunt exprimate în EUR și sunt de asemenea purtătoare de TVA. Termenii contractuali finali vor fi reglementați prin contractul de intermediere semnat între părți.
+                    </div>
+
+                    <div class="signatures-area">
+                        <div class="signature-block-left">
+                            <div class="signature-title">Generat de:</div>
+                            <div class="signature-details">
+                                <strong>Nume:</strong> ${user.full_name}<br>
+                                <strong>Rol Profil:</strong> ${translateRole(user.role)}<br>
+                                <strong>Email:</strong> ${user.email || 'Nespecificat'}<br>
+                                <strong>Telefon:</strong> ${user.phone || 'Nespecificat'}<br>
+                                <strong>Data și ora generării:</strong> ${formattedDate}
+                            </div>
+                            <div style="margin-top: 30px;">
+                                <div class="signature-line">Semnătură Agent / Reprezentant</div>
+                            </div>
+                        </div>
+                        <div class="signature-block-right">
+                            <div class="agreement-text">
+                                "Acestea sunt serviciile pe care eu le-am ales si cu care sunt de accord"
+                            </div>
+                            <div style="margin-top: 75px;">
+                                <div class="signature-line-right">Semnătură Client / Proprietar</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+    };
+
     // Group services by category
     const groupedServices = useMemo(() => {
         const groups: Record<string, Service[]> = {};
@@ -246,7 +674,8 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
     const currentExclusivityPeriod = initialSettings.exclusivity_periods.find(p => p.d === exclusivityPeriodDays);
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {/* CONFIGURATION COLUMN */}
             <div className="lg:col-span-2 space-y-6">
                 
@@ -682,6 +1111,16 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
                         </p>
                     </div>
 
+                    {/* BUTTON GENERATE DOCUMENT */}
+                    <button
+                        type="button"
+                        onClick={handleGenerateDocument}
+                        className="w-full mt-4 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-orange-500/20 transition-all flex items-center justify-center gap-2 border border-orange-500/30 text-sm"
+                    >
+                        <FileText className="w-4 h-4" />
+                        Generează Document
+                    </button>
+
                     <div className="text-[10px] text-slate-500 leading-relaxed mt-4 flex items-start gap-1.5 bg-slate-950/30 p-3 rounded-lg border border-slate-800/40">
                         <HelpCircle className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 mt-0.5" />
                         <div>
@@ -691,5 +1130,43 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
                 </div>
             </div>
         </div>
+
+        {/* AUTH WARNING MODAL */}
+        {showAuthAlert && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl relative text-center">
+                    <button 
+                        type="button"
+                        onClick={() => setShowAuthAlert(false)}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors text-lg"
+                    >
+                        ✕
+                    </button>
+                    <div className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20 flex items-center justify-center mx-auto mb-4">
+                        <Lock className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-2">Autentificare necesară</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                        Pentru a genera acest document, trebuie să fii autentificat în contul tău Real Estate Hub.
+                    </p>
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setShowAuthAlert(false)}
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition-all border border-slate-700/50"
+                        >
+                            Închide
+                        </button>
+                        <a
+                            href="/auth/login"
+                            className="flex-1 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs text-center shadow-lg hover:shadow-orange-500/15 transition-all border border-orange-500/30"
+                        >
+                            Autentificare
+                        </a>
+                    </div>
+                </div>
+            </div>
+        )}
+    </>
     );
 }
