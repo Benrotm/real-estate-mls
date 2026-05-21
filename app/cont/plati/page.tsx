@@ -13,7 +13,10 @@ import {
     Clock, 
     Check, 
     AlertTriangle,
-    ShieldCheck
+    ShieldCheck,
+    Gift,
+    Award,
+    Copy
 } from 'lucide-react';
 import Link from 'next/link';
 import { 
@@ -45,6 +48,14 @@ export default function PlatiPage() {
     const [purchasesLog, setPurchasesLog] = useState<any[]>([]);
     const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [referralLink, setReferralLink] = useState('');
+    const [referralSettings, setReferralSettings] = useState<any>({
+        referrer_bonus: 15,
+        invitee_bonus: 10,
+        commission_percentage: 10
+    });
+    const [totalCommissions, setTotalCommissions] = useState(0);
+    const [copied, setCopied] = useState(false);
 
     const loadData = async () => {
         setLoading(true);
@@ -72,9 +83,14 @@ export default function PlatiPage() {
             setPurchasesLog(logRes.purchases || []);
         }
 
-        if (refRes && 'settings' in refRes) {
-            const settings = refRes.settings;
-            setReferralBonusText(`Primești ${settings.referrer_bonus} credite cadou pentru fiecare prieten invitat + ${settings.commission_percentage}% comision din creditele consumate de ei.`);
+        if (refRes && 'referralLink' in refRes) {
+            setReferralLink(refRes.referralLink || '');
+            setTotalCommissions(refRes.totalCommissionsEarned || 0);
+            if (refRes.settings) {
+                const settings = refRes.settings;
+                setReferralSettings(settings);
+                setReferralBonusText(`Primești ${settings.referrer_bonus} credite cadou pentru fiecare prieten invitat + ${settings.commission_percentage}% comision din creditele consumate de ei.`);
+            }
         }
 
         setLoading(false);
@@ -118,6 +134,13 @@ export default function PlatiPage() {
                 loadData();
             }
         });
+    };
+
+    const copyToClipboard = () => {
+        if (!referralLink) return;
+        navigator.clipboard.writeText(referralLink);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     if (loading) {
@@ -347,6 +370,69 @@ export default function PlatiPage() {
                         </div>
                     </section>
                 )}
+
+                {/* Vrei credite gratuite? / Referral section */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                        <Gift className="w-5 h-5 text-emerald-400" />
+                        Vrei credite gratuite?
+                    </h2>
+                    
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+                        
+                        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                            <div>
+                                <h3 className="text-base font-bold text-white">Sistemul de Recomandare</h3>
+                                <p className="text-xs text-slate-400">Invită prieteni și câștigați credite împreună.</p>
+                            </div>
+                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs text-emerald-400 font-bold shrink-0 self-start sm:self-auto">
+                                <Award className="w-4 h-4" />
+                                {totalCommissions} CR câștigate din recomandări
+                            </div>
+                        </header>
+
+                        {/* Program description */}
+                        <div className="bg-slate-950/60 border border-slate-850 rounded-xl p-5 space-y-4">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Cum funcționează?</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                <div className="space-y-1">
+                                    <div className="text-emerald-400 font-extrabold">1. Trimite link-ul</div>
+                                    <p className="text-slate-400">Prietenul tău folosește link-ul tău unic pentru a se înregistra pe platforma Imobum.</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="text-emerald-400 font-extrabold">2. Primiți credite cadou</div>
+                                    <p className="text-slate-400">El primește <span className="font-bold text-white">{referralSettings.invitee_bonus} credite</span> iar tu primești <span className="font-bold text-white">{referralSettings.referrer_bonus} credite</span> instant.</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="text-emerald-400 font-extrabold">3. Comision permanent</div>
+                                    <p className="text-slate-400">Primești <span className="font-bold text-white">{referralSettings.commission_percentage}% comision</span> din toate creditele consumate de el.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Invitation link generator */}
+                        <div className="space-y-2">
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">Link-ul tău de invitație</label>
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    value={referralLink} 
+                                    readOnly
+                                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono text-slate-300 focus:border-emerald-500 outline-none select-all"
+                                />
+                                <button
+                                    onClick={copyToClipboard}
+                                    className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white font-bold px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-xs shrink-0"
+                                    title="Copiază link-ul"
+                                >
+                                    {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
+                                    {copied ? 'Copiat!' : 'Copiază'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 {/* Purchase Log / Orders History */}
                 <section className="space-y-4">

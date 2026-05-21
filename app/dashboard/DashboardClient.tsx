@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -121,11 +121,13 @@ export default function DashboardClient({
         { name: 'Imoflux', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
         { name: 'Sold Imoflux', icon: Target, href: '/dashboard/admin/sold-immoflux' },
         { name: 'FluxMLS', icon: CopyCheck, href: '/dashboard/admin/fluxmls' },
-        { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
-        { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },
         { name: 'Single Import', icon: Globe, href: '/dashboard/admin/properties/import' },
         { name: 'Bulk Import', icon: FileDown, href: '/dashboard/admin/bulk-import' },
         { name: 'Bulk Import OLX', icon: Globe, href: '/dashboard/admin/bulk-import-olx' },
+        { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
+        { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
+        { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
+        { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
         ...(isAgencyManager ? [
@@ -143,6 +145,8 @@ export default function DashboardClient({
         { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/agent/analytics' },
         { name: 'Daily Activities', icon: Calendar, href: '/dashboard/agent/activities' },
+        { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
+        { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/agent/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/agent/support-chat' },
         { name: 'Report & Suggest', icon: Flag, href: '/dashboard/agent/report' },
@@ -156,6 +160,8 @@ export default function DashboardClient({
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
         { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/owner/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/owner/analytics' },
+        { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
+        { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/owner/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/owner/support-chat' },
         { name: 'Report & Suggest', icon: Flag, href: '/dashboard/owner/report' },
@@ -165,6 +171,8 @@ export default function DashboardClient({
         { name: 'My Projects', icon: Building, href: '/dashboard/developer/projects' },
         ...(hasFeature(SYSTEM_FEATURES.VALUATION_REPORTS) ? [{ name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/developer/valuation' }] : []),
         { name: 'Analytics', icon: BarChart2, href: '/dashboard/developer/analytics' },
+        { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
+        { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/developer/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/developer/support-chat' },
         { name: 'Report & Suggest', icon: Flag, href: '/dashboard/developer/report' },
@@ -177,6 +185,8 @@ export default function DashboardClient({
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/client/valuation' },
         { name: 'ACP Market Insights', icon: BarChart2, href: '/dashboard/client/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/client/analytics' },
+        { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
+        { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/client/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/client/support-chat' },
         { name: 'Report & Suggest', icon: Flag, href: '/dashboard/client/report' },
