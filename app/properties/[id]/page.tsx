@@ -21,6 +21,8 @@ import { getPropertyAnalytics } from '@/app/lib/actions/propertyAnalytics';
 import MakeOfferButton from '@/app/components/property/MakeOfferButton';
 import ReportListingButton from '@/app/components/property/ReportListingButton';
 import PropertyAmenities from '@/app/components/properties/PropertyAmenities';
+import { getAuctionForProperty } from "@/app/lib/actions/auctions";
+import AuctionWidget from "@/app/components/property/AuctionWidget";
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
@@ -61,6 +63,7 @@ export default async function PropertyDetailPage({
     let showVirtualTour = false;
     let hasAccess = false;
     let canViewContact = false;
+    let auction: any = null;
 
     try {
         // 1. Try to fetch from Supabase if ID is valid UUID
@@ -154,6 +157,7 @@ export default async function PropertyDetailPage({
         user = userRes.data.user;
 
         analytics = await getPropertyAnalytics(property.id);
+        auction = await getAuctionForProperty(property.id);
 
         const { data: events } = await supabase
             .from('property_events')
@@ -762,6 +766,15 @@ export default async function PropertyDetailPage({
 
                 {/* Sidebar */}
                 <div className="lg:col-span-1 space-y-6">
+                    {auction && auction.status !== 'cancelled' && (
+                        <AuctionWidget
+                            auction={auction}
+                            propertyId={property.id}
+                            currentUser={user}
+                            currency={property.currency || 'EUR'}
+                        />
+                    )}
+
                     <PropertyAnalyticsWidget
                         views={analytics.views}
                         favorites={analytics.favorites}

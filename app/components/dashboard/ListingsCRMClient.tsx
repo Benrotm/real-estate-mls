@@ -1,7 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { PropertyWithOffers, PropertyOffer, PropertyInquiry, updateOfferStatus, updateInquiryStatus, deleteInquiry } from '@/app/lib/actions/offers';
+import { useState, useEffect } from 'react';
+import { 
+    PropertyWithOffers, 
+    PropertyOffer, 
+    PropertyInquiry, 
+    updateOfferStatus, 
+    updateInquiryStatus, 
+    deleteInquiry,
+    counterOffer,
+    convertOfferToAuction,
+    addOfferToActiveAuction
+} from '@/app/lib/actions/offers';
+import { getAuctionForProperty, PropertyAuction } from '@/app/lib/actions/auctions';
 import { deleteProperty } from '@/app/lib/actions/properties';
 import { findMatchingLeads } from '@/app/lib/actions/scoring';
 import { startConversationWithUser, sendMessage } from '@/app/lib/actions/chat';
@@ -13,7 +24,7 @@ import {
     ExternalLink, Plus, Building2, MapPin, Calendar,
     Award, MessageSquare, Trash2, Zap, User, Phone,
     Mail, AlertCircle, Info, Users, Smartphone, Send,
-    Activity
+    Activity, Loader2, Gavel, Sparkles, ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -50,7 +61,9 @@ function StatusBadge({ status }: { status: string }) {
         contacted: 'bg-emerald-100 text-emerald-700 border-emerald-200',
         rejected: 'bg-red-100 text-red-700 border-red-200',
         spam: 'bg-slate-100 text-slate-500 border-slate-200',
-        expired: 'bg-gray-100 text-gray-500 border-gray-200'
+        expired: 'bg-gray-100 text-gray-500 border-gray-200',
+        countered: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+        auctioned: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200'
     };
     return (
         <span className={`px-2 py-1 text-xs font-bold rounded-full border ${styles[s] || styles.pending}`}>
@@ -61,69 +74,402 @@ function StatusBadge({ status }: { status: string }) {
 
 function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpdate: () => void }) {
     const [isUpdating, setIsUpdating] = useState(false);
+    const [activeAuction, setActiveAuction] = useState<PropertyAuction | null>(null);
+    const [isLoadingAuction, setIsLoadingAuction] = useState(true);
+    const [showCounterForm, setShowCounterForm] = useState(false);
+    const [showAuctionForm, setShowAuctionForm] = useState(false);
+    
+    // Inputs
+    const [counterAmount, setCounterAmount] = useState(offer.offer_amount.toString());
+    const [counterMessage, setCounterMessage] = useState('');
+    const [minIncrement, setMinIncrement] = useState('100');
+    
+    const getTomorrowDateTimeLocal = () => {
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 16);
+    };
+    
+    const getWeekLaterDateTimeLocal = () => {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 16);
+    };
+
+    const [startTime, setStartTime] = useState(getTomorrowDateTimeLocal());
+    const [endTime, setEndTime] = useState(getWeekLaterDateTimeLocal());
+    
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+    useEffect(() => {
+        const checkAuction = async () => {
+            try {
+                const auction = await getAuctionForProperty(offer.property_id);
+                setActiveAuction(auction);
+            } catch (err) {
+                console.error('Error fetching active auction for property:', err);
+            } finally {
+                setIsLoadingAuction(false);
+            }
+        };
+        checkAuction();
+    }, [offer.property_id]);
 
     const handleStatusChange = async (newStatus: 'accepted' | 'rejected' | 'viewed') => {
         setIsUpdating(true);
-        await updateOfferStatus(offer.id, newStatus);
+        setErrorMsg(null);
+        setSuccessMsg(null);
+        const res = await updateOfferStatus(offer.id, newStatus);
         setIsUpdating(false);
-        onStatusUpdate();
+        if (res.success) {
+            onStatusUpdate();
+        } else {
+            setErrorMsg(res.error || 'Failed to update status.');
+        }
     };
 
+    const handleCounterSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsUpdating(true);
+        setErrorMsg(null);
+        setSuccessMsg(null);
+        try {
+            const amount = Number(counterAmount);
+            if (isNaN(amount) || amount <= 0) {
+                setErrorMsg('Please enter a valid counter-offer amount.');
+                setIsUpdating(false);
+                return;
+            }
+            const res = await counterOffer(offer.id, amount, counterMessage);
+            if (res.success) {
+                setSuccessMsg('Counter offer submitted successfully!');
+                setShowCounterForm(false);
+                onStatusUpdate();
+            } else {
+                setErrorMsg(res.error || 'Failed to submit counter offer.');
+            }
+        } catch (err: any) {
+            setErrorMsg(err.message || 'An unexpected error occurred.');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleConvertSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsUpdating(true);
+        setErrorMsg(null);
+        setSuccessMsg(null);
+        try {
+            const increment = Number(minIncrement);
+            if (isNaN(increment) || increment <= 0) {
+                setErrorMsg('Please enter a valid minimum increment.');
+                setIsUpdating(false);
+                return;
+            }
+            const res = await convertOfferToAuction(
+                offer.id,
+                increment,
+                new Date(startTime).toISOString(),
+                new Date(endTime).toISOString()
+            );
+            if (res.success) {
+                setSuccessMsg('Successfully converted offer to auction!');
+                setShowAuctionForm(false);
+                onStatusUpdate();
+            } else {
+                setErrorMsg(res.error || 'Failed to convert offer to auction.');
+            }
+        } catch (err: any) {
+            setErrorMsg(err.message || 'An unexpected error occurred.');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleAddToAuction = async () => {
+        if (!activeAuction) return;
+        setIsUpdating(true);
+        setErrorMsg(null);
+        setSuccessMsg(null);
+        try {
+            const res = await addOfferToActiveAuction(offer.id, activeAuction.id);
+            if (res.success) {
+                setSuccessMsg('Successfully placed offer as a bid in the active auction!');
+                onStatusUpdate();
+            } else {
+                setErrorMsg(res.error || 'Failed to place bid.');
+            }
+        } catch (err: any) {
+            setErrorMsg(err.message || 'An unexpected error occurred.');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const hasActiveAuction = activeAuction && (activeAuction.status === 'active' || activeAuction.status === 'scheduled');
+
     return (
-        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {offer.name?.charAt(0) || 'U'}
+        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100/80 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                            {offer.name?.charAt(0) || 'U'}
+                        </div>
+                        <div>
+                            <div className="font-bold text-slate-900">{offer.name || 'Anonymous'}</div>
+                            <div className="text-sm text-slate-500">{offer.email || 'No email'}</div>
+                        </div>
                     </div>
-                    <div>
-                        <div className="font-bold text-slate-900">{offer.name || 'Anonymous'}</div>
-                        <div className="text-sm text-slate-500">{offer.email || 'No email'}</div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
+                        <span className="font-extrabold text-lg text-emerald-600">
+                            {formatCurrency(offer.offer_amount, offer.currency)}
+                        </span>
+                        <span className="text-slate-300 hidden sm:inline">•</span>
+                        <span className="text-slate-500 flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {formatDate(offer.created_at)}
+                        </span>
+                        {offer.phone && (
+                            <>
+                                <span className="text-slate-300 hidden sm:inline">•</span>
+                                <span className="text-slate-500 flex items-center gap-1">
+                                    <Phone className="w-3.5 h-3.5" />
+                                    {offer.phone}
+                                </span>
+                            </>
+                        )}
                     </div>
+
+                    {offer.message && (
+                        <div className="mt-2 text-sm text-slate-600 bg-white p-3 rounded-xl border border-slate-100 italic">
+                            &ldquo;{offer.message}&ldquo;
+                        </div>
+                    )}
+
+                    {/* Show counter details if countered */}
+                    {offer.status === 'countered' && offer.counter_amount && (
+                        <div className="mt-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl space-y-1">
+                            <div className="text-xs font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1">
+                                <Sparkles className="w-3.5 h-3.5" /> Counter Offer Placed
+                            </div>
+                            <div className="text-sm font-semibold text-indigo-950 flex items-center gap-1.5">
+                                Counter Price: <span className="font-bold text-indigo-700">{formatCurrency(offer.counter_amount, offer.currency)}</span>
+                            </div>
+                            {offer.counter_message && (
+                                <p className="text-xs text-indigo-900 italic">&ldquo;{offer.counter_message}&rdquo;</p>
+                            )}
+                        </div>
+                    )}
                 </div>
-                <div className="flex items-center gap-4 text-sm">
-                    <span className="font-bold text-lg text-emerald-600">{formatCurrency(offer.offer_amount, offer.currency)}</span>
-                    <span className="text-slate-400">•</span>
-                    <span className="text-slate-500">{formatDate(offer.created_at)}</span>
-                    {offer.phone && (
-                        <>
-                            <span className="text-slate-400">•</span>
-                            <span className="text-slate-500">{offer.phone}</span>
-                        </>
+
+                <div className="flex flex-wrap items-center gap-2 sm:self-start">
+                    <StatusBadge status={offer.status} />
+                    {(offer.status === 'pending' || offer.status === 'viewed') && (
+                        <div className="flex flex-wrap gap-1.5 ml-2">
+                            <button
+                                onClick={() => handleStatusChange('accepted')}
+                                disabled={isUpdating}
+                                className="p-2.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 shadow-sm"
+                                title="Accept"
+                            >
+                                <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => handleStatusChange('rejected')}
+                                disabled={isUpdating}
+                                className="p-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50 shadow-sm"
+                                title="Reject"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                            {offer.status === 'pending' && (
+                                <button
+                                    onClick={() => handleStatusChange('viewed')}
+                                    disabled={isUpdating}
+                                    className="p-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 shadow-sm"
+                                    title="Mark as viewed"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                </button>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setShowCounterForm(!showCounterForm);
+                                    setShowAuctionForm(false);
+                                }}
+                                disabled={isUpdating}
+                                className={`p-2.5 rounded-xl transition-colors disabled:opacity-50 shadow-sm ${
+                                    showCounterForm ? 'bg-indigo-700 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                                }`}
+                                title="Counter Offer"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                            </button>
+
+                            {/* Bidding options */}
+                            {!isLoadingAuction && (
+                                hasActiveAuction ? (
+                                    <button
+                                        onClick={handleAddToAuction}
+                                        disabled={isUpdating}
+                                        className="p-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors disabled:opacity-50 shadow-sm flex items-center gap-1 text-xs font-bold px-3"
+                                        title="Submit as Bid to Active Auction"
+                                    >
+                                        <Gavel className="w-4 h-4" />
+                                        Submit Bid
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            setShowAuctionForm(!showAuctionForm);
+                                            setShowCounterForm(false);
+                                        }}
+                                        disabled={isUpdating}
+                                        className={`p-2.5 rounded-xl transition-colors disabled:opacity-50 shadow-sm flex items-center gap-1 text-xs font-bold px-3 ${
+                                            showAuctionForm ? 'bg-violet-700 text-white' : 'bg-violet-500 text-white hover:bg-violet-600'
+                                        }`}
+                                        title="Start Auction from this Offer"
+                                    >
+                                        <Gavel className="w-4 h-4" />
+                                        Auction
+                                    </button>
+                                )
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
-            <div className="flex items-center gap-2">
-                <StatusBadge status={offer.status} />
-                {offer.status === 'pending' && (
-                    <div className="flex gap-1 ml-3">
+
+            {/* Error & Success Messages */}
+            {errorMsg && (
+                <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{errorMsg}</span>
+                </div>
+            )}
+            {successMsg && (
+                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-700 text-xs flex items-center gap-2">
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span>{successMsg}</span>
+                </div>
+            )}
+
+            {/* Counter Offer setup form */}
+            {showCounterForm && (
+                <form onSubmit={handleCounterSubmit} className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-3 animate-in slide-in-from-top duration-200">
+                    <div className="text-sm font-bold text-indigo-900 flex items-center gap-1">
+                        <Sparkles className="w-4 h-4" /> Negotiate / Counter Offer
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500">Counter Amount ({offer.currency})</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
+                                <input
+                                    type="number"
+                                    required
+                                    value={counterAmount}
+                                    onChange={(e) => setCounterAmount(e.target.value)}
+                                    placeholder="Enter counter price"
+                                    className="w-full pl-7 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500">Message to Buyer</label>
+                            <input
+                                type="text"
+                                value={counterMessage}
+                                onChange={(e) => setCounterMessage(e.target.value)}
+                                placeholder="Explain your pricing (e.g. including furniture)"
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
                         <button
-                            onClick={() => handleStatusChange('accepted')}
-                            disabled={isUpdating}
-                            className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
-                            title="Accept"
+                            type="button"
+                            onClick={() => setShowCounterForm(false)}
+                            className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors"
                         >
-                            <Check className="w-4 h-4" />
+                            Cancel
                         </button>
                         <button
-                            onClick={() => handleStatusChange('rejected')}
+                            type="submit"
                             disabled={isUpdating}
-                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                            title="Reject"
+                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/10 flex items-center gap-1"
                         >
-                            <X className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => handleStatusChange('viewed')}
-                            disabled={isUpdating}
-                            className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-                            title="Mark as viewed"
-                        >
-                            <Eye className="w-4 h-4" />
+                            {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                            Submit Counter
                         </button>
                     </div>
-                )}
-            </div>
+                </form>
+            )}
+
+            {/* Convert to Auction form */}
+            {showAuctionForm && (
+                <form onSubmit={handleConvertSubmit} className="p-4 bg-violet-50/50 border border-violet-100 rounded-xl space-y-3 animate-in slide-in-from-top duration-200">
+                    <div className="text-sm font-bold text-violet-900 flex items-center gap-1">
+                        <Gavel className="w-4 h-4 text-violet-600" /> Start Live Auction
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        This starts an auction for this property, using this offer's price of <span className="font-bold text-slate-700">{formatCurrency(offer.offer_amount, offer.currency)}</span> as the starting bid.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500">Min Bid Increment ({offer.currency})</label>
+                            <input
+                                type="number"
+                                required
+                                value={minIncrement}
+                                onChange={(e) => setMinIncrement(e.target.value)}
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 font-bold"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500">Start Time</label>
+                            <input
+                                type="datetime-local"
+                                required
+                                value={startTime}
+                                onChange={(e) => setStartTime(e.target.value)}
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-500">End Time</label>
+                            <input
+                                type="datetime-local"
+                                required
+                                value={endTime}
+                                onChange={(e) => setEndTime(e.target.value)}
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                        <button
+                            type="button"
+                            onClick={() => setShowAuctionForm(false)}
+                            className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isUpdating}
+                            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-violet-600/10 flex items-center gap-1"
+                        >
+                            {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Gavel className="w-3.5 h-3.5" />}
+                            Start Auction
+                        </button>
+                    </div>
+                </form>
+            )}
         </div>
     );
 }

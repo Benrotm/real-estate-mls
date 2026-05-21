@@ -13,7 +13,10 @@ export interface PropertyOffer {
     email: string | null;
     phone: string | null;
     message: string | null;
-    status: 'pending' | 'viewed' | 'accepted' | 'rejected' | 'expired';
+    status: 'pending' | 'viewed' | 'accepted' | 'rejected' | 'expired' | 'countered' | 'auctioned';
+    counter_amount?: number | null;
+    counter_message?: string | null;
+    counter_created_at?: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -214,7 +217,7 @@ export async function getPropertyOffers(propertyId: string): Promise<PropertyOff
 }
 
 // Update offer status
-export async function updateOfferStatus(offerId: string, status: 'pending' | 'viewed' | 'accepted' | 'rejected' | 'expired') {
+export async function updateOfferStatus(offerId: string, status: 'pending' | 'viewed' | 'accepted' | 'rejected' | 'expired' | 'countered' | 'auctioned') {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -391,4 +394,305 @@ export async function deleteInquiry(inquiryId: string) {
     revalidatePath('/dashboard/agent/listings');
     revalidatePath('/dashboard/owner/properties');
     return { success: true };
+}
+
+// Counter offer by listing owner/agent
+export async function counterOffer(offerId: string, counterAmount: number, counterMessage: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get offer details
+    const { data: offer } = await supabase
+        .from('property_offers')
+        .select('*')
+        .eq('id', offerId)
+        .single();
+
+    if (!offer) {
+        return { success: false, error: 'Offer not found' };
+    }
+
+    // Verify ownership of property
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id, title')
+        .eq('id', offer.property_id)
+        .single();
+
+    if (!property || property.owner_id !== user.id) {
+        return { success: false, error: 'Not authorized to counter this offer' };
+    }
+
+    const { error } = await supabase
+        .from('property_offers')
+        .update({
+            status: 'countered',
+            counter_amount: counterAmount,
+            counter_message: counterMessage,
+            counter_created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', offerId);
+
+    if (error) {
+        console.error('Error countering offer:', error);
+        return { success: false, error: error.message };
+    }
+
+    // Trigger Notification for the Buyer
+    if (offer.user_id) {
+        try {
+            const { createNotification } = await import('./notifications');
+            await createNotification({
+                user_id: offer.user_id,
+                type: 'offer',
+                title: 'New Counter Offer Received',
+                content: `The owner countered your offer on "${property.title}" with a price of ${counterAmount} ${offer.currency}`,
+                link: `/dashboard/client/offers`
+            });
+        } catch (notifyError) {
+            console.error('Error sending counter offer notification:', notifyError);
+        }
+    }
+
+    revalidatePath('/dashboard/agent/listings');
+    revalidatePath('/dashboard/owner/properties');
+    revalidatePath('/dashboard/client/offers');
+    return { success: true };
+}
+
+// Respond to counter-offer by buyer
+export async function respondToCounterOffer(offerId: string, accept: boolean) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Not authenticated' };
+    }
+
+    // Fetch offer
+    const { data: offer } = await supabase
+        .from('property_offers')
+        .select('*')
+        .eq('id', offerId)
+        .single();
+
+    if (!offer) {
+        return { success: false, error: 'Offer not found' };
+    }
+
+    // Verify current user is the buyer who made the offer
+    if (offer.user_id !== user.id) {
+        return { success: false, error: 'Not authorized to respond to this counter-offer' };
+    }
+
+    if (offer.status !== 'countered') {
+        return { success: false, error: 'Offer is not currently countered' };
+    }
+
+    const newStatus = accept ? 'accepted' : 'rejected';
+    const updateData: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString()
+    };
+
+    // If accepted, update the final offer_amount to counter_amount
+    if (accept && offer.counter_amount) {
+        updateData.offer_amount = offer.counter_amount;
+    }
+
+    const { error } = await supabase
+        .from('property_offers')
+        .update(updateData)
+        .eq('id', offerId);
+
+    if (error) {
+        console.error('Error responding to counter offer:', error);
+        return { success: false, error: error.message };
+    }
+
+    // Fetch property details for notification
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id, title')
+        .eq('id', offer.property_id)
+        .single();
+
+    // Notify the Owner
+    if (property && property.owner_id) {
+        try {
+            const { createNotification } = await import('./notifications');
+            const responseText = accept ? 'accepted' : 'rejected';
+            await createNotification({
+                user_id: property.owner_id,
+                type: 'offer',
+                title: `Counter Offer ${accept ? 'Accepted' : 'Rejected'}`,
+                content: `Buyer ${offer.name || 'Anonymous'} has ${responseText} your counter offer of ${offer.counter_amount} ${offer.currency} for "${property.title}"`,
+                link: `/dashboard/owner/leads`
+            });
+        } catch (notifyError) {
+            console.error('Error notifying owner of counter offer response:', notifyError);
+        }
+    }
+
+    revalidatePath('/dashboard/agent/listings');
+    revalidatePath('/dashboard/owner/properties');
+    revalidatePath('/dashboard/client/offers');
+    return { success: true };
+}
+
+// Convert offer to a live auction
+export async function convertOfferToAuction(
+    offerId: string,
+    minIncrement: number,
+    startTime: string,
+    endTime: string
+) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Not authenticated' };
+    }
+
+    // Fetch offer
+    const { data: offer } = await supabase
+        .from('property_offers')
+        .select('*')
+        .eq('id', offerId)
+        .single();
+
+    if (!offer) {
+        return { success: false, error: 'Offer not found' };
+    }
+
+    // Create the auction
+    const { createAuction, placeBid } = await import('./auctions');
+    const auctionRes = await createAuction(
+        offer.property_id,
+        offer.offer_amount,
+        null, // No reserve price by default when converting
+        minIncrement,
+        startTime,
+        endTime
+    );
+
+    if (!auctionRes.success || !auctionRes.auction) {
+        return { success: false, error: auctionRes.error || 'Failed to create auction' };
+    }
+
+    const auction = auctionRes.auction;
+
+    // Update offer status to 'auctioned'
+    const { error: updateError } = await supabase
+        .from('property_offers')
+        .update({
+            status: 'auctioned',
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', offerId);
+
+    if (updateError) {
+        console.error('Failed to update offer status to auctioned:', updateError);
+    }
+
+    // If the offer had a registered user_id, automatically place their offer as the first bid!
+    if (offer.user_id && new Date() >= new Date(startTime)) {
+        try {
+            await placeBid(auction.id, offer.offer_amount);
+        } catch (bidError) {
+            console.error('Failed to auto-bid converted offer:', bidError);
+        }
+    }
+
+    revalidatePath(`/properties/${offer.property_id}`);
+    revalidatePath('/dashboard/agent/listings');
+    revalidatePath('/dashboard/owner/properties');
+    return { success: true, auctionId: auction.id };
+}
+
+// Submit offer as a bid to an active auction
+export async function addOfferToActiveAuction(offerId: string, auctionId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Not authenticated' };
+    }
+
+    // Fetch offer
+    const { data: offer } = await supabase
+        .from('property_offers')
+        .select('*')
+        .eq('id', offerId)
+        .single();
+
+    if (!offer) {
+        return { success: false, error: 'Offer not found' };
+    }
+
+    // Place bid
+    const { placeBid } = await import('./auctions');
+    const bidRes = await placeBid(auctionId, offer.offer_amount);
+
+    if (!bidRes.success) {
+        return { success: false, error: bidRes.error || 'Failed to place bid in active auction' };
+    }
+
+    // Update offer status to 'auctioned'
+    const { error: updateError } = await supabase
+        .from('property_offers')
+        .update({
+            status: 'auctioned',
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', offerId);
+
+    if (updateError) {
+        console.error('Failed to update offer status to auctioned:', updateError);
+    }
+
+    revalidatePath(`/properties/${offer.property_id}`);
+    revalidatePath('/dashboard/agent/listings');
+    revalidatePath('/dashboard/owner/properties');
+    return { success: true };
+}
+
+// Get all offers submitted by the current client (buyer)
+export async function getClientOffers(): Promise<(PropertyOffer & { property: any })[]> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('property_offers')
+        .select(`
+            *,
+            property:properties (
+                id,
+                title,
+                price,
+                currency,
+                images,
+                location_city,
+                location_county,
+                friendly_id
+            )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching client offers:', error);
+        return [];
+    }
+
+    return data || [];
 }

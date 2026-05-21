@@ -180,6 +180,7 @@ export default function DashboardClient({
         { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/client' },
         { name: 'Browse Properties', icon: Building, href: '/properties' },
         { name: 'My Favorites', icon: Heart, href: '/dashboard/client/favorites' }, // New
+        { name: 'My Offers', icon: DollarSign, href: '/dashboard/client/offers' },
         { name: 'AI Studio', icon: Wand2, href: '/dashboard/client/ai-staging' },
         { name: 'Saved Searches', icon: Briefcase, href: '/dashboard/client/searches' },
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/client/valuation' },
