@@ -360,7 +360,7 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
                             <Shield className="w-4 h-4 text-orange-500" />
                             Reprezentare Exclusivă
                         </label>
-                        <div className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer">
                             <input 
                                 aria-label="Toggle Exclusivity"
                                 type="checkbox" 
@@ -369,7 +369,7 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
                                 className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-orange-500 after:border-slate-300 after:border after:rounded-full after:height-5 after:width-5 after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500/10 border border-slate-700/80 peer-checked:border-orange-500/30"></div>
-                        </div>
+                        </label>
                     </div>
 
                     {isExclusive ? (
@@ -462,7 +462,7 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
                                                                 <Check className="w-3 h-3" />
                                                             </div>
                                                         ) : (
-                                                            <div className="relative inline-flex items-center cursor-pointer">
+                                                            <label className="relative inline-flex items-center cursor-pointer">
                                                                 <input 
                                                                     aria-label={`Toggle service ${s.nm}`}
                                                                     type="checkbox" 
@@ -471,7 +471,7 @@ export default function CalculatorClientUI({ initialSettings }: CalculatorClient
                                                                     className="sr-only peer"
                                                                 />
                                                                 <div className="w-8 h-4.5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-orange-500 after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-orange-500/10 border border-slate-700/80 peer-checked:border-orange-500/30"></div>
-                                                            </div>
+                                                            </label>
                                                         )}
                                                         <div>
                                                             <span className="text-sm font-bold text-slate-200">
