@@ -46,6 +46,8 @@ export default function CalculatorSettingsClient({ initialSettings }: Props) {
     const [tiers, setTiers] = useState<Tier[]>(initialSettings.value_tiers);
     const [periods, setPeriods] = useState<Period[]>(initialSettings.exclusivity_periods);
     const [services, setServices] = useState<Service[]>(initialSettings.services);
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -53,6 +55,17 @@ export default function CalculatorSettingsClient({ initialSettings }: Props) {
 
     const markDirty = (key: string) => {
         setDirty(prev => new Set(prev).add(key));
+    };
+
+    const handleDrop = (index: number) => {
+        if (draggedIndex === null || draggedIndex === index) return;
+        setServices(prev => {
+            const reordered = [...prev];
+            const [draggedItem] = reordered.splice(draggedIndex, 1);
+            reordered.splice(index, 0, draggedItem);
+            return reordered;
+        });
+        markDirty('services');
     };
 
     const showToast = (type: 'success' | 'error', msg: string) => {
@@ -269,14 +282,46 @@ export default function CalculatorSettingsClient({ initialSettings }: Props) {
 
             <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
                 {services.map((s, i) => (
-                    <div key={s.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 relative">
+                    <div 
+                        key={s.id} 
+                        className={`bg-slate-900 border rounded-xl p-4 space-y-3 relative transition-all duration-200 ${
+                            dragOverIndex === i ? 'border-orange-500 scale-[1.01]' : 'border-slate-800'
+                        } ${draggedIndex === i ? 'opacity-40' : ''}`}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            if (draggedIndex !== i) {
+                                setDragOverIndex(i);
+                            }
+                        }}
+                        onDragLeave={() => {
+                            setDragOverIndex(null);
+                        }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            handleDrop(i);
+                            setDragOverIndex(null);
+                        }}
+                    >
                         {s.always && (
                             <span className="absolute top-3 right-3 text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded px-1.5 py-0.5">
                                 ALWAYS ON
                             </span>
                         )}
                         <div className="flex items-start gap-3">
-                            <GripVertical className="w-4 h-4 text-slate-600 mt-1 cursor-grab flex-shrink-0" />
+                            <span 
+                                className="w-4 h-4 mt-1 cursor-grab active:cursor-grabbing flex-shrink-0 flex items-center justify-center" 
+                                draggable={true}
+                                onDragStart={(e) => {
+                                    setDraggedIndex(i);
+                                    e.dataTransfer.setData('text/plain', i.toString());
+                                }}
+                                onDragEnd={() => {
+                                    setDraggedIndex(null);
+                                    setDragOverIndex(null);
+                                }}
+                            >
+                                <GripVertical className="w-4 h-4 text-slate-600" />
+                            </span>
                             <div className="flex-1 space-y-3">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
