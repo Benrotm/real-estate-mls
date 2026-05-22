@@ -170,15 +170,31 @@ export default function UserTable({ users }: UserTableProps) {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${user.role === 'admin' || user.role === 'super_admin'
-                                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                : user.role === 'agent'
-                                                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
-                                                }`}>
-                                                {user.role === 'super_admin' && <Shield size={10} />}
-                                                {user.role}
-                                            </span>
+                                            {(() => {
+                                                let text = user.role;
+                                                let classes = 'bg-green-500/10 text-green-400 border-green-500/20';
+                                                
+                                                if (user.role === 'admin' || user.role === 'super_admin') {
+                                                    classes = 'bg-red-500/10 text-red-400 border-red-500/20';
+                                                } else if (user.role === 'agent') {
+                                                    if (user.plan_tier?.toLowerCase() === 'enterprise') {
+                                                        text = 'agent (agency)';
+                                                        classes = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+                                                    } else if (user.plan_tier?.toLowerCase() === 'pro') {
+                                                        text = 'agent (broker)';
+                                                        classes = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+                                                    } else {
+                                                        classes = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                                                    }
+                                                }
+                                                
+                                                return (
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${classes}`}>
+                                                        {user.role === 'super_admin' && <Shield size={10} />}
+                                                        {text}
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="p-4">
                                             <span className="text-slate-300 font-medium capitalize">
