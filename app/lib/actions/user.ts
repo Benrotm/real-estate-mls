@@ -53,7 +53,7 @@ export async function updateUserPlan(planName: string) {
 
     if (lowerName.includes('free') || lowerName.includes('basic')) {
         tier = 'free';
-    } else if (lowerName.includes('premium') || lowerName.includes('pro') || lowerName.includes('growth') || lowerName.includes('pro real')) {
+    } else if (lowerName.includes('premium') || lowerName.includes('pro') || lowerName.includes('growth') || lowerName.includes('pro real') || lowerName.includes('broker')) {
         tier = 'pro';
     } else if (lowerName.includes('enterprise') || lowerName.includes('scale') || lowerName.includes('full house agency') || lowerName.includes('ultra plan')) {
         tier = 'enterprise';
