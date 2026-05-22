@@ -183,6 +183,9 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
         // Total outlay of the seller (Seller Commission + Separate Services Cash Cost)
         const sellerTotalOutlayEUR = sellerCommissionEUR + separateServicesCost;
 
+        // Total cost of selected services
+        const totalServicesCostEUR = includedServicesCost + separateServicesCost;
+
         return {
             tierFactor,
             activeTier,
@@ -197,7 +200,8 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
             sellerCommissionEUR,
             buyerCommissionEUR,
             totalCommissionEUR,
-            sellerTotalOutlayEUR
+            sellerTotalOutlayEUR,
+            totalServicesCostEUR
         };
     }, [propertyValue, activeModel, isExclusive, exclusivityPeriodDays, services, initialSettings]);
 
@@ -605,8 +609,8 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                                 </div>
                             </div>
                             <div class="financial-row total">
-                                <span>Total Investit Proprietar (Vânzător):</span>
-                                <span>${formatEUR(calculations.sellerTotalOutlayEUR)}</span>
+                                <span>Total servicii investite în proprietate:</span>
+                                <span>${formatEUR(calculations.totalServicesCostEUR)}</span>
                             </div>
                         </div>
                     </div>
@@ -1101,13 +1105,13 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                     {/* TOTAL OUTLAY BANNER (GREEN BANNER) */}
                     <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-center">
                         <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5" /> Total investit de Proprietar (Vânzător)
+                            <Sparkles className="w-3.5 h-3.5" /> Total servicii investite în proprietate
                         </div>
                         <div className="text-2xl font-extrabold text-emerald-400">
-                            {formatEUR(calculations.sellerTotalOutlayEUR)}
+                            {formatEUR(calculations.totalServicesCostEUR)}
                         </div>
                         <p className="text-[9.5px] text-slate-400 leading-relaxed mt-1.5">
-                            Reprezintă comisionul de vânzare + serviciile plătite separat.
+                            Reprezintă costul total al serviciilor alese (incluse în comision + plătite separat).
                         </p>
                     </div>
 

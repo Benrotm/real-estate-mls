@@ -56,6 +56,20 @@ export default function PlatiPage() {
     });
     const [totalCommissions, setTotalCommissions] = useState(0);
     const [copied, setCopied] = useState(false);
+    const [copiedField, setCopiedField] = useState<string | null>(null);
+    const [customCredits, setCustomCredits] = useState<number | ''>(100);
+    const [userId, setUserId] = useState('');
+
+    const displayReferralLink = referralLink || (userId && typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/signup?ref=${userId}`
+        : '');
+
+    const copyFieldText = (text: string, fieldName: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedField(fieldName);
+        setTimeout(() => setCopiedField(null), 2000);
+    };
 
     const loadData = async () => {
         setLoading(true);
@@ -86,6 +100,9 @@ export default function PlatiPage() {
         if (refRes && 'referralLink' in refRes) {
             setReferralLink(refRes.referralLink || '');
             setTotalCommissions(refRes.totalCommissionsEarned || 0);
+            if (refRes.userId) {
+                setUserId(refRes.userId);
+            }
             if (refRes.settings) {
                 const settings = refRes.settings;
                 setReferralSettings(settings);
@@ -137,8 +154,9 @@ export default function PlatiPage() {
     };
 
     const copyToClipboard = () => {
-        if (!referralLink) return;
-        navigator.clipboard.writeText(referralLink);
+        const linkToCopy = displayReferralLink;
+        if (!linkToCopy) return;
+        navigator.clipboard.writeText(linkToCopy);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -227,7 +245,16 @@ export default function PlatiPage() {
                         <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 space-y-4">
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-slate-400">Sumă de plată:</span>
-                                <span className="font-extrabold text-white text-base">{activePurchase.amount_ron} RON</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-extrabold text-white text-base">{activePurchase.amount_ron} RON</span>
+                                    <button
+                                        onClick={() => copyFieldText(activePurchase.amount_ron.toString(), 'amount')}
+                                        className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-900 transition-colors"
+                                        title="Copiază suma"
+                                    >
+                                        {copiedField === 'amount' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                    </button>
+                                </div>
                             </div>
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-slate-400">Credite de primit:</span>
@@ -239,20 +266,43 @@ export default function PlatiPage() {
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Nume Beneficiar</label>
-                                    <div className="text-sm font-semibold text-white flex items-center justify-between">
+                                    <div className="text-sm font-semibold text-white bg-slate-900 border border-slate-800/80 px-3 py-2 rounded-lg flex items-center justify-between">
                                         <span>{companyBank.name}</span>
+                                        <button
+                                            onClick={() => copyFieldText(companyBank.name, 'name')}
+                                            className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-950 transition-colors animate-pulse-subtle"
+                                            title="Copiază nume beneficiar"
+                                        >
+                                            {copiedField === 'name' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                        </button>
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Cont IBAN</label>
                                     <div className="text-sm font-mono font-bold text-white bg-slate-900 border border-slate-800/80 px-3 py-2 rounded-lg flex items-center justify-between">
                                         <span>{companyBank.iban}</span>
+                                        <button
+                                            onClick={() => copyFieldText(companyBank.iban, 'iban')}
+                                            className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-950 transition-colors"
+                                            title="Copiază IBAN"
+                                        >
+                                            {copiedField === 'iban' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                                <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg animate-pulse-subtle">
                                     <label className="block text-[10px] uppercase font-bold text-orange-400 tracking-wider mb-1">Detalii plată / Referință (FOARTE IMPORTANT)</label>
-                                    <div className="text-base font-mono font-black text-orange-400 select-all">
-                                        {activePurchase.reference_id}
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="text-base font-mono font-black text-orange-400 select-all">
+                                            {activePurchase.reference_id}
+                                        </div>
+                                        <button
+                                            onClick={() => copyFieldText(activePurchase.reference_id, 'ref')}
+                                            className="text-orange-400 hover:text-white bg-orange-500/20 hover:bg-orange-500/30 p-1.5 rounded-lg border border-orange-500/30 transition-all shrink-0 shadow-sm"
+                                            title="Copiază codul de referință"
+                                        >
+                                            {copiedField === 'ref' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                        </button>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-1.5">
                                         Menționează codul exact de mai sus la detaliile plății în aplicația ta de banking pentru a putea asocia plata contului tău.
@@ -327,7 +377,7 @@ export default function PlatiPage() {
                             Alege un pachet de credite
                         </h2>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                             {PACKAGES.map((pack) => (
                                 <div 
                                     key={pack.credits}
@@ -367,6 +417,53 @@ export default function PlatiPage() {
                                     </div>
                                 </div>
                             ))}
+
+                            {/* Custom Credit Amount Card */}
+                            <div className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between gap-4 transition-all hover:-translate-y-0.5 relative">
+                                <div className="space-y-1">
+                                    <div className="text-xs text-slate-500 font-bold uppercase">Pachet Custom</div>
+                                    <div className="text-3xl font-black text-white flex items-baseline gap-1 font-mono">
+                                        Custom
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="10"
+                                            max="50000"
+                                            value={customCredits}
+                                            onChange={(e) => {
+                                                const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value));
+                                                setCustomCredits(val);
+                                            }}
+                                            placeholder="Introdu credite"
+                                            className="w-full bg-slate-950 border border-slate-800/80 rounded-xl pl-3 pr-8 py-2 text-xs font-mono text-white outline-none focus:border-yellow-500 transition-colors"
+                                        />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-yellow-500 font-bold">CR</span>
+                                    </div>
+                                    <div className="text-sm font-semibold text-slate-300">
+                                        {customCredits || 0} RON
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            if (!customCredits || customCredits < 10) {
+                                                alert('Suma minimă este de 10 credite.');
+                                                return;
+                                            }
+                                            handleInitiatePurchase({
+                                                credits: customCredits,
+                                                price: customCredits,
+                                                name: `Pachet Custom`
+                                            });
+                                        }}
+                                        className="w-full font-bold py-2 rounded-xl text-xs bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition-colors"
+                                    >
+                                        Cumpără Custom
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 )}
@@ -417,7 +514,7 @@ export default function PlatiPage() {
                             <div className="flex gap-2">
                                 <input 
                                     type="text" 
-                                    value={referralLink} 
+                                    value={displayReferralLink} 
                                     readOnly
                                     className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono text-slate-300 focus:border-emerald-500 outline-none select-all"
                                 />

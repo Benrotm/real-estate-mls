@@ -111,47 +111,60 @@ export async function getReferralStats() {
     };
 
     // Get all invitees who registered using this user's link
-    const { data: invitees, error: inviteesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, created_at')
-        .eq('referred_by', user.id);
+    let invitees: any[] = [];
+    try {
+        const { data, error: inviteesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, created_at')
+            .eq('referred_by', user.id);
 
-    if (inviteesError) return { error: inviteesError.message };
+        if (inviteesError) {
+            console.error('Error fetching invitees in getReferralStats:', inviteesError);
+        } else {
+            invitees = data || [];
+        }
+    } catch (e) {
+        console.error('Exception fetching invitees in getReferralStats:', e);
+    }
 
     // Process stats for each invitee
     const processedInvitees = [];
     let totalCommissionsEarned = 0;
 
-    for (const invitee of invitees || []) {
-        // Find credits consumed by this invitee (sum of negative amounts in transactions)
-        const { data: consumedData } = await supabase
-            .from('credit_transactions')
-            .select('amount')
-            .eq('user_id', invitee.id)
-            .lt('amount', 0);
+    try {
+        for (const invitee of invitees) {
+            // Find credits consumed by this invitee (sum of negative amounts in transactions)
+            const { data: consumedData } = await supabase
+                .from('credit_transactions')
+                .select('amount')
+                .eq('user_id', invitee.id)
+                .lt('amount', 0);
 
-        const creditsConsumed = (consumedData || []).reduce((acc, curr) => acc + Math.abs(curr.amount), 0);
+            const creditsConsumed = (consumedData || []).reduce((acc, curr) => acc + Math.abs(curr.amount), 0);
 
-        // Find commissions earned by current user from this invitee
-        // We filter user's credit_transactions where metadata->>'invitee_id' = invitee.id and amount > 0 (excluding initial referral bonus)
-        const { data: commissionData } = await supabase
-            .from('credit_transactions')
-            .select('amount')
-            .eq('user_id', user.id)
-            .eq('metadata->>invitee_id', invitee.id)
-            .ilike('description', 'Comision%');
+            // Find commissions earned by current user from this invitee
+            // We filter user's credit_transactions where metadata->>'invitee_id' = invitee.id and amount > 0 (excluding initial referral bonus)
+            const { data: commissionData } = await supabase
+                .from('credit_transactions')
+                .select('amount')
+                .eq('user_id', user.id)
+                .eq('metadata->>invitee_id', invitee.id)
+                .ilike('description', 'Comision%');
 
-        const commissionEarned = (commissionData || []).reduce((acc, curr) => acc + curr.amount, 0);
-        totalCommissionsEarned += commissionEarned;
+            const commissionEarned = (commissionData || []).reduce((acc, curr) => acc + curr.amount, 0);
+            totalCommissionsEarned += commissionEarned;
 
-        processedInvitees.push({
-            id: invitee.id,
-            name: invitee.full_name || 'User fără nume',
-            email: invitee.email || 'Fără email',
-            registeredAt: invitee.created_at,
-            creditsConsumed,
-            commissionEarned
-        });
+            processedInvitees.push({
+                id: invitee.id,
+                name: invitee.full_name || 'User fără nume',
+                email: invitee.email || 'Fără email',
+                registeredAt: invitee.created_at,
+                creditsConsumed,
+                commissionEarned
+            });
+        }
+    } catch (e) {
+        console.error('Error processing invitee stats in getReferralStats:', e);
     }
 
     // Generate referral link
@@ -161,7 +174,8 @@ export async function getReferralStats() {
         referralLink,
         invitees: processedInvitees,
         totalCommissionsEarned,
-        settings
+        settings,
+        userId: user.id
     };
 }
 

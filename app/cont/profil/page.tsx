@@ -128,9 +128,14 @@ export default function ProfilPage() {
         });
     };
 
+    const displayReferralLink = referralLink || (profile?.id && typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/signup?ref=${profile.id}`
+        : '');
+
     const copyToClipboard = () => {
-        if (!referralLink) return;
-        navigator.clipboard.writeText(referralLink);
+        const linkToCopy = displayReferralLink;
+        if (!linkToCopy) return;
+        navigator.clipboard.writeText(linkToCopy);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -392,7 +397,7 @@ export default function ProfilPage() {
                                 <div className="flex gap-2">
                                     <input 
                                         type="text" 
-                                        value={referralLink} 
+                                        value={displayReferralLink} 
                                         readOnly
                                         className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono text-slate-300 focus:border-emerald-500 outline-none select-all"
                                     />
