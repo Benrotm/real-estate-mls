@@ -30,7 +30,7 @@ interface CameraCaptureModalProps {
 }
 
 function CameraCaptureModal({ isOpen, onClose, onCapture, userId }: CameraCaptureModalProps) {
-    const videoRef = useRef<HTMLVideoElement>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const [capturedFile, setCapturedFile] = useState<File | null>(null);
@@ -46,6 +46,16 @@ function CameraCaptureModal({ isOpen, onClose, onCapture, userId }: CameraCaptur
             stopCamera();
         };
     }, [isOpen]);
+
+    const setVideoRef = (node: HTMLVideoElement | null) => {
+        videoRef.current = node;
+        if (node && streamRef.current && node.srcObject !== streamRef.current) {
+            node.srcObject = streamRef.current;
+            node.play().catch(playErr => {
+                console.warn("video.play() failed in callback ref:", playErr);
+            });
+        }
+    };
 
     const startCamera = async () => {
         setIsInitializing(true);
@@ -64,7 +74,9 @@ function CameraCaptureModal({ isOpen, onClose, onCapture, userId }: CameraCaptur
             streamRef.current = stream;
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
-                videoRef.current.play();
+                videoRef.current.play().catch(playErr => {
+                    console.warn("video.play() failed in startCamera:", playErr);
+                });
             }
             setIsInitializing(false);
         } catch (err: any) {
@@ -75,6 +87,9 @@ function CameraCaptureModal({ isOpen, onClose, onCapture, userId }: CameraCaptur
     };
 
     const stopCamera = () => {
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
             streamRef.current = null;
@@ -169,30 +184,34 @@ function CameraCaptureModal({ isOpen, onClose, onCapture, userId }: CameraCaptur
                                 Reîncearcă
                             </button>
                         </div>
-                    ) : isInitializing ? (
-                        <div className="text-center space-y-3">
-                            <Loader2 className="w-10 h-10 text-orange-500 animate-spin mx-auto" />
-                            <p className="text-slate-400 text-xs">Se inițializează camera...</p>
-                        </div>
                     ) : capturedImage ? (
                         <img src={capturedImage} alt="Captured ID" className="w-full h-full object-contain" />
                     ) : (
                         <>
                             <video
-                                ref={videoRef}
+                                ref={setVideoRef}
                                 className="w-full h-full object-cover"
+                                autoPlay
                                 playsInline
                                 muted
                             />
+                            {isInitializing && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 text-center space-y-3 z-10">
+                                    <Loader2 className="w-10 h-10 text-orange-500 animate-spin mx-auto" />
+                                    <p className="text-slate-400 text-xs">Se inițializează camera...</p>
+                                </div>
+                            )}
                             {/* Card frame overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none">
-                                <div className="w-full aspect-[1.586/1] border-2 border-dashed border-orange-500/60 rounded-2xl relative">
-                                    <div className="absolute inset-0 bg-black/20" />
-                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap bg-orange-600 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
-                                        Aliniază buletinul aici
+                            {!isInitializing && (
+                                <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none z-20">
+                                    <div className="w-full aspect-[1.586/1] border-2 border-dashed border-orange-500/60 rounded-2xl relative">
+                                        <div className="absolute inset-0 bg-black/20" />
+                                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap bg-orange-600 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                                            Aliniază buletinul aici
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </>
                     )}
                 </div>
