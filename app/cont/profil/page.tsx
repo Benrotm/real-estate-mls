@@ -32,6 +32,7 @@ import { getCurrentProfile, updateUserProfile } from '@/app/lib/actions/user';
 import { getReferralStats, checkAndProcessReferral } from '@/app/lib/actions/referrals';
 import { getUserCreditTransactions } from '@/app/lib/actions/credits';
 import AvatarUpload from '@/app/components/AvatarUpload';
+import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
 export default function ProfilPage() {
     const router = useRouter();
@@ -132,12 +133,14 @@ export default function ProfilPage() {
         ? `${window.location.origin}/auth/signup?ref=${profile.id}`
         : '');
 
-    const copyToClipboard = () => {
+    const copyToClipboard = async () => {
         const linkToCopy = displayReferralLink;
         if (!linkToCopy) return;
-        navigator.clipboard.writeText(linkToCopy);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        const success = await copyToClipboardSafe(linkToCopy);
+        if (success) {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
     };
 
     if (loading) {

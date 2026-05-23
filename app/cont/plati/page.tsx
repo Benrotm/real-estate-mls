@@ -28,6 +28,7 @@ import {
 } from '@/app/lib/actions/credit-purchases';
 import { getReferralStats } from '@/app/lib/actions/referrals';
 import { getUserCredits } from '@/app/lib/actions/credits';
+import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
 const PACKAGES = [
     { credits: 50, price: 50, name: 'Pachet Mic' },
@@ -64,11 +65,13 @@ export default function PlatiPage() {
         ? `${window.location.origin}/auth/signup?ref=${userId}`
         : '');
 
-    const copyFieldText = (text: string, fieldName: string) => {
+    const copyFieldText = async (text: string, fieldName: string) => {
         if (!text) return;
-        navigator.clipboard.writeText(text);
-        setCopiedField(fieldName);
-        setTimeout(() => setCopiedField(null), 2000);
+        const success = await copyToClipboardSafe(text);
+        if (success) {
+            setCopiedField(fieldName);
+            setTimeout(() => setCopiedField(null), 2000);
+        }
     };
 
     const loadData = async () => {
@@ -153,12 +156,14 @@ export default function PlatiPage() {
         });
     };
 
-    const copyToClipboard = () => {
+    const copyToClipboard = async () => {
         const linkToCopy = displayReferralLink;
         if (!linkToCopy) return;
-        navigator.clipboard.writeText(linkToCopy);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        const success = await copyToClipboardSafe(linkToCopy);
+        if (success) {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
     };
 
     if (loading) {

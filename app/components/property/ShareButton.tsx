@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Share2, Copy, Check, Facebook, Twitter, Mail, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { recordPropertyShare } from '@/app/lib/actions/propertyAnalytics';
+import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
 interface ShareButtonProps {
     propertyId?: string;
@@ -50,15 +51,13 @@ export default function ShareButton({ propertyId, title, description, url, class
     };
 
     const copyToClipboard = async () => {
-        try {
-            await navigator.clipboard.writeText(shareUrl);
+        const success = await copyToClipboardSafe(shareUrl);
+        if (success) {
             setCopied(true);
             if (propertyId) {
                 recordPropertyShare(propertyId, 'copy');
             }
             setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy:', err);
         }
     };
 

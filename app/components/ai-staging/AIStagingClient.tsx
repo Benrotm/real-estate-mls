@@ -16,6 +16,7 @@ import {
 } from '@/app/lib/actions/ai-staging';
 import { getFeatureCosts } from '@/app/lib/actions/settings';
 import { Coins } from 'lucide-react';
+import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
 export const CreditsContext = createContext<{credits: number, costs: Record<string, number>}>({credits: 0, costs: {}});
 
@@ -798,6 +799,7 @@ function DescriptionGenTool() {
 
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const submitAction = () => {
     if (!features && !surface && !location) { 
@@ -913,8 +915,19 @@ function DescriptionGenTool() {
         </div>
         
         <div className="grid grid-cols-2 gap-4 mt-auto">
-           <button onClick={() => result && navigator.clipboard.writeText(result)} className="py-3 px-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black border border-[#D4AF7A] font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors">
-              📄 Copiază
+           <button 
+              onClick={async () => {
+                  if (result) {
+                      const success = await copyToClipboardSafe(result);
+                      if (success) {
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                      }
+                  }
+              }} 
+              className="py-3 px-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black border border-[#D4AF7A] font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
+           >
+              {copied ? '✅ Copiat' : '📄 Copiază'}
            </button>
            <button onClick={submitAction} disabled={!result || isPending} className="py-3 px-4 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors">
               🔄 Regenerează
