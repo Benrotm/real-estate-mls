@@ -19,6 +19,7 @@ interface Service {
     id: string; cat: string; nm: string; dc: string;
     cost: number; coef: number; on: boolean; always?: boolean;
     pay: string; commAvail: Record<string, boolean>;
+    monthly?: boolean;
 }
 
 interface Props {
@@ -255,7 +256,8 @@ export default function CalculatorSettingsClient({ initialSettings }: Props) {
         setServices(prev => [...prev, {
             id: newId, cat: '', nm: 'Serviciu nou', dc: 'Descriere serviciu',
             cost: 20, coef: 0.10, on: false, pay: 'commission',
-            commAvail: { 'zero-seller': true, 'seller': true, 'both': true }
+            commAvail: { 'zero-seller': true, 'seller': true, 'both': true },
+            monthly: false
         }]);
         markDirty('services');
     };
@@ -379,21 +381,34 @@ export default function CalculatorSettingsClient({ initialSettings }: Props) {
                                         )}
                                     </div>
                                 </div>
-                                {/* Commission Availability per Model */}
-                                <div className="flex flex-wrap gap-4 pt-2 border-t border-slate-800/50">
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider self-center">Comision disponibil în:</span>
-                                    {Object.entries(models).map(([mk, mv]) => (
-                                        <label key={mk} className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
-                                            <input type="checkbox" checked={s.commAvail?.[mk] !== false}
-                                                onChange={(e) => {
-                                                    const newAvail = { ...s.commAvail, [mk]: e.target.checked };
-                                                    updateService(s.id, 'commAvail', newAvail);
-                                                }}
+                                {/* Commission Availability & Frequency per Model */}
+                                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 border-t border-slate-800/50">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Frecvență:</span>
+                                        <label className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
+                                            <input type="checkbox" checked={!!s.monthly}
+                                                onChange={(e) => updateService(s.id, 'monthly', e.target.checked)}
                                                 className="rounded border-slate-600 bg-slate-950 text-orange-500 focus:ring-orange-500"
                                             />
-                                            {mv.nm}
+                                            Cost lunar (recurent)
                                         </label>
-                                    ))}
+                                    </div>
+                                    <div className="h-4 w-px bg-slate-800 hidden sm:block" />
+                                    <div className="flex flex-wrap gap-4">
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider self-center">Comision disponibil în:</span>
+                                        {Object.entries(models).map(([mk, mv]) => (
+                                            <label key={mk} className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
+                                                <input type="checkbox" checked={s.commAvail?.[mk] !== false}
+                                                    onChange={(e) => {
+                                                        const newAvail = { ...s.commAvail, [mk]: e.target.checked };
+                                                        updateService(s.id, 'commAvail', newAvail);
+                                                    }}
+                                                    className="rounded border-slate-600 bg-slate-950 text-orange-500 focus:ring-orange-500"
+                                                />
+                                                {mv.nm}
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>

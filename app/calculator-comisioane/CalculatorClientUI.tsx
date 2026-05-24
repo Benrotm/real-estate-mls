@@ -38,6 +38,7 @@ interface Service {
     always?: boolean;
     pay: 'commission' | 'separate';
     commAvail: Record<string, boolean>;
+    monthly?: boolean;
 }
 
 interface UserProfile {
@@ -186,6 +187,15 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
         // Total cost of selected services
         const totalServicesCostEUR = includedServicesCost + separateServicesCost;
 
+        // Total cost of monthly recurring services
+        let monthlyServicesCostEUR = 0;
+        services.forEach(s => {
+            if (!s.always && !s.on) return;
+            if (s.monthly) {
+                monthlyServicesCostEUR += s.cost;
+            }
+        });
+
         return {
             tierFactor,
             activeTier,
@@ -201,7 +211,8 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
             buyerCommissionEUR,
             totalCommissionEUR,
             sellerTotalOutlayEUR,
-            totalServicesCostEUR
+            totalServicesCostEUR,
+            monthlyServicesCostEUR
         };
     }, [propertyValue, activeModel, isExclusive, exclusivityPeriodDays, services, initialSettings]);
 
@@ -233,6 +244,10 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
     // Formatting Helpers
     const formatEUR = (num: number) => {
         return num.toLocaleString('ro-RO') + ' €';
+    };
+
+    const formatServiceCost = (cost: number, isMonthly?: boolean) => {
+        return cost.toLocaleString('ro-RO') + ' €' + (isMonthly ? ' / lună' : '');
     };
 
     const formatPercent = (num: number) => {
@@ -285,10 +300,11 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
             const modeLabel = mode === 'commission' ? 'Inclus în comision' : 'Plată separată';
             const costLabel = mode === 'commission' 
                 ? `+${formatPercent(s.coef * calculations.tierFactor)}` 
-                : formatEUR(s.cost);
+                : formatServiceCost(s.cost, s.monthly);
+            const monthlyBadge = s.monthly ? ' <span style="font-size: 9px; font-weight: 500; color: #1d4ed8; background-color: #eff6ff; border: 1px solid #dbeafe; padding: 2px 4px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">lunar</span>' : '';
             return `
                 <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold; font-size: 13px; color: #1e293b;">${s.nm}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold; font-size: 13px; color: #1e293b;">${s.nm}${monthlyBadge}</td>
                     <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">${s.dc}</td>
                     <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 12px; font-weight: 600; color: ${mode === 'commission' ? '#10b981' : '#f59e0b'};">${modeLabel}</td>
                     <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; font-weight: bold; text-align: right; color: #1e293b;">${costLabel}</td>
@@ -434,6 +450,14 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                         font-size: 16px;
                         font-weight: 800;
                         color: #14532d;
+                    }
+                    .financial-row.total-monthly {
+                        border-top: 1px dashed #bfdbfe;
+                        padding-top: 10px;
+                        margin-top: 10px;
+                        font-size: 16px;
+                        font-weight: 800;
+                        color: #1e3a8a;
                     }
                     .footer-disclaimer {
                         font-size: 11px;
@@ -609,8 +633,12 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                                 </div>
                             </div>
                             <div class="financial-row total">
-                                <span>Total servicii investite în proprietate:</span>
+                                <span>Total servicii investite în proprietate în prima lună:</span>
                                 <span>${formatEUR(calculations.totalServicesCostEUR)}</span>
+                            </div>
+                            <div class="financial-row total-monthly">
+                                <span>Costuri Lunare (recurente):</span>
+                                <span>${formatEUR(calculations.monthlyServicesCostEUR)}</span>
                             </div>
                         </div>
                     </div>
@@ -910,6 +938,11 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                                                             <span className="text-sm font-bold text-slate-200">
                                                                 {s.nm}
                                                             </span>
+                                                            {s.monthly && (
+                                                                <span className="ml-2 inline-flex items-center gap-0.5 text-[9px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded px-1.5 py-0.5 animate-pulse">
+                                                                    lunar
+                                                                </span>
+                                                            )}
                                                             {s.always && (
                                                                 <span className="ml-2 inline-flex items-center gap-0.5 text-[9px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded px-1.5 py-0.5">
                                                                     Inclus automat
@@ -926,17 +959,17 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                                                         )}
                                                         {showCoef && s.cost > 0 && (
                                                             <div className="text-[10px] text-slate-500 line-through">
-                                                                {formatEUR(s.cost)}
+                                                                {formatServiceCost(s.cost, s.monthly)}
                                                             </div>
                                                         )}
                                                         {showSep && s.cost > 0 && (
                                                             <div className="text-xs font-extrabold text-amber-500">
-                                                                {formatEUR(s.cost)}
+                                                                {formatServiceCost(s.cost, s.monthly)}
                                                             </div>
                                                         )}
                                                         {!isSelected && s.cost > 0 && (
                                                             <div className="text-xs text-slate-500">
-                                                                {formatEUR(s.cost)}
+                                                                {formatServiceCost(s.cost, s.monthly)}
                                                             </div>
                                                         )}
                                                     </div>
@@ -1091,9 +1124,11 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                                     const mode = getEffectivePayMode(s);
                                     return (
                                         <div key={s.id} className="flex justify-between items-center text-[11px] text-slate-400 bg-slate-950/40 rounded border border-slate-800/40 px-2 py-1">
-                                            <span className="truncate max-w-[140px] font-medium">{s.nm}</span>
+                                            <span className="truncate max-w-[140px] font-medium">
+                                                {s.nm} {s.monthly && <span className="text-[9px] text-blue-400 font-semibold">(lunar)</span>}
+                                            </span>
                                             <span className={mode === 'commission' ? 'text-emerald-400 font-semibold' : 'text-amber-500 font-semibold'}>
-                                                {mode === 'commission' ? 'Inclus în comision' : formatEUR(s.cost)}
+                                                {mode === 'commission' ? 'Inclus în comision' : formatServiceCost(s.cost, s.monthly)}
                                             </span>
                                         </div>
                                     );
@@ -1105,13 +1140,26 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                     {/* TOTAL OUTLAY BANNER (GREEN BANNER) */}
                     <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-center">
                         <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5" /> Total servicii investite în proprietate
+                            <Sparkles className="w-3.5 h-3.5" /> Total servicii investite în proprietate în prima lună
                         </div>
                         <div className="text-2xl font-extrabold text-emerald-400">
                             {formatEUR(calculations.totalServicesCostEUR)}
                         </div>
                         <p className="text-[9.5px] text-slate-400 leading-relaxed mt-1.5">
-                            Reprezintă costul total al serviciilor alese (incluse în comision + plătite separat).
+                            Reprezintă costul total al serviciilor alese în prima lună (incluse în comision + plătite separat, recurente și one-time).
+                        </p>
+                    </div>
+
+                    {/* MONTHLY COSTS BANNER (BLUE BANNER) */}
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 text-center mt-3">
+                        <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+                            <Activity className="w-3.5 h-3.5" /> Costuri Lunare
+                        </div>
+                        <div className="text-2xl font-extrabold text-blue-400">
+                            {formatEUR(calculations.monthlyServicesCostEUR)}
+                        </div>
+                        <p className="text-[9.5px] text-slate-400 leading-relaxed mt-1.5">
+                            Reprezintă costul lunar recurent al serviciilor active alese (ex: promovare continuă, administrare).
                         </p>
                     </div>
 
