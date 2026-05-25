@@ -552,6 +552,28 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
         await supabase.from('notifications').delete().eq('user_id', userId);
         await supabase.from('messages').delete().eq('sender_id', userId);
         await supabase.from('messages').delete().eq('receiver_id', userId);
+        await supabase.from('transactions').delete().eq('agent_id', userId);
+        await supabase.from('transactions').delete().eq('agency_id', userId);
+        await supabase.from('financial_records').delete().eq('user_id', userId);
+        await supabase.from('financial_records').delete().eq('agency_id', userId);
+        await supabase.from('agent_activities').delete().eq('agent_id', userId);
+        await supabase.from('property_sold_history').delete().eq('reporter_id', userId);
+        await supabase.from('credit_transactions').delete().eq('user_id', userId);
+        await supabase.from('team_invitations').delete().eq('agency_id', userId);
+        await supabase.from('virtual_tours').delete().eq('created_by', userId);
+        await supabase.from('support_tickets').delete().eq('user_id', userId);
+        await supabase.from('saved_searches').delete().eq('user_id', userId);
+        await supabase.from('property_shares').delete().eq('user_id', userId);
+        await supabase.from('property_analytics').delete().eq('user_id', userId);
+        await supabase.from('property_events').delete().eq('user_id', userId);
+        await supabase.from('scrape_logs').delete().eq('user_id', userId);
+        await supabase.from('otp_verifications').delete().eq('user_id', userId);
+        await supabase.from('lead_notes').delete().eq('created_by', userId);
+        await supabase.from('lead_activities').delete().eq('created_by', userId);
+
+        // Nullify references in profiles to prevent FK violations
+        await supabase.from('profiles').update({ agency_id: null }).eq('agency_id', userId);
+        await supabase.from('profiles').update({ referred_by: null }).eq('referred_by', userId);
         
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
