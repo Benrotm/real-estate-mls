@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updatePropertyAdmin } from '@/app/lib/actions/admin';
 import { PROPERTY_TYPES, TRANSACTION_TYPES, PARTITIONING_TYPES, COMFORT_TYPES, BUILDING_TYPES, INTERIOR_CONDITIONS, FURNISHING_TYPES, PROPERTY_FEATURES, Property } from '@/app/lib/properties';
-import { Loader2, Save, Camera, MapPin, Layout, DollarSign, Home, Briefcase, X, ArrowLeft } from 'lucide-react';
+import { Loader2, Save, Camera, MapPin, Layout, DollarSign, Home, Briefcase, X, ArrowLeft, Move, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import Link from 'next/link';
 
@@ -19,6 +19,10 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
     const [uploading, setUploading] = useState(false);
     const [images, setImages] = useState<string[]>(initialData.images || []);
     const [error, setError] = useState<string | null>(null);
+
+    // Photo reordering states
+    const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
+    const [hoveredPhotoIndex, setHoveredPhotoIndex] = useState<number | null>(null);
 
     // Initial check for features to populate checkboxes if needed, 
     // but for checkboxes we rely on defaultChecked logic or uncontrolled inputs
@@ -72,6 +76,44 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
 
     const removeImage = (index: number) => {
         setImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Photo drag-and-drop reordering handlers
+    const handlePhotoDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedPhotoIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', index.toString());
+    };
+
+    const handlePhotoDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        if (draggedPhotoIndex === index) return;
+        setHoveredPhotoIndex(index);
+    };
+
+    const handlePhotoDragLeave = (index: number) => {
+        if (hoveredPhotoIndex === index) {
+            setHoveredPhotoIndex(null);
+        }
+    };
+
+    const handlePhotoDragEnd = () => {
+        setDraggedPhotoIndex(null);
+        setHoveredPhotoIndex(null);
+    };
+
+    const handlePhotoDrop = (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault();
+        if (draggedPhotoIndex === null || draggedPhotoIndex === targetIndex) return;
+
+        const newImages = [...images];
+        const [draggedImg] = newImages.splice(draggedPhotoIndex, 1);
+        newImages.splice(targetIndex, 0, draggedImg);
+
+        setImages(newImages);
+
+        setDraggedPhotoIndex(null);
+        setHoveredPhotoIndex(null);
     };
 
     async function handleSubmit(formData: FormData) {
@@ -303,12 +345,74 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
                 {images.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {images.map((url, index) => (
-                            <div key={index} className="relative group aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-                                <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                            <div
+                                key={index}
+                                draggable
+                                onDragStart={(e) => handlePhotoDragStart(e, index)}
+                                onDragOver={(e) => handlePhotoDragOver(e, index)}
+                                onDragLeave={() => handlePhotoDragLeave(index)}
+                                onDrop={(e) => handlePhotoDrop(e, index)}
+                                onDragEnd={handlePhotoDragEnd}
+                                className={`relative group aspect-square bg-slate-100 rounded-lg overflow-hidden border transition-all cursor-grab active:cursor-grabbing ${
+                                    draggedPhotoIndex === index
+                                        ? 'opacity-40 border-blue-500 scale-95'
+                                        : hoveredPhotoIndex === index
+                                            ? 'border-blue-500 scale-[1.03] shadow-lg shadow-blue-500/25'
+                                            : 'border-slate-200 hover:border-slate-400'
+                                }`}
+                            >
+                                <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover select-none pointer-events-none" />
+                                
+                                {/* Drag Hint Overlay */}
+                                <div className="absolute top-1.5 left-1.5 bg-slate-900/80 text-slate-300 p-1 rounded-md opacity-0 group-hover:opacity-100 transition pointer-events-none" title="Drag to reorder">
+                                    <Move size={12} />
+                                </div>
+
+                                {/* Move Left Button */}
+                                {index > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newImages = [...images];
+                                            const temp = newImages[index];
+                                            newImages[index] = newImages[index - 1];
+                                            newImages[index - 1] = temp;
+                                            setImages(newImages);
+                                        }}
+                                        className="absolute bottom-1.5 left-1.5 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition hover:bg-slate-800"
+                                        title="Move Left"
+                                    >
+                                        <ChevronLeft size={12} />
+                                    </button>
+                                )}
+
+                                {/* Move Right Button */}
+                                {index < images.length - 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newImages = [...images];
+                                            const temp = newImages[index];
+                                            newImages[index] = newImages[index + 1];
+                                            newImages[index + 1] = temp;
+                                            setImages(newImages);
+                                        }}
+                                        className="absolute bottom-1.5 right-1.5 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition hover:bg-slate-800"
+                                        title="Move Right"
+                                    >
+                                        <ChevronRight size={12} />
+                                    </button>
+                                )}
+
                                 <button
                                     type="button"
-                                    onClick={() => removeImage(index)}
-                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeImage(index);
+                                    }}
+                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm hover:bg-red-600"
                                 >
                                     <X className="w-3 h-3" />
                                 </button>

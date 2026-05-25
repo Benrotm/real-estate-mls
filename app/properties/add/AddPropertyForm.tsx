@@ -26,7 +26,8 @@ import {
     AlertCircle,
     FileText,
     RefreshCw,
-    Calendar
+    Calendar,
+    Move
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
 import { supabase } from '@/app/lib/supabase/client';
@@ -70,6 +71,10 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [isReportSoldModalOpen, setIsReportSoldModalOpen] = useState(false);
     const [availableTours, setAvailableTours] = useState<VirtualTour[]>([]);
+
+    // Photo reordering states
+    const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
+    const [hoveredPhotoIndex, setHoveredPhotoIndex] = useState<number | null>(null);
 
     useEffect(() => {
         getVirtualTours().then(tours => {
@@ -347,6 +352,47 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         } finally {
             setUploading(false);
         }
+    };
+
+    // Photo drag-and-drop reordering handlers
+    const handlePhotoDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedPhotoIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', index.toString());
+    };
+
+    const handlePhotoDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        if (draggedPhotoIndex === index) return;
+        setHoveredPhotoIndex(index);
+    };
+
+    const handlePhotoDragLeave = (index: number) => {
+        if (hoveredPhotoIndex === index) {
+            setHoveredPhotoIndex(null);
+        }
+    };
+
+    const handlePhotoDragEnd = () => {
+        setDraggedPhotoIndex(null);
+        setHoveredPhotoIndex(null);
+    };
+
+    const handlePhotoDrop = (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault();
+        if (draggedPhotoIndex === null || draggedPhotoIndex === targetIndex) return;
+
+        const newImages = [...formData.images];
+        const [draggedImg] = newImages.splice(draggedPhotoIndex, 1);
+        newImages.splice(targetIndex, 0, draggedImg);
+
+        setFormData(prev => ({
+            ...prev,
+            images: newImages
+        }));
+
+        setDraggedPhotoIndex(null);
+        setHoveredPhotoIndex(null);
     };
 
     const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -1074,11 +1120,73 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     {formData.images.length > 0 ? (
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                             {formData.images.map((img, index) => (
-                                                <div key={index} className="relative aspect-[4/3] group rounded-xl overflow-hidden border border-slate-700">
-                                                    <img src={img} alt={`Property ${index + 1}`} className="w-full h-full object-cover" />
+                                                <div
+                                                    key={index}
+                                                    draggable
+                                                    onDragStart={(e) => handlePhotoDragStart(e, index)}
+                                                    onDragOver={(e) => handlePhotoDragOver(e, index)}
+                                                    onDragLeave={() => handlePhotoDragLeave(index)}
+                                                    onDrop={(e) => handlePhotoDrop(e, index)}
+                                                    onDragEnd={handlePhotoDragEnd}
+                                                    className={`relative aspect-[4/3] group rounded-xl overflow-hidden border transition-all cursor-grab active:cursor-grabbing ${
+                                                        draggedPhotoIndex === index
+                                                            ? 'opacity-40 border-violet-500 scale-95'
+                                                            : hoveredPhotoIndex === index
+                                                                ? 'border-violet-500 scale-[1.03] shadow-lg shadow-violet-500/25'
+                                                                : 'border-slate-700 hover:border-slate-500'
+                                                    }`}
+                                                >
+                                                    <img src={img} alt={`Property ${index + 1}`} className="w-full h-full object-cover select-none pointer-events-none" />
+                                                    
+                                                    {/* Drag Hint Overlay */}
+                                                    <div className="absolute top-2 left-2 bg-slate-900/80 text-slate-300 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" title="Drag to reorder">
+                                                        <Move size={14} />
+                                                    </div>
+
+                                                    {/* Move Left Button (Mobile/Touch Fallback) */}
+                                                    {index > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newImages = [...formData.images];
+                                                                const temp = newImages[index];
+                                                                newImages[index] = newImages[index - 1];
+                                                                newImages[index - 1] = temp;
+                                                                setFormData(prev => ({ ...prev, images: newImages }));
+                                                            }}
+                                                            className="absolute bottom-2 left-2 bg-slate-900/80 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-800"
+                                                            title="Move Left"
+                                                        >
+                                                            <ChevronLeft size={14} />
+                                                        </button>
+                                                    )}
+
+                                                    {/* Move Right Button (Mobile/Touch Fallback) */}
+                                                    {index < formData.images.length - 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newImages = [...formData.images];
+                                                                const temp = newImages[index];
+                                                                newImages[index] = newImages[index + 1];
+                                                                newImages[index + 1] = temp;
+                                                                setFormData(prev => ({ ...prev, images: newImages }));
+                                                            }}
+                                                            className="absolute bottom-2 right-2 bg-slate-900/80 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-800"
+                                                            title="Move Right"
+                                                        >
+                                                            <ChevronRight size={14} />
+                                                        </button>
+                                                    )}
+
                                                     <button
                                                         type="button"
-                                                        onClick={() => setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }))}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+                                                        }}
                                                         className="absolute top-2 right-2 bg-red-500/80 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                                                     >
                                                         <X className="w-4 h-4" />
