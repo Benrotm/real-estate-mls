@@ -140,45 +140,6 @@ export default function LoginPage() {
                         </div>
                         <span className="relative">Sign in with Google</span>
                     </button>
-
-                    {/* GitHub Button - Galaxy Gradient Fill */}
-                    <button
-                        type="button"
-                        onClick={() => handleSocialLogin('github')}
-                        className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl shadow-md bg-gradient-to-r from-[#8a3c90] to-[#2c2250] text-sm font-bold text-white hover:brightness-110 transition-all hover:shadow-lg transform active:scale-[0.98] relative overflow-hidden group"
-                    >
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <svg className="w-6 h-6 mr-3 fill-current group-hover:rotate-12 transition-transform" viewBox="0 0 24 24">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                        </svg>
-                        <span className="relative">Sign in with GitHub</span>
-                    </button>
-
-                    {/* Apple Button - Aurora Gradient Icon on Black */}
-                    <button
-                        type="button"
-                        disabled
-                        className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl shadow-md bg-black text-sm font-bold text-white hover:bg-gray-900 transition-all hover:shadow-lg transform active:scale-[0.98] group relative overflow-hidden opacity-90 cursor-not-allowed"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-50" />
-                        <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="none">
-                            <defs>
-                                <linearGradient id="apple-aurora" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#25D9D9" />
-                                    <stop offset="50%" stopColor="#A055F5" />
-                                    <stop offset="100%" stopColor="#5E22E6" />
-                                </linearGradient>
-                            </defs>
-                            <path
-                                d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.09-.24 2.36-.92 3.69-.64 2.26.48 3.16 1.54 3.65 2.65-2.09 1.1-2.36 4.09-1.06 5.54-.7 1.83-1.6 3.64-3.36 4.62zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.16 2.29-2.09 4.34-3.74 4.25z"
-                                fill="url(#apple-aurora)"
-                                className="drop-shadow-[0_0_8px_rgba(160,85,245,0.6)]"
-                            />
-                        </svg>
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200">
-                            Sign in with Apple
-                        </span>
-                    </button>
                 </div>
 
                 <div className="relative mb-6">
