@@ -398,7 +398,34 @@ export async function fetchUsers() {
 
         const users = data || [];
 
+        // Fetch auth metadata (created_at, last_sign_in_at) using admin client
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            }
+        );
+
+        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
+            perPage: 1000
+        });
+
+        const authMap: Record<string, { created_at: string; last_sign_in_at?: string | null }> = {};
+        if (!authError && authData && authData.users) {
+            authData.users.forEach((u: any) => {
+                authMap[u.id] = {
+                    created_at: u.created_at,
+                    last_sign_in_at: u.last_sign_in_at
+                };
+            });
+        }
+
         // Count active properties per user from the properties table
+        let countMap: Record<string, number> = {};
         if (users.length > 0) {
             const { data: propertyCounts, error: countError } = await supabase
                 .from('properties')
@@ -406,20 +433,23 @@ export async function fetchUsers() {
                 .in('status', ['active', 'draft']);
 
             if (!countError && propertyCounts) {
-                // Build a map of owner_id -> count
-                const countMap: Record<string, number> = {};
                 propertyCounts.forEach((p: any) => {
                     if (p.owner_id) {
                         countMap[p.owner_id] = (countMap[p.owner_id] || 0) + 1;
                     }
                 });
-
-                // Merge counts into user objects
-                users.forEach((user: any) => {
-                    user.listings_count = countMap[user.id] || 0;
-                });
             }
         }
+
+        // Merge counts and auth details into user objects
+        users.forEach((user: any) => {
+            user.listings_count = countMap[user.id] || 0;
+            const authInfo = authMap[user.id];
+            if (authInfo) {
+                user.created_at = authInfo.created_at;
+                user.last_sign_in_at = authInfo.last_sign_in_at;
+            }
+        });
 
         return users;
     } catch (err) {

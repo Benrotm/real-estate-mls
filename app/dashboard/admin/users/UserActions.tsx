@@ -1,4 +1,5 @@
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { updateUserBonus, sendNotification, updateUserRoleAndPlan, deleteUser } from '@/app/lib/admin';
 import { grantUserCredits } from '@/app/lib/actions/credits';
 import { Gift, MessageSquare, Check, Edit, UserCog, Trash2, AlertTriangle, Coins } from 'lucide-react';
@@ -8,6 +9,7 @@ interface UserActionsProps {
 }
 
 export default function UserActions({ user }: UserActionsProps) {
+    const router = useRouter();
     const [showBonusModal, setShowBonusModal] = useState(false);
     const [showMsgModal, setShowMsgModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -30,6 +32,7 @@ export default function UserActions({ user }: UserActionsProps) {
                 await updateUserBonus(user.id, Number(bonusAmount));
                 alert('Bonus listings updated!');
                 setShowBonusModal(false);
+                router.refresh();
             } catch (e: any) {
                 alert('Failed: ' + e.message);
             }
@@ -44,6 +47,7 @@ export default function UserActions({ user }: UserActionsProps) {
                 alert(`Credits granted! New Balance: ${res.newBalance}`);
                 setShowCreditsModal(false);
                 setCreditAmount(0);
+                router.refresh();
             } catch (e: any) {
                 alert('Failed: ' + e.message);
             }
@@ -72,6 +76,7 @@ export default function UserActions({ user }: UserActionsProps) {
                 await updateUserRoleAndPlan(user.id, selectedRole, selectedPlan);
                 alert('User role and plan updated! Limits recalculated.');
                 setShowEditModal(false);
+                router.refresh();
             } catch (e: any) {
                 alert('Failed: ' + e.message);
             }
@@ -87,6 +92,7 @@ export default function UserActions({ user }: UserActionsProps) {
                 } else {
                     alert('User deleted permanently.');
                     setShowDeleteModal(false);
+                    router.refresh();
                 }
             } catch (e: any) {
                 alert('Request failed: ' + e.message);

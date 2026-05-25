@@ -13,6 +13,22 @@ export default function UserTable({ users }: UserTableProps) {
     const [roleFilter, setRoleFilter] = useState('all');
     const [planFilter, setPlanFilter] = useState('all');
 
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ro-RO', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return 'N/A';
+        }
+    };
+
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
             const matchesSearch =
@@ -108,6 +124,7 @@ export default function UserTable({ users }: UserTableProps) {
                             <tr className="bg-slate-950 border-b border-slate-800 text-xs uppercase text-slate-400 tracking-wider">
                                 <th className="p-4 font-bold">User</th>
                                 <th className="p-4 font-bold">Contact</th>
+                                <th className="p-4 font-bold">Activity</th>
                                 <th className="p-4 font-bold">Role</th>
                                 <th className="p-4 font-bold">Plan</th>
                                 <th className="p-4 font-bold">Listings</th>
@@ -118,7 +135,7 @@ export default function UserTable({ users }: UserTableProps) {
                         <tbody className="divide-y divide-slate-800">
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="p-12 text-center text-slate-500">
+                                    <td colSpan={8} className="p-12 text-center text-slate-500">
                                         <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
                                         <p className="text-lg font-medium">No users match your filters.</p>
                                         <button
@@ -166,6 +183,16 @@ export default function UserTable({ users }: UserTableProps) {
                                                 <div className="flex items-center gap-2 text-slate-300">
                                                     <Phone size={12} className="text-slate-500" />
                                                     <span>{user.phone || 'No Phone'}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 text-xs">
+                                            <div className="space-y-1 text-slate-400">
+                                                <div>
+                                                    Created: <span className="text-slate-200 font-semibold">{formatDate(user.created_at)}</span>
+                                                </div>
+                                                <div>
+                                                    Last Login: <span className="text-slate-200 font-semibold">{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : 'Never'}</span>
                                                 </div>
                                             </div>
                                         </td>
