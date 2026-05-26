@@ -104,10 +104,13 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
 
     const handlePhotoDrop = (e: React.DragEvent, targetIndex: number) => {
         e.preventDefault();
-        if (draggedPhotoIndex === null || draggedPhotoIndex === targetIndex) return;
+        const dataTransferIndex = e.dataTransfer.getData('text/plain');
+        const sourceIndex = dataTransferIndex !== '' ? parseInt(dataTransferIndex, 10) : draggedPhotoIndex;
+
+        if (sourceIndex === null || isNaN(sourceIndex) || sourceIndex === targetIndex) return;
 
         const newImages = [...images];
-        const [draggedImg] = newImages.splice(draggedPhotoIndex, 1);
+        const [draggedImg] = newImages.splice(sourceIndex, 1);
         newImages.splice(targetIndex, 0, draggedImg);
 
         setImages(newImages);
@@ -364,7 +367,7 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
                                 <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover select-none pointer-events-none" />
                                 
                                 {/* Drag Hint Overlay */}
-                                <div className="absolute top-1.5 left-1.5 bg-slate-900/80 text-slate-300 p-1 rounded-md opacity-0 group-hover:opacity-100 transition pointer-events-none" title="Drag to reorder">
+                                <div className="absolute top-1.5 left-1.5 bg-slate-900/80 text-slate-300 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition pointer-events-none" title="Drag to reorder">
                                     <Move size={12} />
                                 </div>
 
@@ -380,7 +383,7 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
                                             newImages[index - 1] = temp;
                                             setImages(newImages);
                                         }}
-                                        className="absolute bottom-1.5 left-1.5 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition hover:bg-slate-800"
+                                        className="absolute bottom-1.5 left-1.5 bg-slate-900/80 text-white p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition hover:bg-slate-800"
                                         title="Move Left"
                                     >
                                         <ChevronLeft size={12} />
@@ -399,7 +402,7 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
                                             newImages[index + 1] = temp;
                                             setImages(newImages);
                                         }}
-                                        className="absolute bottom-1.5 right-1.5 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition hover:bg-slate-800"
+                                        className="absolute bottom-1.5 right-1.5 bg-slate-900/80 text-white p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 transition hover:bg-slate-800"
                                         title="Move Right"
                                     >
                                         <ChevronRight size={12} />
@@ -412,7 +415,7 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
                                         e.stopPropagation();
                                         removeImage(index);
                                     }}
-                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm hover:bg-red-600"
+                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition shadow-sm hover:bg-red-600"
                                 >
                                     <X className="w-3 h-3" />
                                 </button>

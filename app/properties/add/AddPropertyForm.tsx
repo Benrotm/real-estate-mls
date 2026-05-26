@@ -380,10 +380,13 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
     const handlePhotoDrop = (e: React.DragEvent, targetIndex: number) => {
         e.preventDefault();
-        if (draggedPhotoIndex === null || draggedPhotoIndex === targetIndex) return;
+        const dataTransferIndex = e.dataTransfer.getData('text/plain');
+        const sourceIndex = dataTransferIndex !== '' ? parseInt(dataTransferIndex, 10) : draggedPhotoIndex;
+
+        if (sourceIndex === null || isNaN(sourceIndex) || sourceIndex === targetIndex) return;
 
         const newImages = [...formData.images];
-        const [draggedImg] = newImages.splice(draggedPhotoIndex, 1);
+        const [draggedImg] = newImages.splice(sourceIndex, 1);
         newImages.splice(targetIndex, 0, draggedImg);
 
         setFormData(prev => ({
@@ -1139,7 +1142,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                     <img src={img} alt={`Property ${index + 1}`} className="w-full h-full object-cover select-none pointer-events-none" />
                                                     
                                                     {/* Drag Hint Overlay */}
-                                                    <div className="absolute top-2 left-2 bg-slate-900/80 text-slate-300 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" title="Drag to reorder">
+                                                    <div className="absolute top-2 left-2 bg-slate-900/80 text-slate-300 p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity pointer-events-none" title="Drag to reorder">
                                                         <Move size={14} />
                                                     </div>
 
@@ -1155,7 +1158,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                                 newImages[index - 1] = temp;
                                                                 setFormData(prev => ({ ...prev, images: newImages }));
                                                             }}
-                                                            className="absolute bottom-2 left-2 bg-slate-900/80 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-800"
+                                                            className="absolute bottom-2 left-2 bg-slate-900/80 text-white p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-slate-800"
                                                             title="Move Left"
                                                         >
                                                             <ChevronLeft size={14} />
@@ -1174,7 +1177,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                                 newImages[index + 1] = temp;
                                                                 setFormData(prev => ({ ...prev, images: newImages }));
                                                             }}
-                                                            className="absolute bottom-2 right-2 bg-slate-900/80 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-800"
+                                                            className="absolute bottom-2 right-2 bg-slate-900/80 text-white p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-slate-800"
                                                             title="Move Right"
                                                         >
                                                             <ChevronRight size={14} />
@@ -1187,7 +1190,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                             e.stopPropagation();
                                                             setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
                                                         }}
-                                                        className="absolute top-2 right-2 bg-red-500/80 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                                        className="absolute top-2 right-2 bg-red-500/80 text-white p-1.5 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600"
                                                     >
                                                         <X className="w-4 h-4" />
                                                     </button>
