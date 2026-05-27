@@ -63,6 +63,18 @@ export interface Property {
     // Portal Distribution
     publish_imobiliare?: boolean;
     publish_storia?: boolean;
+    publish_romimo?: boolean;
+    publish_homezz?: boolean;
+    publish_imobiliarepret?: boolean;
+
+    // Confidential Contract Fields
+    contract_country?: string;
+    contract_city?: string;
+    contract_street?: string;
+    contract_building?: string;
+    contract_floor?: string;
+    contract_apartment?: string;
+    contract_cf_topo?: string;
 
     created_at: string;
     updated_at: string;

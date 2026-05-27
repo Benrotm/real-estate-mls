@@ -80,8 +80,26 @@ export async function createProperty(formData: FormData) {
             youtube_video_url: formData.get('youtube_video_url') as string,
             virtual_tour_url: formData.get('virtual_tour_url') as string,
 
+            // Private Fields
+            private_notes: formData.get('private_notes') as string,
+            documents: formData.get('documents') ? JSON.parse(formData.get('documents') as string) : [],
+            owner_name: formData.get('owner_name') as string,
+            owner_phone: formData.get('owner_phone') as string,
+
+            // Contract Fields
+            contract_country: formData.get('contract_country') as string || null,
+            contract_city: formData.get('contract_city') as string || null,
+            contract_street: formData.get('contract_street') as string || null,
+            contract_building: formData.get('contract_building') as string || null,
+            contract_floor: formData.get('contract_floor') as string || null,
+            contract_apartment: formData.get('contract_apartment') as string || null,
+            contract_cf_topo: formData.get('contract_cf_topo') as string || null,
+
             publish_imobiliare: formData.get('publish_imobiliare') === 'true',
             publish_storia: formData.get('publish_storia') === 'true',
+            publish_romimo: formData.get('publish_romimo') === 'true',
+            publish_homezz: formData.get('publish_homezz') === 'true',
+            publish_imobiliarepret: formData.get('publish_imobiliarepret') === 'true',
 
             status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
@@ -555,6 +573,15 @@ export async function updateProperty(id: string, formData: FormData) {
             owner_name: formData.get('owner_name') as string,
             owner_phone: formData.get('owner_phone') as string,
 
+            // Contract Fields
+            contract_country: formData.get('contract_country') as string || null,
+            contract_city: formData.get('contract_city') as string || null,
+            contract_street: formData.get('contract_street') as string || null,
+            contract_building: formData.get('contract_building') as string || null,
+            contract_floor: formData.get('contract_floor') as string || null,
+            contract_apartment: formData.get('contract_apartment') as string || null,
+            contract_cf_topo: formData.get('contract_cf_topo') as string || null,
+
             // Details
             features: features,
 
@@ -565,6 +592,12 @@ export async function updateProperty(id: string, formData: FormData) {
             video_url: formData.get('video_url') as string,
             youtube_video_url: formData.get('youtube_video_url') as string,
             virtual_tour_url: formData.get('virtual_tour_url') as string,
+
+            publish_imobiliare: formData.get('publish_imobiliare') === 'true',
+            publish_storia: formData.get('publish_storia') === 'true',
+            publish_romimo: formData.get('publish_romimo') === 'true',
+            publish_homezz: formData.get('publish_homezz') === 'true',
+            publish_imobiliarepret: formData.get('publish_imobiliarepret') === 'true',
 
             // updated_at is handled by DB trigger usually, but we can set it if needed
             updated_at: new Date().toISOString(),

@@ -71,6 +71,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [isReportSoldModalOpen, setIsReportSoldModalOpen] = useState(false);
     const [availableTours, setAvailableTours] = useState<VirtualTour[]>([]);
+    const [contractLanguage, setContractLanguage] = useState<'ro' | 'en'>('ro');
 
     // Photo reordering states
     const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
@@ -194,8 +195,37 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         features: (initialData?.features as string[]) || [],
         images: (initialData?.images as string[]) || [],
         publishImobiliare: initialData?.publish_imobiliare || false,
-        publishStoria: initialData?.publish_storia || false
+        publishStoria: initialData?.publish_storia || false,
+        publishRomimo: initialData?.publish_romimo || false,
+        publishHomezz: initialData?.publish_homezz || false,
+        publishImobiliarepret: initialData?.publish_imobiliarepret || false,
+        contractCountry: initialData?.contract_country || 'România',
+        contractCity: initialData?.contract_city || '',
+        contractStreet: initialData?.contract_street || '',
+        contractBuilding: initialData?.contract_building || '',
+        contractFloor: initialData?.contract_floor || '',
+        contractApartment: initialData?.contract_apartment || '',
+        contractCfTopo: initialData?.contract_cf_topo || ''
     });
+
+    const [agentProfile, setAgentProfile] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                if (data) {
+                    setAgentProfile(data);
+                }
+            }
+        };
+        fetchProfile();
+    }, []);
 
     const handleScrapeSuccess = (data: any) => {
         setFormData(prev => ({
@@ -490,10 +520,22 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         formDataToSend.append('owner_name', formData.ownerName || '');
         formDataToSend.append('owner_phone', formData.ownerPhone || '');
 
+        // Contract Fields
+        formDataToSend.append('contract_country', formData.contractCountry || '');
+        formDataToSend.append('contract_city', formData.contractCity || '');
+        formDataToSend.append('contract_street', formData.contractStreet || '');
+        formDataToSend.append('contract_building', formData.contractBuilding || '');
+        formDataToSend.append('contract_floor', formData.contractFloor || '');
+        formDataToSend.append('contract_apartment', formData.contractApartment || '');
+        formDataToSend.append('contract_cf_topo', formData.contractCfTopo || '');
+
         // Status & Distribution
         formDataToSend.append('status', status);
         formDataToSend.append('publish_imobiliare', formData.publishImobiliare ? 'true' : 'false');
         formDataToSend.append('publish_storia', formData.publishStoria ? 'true' : 'false');
+        formDataToSend.append('publish_romimo', formData.publishRomimo ? 'true' : 'false');
+        formDataToSend.append('publish_homezz', formData.publishHomezz ? 'true' : 'false');
+        formDataToSend.append('publish_imobiliarepret', formData.publishImobiliarepret ? 'true' : 'false');
 
         // Images
         formDataToSend.append('images', JSON.stringify(formData.images));
@@ -523,6 +565,357 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         } finally {
             if (!silent) setSubmitting(false);
         }
+    };
+
+    const handleGenerateContract = () => {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Te rugăm să permiți ferestrele pop-up pentru a genera documentul.');
+            return;
+        }
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const dateStr = `${day}.${month}.${year}`;
+        const timeStr = `${hours}:${minutes}`;
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        const contractSerial = 'IMB';
+        const contractNumber = `${year}${month}${day}-${randomNum}`;
+
+        const isRo = contractLanguage === 'ro';
+
+        const content = {
+            title: isRo ? 'Contract de Colaborare Imobiliară' : 'Real Estate Collaboration Contract',
+            series: isRo ? 'Seria' : 'Series',
+            nr: isRo ? 'Nr' : 'No',
+            date: isRo ? 'Data' : 'Date',
+            hour: isRo ? 'Ora' : 'Time',
+            partiesTitle: isRo ? '1. Părțile Contractante' : '1. Contracting Parties',
+            providerTitle: isRo ? 'PRESTATORUL (Broker / Agenție)' : 'THE PROVIDER (Broker / Agency)',
+            providerCompany: isRo ? 'Denumire Societate (Firma):' : 'Company Name (Firm):',
+            providerCui: isRo ? 'CUI / CIF:' : 'Tax ID / VAT registration no:',
+            providerRegCom: isRo ? 'Nr. Reg. Comerțului:' : 'Trade Register no:',
+            providerAddress: isRo ? 'Sediul Social:' : 'Registered Office Address:',
+            providerRep: isRo ? 'Reprezentat legal prin:' : 'Represented legally by:',
+            beneficiaryTitle: isRo ? 'BENEFICIARUL (Proprietar / Client)' : 'THE BENEFICIARY (Owner / Client)',
+            beneficiaryName: isRo ? 'Nume complet:' : 'Full Name:',
+            beneficiaryPhone: isRo ? 'Telefon contact:' : 'Contact Phone:',
+            objectTitle: isRo ? '2. Obiectul Contractului' : '2. Object of the Contract',
+            objectDesc: isRo 
+                ? 'Obiectul prezentului contract îl reprezintă colaborarea dintre Prestator și Beneficiar în scopul promovării, intermedierii și facilitării tranzacționării (vânzare/închiriere) a dreptului de proprietate asupra bunului imobil identificat după cum urmează:'
+                : 'The object of this contract is the collaboration between the Provider and the Beneficiary for the purpose of marketing, promoting, and facilitating the transaction (sale/lease) of the property rights of the real estate asset identified below:',
+            imobilTitle: isRo ? 'Identificare Imobil' : 'Property Identification',
+            propTitle: isRo ? 'Titlu Proprietate:' : 'Property Title:',
+            propAddress: isRo ? 'Adresă exactă (locație contract):' : 'Exact Address (Contract Location):',
+            propCfTopo: isRo ? 'Carte Funciară / Topo (CF/NR. Topo):' : 'Land Registry / Topographic no (CF/No. Topo):',
+            propPrice: isRo ? 'Preț Promovare Solicitat:' : 'Requested Listing Price:',
+            servicesTitle: isRo ? '3. Servicii și Comisioane' : '3. Services and Commissions',
+            servicesDesc1: isRo
+                ? '3.1. Serviciile specifice pe care le va presta Prestatorul pentru Beneficiar, precum și valoarea și structura comisionului datorat de Beneficiar pentru aceste servicii sunt stabilite în totalitate și în exclusivitate în conformitate cu prevederile detaliate în <strong>Anexa 1</strong> la prezentul contract, care face parte integrantă din acesta.'
+                : '3.1. The specific services to be performed by the Provider for the Beneficiary, as well as the value and structure of the commission owed by the Beneficiary for these services, are established entirely and exclusively in accordance with the provisions detailed in <strong>Annex 1</strong> to this contract, which forms an integral part thereof.',
+            servicesDesc2: isRo
+                ? '3.2. Beneficiarul se obligă să achite comisionul stabilit în conformitate cu condițiile, termenele și modalitățile de plată stipulate în <strong>Anexa 1</strong>.'
+                : '3.2. The Beneficiary undertakes to pay the established commission in accordance with the conditions, deadlines, and payment methods stipulated in <strong>Annex 1</strong>.',
+            rightsProviderTitle: isRo ? '4. Drepturile și Obligațiile Prestatorului' : '4. Rights and Obligations of the Provider',
+            rightsProvider1: isRo
+                ? '4.1. Prestatorul are dreptul de a promova imobilul în mediul online și offline prin canale proprii sau prin rețeaua MLS (Multiple Listing Service).'
+                : '4.1. The Provider has the right to promote the property in online and offline media through their own channels or through the MLS (Multiple Listing Service) network.',
+            rightsProvider2: isRo
+                ? '4.2. Prestatorul se obligă să depună toate diligențele profesionale necesare pentru identificarea potențialilor clienți cumpărători/chiriași și să asigure asistența de specialitate pe tot parcursul negocierilor și finalizării tranzacției.'
+                : '4.2. The Provider undertakes to use all professional diligence necessary to identify potential buyers/tenants and to provide professional assistance throughout the negotiations and finalization of the transaction.',
+            rightsBeneficiaryTitle: isRo ? '5. Drepturile și Obligațiile Beneficiarului' : '5. Rights and Obligations of the Beneficiary',
+            rightsBeneficiary1: isRo
+                ? '5.1. Beneficiarul garantează că deține drepturile legale de a tranzacționa imobilul descris mai sus și că toate datele furnizate sunt reale și corecte.'
+                : '5.1. The Beneficiary guarantees that they hold the legal rights to transact the property described above and that all data provided is true and correct.',
+            rightsBeneficiary2: isRo
+                ? '5.2. Beneficiarul se obligă să asigure accesul Prestatorului și al potențialilor clienți pentru vizionarea imobilului și să informeze Prestatorul cu privire la orice schimbări apărute.'
+                : '5.2. The Beneficiary undertakes to ensure access to the Provider and potential clients for property viewings and to inform the Provider of any changes.',
+            forceTitle: isRo ? '6. Forța Majoră și Litigii' : '6. Force Majeure and Disputes',
+            force1: isRo
+                ? '6.1. Părțile sunt exonerate de răspundere în caz de forță majoră, constatată conform legii.'
+                : '6.1. The parties are exonerated from liability in case of force majeure, established by law.',
+            force2: isRo
+                ? '6.2. Litigiile izvorâte din interpretarea sau executarea prezentului contract se vor rezolva pe cale amiabilă, iar în caz contrar vor fi deferite instanțelor judecătorești competente de la sediul Prestatorului.'
+                : '6.2. Disputes arising from the interpretation or execution of this contract shall be settled amicably, otherwise they shall be referred to the competent courts of law at the Provider\'s headquarters.',
+            signProvider: isRo ? 'PRESTATOR' : 'PROVIDER',
+            signBeneficiary: isRo ? 'BENEFICIAR' : 'BENEFICIARY',
+            signLineProvider: isRo ? 'Semnătura și Ștampila' : 'Signature and Stamp',
+            signLineBeneficiary: isRo ? 'Semnătura' : 'Signature',
+            footerText: isRo
+                ? 'Document generat automat prin intermediul platformei Real Estate MLS. Toate drepturile rezervate.'
+                : 'Document generated automatically via the Real Estate MLS platform. All rights reserved.'
+        };
+
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html lang="${isRo ? 'ro' : 'en'}">
+            <head>
+                <meta charset="UTF-8">
+                <title>${content.title} - ${contractSerial} ${contractNumber}</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+                    body {
+                        font-family: 'Inter', sans-serif;
+                        color: #0f172a;
+                        line-height: 1.6;
+                        margin: 0;
+                        padding: 50px;
+                        background-color: #ffffff;
+                    }
+                    .contract-container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                    }
+                    .contract-header {
+                        text-align: center;
+                        margin-bottom: 40px;
+                    }
+                    .contract-title {
+                        font-family: 'Cinzel', serif;
+                        font-size: 22px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        margin-bottom: 10px;
+                        color: #0f172a;
+                    }
+                    .contract-meta {
+                        font-size: 14px;
+                        color: #475569;
+                        border-bottom: 2px double #cbd5e1;
+                        padding-bottom: 15px;
+                        margin-bottom: 25px;
+                    }
+                    .meta-row {
+                        display: flex;
+                        justify-content: space-between;
+                        font-weight: 600;
+                    }
+                    h3 {
+                        font-size: 14px;
+                        font-weight: 700;
+                        color: #0f172a;
+                        margin-top: 25px;
+                        margin-bottom: 10px;
+                        text-transform: uppercase;
+                        border-bottom: 1px solid #e2e8f0;
+                        padding-bottom: 5px;
+                    }
+                    p {
+                        font-size: 13px;
+                        margin: 0 0 12px 0;
+                        text-align: justify;
+                    }
+                    .party-info {
+                        background-color: #f8fafc;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-bottom: 15px;
+                    }
+                    .party-title {
+                        font-weight: 700;
+                        color: #0f172a;
+                        margin-bottom: 10px;
+                        font-size: 12px;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        border-bottom: 1px dashed #cbd5e1;
+                        padding-bottom: 4px;
+                    }
+                    .details-grid {
+                        display: grid;
+                        grid-template-cols: 1fr 1fr;
+                        gap: 8px 16px;
+                        font-size: 13px;
+                    }
+                    .details-item {
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .details-label {
+                        font-weight: 600;
+                        color: #64748b;
+                        font-size: 11px;
+                        text-transform: uppercase;
+                        margin-bottom: 2px;
+                    }
+                    .details-value {
+                        color: #0f172a;
+                        font-weight: 500;
+                    }
+                    .signatures {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-top: 50px;
+                        page-break-inside: avoid;
+                    }
+                    .signature-block {
+                        width: 45%;
+                        text-align: center;
+                    }
+                    .signature-line {
+                        border-top: 1px solid #94a3b8;
+                        margin-top: 50px;
+                        padding-top: 5px;
+                        font-size: 12px;
+                        color: #64748b;
+                    }
+                    .footer {
+                        text-align: center;
+                        font-size: 10px;
+                        color: #94a3b8;
+                        margin-top: 60px;
+                        border-top: 1px solid #e2e8f0;
+                        padding-top: 15px;
+                        page-break-inside: avoid;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="contract-container">
+                    <div class="contract-header">
+                        <div class="contract-title">${content.title}</div>
+                        <div class="contract-meta">
+                            <div class="meta-row">
+                                <span>${content.series}: ${contractSerial} / ${content.nr}: ${contractNumber}</span>
+                                <span>${content.date}: ${dateStr} | ${content.hour}: ${timeStr}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>${content.partiesTitle}</h3>
+                    
+                    <div class="party-info">
+                        <div class="party-title">${content.providerTitle}</div>
+                        <div class="details-grid">
+                            <div class="details-item">
+                                <span class="details-label">${content.providerCompany}</span>
+                                <span class="details-value">${agentProfile?.company_name || '................................................'}</span>
+                            </div>
+                            <div class="details-item">
+                                <span class="details-label">${content.providerCui}</span>
+                                <span class="details-value">${agentProfile?.company_cui || '................................................'}</span>
+                            </div>
+                            <div class="details-item">
+                                <span class="details-label">${content.providerRegCom}</span>
+                                <span class="details-value">${agentProfile?.company_reg_com || '................................................'}</span>
+                            </div>
+                            <div class="details-item">
+                                <span class="details-label">${content.providerAddress}</span>
+                                <span class="details-value">${agentProfile?.company_address || '................................................'}</span>
+                            </div>
+                            <div class="details-item" style="grid-column: span 2;">
+                                <span class="details-label">${content.providerRep}</span>
+                                <span class="details-value">${agentProfile?.full_name || '................................................'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="party-info">
+                        <div class="party-title">${content.beneficiaryTitle}</div>
+                        <div class="details-grid">
+                            <div class="details-item" style="grid-column: span 2;">
+                                <span class="details-label">${content.beneficiaryName}</span>
+                                <span class="details-value">${formData.ownerName || '................................................'}</span>
+                            </div>
+                            <div class="details-item">
+                                <span class="details-label">${content.beneficiaryPhone}</span>
+                                <span class="details-value">${formData.ownerPhone || '................................................'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>${content.objectTitle}</h3>
+                    <p>${content.objectDesc}</p>
+                    
+                    <div class="party-info">
+                        <div class="party-title">${content.imobilTitle}</div>
+                        <div class="details-grid">
+                            <div class="details-item" style="grid-column: span 2;">
+                                <span class="details-label">${content.propTitle}</span>
+                                <span class="details-value">${formData.title || '................................................'}</span>
+                            </div>
+                            <div class="details-item" style="grid-column: span 2;">
+                                <span class="details-label">${content.propAddress}</span>
+                                <span class="details-value">
+                                    ${[
+                                        formData.contractCountry ? (isRo ? `Țara: ${formData.contractCountry}` : `Country: ${formData.contractCountry}`) : '',
+                                        formData.contractCity ? (isRo ? `Oraș: ${formData.contractCity}` : `City: ${formData.contractCity}`) : '',
+                                        formData.contractStreet ? (isRo ? `Strada: ${formData.contractStreet}` : `Street: ${formData.contractStreet}`) : '',
+                                        formData.contractBuilding ? (isRo ? `Nr: ${formData.contractBuilding}` : `No: ${formData.contractBuilding}`) : '',
+                                        formData.contractFloor ? (isRo ? `Et: ${formData.contractFloor}` : `Floor: ${formData.contractFloor}`) : '',
+                                        formData.contractApartment ? (isRo ? `Ap: ${formData.contractApartment}` : `Apt: ${formData.contractApartment}`) : ''
+                                    ].filter(Boolean).join(', ') || '................................................'}
+                                </span>
+                            </div>
+                            <div class="details-item">
+                                <span class="details-label">${content.propCfTopo}</span>
+                                <span class="details-value">${formData.contractCfTopo || '................................................'}</span>
+                            </div>
+                            <div class="details-item">
+                                <span class="details-label">${content.propPrice}</span>
+                                <span class="details-value">${formData.price ? `${formData.price} ${formData.currency}` : '................................................'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>${content.servicesTitle}</h3>
+                    <p>${content.servicesDesc1}</p>
+                    <p>${content.servicesDesc2}</p>
+
+                    <h3>${content.rightsProviderTitle}</h3>
+                    <p>${content.rightsProvider1}</p>
+                    <p>${content.rightsProvider2}</p>
+
+                    <h3>${content.rightsBeneficiaryTitle}</h3>
+                    <p>${content.rightsBeneficiary1}</p>
+                    <p>${content.rightsBeneficiary2}</p>
+
+                    <h3>${content.forceTitle}</h3>
+                    <p>${content.force1}</p>
+                    <p>${content.force2}</p>
+
+                    <div class="signatures">
+                        <div class="signature-block">
+                            <div class="party-title">${content.signProvider}</div>
+                            <div style="font-size: 13px; color: #0f172a; margin-top: 15px; font-weight: bold;">${agentProfile?.company_name || '................................................'}</div>
+                            <div class="signature-line">${content.signLineProvider}</div>
+                        </div>
+                        <div class="signature-block">
+                            <div class="party-title">${content.signBeneficiary}</div>
+                            <div style="font-size: 13px; color: #0f172a; margin-top: 15px; font-weight: bold;">${formData.ownerName || '................................................'}</div>
+                            <div class="signature-line">${content.signLineBeneficiary}</div>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        ${content.footerText}
+                    </div>
+                </div>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
     };
 
     const checkKeyDown = (e: React.KeyboardEvent) => {
@@ -1445,6 +1838,124 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <div className="border-t border-slate-700/50 pt-6">
+                                            <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                                <MapPin className="w-4 h-4 text-violet-400" />
+                                                Exact Location Address (For Contract)
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Country</label>
+                                                    <input
+                                                        type="text"
+                                                        name="contractCountry"
+                                                        value={formData.contractCountry}
+                                                        onChange={handleChange}
+                                                        placeholder="e.g. România"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">City</label>
+                                                    <input
+                                                        type="text"
+                                                        name="contractCity"
+                                                        value={formData.contractCity}
+                                                        onChange={handleChange}
+                                                        placeholder="e.g. Timișoara"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Street Address</label>
+                                                    <input
+                                                        type="text"
+                                                        name="contractStreet"
+                                                        value={formData.contractStreet}
+                                                        onChange={handleChange}
+                                                        placeholder="e.g. Bulevardul Revoluției"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Building Nr.</label>
+                                                    <input
+                                                        type="text"
+                                                        name="contractBuilding"
+                                                        value={formData.contractBuilding}
+                                                        onChange={handleChange}
+                                                        placeholder="e.g. 12A"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Floor Nr.</label>
+                                                    <input
+                                                        type="text"
+                                                        name="contractFloor"
+                                                        value={formData.contractFloor}
+                                                        onChange={handleChange}
+                                                        placeholder="e.g. 3"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Apartment Nr.</label>
+                                                    <input
+                                                        type="text"
+                                                        name="contractApartment"
+                                                        value={formData.contractApartment}
+                                                        onChange={handleChange}
+                                                        placeholder="e.g. 14"
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-slate-700/50 pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-slate-300">CF/NR. Topo (For Contract)</label>
+                                                <input
+                                                    type="text"
+                                                    name="contractCfTopo"
+                                                    value={formData.contractCfTopo}
+                                                    onChange={handleChange}
+                                                    placeholder="e.g. CF 12345 Timișoara / Topo 678/2"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+
+                                                                        <div className="border-t border-slate-700/50 pt-6 flex justify-between items-center flex-wrap gap-4">
+                                            <div className="text-slate-400 text-xs max-w-md">
+                                                Generează un contract de colaborare standard conform legislației românești în vigoare, folosind datele firmei tale din profil și datele confidențiale de mai sus.
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative">
+                                                    <select
+                                                        value={contractLanguage}
+                                                        onChange={(e) => setContractLanguage(e.target.value as 'ro' | 'en')}
+                                                        className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-300 focus:ring-2 focus:ring-violet-500/30 outline-none appearance-none pr-8 cursor-pointer"
+                                                    >
+                                                        <option value="ro">Română (RO)</option>
+                                                        <option value="en">English (EN)</option>
+                                                    </select>
+                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGenerateContract}
+                                                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 transition-all flex items-center gap-2 text-sm border border-orange-400/20 active:scale-[0.98]"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                    Generate Collaboration Contract
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1488,6 +1999,51 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 <div>
                                                     <p className={`font-semibold ${formData.publishStoria ? 'text-cyan-400' : 'text-slate-300'}`}>Publish to Storia / OLX</p>
                                                     <p className="text-sm text-slate-500 mt-1">Include this property in the Storia XML auto-sync feed</p>
+                                                </div>
+                                            </label>
+
+                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishRomimo ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
+                                                <div className="flex items-center h-5 mt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.publishRomimo}
+                                                        onChange={(e) => setFormData({ ...formData, publishRomimo: e.target.checked })}
+                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className={`font-semibold ${formData.publishRomimo ? 'text-indigo-400' : 'text-slate-300'}`}>Publish to Romimo / Publi24</p>
+                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the Romimo/Publi24 XML auto-sync feed</p>
+                                                </div>
+                                            </label>
+
+                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishHomezz ? 'bg-violet-500/10 border-violet-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
+                                                <div className="flex items-center h-5 mt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.publishHomezz}
+                                                        onChange={(e) => setFormData({ ...formData, publishHomezz: e.target.checked })}
+                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className={`font-semibold ${formData.publishHomezz ? 'text-violet-400' : 'text-slate-300'}`}>Publish to HomeZZ / LaJumate</p>
+                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the HomeZZ/LaJumate XML auto-sync feed</p>
+                                                </div>
+                                            </label>
+
+                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishImobiliarepret ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
+                                                <div className="flex items-center h-5 mt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.publishImobiliarepret}
+                                                        onChange={(e) => setFormData({ ...formData, publishImobiliarepret: e.target.checked })}
+                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className={`font-semibold ${formData.publishImobiliarepret ? 'text-emerald-400' : 'text-slate-300'}`}>Publish to ImobiliarePret.ro</p>
+                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the ImobiliarePret XML auto-sync feed</p>
                                                 </div>
                                             </label>
                                         </div>
