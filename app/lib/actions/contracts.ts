@@ -55,16 +55,18 @@ export async function createProposalContract(
         return { success: false, error: `Property not found (searched for "${propertyIdOrRef}").` };
     }
 
-    // Match client profile by email
+    // Match client profile by email to prefill from their profile page
     let client_id = null;
+    let matchedClientProfile: any = null;
     if (lead.email) {
         const { data: clientProfile } = await supabase
             .from('profiles')
-            .select('id')
+            .select('id, full_name, phone, cnp, id_series_number, email')
             .eq('email', lead.email.trim())
             .maybeSingle();
         if (clientProfile) {
             client_id = clientProfile.id;
+            matchedClientProfile = clientProfile;
         }
     }
 
@@ -79,13 +81,13 @@ export async function createProposalContract(
     const contract_number = `${year}${month}${day}-${hour}${minute}${second}`;
     const contract_serial = 'PROP';
 
-    // Prepare JSON structures
+    // Prepare JSON structures - completed automatically from profile page if matched, fallback to lead details
     const client_details = {
-        fullName: lead.name || '',
-        email: lead.email || '',
-        phone: lead.phone || '',
-        cnp: lead.cnp || '',
-        idSeriesNumber: lead.id_series_number || '',
+        fullName: matchedClientProfile?.full_name || lead.name || '',
+        email: matchedClientProfile?.email || lead.email || '',
+        phone: matchedClientProfile?.phone || lead.phone || '',
+        cnp: matchedClientProfile?.cnp || lead.cnp || '',
+        idSeriesNumber: matchedClientProfile?.id_series_number || lead.id_series_number || '',
         signed: false
     };
 
