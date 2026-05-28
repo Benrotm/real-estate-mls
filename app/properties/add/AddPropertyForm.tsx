@@ -84,6 +84,20 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         });
     }, []);
 
+    // Set starting step if defined in URL search query (e.g. ?step=4)
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const stepParam = params.get('step');
+            if (stepParam) {
+                const parsedStep = parseInt(stepParam, 10);
+                if (parsedStep >= 1 && parsedStep <= 4) {
+                    setStep(parsedStep);
+                }
+            }
+        }
+    }, []);
+
     // Auto-geocode address on form load when lat/lng are missing (null from DB defaults to Bucharest)
     // NOTE: Uses Places API (enabled) instead of Geocoding API (not enabled) via findPlaceFromQuery
     useEffect(() => {

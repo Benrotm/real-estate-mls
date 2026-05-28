@@ -156,3 +156,73 @@ export async function updateCollaborationSignatures(
 
     return { success: true, contract: data };
 }
+
+/**
+ * Saves or updates Anexa 1 calculator data for a collaboration contract.
+ */
+export async function saveAnexa1ToContract(contractId: string, calculatorData: any) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('collaboration_contracts')
+        .update({
+            anexa_data: calculatorData,
+            anexa_agent_signature: null,
+            anexa_owner_signature: null,
+            anexa_status: 'sent',
+            anexa_signed_at: null,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', contractId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error saving Anexa 1:', error);
+        return { success: false, error: error.message };
+    }
+    return { success: true, contract: data };
+}
+
+/**
+ * Updates signatures on Anexa 1.
+ */
+export async function updateAnexaSignatures(
+    id: string,
+    updates: { agent_signature?: string; owner_signature?: string }
+) {
+    const supabase = await createClient();
+
+    const { data: current, error: fetchError } = await supabase
+        .from('collaboration_contracts')
+        .select('anexa_agent_signature, anexa_owner_signature, anexa_status')
+        .eq('id', id)
+        .single();
+
+    if (fetchError || !current) {
+        return { success: false, error: fetchError?.message || 'Contract not found' };
+    }
+
+    const nextAgentSig = updates.agent_signature !== undefined ? updates.agent_signature : current.anexa_agent_signature;
+    const nextOwnerSig = updates.owner_signature !== undefined ? updates.owner_signature : current.anexa_owner_signature;
+    const isSigned = !!(nextAgentSig && nextOwnerSig);
+
+    const { data, error } = await supabase
+        .from('collaboration_contracts')
+        .update({
+            anexa_agent_signature: nextAgentSig,
+            anexa_owner_signature: nextOwnerSig,
+            anexa_status: isSigned ? 'signed' : 'sent',
+            anexa_signed_at: isSigned ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating Anexa 1 signatures:', error);
+        return { success: false, error: error.message };
+    }
+    return { success: true, contract: data };
+}
+

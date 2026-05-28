@@ -4,7 +4,7 @@ import { checkUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features
 export const dynamic = 'force-dynamic';
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video, Sparkles, ArrowRight, LayoutGrid, Activity, Armchair, Layers, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video, Sparkles, ArrowRight, LayoutGrid, Activity, Armchair, Layers, ShieldCheck, Edit3, RefreshCw } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 
@@ -57,6 +57,8 @@ export default async function PropertyDetailPage({
     let property: Property | undefined;
     let ownerProfile = null;
     let user = null;
+    let userRole = null;
+    let collaborationContract = null;
     let analytics: { views: number; favorites: number; inquiries: number; offers: number; shares: number; createdAt: string | null } = { views: 0, favorites: 0, inquiries: 0, offers: 0, shares: 0, createdAt: null };
     let propertyEvents: any[] = [];
     let showMakeOffer = false;
@@ -205,16 +207,20 @@ export default async function PropertyDetailPage({
         }
 
         if (user) {
+            const { data: currentUserProfile } = await supabase
+                .from('profiles')
+                .select('role, plan_tier')
+                .eq('id', user.id)
+                .single();
+
+            if (currentUserProfile) {
+                userRole = currentUserProfile.role;
+            }
+
             if (property.owner_id === user.id) {
                 hasAccess = true;
                 canViewContact = true;
             } else {
-                const { data: currentUserProfile } = await supabase
-                    .from('profiles')
-                    .select('role, plan_tier')
-                    .eq('id', user.id)
-                    .single();
-
                 if (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'superadmin') {
                     hasAccess = true;
                     canViewContact = true;
@@ -234,6 +240,18 @@ export default async function PropertyDetailPage({
                     }
                 }
             }
+        }
+
+        // Fetch collaboration contract if uuid is valid
+        if (isUuid && property) {
+            const { data: contractData } = await supabase
+                .from('collaboration_contracts')
+                .select('id, contract_serial, contract_number, anexa_data')
+                .eq('property_id', property.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            collaborationContract = contractData;
         }
     } catch (err) {
         console.error("Critical error in PropertyDetailPage:", err);
@@ -374,6 +392,90 @@ export default async function PropertyDetailPage({
                                                 </a>
                                             ))}
                                         </div>
+                                    </div>
+                                )}
+
+                                {/* Owner / Admin Actions */}
+                                {hasAccess && (
+                                    <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-800/80">
+                                        {/* Edit Property Button */}
+                                        <Link
+                                            href={
+                                                userRole === 'admin' || userRole === 'superadmin'
+                                                    ? `/dashboard/admin/properties/${property.id}/edit`
+                                                    : `/dashboard/owner/properties/${property.id}/edit`
+                                            }
+                                            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 hover:border-slate-600 transition duration-300 flex items-center gap-2"
+                                        >
+                                            <Edit3 className="w-4 h-4 text-violet-400" />
+                                            <span>EDIT PROPERTY</span>
+                                        </Link>
+
+                                        {/* Generate / View Collaboration Contract */}
+                                        {collaborationContract ? (
+                                            <a
+                                                href={`/properties/contract-preview?id=${collaborationContract.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2 shadow-lg shadow-orange-500/10"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                                <span>VIEW CONTRACT</span>
+                                            </a>
+                                        ) : (
+                                            <Link
+                                                href={
+                                                    userRole === 'admin' || userRole === 'superadmin'
+                                                        ? `/dashboard/admin/properties/${property.id}/edit?step=4`
+                                                        : `/dashboard/owner/properties/${property.id}/edit?step=4`
+                                                }
+                                                className="px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2 shadow-lg shadow-orange-500/10"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                                <span>GENERATE CONTRACT</span>
+                                            </Link>
+                                        )}
+
+                                        {/* Generate / View Anexa 1 */}
+                                        {collaborationContract ? (
+                                            collaborationContract.anexa_data ? (
+                                                <div className="flex gap-2">
+                                                    <a
+                                                        href={`/properties/anexa1-preview?id=${collaborationContract.id}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2 shadow-lg shadow-cyan-500/15"
+                                                    >
+                                                        <Sparkles className="w-4 h-4" />
+                                                        <span>VIEW ANEXA 1</span>
+                                                    </a>
+                                                    <Link
+                                                        href={`/calculator-comisioane?property_id=${property.id}`}
+                                                        className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 transition duration-300 flex items-center gap-2"
+                                                    >
+                                                        <RefreshCw className="w-4 h-4 text-slate-400" />
+                                                        <span>REGENERATE ANEXA 1</span>
+                                                    </Link>
+                                                </div>
+                                            ) : (
+                                                <Link
+                                                    href={`/calculator-comisioane?property_id=${property.id}`}
+                                                    className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2 shadow-lg shadow-cyan-500/15"
+                                                >
+                                                    <Sparkles className="w-4 h-4" />
+                                                    <span>GENERATE ANEXA 1</span>
+                                                </Link>
+                                            )
+                                        ) : (
+                                            <button
+                                                disabled
+                                                title="Vă rugăm să generați mai întâi Contractul de Colaborare pentru a putea genera Anexa 1."
+                                                className="px-4 py-2.5 bg-slate-850 text-slate-500 border border-slate-800 rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2 cursor-not-allowed opacity-40"
+                                            >
+                                                <Sparkles className="w-4 h-4" />
+                                                <span>GENERATE ANEXA 1</span>
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>

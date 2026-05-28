@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { supabase } from '@/app/lib/supabase/client';
+import { saveAnexa1ToContract } from '@/app/lib/actions/collaboration-contracts';
 import { 
     Sliders, Shield, Activity, Info, Lock, Check, HelpCircle, 
     AlertCircle, Sparkles, Receipt, UserCheck, ShieldCheck, FileText
@@ -69,6 +72,49 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
     const [isExclusive, setIsExclusive] = useState<boolean>(false);
     const [exclusivityPeriodDays, setExclusivityPeriodDays] = useState<number>(90);
     const [showAuthAlert, setShowAuthAlert] = useState<boolean>(false);
+
+    const searchParams = useSearchParams();
+    const [propertyId, setPropertyId] = useState<string | null>(null);
+    const [associatedContract, setAssociatedContract] = useState<any>(null);
+    const [propertyName, setPropertyName] = useState<string>('');
+    const [savingAnexa, setSavingAnexa] = useState(false);
+
+    useEffect(() => {
+        if (!searchParams) return;
+        const propId = searchParams.get('property_id');
+        if (propId) {
+            setPropertyId(propId);
+            
+            // Fetch property details to prefill the value slider
+            supabase
+                .from('properties')
+                .select('title, price')
+                .eq('id', propId)
+                .maybeSingle()
+                .then(({ data: propData }) => {
+                    if (propData) {
+                        setPropertyName(propData.title);
+                        if (propData.price) {
+                            setPropertyValue(Number(propData.price));
+                        }
+                    }
+                });
+
+            // Fetch collaboration contract to check if it exists and to get serial/number
+            supabase
+                .from('collaboration_contracts')
+                .select('*')
+                .eq('property_id', propId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+                .then(({ data: contractData }) => {
+                    if (contractData) {
+                        setAssociatedContract(contractData);
+                    }
+                });
+        }
+    }, [searchParams]);
     
     // Services status
     const [services, setServices] = useState<Service[]>(
@@ -263,6 +309,59 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
             case 'admin': return 'Administrator';
             case 'super_admin': return 'Super Administrator';
             default: return role;
+        }
+    };
+
+    const handleGenerateAnexa1 = async () => {
+        if (!associatedContract) return;
+        setSavingAnexa(true);
+        try {
+            const selectedServices = services.filter(s => s.always || s.on);
+            const activeModelObj = initialSettings.commission_models[activeModel] || { nm: '', desc: '' };
+            const exclusivityText = isExclusive 
+                ? `Exclusivă (${exclusivityPeriodDays} zile)` 
+                : 'Non-exclusivă';
+
+            const anexaData = {
+                propertyName,
+                propertyValue,
+                activeModel,
+                activeModelName: activeModelObj.nm,
+                isExclusive,
+                exclusivityPeriodDays,
+                exclusivityText,
+                selectedServices: selectedServices.map(s => ({
+                    id: s.id,
+                    name: s.nm,
+                    desc: s.dc,
+                    cost: s.cost,
+                    coef: s.coef,
+                    payMode: getEffectivePayMode(s),
+                    monthly: s.monthly || false
+                })),
+                calculations: {
+                    sellerPercent: calculations.finalSellerPercent,
+                    sellerCommEUR: calculations.sellerCommissionEUR,
+                    buyerPercent: calculations.finalBuyerPercent,
+                    buyerCommEUR: calculations.buyerCommissionEUR,
+                    totalServicesFirstMonthEUR: calculations.totalServicesCostEUR,
+                    monthlyServicesCostEUR: calculations.monthlyServicesCostEUR
+                },
+                generatedAt: new Date().toISOString()
+            };
+
+            const res = await saveAnexa1ToContract(associatedContract.id, anexaData);
+            if (res.success) {
+                // Redirect to Anexa 1 preview page
+                window.location.href = `/properties/anexa1-preview?id=${associatedContract.id}`;
+            } else {
+                alert('Eroare la salvarea Anexei 1: ' + res.error);
+            }
+        } catch (error) {
+            console.error('Error generating Anexa 1:', error);
+            alert('A apărut o eroare la generarea Anexei 1.');
+        } finally {
+            setSavingAnexa(false);
         }
     };
 
@@ -1164,14 +1263,35 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                     </div>
 
                     {/* BUTTON GENERATE DOCUMENT */}
-                    <button
-                        type="button"
-                        onClick={handleGenerateDocument}
-                        className="w-full mt-4 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-orange-500/20 transition-all flex items-center justify-center gap-2 border border-orange-500/30 text-sm"
-                    >
-                        <FileText className="w-4 h-4" />
-                        Generează Document
-                    </button>
+                    {associatedContract ? (
+                        <button
+                            type="button"
+                            onClick={handleGenerateAnexa1}
+                            disabled={savingAnexa}
+                            className="w-full mt-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-cyan-500/20 transition-all flex items-center justify-center gap-2 border border-cyan-500/30 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {savingAnexa ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-slate-300 border-t-white rounded-full animate-spin"></div>
+                                    <span>Se salvează Anexa 1...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-4 h-4 text-cyan-300" />
+                                    <span>Generează Anexa 1 (Contract {associatedContract.contract_serial}/{associatedContract.contract_number})</span>
+                                </>
+                            )}
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleGenerateDocument}
+                            className="w-full mt-4 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-orange-500/20 transition-all flex items-center justify-center gap-2 border border-orange-500/30 text-sm"
+                        >
+                            <FileText className="w-4 h-4" />
+                            Generează Document
+                        </button>
+                    )}
 
                     <div className="text-[10px] text-slate-500 leading-relaxed mt-4 flex items-start gap-1.5 bg-slate-950/30 p-3 rounded-lg border border-slate-800/40">
                         <HelpCircle className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 mt-0.5" />
