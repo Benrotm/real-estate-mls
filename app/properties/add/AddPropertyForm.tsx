@@ -205,7 +205,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         contractBuilding: initialData?.contract_building || '',
         contractFloor: initialData?.contract_floor || '',
         contractApartment: initialData?.contract_apartment || '',
-        contractCfTopo: initialData?.contract_cf_topo || ''
+        contractCfTopo: initialData?.contract_cf_topo || '',
+        contractOwnerId: initialData?.contract_owner_id || '',
+        contractOwnerCnp: initialData?.contract_owner_cnp || ''
     });
 
     const [agentProfile, setAgentProfile] = useState<any>(null);
@@ -528,6 +530,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         formDataToSend.append('contract_floor', formData.contractFloor || '');
         formDataToSend.append('contract_apartment', formData.contractApartment || '');
         formDataToSend.append('contract_cf_topo', formData.contractCfTopo || '');
+        formDataToSend.append('contract_owner_id', formData.contractOwnerId || '');
+        formDataToSend.append('contract_owner_cnp', formData.contractOwnerCnp || '');
 
         // Status & Distribution
         formDataToSend.append('status', status);
@@ -568,12 +572,6 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     };
 
     const handleGenerateContract = () => {
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) {
-            alert('Te rugăm să permiți ferestrele pop-up pentru a genera documentul.');
-            return;
-        }
-
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -586,336 +584,47 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         const contractSerial = 'IMB';
         const contractNumber = `${year}${month}${day}-${randomNum}`;
 
-        const isRo = contractLanguage === 'ro';
-
-        const content = {
-            title: isRo ? 'Contract de Colaborare Imobiliară' : 'Real Estate Collaboration Contract',
-            series: isRo ? 'Seria' : 'Series',
-            nr: isRo ? 'Nr' : 'No',
-            date: isRo ? 'Data' : 'Date',
-            hour: isRo ? 'Ora' : 'Time',
-            partiesTitle: isRo ? '1. Părțile Contractante' : '1. Contracting Parties',
-            providerTitle: isRo ? 'PRESTATORUL (Broker / Agenție)' : 'THE PROVIDER (Broker / Agency)',
-            providerCompany: isRo ? 'Denumire Societate (Firma):' : 'Company Name (Firm):',
-            providerCui: isRo ? 'CUI / CIF:' : 'Tax ID / VAT registration no:',
-            providerRegCom: isRo ? 'Nr. Reg. Comerțului:' : 'Trade Register no:',
-            providerAddress: isRo ? 'Sediul Social:' : 'Registered Office Address:',
-            providerRep: isRo ? 'Reprezentat legal prin:' : 'Represented legally by:',
-            beneficiaryTitle: isRo ? 'BENEFICIARUL (Proprietar / Client)' : 'THE BENEFICIARY (Owner / Client)',
-            beneficiaryName: isRo ? 'Nume complet:' : 'Full Name:',
-            beneficiaryPhone: isRo ? 'Telefon contact:' : 'Contact Phone:',
-            objectTitle: isRo ? '2. Obiectul Contractului' : '2. Object of the Contract',
-            objectDesc: isRo 
-                ? 'Obiectul prezentului contract îl reprezintă colaborarea dintre Prestator și Beneficiar în scopul promovării, intermedierii și facilitării tranzacționării (vânzare/închiriere) a dreptului de proprietate asupra bunului imobil identificat după cum urmează:'
-                : 'The object of this contract is the collaboration between the Provider and the Beneficiary for the purpose of marketing, promoting, and facilitating the transaction (sale/lease) of the property rights of the real estate asset identified below:',
-            imobilTitle: isRo ? 'Identificare Imobil' : 'Property Identification',
-            propTitle: isRo ? 'Titlu Proprietate:' : 'Property Title:',
-            propAddress: isRo ? 'Adresă exactă (locație contract):' : 'Exact Address (Contract Location):',
-            propCfTopo: isRo ? 'Carte Funciară / Topo (CF/NR. Topo):' : 'Land Registry / Topographic no (CF/No. Topo):',
-            propPrice: isRo ? 'Preț Promovare Solicitat:' : 'Requested Listing Price:',
-            servicesTitle: isRo ? '3. Servicii și Comisioane' : '3. Services and Commissions',
-            servicesDesc1: isRo
-                ? '3.1. Serviciile specifice pe care le va presta Prestatorul pentru Beneficiar, precum și valoarea și structura comisionului datorat de Beneficiar pentru aceste servicii sunt stabilite în totalitate și în exclusivitate în conformitate cu prevederile detaliate în <strong>Anexa 1</strong> la prezentul contract, care face parte integrantă din acesta.'
-                : '3.1. The specific services to be performed by the Provider for the Beneficiary, as well as the value and structure of the commission owed by the Beneficiary for these services, are established entirely and exclusively in accordance with the provisions detailed in <strong>Annex 1</strong> to this contract, which forms an integral part thereof.',
-            servicesDesc2: isRo
-                ? '3.2. Beneficiarul se obligă să achite comisionul stabilit în conformitate cu condițiile, termenele și modalitățile de plată stipulate în <strong>Anexa 1</strong>.'
-                : '3.2. The Beneficiary undertakes to pay the established commission in accordance with the conditions, deadlines, and payment methods stipulated in <strong>Annex 1</strong>.',
-            rightsProviderTitle: isRo ? '4. Drepturile și Obligațiile Prestatorului' : '4. Rights and Obligations of the Provider',
-            rightsProvider1: isRo
-                ? '4.1. Prestatorul are dreptul de a promova imobilul în mediul online și offline prin canale proprii sau prin rețeaua MLS (Multiple Listing Service).'
-                : '4.1. The Provider has the right to promote the property in online and offline media through their own channels or through the MLS (Multiple Listing Service) network.',
-            rightsProvider2: isRo
-                ? '4.2. Prestatorul se obligă să depună toate diligențele profesionale necesare pentru identificarea potențialilor clienți cumpărători/chiriași și să asigure asistența de specialitate pe tot parcursul negocierilor și finalizării tranzacției.'
-                : '4.2. The Provider undertakes to use all professional diligence necessary to identify potential buyers/tenants and to provide professional assistance throughout the negotiations and finalization of the transaction.',
-            rightsBeneficiaryTitle: isRo ? '5. Drepturile și Obligațiile Beneficiarului' : '5. Rights and Obligations of the Beneficiary',
-            rightsBeneficiary1: isRo
-                ? '5.1. Beneficiarul garantează că deține drepturile legale de a tranzacționa imobilul descris mai sus și că toate datele furnizate sunt reale și corecte.'
-                : '5.1. The Beneficiary guarantees that they hold the legal rights to transact the property described above and that all data provided is true and correct.',
-            rightsBeneficiary2: isRo
-                ? '5.2. Beneficiarul se obligă să asigure accesul Prestatorului și al potențialilor clienți pentru vizionarea imobilului și să informeze Prestatorul cu privire la orice schimbări apărute.'
-                : '5.2. The Beneficiary undertakes to ensure access to the Provider and potential clients for property viewings and to inform the Provider of any changes.',
-            forceTitle: isRo ? '6. Forța Majoră și Litigii' : '6. Force Majeure and Disputes',
-            force1: isRo
-                ? '6.1. Părțile sunt exonerate de răspundere în caz de forță majoră, constatată conform legii.'
-                : '6.1. The parties are exonerated from liability in case of force majeure, established by law.',
-            force2: isRo
-                ? '6.2. Litigiile izvorâte din interpretarea sau executarea prezentului contract se vor rezolva pe cale amiabilă, iar în caz contrar vor fi deferite instanțelor judecătorești competente de la sediul Prestatorului.'
-                : '6.2. Disputes arising from the interpretation or execution of this contract shall be settled amicably, otherwise they shall be referred to the competent courts of law at the Provider\'s headquarters.',
-            signProvider: isRo ? 'PRESTATOR' : 'PROVIDER',
-            signBeneficiary: isRo ? 'BENEFICIAR' : 'BENEFICIARY',
-            signLineProvider: isRo ? 'Semnătura și Ștampila' : 'Signature and Stamp',
-            signLineBeneficiary: isRo ? 'Semnătura' : 'Signature',
-            footerText: isRo
-                ? 'Document generat automat prin intermediul platformei Real Estate MLS. Toate drepturile rezervate.'
-                : 'Document generated automatically via the Real Estate MLS platform. All rights reserved.'
+        const contractData = {
+            agentProfile: {
+                company_name: agentProfile?.company_name || '',
+                company_cui: agentProfile?.company_cui || '',
+                company_reg_com: agentProfile?.company_reg_com || '',
+                company_address: agentProfile?.company_address || '',
+                full_name: agentProfile?.full_name || '',
+                phone: agentProfile?.phone || ''
+            },
+            formData: {
+                ownerName: formData.ownerName || '',
+                ownerPhone: formData.ownerPhone || '',
+                contractOwnerId: formData.contractOwnerId || '',
+                contractOwnerCnp: formData.contractOwnerCnp || '',
+                title: formData.title || '',
+                contractCountry: formData.contractCountry || 'România',
+                contractCity: formData.contractCity || '',
+                contractStreet: formData.contractStreet || '',
+                contractBuilding: formData.contractBuilding || '',
+                contractFloor: formData.contractFloor || '',
+                contractApartment: formData.contractApartment || '',
+                contractCfTopo: formData.contractCfTopo || '',
+                price: formData.price || '',
+                currency: formData.currency || 'EUR'
+            },
+            contractSerial,
+            contractNumber,
+            dateStr,
+            timeStr,
+            lang: contractLanguage
         };
 
-        const htmlContent = `
-            <!DOCTYPE html>
-            <html lang="${isRo ? 'ro' : 'en'}">
-            <head>
-                <meta charset="UTF-8">
-                <title>${content.title} - ${contractSerial} ${contractNumber}</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-                    body {
-                        font-family: 'Inter', sans-serif;
-                        color: #0f172a;
-                        line-height: 1.6;
-                        margin: 0;
-                        padding: 50px;
-                        background-color: #ffffff;
-                    }
-                    .contract-container {
-                        max-width: 800px;
-                        margin: 0 auto;
-                    }
-                    .contract-header {
-                        text-align: center;
-                        margin-bottom: 40px;
-                    }
-                    .contract-title {
-                        font-family: 'Cinzel', serif;
-                        font-size: 22px;
-                        font-weight: 700;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                        margin-bottom: 10px;
-                        color: #0f172a;
-                    }
-                    .contract-meta {
-                        font-size: 14px;
-                        color: #475569;
-                        border-bottom: 2px double #cbd5e1;
-                        padding-bottom: 15px;
-                        margin-bottom: 25px;
-                    }
-                    .meta-row {
-                        display: flex;
-                        justify-content: space-between;
-                        font-weight: 600;
-                    }
-                    h3 {
-                        font-size: 14px;
-                        font-weight: 700;
-                        color: #0f172a;
-                        margin-top: 25px;
-                        margin-bottom: 10px;
-                        text-transform: uppercase;
-                        border-bottom: 1px solid #e2e8f0;
-                        padding-bottom: 5px;
-                    }
-                    p {
-                        font-size: 13px;
-                        margin: 0 0 12px 0;
-                        text-align: justify;
-                    }
-                    .party-info {
-                        background-color: #f8fafc;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 8px;
-                        padding: 15px;
-                        margin-bottom: 15px;
-                    }
-                    .party-title {
-                        font-weight: 700;
-                        color: #0f172a;
-                        margin-bottom: 10px;
-                        font-size: 12px;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        border-bottom: 1px dashed #cbd5e1;
-                        padding-bottom: 4px;
-                    }
-                    .details-grid {
-                        display: grid;
-                        grid-template-cols: 1fr 1fr;
-                        gap: 8px 16px;
-                        font-size: 13px;
-                    }
-                    .details-item {
-                        display: flex;
-                        flex-direction: column;
-                    }
-                    .details-label {
-                        font-weight: 600;
-                        color: #64748b;
-                        font-size: 11px;
-                        text-transform: uppercase;
-                        margin-bottom: 2px;
-                    }
-                    .details-value {
-                        color: #0f172a;
-                        font-weight: 500;
-                    }
-                    .signatures {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-top: 50px;
-                        page-break-inside: avoid;
-                    }
-                    .signature-block {
-                        width: 45%;
-                        text-align: center;
-                    }
-                    .signature-line {
-                        border-top: 1px solid #94a3b8;
-                        margin-top: 50px;
-                        padding-top: 5px;
-                        font-size: 12px;
-                        color: #64748b;
-                    }
-                    .footer {
-                        text-align: center;
-                        font-size: 10px;
-                        color: #94a3b8;
-                        margin-top: 60px;
-                        border-top: 1px solid #e2e8f0;
-                        padding-top: 15px;
-                        page-break-inside: avoid;
-                    }
-                    @media print {
-                        body {
-                            padding: 0;
-                        }
-                        .no-print {
-                            display: none;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="contract-container">
-                    <div class="contract-header">
-                        <div class="contract-title">${content.title}</div>
-                        <div class="contract-meta">
-                            <div class="meta-row">
-                                <span>${content.series}: ${contractSerial} / ${content.nr}: ${contractNumber}</span>
-                                <span>${content.date}: ${dateStr} | ${content.hour}: ${timeStr}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h3>${content.partiesTitle}</h3>
-                    
-                    <div class="party-info">
-                        <div class="party-title">${content.providerTitle}</div>
-                        <div class="details-grid">
-                            <div class="details-item">
-                                <span class="details-label">${content.providerCompany}</span>
-                                <span class="details-value">${agentProfile?.company_name || '................................................'}</span>
-                            </div>
-                            <div class="details-item">
-                                <span class="details-label">${content.providerCui}</span>
-                                <span class="details-value">${agentProfile?.company_cui || '................................................'}</span>
-                            </div>
-                            <div class="details-item">
-                                <span class="details-label">${content.providerRegCom}</span>
-                                <span class="details-value">${agentProfile?.company_reg_com || '................................................'}</span>
-                            </div>
-                            <div class="details-item">
-                                <span class="details-label">${content.providerAddress}</span>
-                                <span class="details-value">${agentProfile?.company_address || '................................................'}</span>
-                            </div>
-                            <div class="details-item" style="grid-column: span 2;">
-                                <span class="details-label">${content.providerRep}</span>
-                                <span class="details-value">${agentProfile?.full_name || '................................................'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="party-info">
-                        <div class="party-title">${content.beneficiaryTitle}</div>
-                        <div class="details-grid">
-                            <div class="details-item" style="grid-column: span 2;">
-                                <span class="details-label">${content.beneficiaryName}</span>
-                                <span class="details-value">${formData.ownerName || '................................................'}</span>
-                            </div>
-                            <div class="details-item">
-                                <span class="details-label">${content.beneficiaryPhone}</span>
-                                <span class="details-value">${formData.ownerPhone || '................................................'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h3>${content.objectTitle}</h3>
-                    <p>${content.objectDesc}</p>
-                    
-                    <div class="party-info">
-                        <div class="party-title">${content.imobilTitle}</div>
-                        <div class="details-grid">
-                            <div class="details-item" style="grid-column: span 2;">
-                                <span class="details-label">${content.propTitle}</span>
-                                <span class="details-value">${formData.title || '................................................'}</span>
-                            </div>
-                            <div class="details-item" style="grid-column: span 2;">
-                                <span class="details-label">${content.propAddress}</span>
-                                <span class="details-value">
-                                    ${[
-                                        formData.contractCountry ? (isRo ? `Țara: ${formData.contractCountry}` : `Country: ${formData.contractCountry}`) : '',
-                                        formData.contractCity ? (isRo ? `Oraș: ${formData.contractCity}` : `City: ${formData.contractCity}`) : '',
-                                        formData.contractStreet ? (isRo ? `Strada: ${formData.contractStreet}` : `Street: ${formData.contractStreet}`) : '',
-                                        formData.contractBuilding ? (isRo ? `Nr: ${formData.contractBuilding}` : `No: ${formData.contractBuilding}`) : '',
-                                        formData.contractFloor ? (isRo ? `Et: ${formData.contractFloor}` : `Floor: ${formData.contractFloor}`) : '',
-                                        formData.contractApartment ? (isRo ? `Ap: ${formData.contractApartment}` : `Apt: ${formData.contractApartment}`) : ''
-                                    ].filter(Boolean).join(', ') || '................................................'}
-                                </span>
-                            </div>
-                            <div class="details-item">
-                                <span class="details-label">${content.propCfTopo}</span>
-                                <span class="details-value">${formData.contractCfTopo || '................................................'}</span>
-                            </div>
-                            <div class="details-item">
-                                <span class="details-label">${content.propPrice}</span>
-                                <span class="details-value">${formData.price ? `${formData.price} ${formData.currency}` : '................................................'}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h3>${content.servicesTitle}</h3>
-                    <p>${content.servicesDesc1}</p>
-                    <p>${content.servicesDesc2}</p>
-
-                    <h3>${content.rightsProviderTitle}</h3>
-                    <p>${content.rightsProvider1}</p>
-                    <p>${content.rightsProvider2}</p>
-
-                    <h3>${content.rightsBeneficiaryTitle}</h3>
-                    <p>${content.rightsBeneficiary1}</p>
-                    <p>${content.rightsBeneficiary2}</p>
-
-                    <h3>${content.forceTitle}</h3>
-                    <p>${content.force1}</p>
-                    <p>${content.force2}</p>
-
-                    <div class="signatures">
-                        <div class="signature-block">
-                            <div class="party-title">${content.signProvider}</div>
-                            <div style="font-size: 13px; color: #0f172a; margin-top: 15px; font-weight: bold;">${agentProfile?.company_name || '................................................'}</div>
-                            <div class="signature-line">${content.signLineProvider}</div>
-                        </div>
-                        <div class="signature-block">
-                            <div class="party-title">${content.signBeneficiary}</div>
-                            <div style="font-size: 13px; color: #0f172a; margin-top: 15px; font-weight: bold;">${formData.ownerName || '................................................'}</div>
-                            <div class="signature-line">${content.signLineBeneficiary}</div>
-                        </div>
-                    </div>
-
-                    <div class="footer">
-                        ${content.footerText}
-                    </div>
-                </div>
-                <script>
-                    window.onload = function() {
-                        window.print();
-                    }
-                </script>
-            </body>
-            </html>
-        `;
-
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
+        try {
+            const jsonStr = JSON.stringify(contractData);
+            const encodedData = btoa(unescape(encodeURIComponent(jsonStr)));
+            const previewUrl = `/properties/contract-preview?data=${encodedData}`;
+            window.open(previewUrl, '_blank');
+        } catch (error) {
+            console.error('Eroare la generarea contractului:', error);
+            alert('A apărut o eroare la generarea contractului. Te rugăm să verifici datele introduse.');
+        }
     };
 
     const checkKeyDown = (e: React.KeyboardEvent) => {
@@ -1741,6 +1450,32 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                     value={formData.ownerPhone}
                                                     onChange={handleChange}
                                                     placeholder="+1 (555) 000-0000"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-slate-300">ID Number and Serial (For Contract)</label>
+                                                <input
+                                                    type="text"
+                                                    name="contractOwnerId"
+                                                    value={formData.contractOwnerId}
+                                                    onChange={handleChange}
+                                                    placeholder="e.g. AX 123456"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-slate-300">CNP (For Contract)</label>
+                                                <input
+                                                    type="text"
+                                                    name="contractOwnerCnp"
+                                                    value={formData.contractOwnerCnp}
+                                                    onChange={handleChange}
+                                                    placeholder="e.g. 1950203xxxxxx"
+                                                    maxLength={13}
                                                     className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                                                 />
                                             </div>

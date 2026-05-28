@@ -75,6 +75,8 @@ export interface Property {
     contract_floor?: string;
     contract_apartment?: string;
     contract_cf_topo?: string;
+    contract_owner_id?: string;
+    contract_owner_cnp?: string;
 
     created_at: string;
     updated_at: string;

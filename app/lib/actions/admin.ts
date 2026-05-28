@@ -215,6 +215,8 @@ export async function updatePropertyAdmin(propertyId: string, formData: FormData
             contract_floor: formData.get('contract_floor') as string || null,
             contract_apartment: formData.get('contract_apartment') as string || null,
             contract_cf_topo: formData.get('contract_cf_topo') as string || null,
+            contract_owner_id: formData.get('contract_owner_id') as string || null,
+            contract_owner_cnp: formData.get('contract_owner_cnp') as string || null,
 
             publish_imobiliare: formData.get('publish_imobiliare') === 'true',
             publish_storia: formData.get('publish_storia') === 'true',
