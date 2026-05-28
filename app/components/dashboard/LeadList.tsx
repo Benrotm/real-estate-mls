@@ -473,13 +473,25 @@ export default function LeadList({
                                                                 {lead.name || 'Client Interest'}
                                                             </span>
                                                         ) : lead.agent_id === currentUserId ? (
-                                                            <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
-                                                                {lead.name || 'Unnamed Lead'}
-                                                            </Link>
+                                                            allowEdit ? (
+                                                                <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
+                                                                    {lead.name || 'Unnamed Lead'}
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="font-bold text-slate-900">
+                                                                    {lead.name || 'Unnamed Lead'}
+                                                                </span>
+                                                            )
                                                         ) : teamMemberIds.includes(lead.agent_id) ? (
-                                                            <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-500 italic hover:text-orange-600 transition-colors">
-                                                                Team Lead
-                                                            </Link>
+                                                            allowEdit ? (
+                                                                <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-500 italic hover:text-orange-600 transition-colors">
+                                                                    Team Lead
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="font-bold text-slate-500 italic">
+                                                                    Team Lead
+                                                                </span>
+                                                            )
                                                         ) : (
                                                             <span className="font-bold text-slate-500 italic">Partner Lead</span>
                                                         )}
@@ -567,23 +579,25 @@ export default function LeadList({
                                                             <Wallet className="w-3.5 h-3.5" /> Deblochează ({leadUnlockCost} CR)
                                                         </button>
                                                     ) : lead.agent_id === currentUserId ? (
-                                                        <>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
-                                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-                                                                title="Archive Lead"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                            <Link
-                                                                href={`${basePath}/${lead.id}`}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all border border-transparent hover:border-slate-200"
-                                                                title="Edit Details"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                            </Link>
-                                                        </>
+                                                        allowEdit ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
+                                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                                                                    title="Archive Lead"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                                <Link
+                                                                    href={`${basePath}/${lead.id}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all border border-transparent hover:border-slate-200"
+                                                                    title="Edit Details"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                </Link>
+                                                            </>
+                                                        ) : null
                                                     ) : teamMemberIds.includes(lead.agent_id) ? (
                                                         <div className="flex items-center gap-2">
                                                             <button
@@ -592,14 +606,16 @@ export default function LeadList({
                                                             >
                                                                 <MessageSquare className="w-3.5 h-3.5" /> Contact
                                                             </button>
-                                                            <Link
-                                                                href={`${basePath}/${lead.id}`}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-100 transition-colors"
-                                                                title="View Details"
-                                                            >
-                                                                <Eye className="w-3.5 h-3.5" /> View
-                                                            </Link>
+                                                            {allowEdit && (
+                                                                <Link
+                                                                    href={`${basePath}/${lead.id}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg font-bold text-xs hover:bg-slate-100 transition-colors"
+                                                                    title="View Details"
+                                                                >
+                                                                    <Eye className="w-3.5 h-3.5" /> View
+                                                                </Link>
+                                                            )}
                                                         </div>
                                                     ) : (
                                                         <button

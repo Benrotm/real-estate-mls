@@ -122,6 +122,7 @@ export default async function OwnerLeadsPage() {
                     hasLeadsAccess={hasLeadsAccess}
                     userCredits={userCredits}
                     leadUnlockCost={leadUnlockCost}
+                    currentUserId={user.id}
                 />
             </div>
         </div>

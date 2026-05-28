@@ -62,6 +62,12 @@ export async function deductUserCredits(amount: number, description: string = 'C
 
     if (logTxError) {
         console.error('Error inserting credit transaction log:', logTxError);
+        // Rollback balance update
+        await supabase
+            .from('profiles')
+            .update({ credits: currentCredits })
+            .eq('id', user.id);
+        return { error: 'Failed to record transaction log: ' + logTxError.message };
     }
 
     // Check for referral commission
@@ -100,7 +106,7 @@ export async function deductUserCredits(amount: number, description: string = 'C
 
                     // Log commission transaction
                     const inviteeName = profile.full_name || 'Prieten invitat';
-                    await supabase
+                    await supabaseAdmin
                         .from('credit_transactions')
                         .insert({
                             user_id: referrerId,
