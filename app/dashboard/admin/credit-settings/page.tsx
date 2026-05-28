@@ -115,7 +115,7 @@ export default function CreditSettingsPage() {
                                     <input 
                                         type="number"
                                         min="0"
-                                        value={costs[feat.feature_key] !== undefined ? costs[feat.feature_key] : 0}
+                                        value={costs[feat.feature_key] !== undefined ? costs[feat.feature_key] : (feat.feature_key === 'leads_access' ? 5 : 0)}
                                         onChange={(e) => handleChange(feat.feature_key, e.target.value)}
                                         className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
                                     />

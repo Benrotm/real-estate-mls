@@ -7,8 +7,16 @@ import LeadList from '@/app/components/dashboard/LeadList';
 import NotificationSync from '@/app/components/notifications/NotificationSync';
 import { ArrowUpRight, Coins, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/app/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
 export default async function OwnerLeadsPage() {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+        return redirect('/login');
+    }
+
     const hasLeadsAccess = await hasFeature(SYSTEM_FEATURES.LEADS_ACCESS);
 
     // Fetch leads. Owners can view all raw leads on their properties but contact info will be masked.
@@ -32,8 +40,13 @@ export default async function OwnerLeadsPage() {
         // Fetch unlocked lead IDs
         unlockedLeadIds = await getUnlockedLeadIds();
 
-        // Server-side masking for locked leads
+        // Server-side masking for locked leads (only own leads, not partner leads)
         leads = rawLeads.map((lead: any) => {
+            const isOwnLead = lead.agent_id === user.id;
+            if (!isOwnLead) {
+                return lead;
+            }
+
             const isUnlocked = unlockedLeadIds.includes(lead.id);
             if (isUnlocked) {
                 return {
@@ -91,13 +104,10 @@ export default async function OwnerLeadsPage() {
                             </div>
                             <h2 className="text-xl font-bold tracking-tight">Deblochează Contactele din Leads & CRM</h2>
                             <p className="text-orange-50 text-sm max-w-2xl font-medium">
-                                Sunteți pe un plan gratuit. Puteți vedea cererile și bugetele clienților, însă detaliile de contact sunt ascunse. Faceți upgrade la planul <strong>Pro</strong> pentru acces nelimitat sau deblocați lead-urile individual folosind credite.
+                                Sunteți pe un plan gratuit. Puteți vedea cererile și bugetele clienților, însă detaliile de contact sunt ascunse. Deblocați lead-urile individual folosind credite.
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-3 shrink-0">
-                            <Link href="/pricing" className="px-5 py-2.5 bg-white text-orange-700 hover:bg-orange-50 rounded-xl font-black text-sm transition-all shadow-md active:scale-95">
-                                Upgrade la Pro
-                            </Link>
                             <Link href="/cont/plati" className="px-5 py-2.5 bg-orange-700 hover:bg-orange-800 text-white rounded-xl font-bold text-sm border border-orange-600 transition-all shadow-md active:scale-95 flex items-center gap-1.5">
                                 <Coins className="w-4 h-4" /> Alimentează Credite
                             </Link>
