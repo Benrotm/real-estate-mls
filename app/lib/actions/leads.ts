@@ -309,3 +309,96 @@ export async function fetchActivities(leadId: string) {
     }
     return data || [];
 }
+
+export async function getUnlockedLeadIds() {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('credit_transactions')
+        .select('metadata')
+        .eq('user_id', user.id);
+
+    if (error || !data) {
+        return [];
+    }
+
+    return data
+        .map(t => (t.metadata as any)?.lead_id)
+        .filter(Boolean) as string[];
+}
+
+export async function unlockLead(leadId: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    // 1. Verify that the lead exists and belongs to the user (agent_id = user.id)
+    const { data: lead, error: leadError } = await supabase
+        .from('leads')
+        .select('id, agent_id, name')
+        .eq('id', leadId)
+        .single();
+
+    if (leadError || !lead) {
+        return { success: false, error: 'Lead not found.' };
+    }
+
+    if (lead.agent_id !== user.id) {
+        return { success: false, error: 'Access denied.' };
+    }
+
+    // 2. Check if lead is already unlocked
+    const unlockedIds = await getUnlockedLeadIds();
+    if (unlockedIds.includes(leadId)) {
+        return { success: true, message: 'Lead is already unlocked.' };
+    }
+
+    // 3. Fetch cost of leads_access
+    const { data: costData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (costData?.setting_value as Record<string, number>) || {};
+    const cost = costsMap['leads_access'] !== undefined ? costsMap['leads_access'] : 5;
+
+    // 4. Deduct user credits
+    const { deductUserCredits } = await import('./credits');
+    const deductRes = await deductUserCredits(
+        cost, 
+        `Deblocare Lead: ${lead.name || 'Client Interest'}`,
+        { lead_id: leadId }
+    );
+
+    if (deductRes.error) {
+        return { 
+            success: false, 
+            error: deductRes.error, 
+            insufficient: deductRes.insufficient 
+        };
+    }
+
+    // Log lead activity for the unlock event
+    try {
+        await supabase.from('lead_activities').insert({
+            lead_id: leadId,
+            type: 'system',
+            description: `Lead unlocked utilizing ${cost} credits.`,
+            created_by: user.id
+        });
+    } catch (e) {
+        console.error('Error logging unlock activity:', e);
+    }
+
+    revalidatePath('/dashboard/owner/leads');
+    return { success: true };
+}

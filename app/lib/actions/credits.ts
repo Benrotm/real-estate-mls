@@ -17,7 +17,7 @@ export async function getUserCredits() {
     return { credits: data.credits as number };
 }
 
-export async function deductUserCredits(amount: number, description: string = 'Consum servicii') {
+export async function deductUserCredits(amount: number, description: string = 'Consum servicii', metadata: Record<string, any> = {}) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
@@ -53,7 +53,7 @@ export async function deductUserCredits(amount: number, description: string = 'C
             user_id: user.id,
             amount: -amount,
             description: description,
-            metadata: { feature_cost: amount }
+            metadata: { feature_cost: amount, ...metadata }
         })
         .select()
         .single();

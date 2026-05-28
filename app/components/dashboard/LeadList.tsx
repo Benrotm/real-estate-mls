@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useTransition } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp, ArrowUpRight, MessageSquare, Info, Eye } from 'lucide-react';
+import { Mail, Phone, Edit, Search, CheckCircle, Clock, Trash2, X, AlertCircle, ChevronDown, ChevronUp, Filter, ArrowUpAZ, ArrowDownZA, DollarSign, Zap, User, Wallet, MapPin, Activity, ChevronRight, Heart, Ban, Home, List, Building2, TrendingUp, ArrowUpRight, MessageSquare, Info, Eye, Lock } from 'lucide-react';
 import { LeadData } from '@/app/lib/types';
-import { deleteLead } from '@/app/lib/actions/leads';
+import { deleteLead, unlockLead } from '@/app/lib/actions/leads';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
 import { startConversationWithUser, sendMessage } from '@/app/lib/actions/chat';
 import { useRouter } from 'next/navigation';
@@ -41,10 +41,23 @@ interface LeadListProps {
     allowEdit?: boolean;
     currentUserId?: string;
     teamMemberIds?: string[];
+    userCredits?: number;
+    leadUnlockCost?: number;
+    hasLeadsAccess?: boolean;
 }
 
-export default function LeadList({ leads, basePath, allowEdit = true, currentUserId, teamMemberIds = [] }: LeadListProps) {
+export default function LeadList({ 
+    leads, 
+    basePath, 
+    allowEdit = true, 
+    currentUserId, 
+    teamMemberIds = [],
+    userCredits = 0,
+    leadUnlockCost = 5,
+    hasLeadsAccess = true
+}: LeadListProps) {
     const router = useRouter();
+    const [isPending, startTransition] = useTransition();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeStatus, setActiveStatus] = useState<string>('all');
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -53,6 +66,29 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
     const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'my' | 'partner'>('all');
+
+    const handleUnlockClick = async (leadId: string) => {
+        if (userCredits < leadUnlockCost) {
+            if (confirm('Fonduri insuficiente. Doriți să accesați pagina de alimentare credite?')) {
+                router.push('/cont/plati');
+            }
+            return;
+        }
+
+        if (!confirm(`Deblocați acest lead pentru ${leadUnlockCost} credite?`)) {
+            return;
+        }
+
+        startTransition(async () => {
+            const res = await unlockLead(leadId);
+            if (res.success) {
+                alert('Lead deblocat cu succes!');
+                router.refresh();
+            } else {
+                alert('Eroare: ' + (res.error || 'A apărut o eroare necunoscută.'));
+            }
+        });
+    };
 
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [selectedPartnerForContact, setSelectedPartnerForContact] = useState<any>(null);
@@ -425,10 +461,18 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold shrink-0">
-                                                        {(lead.agent_id === currentUserId ? (lead.name || '?') : 'P').charAt(0).toUpperCase()}
+                                                        {lead.isLocked ? (
+                                                            <Lock className="w-4 h-4 text-slate-400" />
+                                                        ) : (
+                                                            (lead.agent_id === currentUserId ? (lead.name || '?') : 'P').charAt(0).toUpperCase()
+                                                        )}
                                                     </div>
                                                     <div>
-                                                        {lead.agent_id === currentUserId ? (
+                                                        {lead.isLocked ? (
+                                                            <span className="font-bold text-slate-500 flex items-center gap-1">
+                                                                {lead.name || 'Client Interest'}
+                                                            </span>
+                                                        ) : lead.agent_id === currentUserId ? (
                                                             <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
                                                                 {lead.name || 'Unnamed Lead'}
                                                             </Link>
@@ -471,7 +515,12 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {lead.agent_id === currentUserId ? (
+                                                {lead.isLocked ? (
+                                                    <div className="flex items-center gap-1.5 text-amber-600 bg-amber-50 border border-amber-100 px-2 py-1 rounded-md w-fit">
+                                                        <Lock className="w-3.5 h-3.5" />
+                                                        <span className="text-xs font-bold font-mono">🔒 Locked</span>
+                                                    </div>
+                                                ) : lead.agent_id === currentUserId ? (
                                                     <div className="flex flex-col gap-2 items-start">
                                                         {lead.email && (
                                                             <div className="flex items-center gap-2 group/link">
@@ -509,7 +558,15 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    {lead.agent_id === currentUserId ? (
+                                                    {lead.isLocked ? (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleUnlockClick(lead.id); }}
+                                                            disabled={isPending}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black rounded-lg font-bold text-xs transition-all shadow-sm active:scale-95 shrink-0"
+                                                        >
+                                                            <Wallet className="w-3.5 h-3.5" /> Deblochează ({leadUnlockCost} CR)
+                                                        </button>
+                                                    ) : lead.agent_id === currentUserId ? (
                                                         <>
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
@@ -567,9 +624,47 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                         {expandedLeadId === lead.id && (
                                             <tr className="bg-slate-50/50">
                                                 <td colSpan={6} className="px-6 py-6 ring-1 ring-inset ring-slate-200/50">
-                                                    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-                                                        {/* Card Header - Premium Gradient */}
-                                                        <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex justify-between items-center">
+                                                    {lead.isLocked ? (
+                                                        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-lg mx-auto text-center space-y-6 border-t-4 border-t-yellow-500 animate-in fade-in slide-in-from-top-4 duration-300">
+                                                            <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto border border-yellow-200">
+                                                                <Lock className="w-8 h-8" />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <h3 className="text-xl font-black text-slate-900">Deblochează Date Contact Client</h3>
+                                                                <p className="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
+                                                                    Deblochează accesul complet la numele, adresa de email, numărul de telefon, notițele și instrumentele de AI matching ale acestui lead.
+                                                                </p>
+                                                            </div>
+                                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-around text-sm font-bold text-slate-700">
+                                                                <div className="text-center">
+                                                                    <div className="text-[10px] text-slate-400 uppercase font-black">Cost Deblocare</div>
+                                                                    <div className="text-lg text-yellow-600 font-black font-mono">{leadUnlockCost} CR</div>
+                                                                </div>
+                                                                <div className="w-px h-8 bg-slate-200" />
+                                                                <div className="text-center">
+                                                                    <div className="text-[10px] text-slate-400 uppercase font-black">Balanță Credite</div>
+                                                                    <div className="text-lg text-slate-800 font-black font-mono">{userCredits} CR</div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col gap-2">
+                                                                <button
+                                                                    onClick={() => handleUnlockClick(lead.id)}
+                                                                    disabled={isPending}
+                                                                    className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+                                                                >
+                                                                    {isPending ? 'Se deblochează...' : <><Wallet className="w-5 h-5" /> Deblochează cu Credite</>}
+                                                                </button>
+                                                                {userCredits < leadUnlockCost && (
+                                                                    <Link href="/cont/plati" className="text-xs text-red-500 font-bold hover:underline flex items-center justify-center gap-1">
+                                                                        Credite insuficiente. Alimentează contul aici. &rarr;
+                                                                    </Link>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                                                            {/* Card Header - Premium Gradient */}
+                                                            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex justify-between items-center">
                                                             <div className="flex items-center gap-4">
                                                                 <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl font-black border border-white/20">
                                                                     {(lead.name || '?').charAt(0).toUpperCase()}
@@ -602,6 +697,7 @@ export default function LeadList({ leads, basePath, allowEdit = true, currentUse
                                                         {/* Matching Properties Section */}
                                                         <LeadAIMatching lead={lead} currentUserId={currentUserId} />
                                                     </div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         )}
