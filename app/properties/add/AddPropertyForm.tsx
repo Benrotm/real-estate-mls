@@ -30,6 +30,7 @@ import {
     Move
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
+import { createCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
 import { supabase } from '@/app/lib/supabase/client';
 import LocationMap from '@/app/components/LocationMap';
 import AddressAutocomplete from '@/app/components/AddressAutocomplete';
@@ -571,7 +572,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         }
     };
 
-    const handleGenerateContract = () => {
+    const handleGenerateContract = async () => {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -584,42 +585,48 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         const contractSerial = 'IMB';
         const contractNumber = `${year}${month}${day}-${randomNum}`;
 
-        const contractData = {
-            agentProfile: {
-                company_name: agentProfile?.company_name || '',
-                company_cui: agentProfile?.company_cui || '',
-                company_reg_com: agentProfile?.company_reg_com || '',
-                company_address: agentProfile?.company_address || '',
-                full_name: agentProfile?.full_name || '',
-                phone: agentProfile?.phone || ''
-            },
-            formData: {
-                ownerName: formData.ownerName || '',
-                ownerPhone: formData.ownerPhone || '',
-                contractOwnerId: formData.contractOwnerId || '',
-                contractOwnerCnp: formData.contractOwnerCnp || '',
-                title: formData.title || '',
-                contractCountry: formData.contractCountry || 'România',
-                contractCity: formData.contractCity || '',
-                contractStreet: formData.contractStreet || '',
-                contractBuilding: formData.contractBuilding || '',
-                contractFloor: formData.contractFloor || '',
-                contractApartment: formData.contractApartment || '',
-                contractCfTopo: formData.contractCfTopo || '',
-                price: formData.price || '',
-                currency: formData.currency || 'EUR'
-            },
-            contractSerial,
-            contractNumber,
-            dateStr,
-            timeStr,
-            lang: contractLanguage
+        const agentProfileData = {
+            company_name: agentProfile?.company_name || '',
+            company_cui: agentProfile?.company_cui || '',
+            company_reg_com: agentProfile?.company_reg_com || '',
+            company_address: agentProfile?.company_address || '',
+            full_name: agentProfile?.full_name || '',
+            phone: agentProfile?.phone || ''
+        };
+
+        const formDataData = {
+            ownerName: formData.ownerName || '',
+            ownerPhone: formData.ownerPhone || '',
+            contractOwnerId: formData.contractOwnerId || '',
+            contractOwnerCnp: formData.contractOwnerCnp || '',
+            title: formData.title || '',
+            contractCountry: formData.contractCountry || 'România',
+            contractCity: formData.contractCity || '',
+            contractStreet: formData.contractStreet || '',
+            contractBuilding: formData.contractBuilding || '',
+            contractFloor: formData.contractFloor || '',
+            contractApartment: formData.contractApartment || '',
+            contractCfTopo: formData.contractCfTopo || '',
+            price: formData.price || '',
+            currency: formData.currency || 'EUR'
         };
 
         try {
-            const jsonStr = JSON.stringify(contractData);
-            const encodedData = btoa(unescape(encodeURIComponent(jsonStr)));
-            const previewUrl = `/properties/contract-preview?data=${encodedData}`;
+            const res = await createCollaborationContract({
+                agentProfile: agentProfileData,
+                formData: formDataData,
+                contractSerial,
+                contractNumber,
+                dateStr,
+                timeStr,
+                lang: contractLanguage
+            });
+
+            if (!res.success || !res.contractId) {
+                throw new Error(res.error || 'Failed to save contract');
+            }
+
+            const previewUrl = `/properties/contract-preview?id=${res.contractId}`;
             window.open(previewUrl, '_blank');
         } catch (error) {
             console.error('Eroare la generarea contractului:', error);

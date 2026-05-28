@@ -2,18 +2,24 @@
 
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Printer, Share2, Globe, Trash2, Check, FileText } from 'lucide-react';
+import { Printer, Share2, Globe, Trash2, Check, FileText, Save } from 'lucide-react';
+import { getCollaborationContract, updateCollaborationSignatures } from '@/app/lib/actions/collaboration-contracts';
 
 interface SignaturePadProps {
     id: string;
     label: string;
     clearLabel: string;
+    savedSignature?: string;
+    onSave?: (dataUrl: string) => Promise<void>;
+    isRo: boolean;
 }
 
-function SignaturePad({ id, label, clearLabel }: SignaturePadProps) {
+function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: SignaturePadProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [hasSigned, setHasSigned] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
 
     const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
@@ -32,15 +38,15 @@ function SignaturePad({ id, label, clearLabel }: SignaturePadProps) {
             clientY = e.clientY;
         }
         
-        const x = ((clientX - rect.left) / rect.width) * canvas.width;
-        const y = ((clientY - rect.top) / rect.height) * canvas.height;
+        // Use CSS coordinates directly, as the canvas context is scaled by 2
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
         
         return { x, y };
     };
 
     const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
         if ('touches' in e) {
-            // Do not prevent default for vertical scroll if not drawing, but here we want touch-none behavior
             e.preventDefault();
         }
         const canvas = canvasRef.current;
@@ -53,6 +59,7 @@ function SignaturePad({ id, label, clearLabel }: SignaturePadProps) {
         ctx.moveTo(x, y);
         setIsDrawing(true);
         setHasSigned(true);
+        setIsSaved(false);
     };
 
     const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -81,25 +88,33 @@ function SignaturePad({ id, label, clearLabel }: SignaturePadProps) {
         if (!ctx) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         setHasSigned(false);
+        setIsSaved(false);
     };
 
-    const resizeCanvas = () => {
+    const handleSave = async () => {
+        const canvas = canvasRef.current;
+        if (!canvas || !onSave) return;
+        
+        setIsSaving(true);
+        try {
+            const dataUrl = canvas.toDataURL();
+            await onSave(dataUrl);
+            setIsSaved(true);
+        } catch (error) {
+            console.error('Failed to save signature:', error);
+            alert(isRo ? 'Nu s-a putut salva semnătura.' : 'Could not save signature.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const initCanvas = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
         const rect = canvas.getBoundingClientRect();
-        
-        // Save current canvas content before resize
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        if (tempCtx) {
-            tempCtx.drawImage(canvas, 0, 0);
-        }
-
         canvas.width = rect.width * 2;
         canvas.height = rect.height * 2;
         
@@ -109,17 +124,27 @@ function SignaturePad({ id, label, clearLabel }: SignaturePadProps) {
         ctx.lineJoin = 'round';
         ctx.strokeStyle = '#0f172a'; // Deep slate ink
 
-        // Restore content
-        if (tempCtx && hasSigned) {
-            ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width / 2, tempCanvas.height / 2);
+        if (savedSignature) {
+            const img = new Image();
+            img.src = savedSignature;
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, rect.width, rect.height);
+                setHasSigned(true);
+                setIsSaved(true);
+            };
+        } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            setHasSigned(false);
+            setIsSaved(false);
         }
     };
 
     useEffect(() => {
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        return () => window.removeEventListener('resize', resizeCanvas);
-    }, [hasSigned]);
+        initCanvas();
+        window.addEventListener('resize', initCanvas);
+        return () => window.removeEventListener('resize', initCanvas);
+    }, [savedSignature]);
 
     return (
         <div className="flex flex-col items-center w-full">
@@ -137,20 +162,51 @@ function SignaturePad({ id, label, clearLabel }: SignaturePadProps) {
                 />
                 {!hasSigned && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 text-xs italic">
-                        Semnați aici / Sign here
+                        {isRo ? 'Semnați aici' : 'Sign here'}
                     </div>
                 )}
             </div>
-            <div className="flex justify-between items-center w-full mt-2 no-print">
+            <div className="flex justify-between items-center w-full mt-2 no-print gap-2">
                 <span className="text-[11px] text-slate-500 italic">{label}</span>
-                <button
-                    type="button"
-                    onClick={clearCanvas}
-                    className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition-colors flex items-center gap-1"
-                >
-                    <Trash2 className="w-3 h-3" />
-                    {clearLabel}
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={clearCanvas}
+                        className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition-colors flex items-center gap-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded px-2 py-1"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        {clearLabel}
+                    </button>
+                    {onSave && (
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={isSaving || !hasSigned}
+                            className={`text-[11px] font-semibold transition-colors flex items-center gap-1 border rounded px-2 py-1 ${
+                                isSaved 
+                                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600'
+                                    : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                            }`}
+                        >
+                            {isSaving ? (
+                                <>
+                                    <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-white rounded-full animate-spin"></div>
+                                    <span>...</span>
+                                </>
+                            ) : isSaved ? (
+                                <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>{isRo ? 'Salvat' : 'Saved'}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-3.5 h-3.5" />
+                                    <span>{isRo ? 'Salvează' : 'Save'}</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -158,13 +214,40 @@ function SignaturePad({ id, label, clearLabel }: SignaturePadProps) {
 
 function ContractPreviewContent() {
     const searchParams = useSearchParams();
+    const [contractId, setContractId] = useState<string | null>(null);
     const [contractData, setContractData] = useState<any>(null);
     const [lang, setLang] = useState<'ro' | 'en'>('ro');
     const [copied, setCopied] = useState(false);
 
+    const loadContract = async (id: string) => {
+        const res = await getCollaborationContract(id);
+        if (res.success && res.contract) {
+            const contract = res.contract;
+            setContractData({
+                agentProfile: contract.agent_details,
+                formData: contract.form_data,
+                contractSerial: contract.contract_serial,
+                contractNumber: contract.contract_number,
+                dateStr: contract.form_data?.dateStr || new Date(contract.created_at).toLocaleDateString('ro-RO'),
+                timeStr: contract.form_data?.timeStr || new Date(contract.created_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' }),
+                agent_signature: contract.agent_signature,
+                owner_signature: contract.owner_signature,
+                status: contract.status
+            });
+            setContractId(id);
+            if (contract.language) {
+                setLang(contract.language);
+            }
+        }
+    };
+
     useEffect(() => {
+        const id = searchParams.get('id');
         const rawData = searchParams.get('data');
-        if (rawData) {
+        
+        if (id) {
+            loadContract(id);
+        } else if (rawData) {
             try {
                 const decodedStr = decodeURIComponent(escape(atob(rawData)));
                 const parsed = JSON.parse(decodedStr);
@@ -201,7 +284,10 @@ function ContractPreviewContent() {
 
     const handleShare = () => {
         try {
-            navigator.clipboard.writeText(window.location.href);
+            const shareUrl = contractId 
+                ? `${window.location.origin}/properties/contract-preview?id=${contractId}`
+                : window.location.href;
+            navigator.clipboard.writeText(shareUrl);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
@@ -209,7 +295,38 @@ function ContractPreviewContent() {
         }
     };
 
-    // Bilingual translations dictionary
+    const handleSaveAgentSignature = async (signatureDataUrl: string) => {
+        if (!contractId) return;
+        const res = await updateCollaborationSignatures(contractId, {
+            agent_signature: signatureDataUrl
+        });
+        if (res.success && res.contract) {
+            setContractData((prev: any) => ({
+                ...prev,
+                agent_signature: res.contract.agent_signature,
+                status: res.contract.status
+            }));
+        } else {
+            throw new Error(res.error || 'Failed to save signature');
+        }
+    };
+
+    const handleSaveOwnerSignature = async (signatureDataUrl: string) => {
+        if (!contractId) return;
+        const res = await updateCollaborationSignatures(contractId, {
+            owner_signature: signatureDataUrl
+        });
+        if (res.success && res.contract) {
+            setContractData((prev: any) => ({
+                ...prev,
+                owner_signature: res.contract.owner_signature,
+                status: res.contract.status
+            }));
+        } else {
+            throw new Error(res.error || 'Failed to save signature');
+        }
+    };
+
     const t = {
         title: isRo ? 'Contract de Colaborare Imobiliară' : 'Real Estate Collaboration Contract',
         series: isRo ? 'Seria' : 'Series',
@@ -300,13 +417,12 @@ function ContractPreviewContent() {
         signBeneficiary: isRo ? 'BENEFICIAR' : 'BENEFICIARY',
         signLineProvider: isRo ? 'Semnătura și Ștampila' : 'Signature and Stamp',
         signLineBeneficiary: isRo ? 'Semnătura' : 'Signature',
-        clearBtn: isRo ? 'Șterge semnătura' : 'Clear signature',
+        clearBtn: isRo ? 'Șterge' : 'Clear',
         footerText: isRo
             ? 'Document generat automat prin intermediul platformei Real Estate MLS. Toate drepturile rezervate.'
             : 'Document generated automatically via the Real Estate MLS platform. All rights reserved.'
     };
 
-    // Address formatting helper
     const formattedAddress = [
         formData.contractCountry ? (isRo ? `Țara: ${formData.contractCountry}` : `Country: ${formData.contractCountry}`) : '',
         formData.contractCity ? (isRo ? `Oraș: ${formData.contractCity}` : `City: ${formData.contractCity}`) : '',
@@ -318,7 +434,6 @@ function ContractPreviewContent() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col print:bg-white print:text-slate-900 pb-12">
-            {/* Custom print styles to override Tailwind background details on page print */}
             <style jsx global>{`
                 @media print {
                     .no-print {
@@ -346,6 +461,11 @@ function ContractPreviewContent() {
                         border: 1px solid #e2e8f0 !important;
                         -webkit-print-color-adjust: exact;
                         print-color-adjust: exact;
+                    }
+                    .signatures-grid {
+                        display: grid !important;
+                        grid-template-cols: 1fr 1fr !important;
+                        gap: 16px !important;
                     }
                 }
             `}</style>
@@ -419,7 +539,6 @@ function ContractPreviewContent() {
             <main className="flex-1 flex justify-center items-start pt-8 px-4 sm:px-6">
                 {/* Print Sheet */}
                 <article className="print-sheet max-w-[800px] w-full bg-white text-slate-900 shadow-2xl rounded-2xl border border-slate-200 p-8 sm:p-12 md:p-16 leading-relaxed select-text font-serif">
-                    {/* Style override to support serif font inside sheet */}
                     <div className="font-sans text-[13px] text-justify text-slate-800">
                         {/* Header metadata */}
                         <div className="text-center mb-8 border-b-2 double border-slate-200 pb-6">
@@ -568,7 +687,7 @@ function ContractPreviewContent() {
                         <p className="mb-6 text-justify">{t.gdprDesc3}</p>
 
                         {/* Signatures and interactive drawing canvas */}
-                        <div className="grid grid-cols-2 gap-8 sm:gap-16 mt-12 pt-6 border-t border-slate-200 page-break-inside-avoid">
+                        <div className="signatures-grid grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 mt-12 pt-6 border-t border-slate-200 page-break-inside-avoid">
                             <div className="flex flex-col items-center">
                                 <div className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
                                     {t.signProvider}
@@ -580,6 +699,9 @@ function ContractPreviewContent() {
                                     id="provider-signature" 
                                     label={t.signLineProvider} 
                                     clearLabel={t.clearBtn} 
+                                    savedSignature={contractData.agent_signature}
+                                    onSave={contractId ? handleSaveAgentSignature : undefined}
+                                    isRo={isRo}
                                 />
                             </div>
 
@@ -594,6 +716,9 @@ function ContractPreviewContent() {
                                     id="beneficiary-signature" 
                                     label={t.signLineBeneficiary} 
                                     clearLabel={t.clearBtn} 
+                                    savedSignature={contractData.owner_signature}
+                                    onSave={contractId ? handleSaveOwnerSignature : undefined}
+                                    isRo={isRo}
                                 />
                             </div>
                         </div>
