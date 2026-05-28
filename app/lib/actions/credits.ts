@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '../supabase/server';
+import { createAdminClient } from '../supabase/admin';
 
 export async function getUserCredits() {
     const supabase = await createClient();
@@ -46,8 +47,9 @@ export async function deductUserCredits(amount: number, description: string = 'C
 
     if (updateError) return { error: updateError.message };
 
-    // Create transaction log for deduction
-    const { data: txn, error: logTxError } = await supabase
+    // Create transaction log for deduction (using admin client to bypass RLS restrictions)
+    const supabaseAdmin = createAdminClient();
+    const { data: txn, error: logTxError } = await supabaseAdmin
         .from('credit_transactions')
         .insert({
             user_id: user.id,
@@ -57,6 +59,10 @@ export async function deductUserCredits(amount: number, description: string = 'C
         })
         .select()
         .single();
+
+    if (logTxError) {
+        console.error('Error inserting credit transaction log:', logTxError);
+    }
 
     // Check for referral commission
     if (profile.referred_by && amount > 0) {
