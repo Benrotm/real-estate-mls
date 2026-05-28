@@ -140,6 +140,7 @@ export default function DashboardClient({
         { name: 'My Favorites', icon: Heart, href: '/dashboard/agent/favorites' }, // New
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
+        { name: 'Collaboration Contracts', icon: CopyCheck, href: '/dashboard/agent/collaboration-contracts' },
         ...(hasFeature(SYSTEM_FEATURES.AI_STUDIO) ? [{ name: 'AI Studio', icon: Wand2, href: '/dashboard/agent/ai-staging' }] : []),
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
         { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },

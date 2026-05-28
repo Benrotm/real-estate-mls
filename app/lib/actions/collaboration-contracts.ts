@@ -10,6 +10,7 @@ interface CollaborationContractInput {
     dateStr: string;
     timeStr: string;
     lang: 'ro' | 'en';
+    propertyId?: string;
 }
 
 /**
@@ -25,6 +26,7 @@ export async function createCollaborationContract(input: CollaborationContractIn
         .from('collaboration_contracts')
         .insert({
             agent_id: user?.id || null,
+            property_id: input.propertyId || null,
             contract_number: input.contractNumber,
             contract_serial: input.contractSerial,
             status: 'sent',
@@ -61,6 +63,52 @@ export async function getCollaborationContract(id: string) {
     }
 
     return { success: true, contract: data };
+}
+
+/**
+ * Fetches the latest collaboration contract for a specific property ID.
+ */
+export async function getCollaborationContractForProperty(propertyId: string) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from('collaboration_contracts')
+        .select('*')
+        .eq('property_id', propertyId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error fetching contract for property:', error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true, contract: data };
+}
+
+/**
+ * Fetches all collaboration contracts associated with the logged-in agent.
+ */
+export async function getCollaborationContractsForAgent() {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    const { data, error } = await supabase
+        .from('collaboration_contracts')
+        .select('*')
+        .eq('agent_id', user.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching agent collaboration contracts:', error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true, contracts: data || [] };
 }
 
 /**

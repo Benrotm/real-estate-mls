@@ -11,7 +11,7 @@ async function main() {
         await client.connect();
         console.log("Connected to the database!");
 
-        const migrationPath = path.join(__dirname, '..', 'supabase', 'migrations', '20260528020000_create_collaboration_contracts.sql');
+        const migrationPath = path.join(__dirname, '..', 'supabase', 'migrations', '20260528030000_add_property_id_to_collaboration_contracts.sql');
         const sql = fs.readFileSync(migrationPath, 'utf8');
         console.log("Read SQL migration file from:", migrationPath);
 
