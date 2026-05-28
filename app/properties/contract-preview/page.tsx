@@ -435,6 +435,12 @@ function ContractPreviewContent() {
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col print:bg-white print:text-slate-900 pb-12">
             <style jsx global>{`
+                nav, footer {
+                    display: none !important;
+                }
+                main {
+                    padding-top: 0 !important;
+                }
                 @media print {
                     .no-print {
                         display: none !important;
