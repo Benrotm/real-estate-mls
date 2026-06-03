@@ -23,6 +23,7 @@ export interface UserProfile {
     company_cui?: string;
     company_reg_com?: string;
     company_address?: string;
+    company_representative?: string;
     gdpr_consent?: boolean;
     gdpr_consent_date?: string;
 }

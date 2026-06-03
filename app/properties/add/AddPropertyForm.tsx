@@ -615,6 +615,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
             company_cui: agentProfile?.company_cui || '',
             company_reg_com: agentProfile?.company_reg_com || '',
             company_address: agentProfile?.company_address || '',
+            company_representative: agentProfile?.company_representative || '',
+            is_company: agentProfile?.is_company || false,
             full_name: agentProfile?.full_name || '',
             phone: agentProfile?.phone || ''
         };
@@ -1490,31 +1492,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2 text-slate-300">ID Number and Serial (For Contract)</label>
-                                                <input
-                                                    type="text"
-                                                    name="contractOwnerId"
-                                                    value={formData.contractOwnerId}
-                                                    onChange={handleChange}
-                                                    placeholder="e.g. AX 123456"
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2 text-slate-300">CNP (For Contract)</label>
-                                                <input
-                                                    type="text"
-                                                    name="contractOwnerCnp"
-                                                    value={formData.contractOwnerCnp}
-                                                    onChange={handleChange}
-                                                    placeholder="e.g. 1950203xxxxxx"
-                                                    maxLength={13}
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
-                                                />
-                                            </div>
-                                        </div>
+
 
                                         <div>
                                             <label className="block text-sm font-medium mb-2 text-slate-300">Private Notes</label>
@@ -1681,6 +1659,32 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                         className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-sm"
                                                     />
                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-slate-700/50 pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-slate-300">ID Number and Serial (For Contract)</label>
+                                                <input
+                                                    type="text"
+                                                    name="contractOwnerId"
+                                                    value={formData.contractOwnerId}
+                                                    onChange={handleChange}
+                                                    placeholder="e.g. AX 123456"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-slate-300">CNP (For Contract)</label>
+                                                <input
+                                                    type="text"
+                                                    name="contractOwnerCnp"
+                                                    value={formData.contractOwnerCnp}
+                                                    onChange={handleChange}
+                                                    placeholder="e.g. 1950203xxxxxx"
+                                                    maxLength={13}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                                                />
                                             </div>
                                         </div>
 

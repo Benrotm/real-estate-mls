@@ -17,6 +17,7 @@ interface ProfileFormProps {
     initialCompanyCui?: string;
     initialCompanyRegCom?: string;
     initialCompanyAddress?: string;
+    initialCompanyRepresentative?: string;
     initialGdprConsent?: boolean;
     userId: string;
 }
@@ -276,6 +277,7 @@ export default function ProfileForm({
     initialCompanyCui,
     initialCompanyRegCom,
     initialCompanyAddress,
+    initialCompanyRepresentative,
     initialGdprConsent,
     userId
 }: ProfileFormProps) {
@@ -289,6 +291,7 @@ export default function ProfileForm({
     const [companyCui, setCompanyCui] = useState(initialCompanyCui || '');
     const [companyRegCom, setCompanyRegCom] = useState(initialCompanyRegCom || '');
     const [companyAddress, setCompanyAddress] = useState(initialCompanyAddress || '');
+    const [companyRepresentative, setCompanyRepresentative] = useState(initialCompanyRepresentative || '');
     const [gdprConsent, setGdprConsent] = useState(initialGdprConsent || false);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -370,6 +373,7 @@ export default function ProfileForm({
                 company_cui: isCompany ? companyCui : '',
                 company_reg_com: isCompany ? companyRegCom : '',
                 company_address: isCompany ? companyAddress : '',
+                company_representative: isCompany ? companyRepresentative : '',
                 gdpr_consent: gdprConsent
             });
 
@@ -587,6 +591,21 @@ export default function ProfileForm({
                                         onChange={(e) => setCompanyName(e.target.value)}
                                         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium text-slate-900"
                                         placeholder="Ex: Imob Design S.R.L."
+                                        required={isCompany}
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label htmlFor="companyRepresentative" className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Reprezentat prin
+                                    </label>
+                                    <input
+                                        id="companyRepresentative"
+                                        type="text"
+                                        value={companyRepresentative}
+                                        onChange={(e) => setCompanyRepresentative(e.target.value)}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium text-slate-900"
+                                        placeholder="Ex: Popescu Ion"
                                         required={isCompany}
                                     />
                                 </div>

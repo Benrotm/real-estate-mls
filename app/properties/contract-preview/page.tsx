@@ -586,7 +586,11 @@ function ContractPreviewContent() {
                                 </div>
                                 <div className="sm:col-span-2">
                                     <span className="block text-[10px] uppercase font-bold text-slate-400">{t.providerRep}</span>
-                                    <span className="font-semibold text-slate-900">{agentProfile?.full_name || '................................................'}</span>
+                                    <span className="font-semibold text-slate-900">
+                                        {(agentProfile?.is_company && agentProfile?.company_representative) 
+                                            ? agentProfile.company_representative 
+                                            : (agentProfile?.full_name || '................................................')}
+                                    </span>
                                 </div>
                             </div>
                         </div>

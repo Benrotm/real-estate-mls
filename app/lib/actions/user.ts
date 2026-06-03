@@ -108,6 +108,7 @@ export async function updateUserProfile(data: {
     company_cui?: string;
     company_reg_com?: string;
     company_address?: string;
+    company_representative?: string;
     gdpr_consent?: boolean;
 }) {
     const supabase = await createClient();
@@ -129,7 +130,8 @@ export async function updateUserProfile(data: {
             company_name: data.company_name,
             company_cui: data.company_cui,
             company_reg_com: data.company_reg_com,
-            company_address: data.company_address
+            company_address: data.company_address,
+            company_representative: data.company_representative
         };
 
         if (typeof data.gdpr_consent === 'boolean') {
