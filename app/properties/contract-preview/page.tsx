@@ -2,8 +2,8 @@
 
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Printer, Share2, Globe, Trash2, Check, FileText, Save, Sparkles } from 'lucide-react';
-import { getCollaborationContract, updateCollaborationSignatures } from '@/app/lib/actions/collaboration-contracts';
+import { Printer, Share2, Globe, Trash2, Check, FileText, Save, Sparkles, Lock, Unlock } from 'lucide-react';
+import { getCollaborationContract, updateCollaborationSignatures, lockCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
 
 interface SignaturePadProps {
     id: string;
@@ -12,9 +12,10 @@ interface SignaturePadProps {
     savedSignature?: string;
     onSave?: (dataUrl: string) => Promise<void>;
     isRo: boolean;
+    isLocked?: boolean;
 }
 
-function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: SignaturePadProps) {
+function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo, isLocked }: SignaturePadProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [hasSigned, setHasSigned] = useState(false);
@@ -55,6 +56,7 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
     };
 
     const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+        if (isLocked) return;
         if ('touches' in e) {
             e.preventDefault();
         }
@@ -76,6 +78,7 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
     };
 
     const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+        if (isLocked) return;
         if (!isDrawing) return;
         if ('touches' in e) {
             e.preventDefault();
@@ -91,6 +94,7 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
     };
 
     const stopDrawing = () => {
+        if (isLocked) return;
         setIsDrawing(false);
 
         if (saveTimeoutRef.current) {
@@ -116,6 +120,7 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
     };
 
     const clearCanvas = () => {
+        if (isLocked) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -134,6 +139,7 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
     };
 
     const handleSave = async () => {
+        if (isLocked) return;
         const canvas = canvasRef.current;
         if (!canvas || !onSave) return;
         
@@ -202,7 +208,7 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
                 />
-                {!hasSigned && (
+                {!hasSigned && !isLocked && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 text-xs italic">
                         {isRo ? 'Semnați aici' : 'Sign here'}
                     </div>
@@ -210,45 +216,48 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
             </div>
             <div className="flex justify-between items-center w-full mt-2 no-print gap-2">
                 <span className="text-[11px] text-slate-500 italic">{label}</span>
-                <div className="flex gap-2">
-                    <button
-                        type="button"
-                        onClick={clearCanvas}
-                        className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition-colors flex items-center gap-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded px-2 py-1"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        {clearLabel}
-                    </button>
-                    {onSave && (
+                {!isLocked && (
+                    <div className="flex gap-2">
                         <button
                             type="button"
-                            onClick={handleSave}
-                            disabled={isSaving || !hasSigned}
-                            className={`text-[11px] font-semibold transition-colors flex items-center gap-1 border rounded px-2 py-1 ${
-                                isSaved 
-                                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600'
-                                    : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
-                            }`}
+                            onClick={clearCanvas}
+                            className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition-colors flex items-center gap-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded px-2 py-1"
                         >
-                            {isSaving ? (
-                                <>
-                                    <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-white rounded-full animate-spin"></div>
-                                    <span>...</span>
-                                </>
-                            ) : isSaved ? (
-                                <>
-                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                    <span>{isRo ? 'Salvat' : 'Saved'}</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="w-3.5 h-3.5" />
-                                    <span>{isRo ? 'Salvează' : 'Save'}</span>
-                                </>
-                            )}
+                            <Trash2 className="w-3.5 h-3.5" />
+                            {clearLabel}
                         </button>
-                    )}
-                </div>
+                        {onSave && (
+                            <button
+                                type="button"
+                                onClick={handleSave}
+                                data-saved={isSaved}
+                                disabled={isSaving || !hasSigned}
+                                className={`signature-save-button text-[11px] font-semibold transition-colors flex items-center gap-1 border rounded px-2 py-1 ${
+                                    isSaved 
+                                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600'
+                                        : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                                }`}
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-white rounded-full animate-spin"></div>
+                                        <span>...</span>
+                                    </>
+                                ) : isSaved ? (
+                                    <>
+                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span>{isRo ? 'Salvat' : 'Saved'}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="w-3.5 h-3.5" />
+                                        <span>{isRo ? 'Salvează' : 'Save'}</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -276,7 +285,8 @@ function ContractPreviewContent() {
                 owner_signature: contract.owner_signature,
                 status: contract.status,
                 propertyId: contract.property_id,
-                personal_property_id: contract.personal_property_id
+                personal_property_id: contract.personal_property_id,
+                is_locked: contract.is_locked
             });
             setContractId(id);
             if (contract.language) {
@@ -295,7 +305,10 @@ function ContractPreviewContent() {
             try {
                 const decodedStr = decodeURIComponent(escape(atob(rawData)));
                 const parsed = JSON.parse(decodedStr);
-                setContractData(parsed);
+                setContractData({
+                    ...parsed,
+                    is_locked: parsed.is_locked || false
+                });
                 if (parsed.lang) {
                     setLang(parsed.lang);
                 }
@@ -336,6 +349,41 @@ function ContractPreviewContent() {
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy link:', err);
+        }
+    };
+
+    const handleLockContract = async () => {
+        if (!contractId) return;
+        if (!window.confirm(isRo ? 'Sigur doriți să blocați acest contract? După blocare, semnăturile și detaliile nu mai pot fi modificate.' : 'Are you sure you want to lock this contract? Once locked, signatures and details can no longer be modified.')) {
+            return;
+        }
+        const res = await lockCollaborationContract(contractId);
+        if (res.success && res.contract) {
+            setContractData((prev: any) => ({
+                ...prev,
+                is_locked: true
+            }));
+            alert(isRo ? 'Contractul a fost blocat cu succes!' : 'Contract locked successfully!');
+        } else {
+            alert(isRo ? 'Eroare la blocarea contractului.' : 'Error locking contract.');
+        }
+    };
+
+    const handleSaveContract = () => {
+        const saveButtons = document.querySelectorAll('.signature-save-button');
+        let clickedCount = 0;
+        saveButtons.forEach((btn: any) => {
+            const isSaved = btn.getAttribute('data-saved') === 'true';
+            if (!btn.disabled && !isSaved) {
+                btn.click();
+                clickedCount++;
+            }
+        });
+        
+        if (clickedCount > 0) {
+            alert(isRo ? 'Semnăturile se salvează...' : 'Saving signatures...');
+        } else {
+            alert(isRo ? 'Nu există semnături noi de salvat sau documentul este deja salvat.' : 'No new signatures to save or document is already saved.');
         }
     };
 
@@ -593,15 +641,34 @@ function ContractPreviewContent() {
                             <span>{isRo ? 'Printează' : 'Print'}</span>
                         </button>
 
-                        {/* Save PDF Button */}
+                        {/* Save Button */}
                         <button
                             type="button"
-                            onClick={handlePrint}
+                            onClick={handleSaveContract}
                             className="p-2 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl flex items-center gap-2 text-xs font-bold transition-all shadow-md shadow-orange-500/10 border border-orange-500/20 active:scale-[0.98]"
                         >
                             <Save className="w-4 h-4" />
-                            <span>{isRo ? 'Salvează PDF' : 'Save PDF'}</span>
+                            <span>{isRo ? 'Salvează' : 'Save'}</span>
                         </button>
+
+                        {/* Lock Button / Status */}
+                        {contractId && (
+                            contractData.is_locked ? (
+                                <span className="p-2 px-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md">
+                                    <Lock className="w-4 h-4 text-emerald-500" />
+                                    <span>{isRo ? 'Blocat' : 'Locked'}</span>
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleLockContract}
+                                    className="p-2 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl flex items-center gap-2 text-xs font-bold transition-all shadow-md active:scale-[0.98] border border-rose-500/20"
+                                >
+                                    <Unlock className="w-4 h-4" />
+                                    <span>{isRo ? 'Blochează' : 'Lock'}</span>
+                                </button>
+                            )
+                        )}
                     </div>
                 </div>
             </header>
@@ -612,18 +679,23 @@ function ContractPreviewContent() {
                 <article className="print-sheet max-w-[800px] w-full bg-white text-slate-900 shadow-2xl rounded-2xl border border-slate-200 p-8 sm:p-12 md:p-16 leading-relaxed select-text font-serif">
                     <div className="font-sans text-[13px] text-justify text-slate-800">
                         {/* Header metadata */}
-                        <div className="text-center mb-8 border-b-2 double border-slate-200 pb-6">
-                            <h2 className="font-serif text-xl sm:text-2xl font-bold uppercase tracking-wider text-slate-900 mb-2">
-                                {t.title}
-                            </h2>
-                            <div className="flex justify-between text-xs text-slate-500 font-mono mt-4">
-                                <span>{t.series}: <strong className="text-slate-800">{contractSerial}</strong> / {t.nr}: <strong className="text-slate-800">{contractNumber}</strong></span>
-                                {contractData.personal_property_id && (
-                                    <span>ID Imobil: <strong className="text-slate-800">#{contractData.personal_property_id}</strong></span>
-                                )}
-                                <span>{t.date}: <strong className="text-slate-800">{dateStr}</strong> | {t.hour}: <strong className="text-slate-800">{timeStr}</strong></span>
-                            </div>
-                        </div>
+                        {(() => {
+                            const displayPropertyId = contractData.personal_property_id || (contractData.propertyId ? 'P' + contractData.propertyId.substring(0, 5).toUpperCase() : '');
+                            return (
+                                <div className="text-center mb-8 border-b-2 double border-slate-200 pb-6">
+                                    <h2 className="font-serif text-xl sm:text-2xl font-bold uppercase tracking-wider text-slate-900 mb-2">
+                                        {t.title}
+                                    </h2>
+                                    <div className="flex justify-between text-xs text-slate-500 font-mono mt-4">
+                                        <span>{t.series}: <strong className="text-slate-800">{contractSerial}</strong> / {t.nr}: <strong className="text-slate-800">{contractNumber}</strong></span>
+                                        {displayPropertyId && (
+                                            <span>ID Imobil: <strong className="text-slate-800">#{displayPropertyId}</strong></span>
+                                        )}
+                                        <span>{t.date}: <strong className="text-slate-800">{dateStr}</strong> | {t.hour}: <strong className="text-slate-800">{timeStr}</strong></span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         {/* 1. Contracting Parties */}
                         <h3 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-1 mt-6 mb-3 uppercase tracking-wide">
@@ -720,7 +792,10 @@ function ContractPreviewContent() {
                                 <div>
                                     <span className="block text-[10px] uppercase font-bold text-slate-400">ID PROPRIETATE / PROPERTY ID:</span>
                                     <span className="font-semibold text-slate-900">
-                                        {contractData.personal_property_id ? `#${contractData.personal_property_id}` : (contractData.propertyId ? `#${contractData.propertyId}` : '................................................')}
+                                        {(() => {
+                                            const displayPropertyId = contractData.personal_property_id || (contractData.propertyId ? 'P' + contractData.propertyId.substring(0, 5).toUpperCase() : '');
+                                            return displayPropertyId ? `#${displayPropertyId}` : '................................................';
+                                        })()}
                                     </span>
                                 </div>
                             </div>
@@ -786,6 +861,7 @@ function ContractPreviewContent() {
                                     savedSignature={contractData.agent_signature}
                                     onSave={contractId ? handleSaveAgentSignature : undefined}
                                     isRo={isRo}
+                                    isLocked={contractData.is_locked}
                                 />
                             </div>
 
@@ -803,6 +879,7 @@ function ContractPreviewContent() {
                                     savedSignature={contractData.owner_signature}
                                     onSave={contractId ? handleSaveOwnerSignature : undefined}
                                     isRo={isRo}
+                                    isLocked={contractData.is_locked}
                                 />
                             </div>
                         </div>

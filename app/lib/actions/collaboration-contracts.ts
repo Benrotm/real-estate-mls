@@ -245,3 +245,155 @@ export async function updateAnexaSignatures(
     return { success: true, contract: data };
 }
 
+/**
+ * Deletes a collaboration contract, or sets delete_requested = true if locked.
+ */
+export async function deleteCollaborationContract(id: string) {
+    const supabase = await createClient();
+    
+    // Fetch contract lock status
+    const { data: contract, error: fetchError } = await supabase
+        .from('collaboration_contracts')
+        .select('is_locked')
+        .eq('id', id)
+        .single();
+        
+    if (fetchError || !contract) {
+        return { success: false, error: fetchError?.message || 'Contract not found' };
+    }
+    
+    if (contract.is_locked) {
+        // Mark as delete requested
+        const { error: updateError } = await supabase
+            .from('collaboration_contracts')
+            .update({ delete_requested: true, updated_at: new Date().toISOString() })
+            .eq('id', id);
+            
+        if (updateError) {
+            return { success: false, error: updateError.message };
+        }
+        return { success: true, deleted: false, deleteRequested: true };
+    } else {
+        // Direct delete
+        const { error: deleteError } = await supabase
+            .from('collaboration_contracts')
+            .delete()
+            .eq('id', id);
+            
+        if (deleteError) {
+            return { success: false, error: deleteError.message };
+        }
+        return { success: true, deleted: true, deleteRequested: false };
+    }
+}
+
+/**
+ * Locks a collaboration contract.
+ */
+export async function lockCollaborationContract(id: string) {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+        .from('collaboration_contracts')
+        .update({ is_locked: true, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+        
+    if (error) {
+        return { success: false, error: error.message };
+    }
+    return { success: true, contract: data };
+}
+
+/**
+ * Fetches all contract deletion requests.
+ * Admins see all requests. Team leaders see members' requests.
+ */
+export async function getCollaborationContractDeleteRequests() {
+    const supabase = await createClient();
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    
+    // Fetch current user profile to check role and tier
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, plan_tier')
+        .eq('id', user.id)
+        .single();
+        
+    if (!profile) {
+        return { success: false, error: 'Profile not found' };
+    }
+    
+    const isAdmin = profile.role === 'super_admin' || profile.role === 'admin';
+    const isTeamLeader = profile.role === 'agent' && profile.plan_tier === 'enterprise';
+    
+    if (!isAdmin && !isTeamLeader) {
+        return { success: false, error: 'Access denied' };
+    }
+    
+    let query = supabase
+        .from('collaboration_contracts')
+        .select(`
+            *,
+            agent:agent_id(id, full_name, email, phone)
+        `)
+        .eq('delete_requested', true);
+        
+    if (isTeamLeader) {
+        // Fetch team members
+        const { data: members } = await supabase
+            .from('team_members')
+            .select('user_id')
+            .eq('agency_id', user.id);
+            
+        const memberIds = members ? members.map(m => m.user_id) : [];
+        query = query.in('agent_id', [user.id, ...memberIds]);
+    }
+    
+    const { data: contracts, error } = await query.order('updated_at', { ascending: false });
+    
+    if (error) {
+        return { success: false, error: error.message };
+    }
+    
+    return { success: true, contracts };
+}
+
+/**
+ * Approves a deletion request by deleting the contract.
+ */
+export async function approveDeleteCollaborationContract(id: string) {
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from('collaboration_contracts')
+        .delete()
+        .eq('id', id);
+        
+    if (error) {
+        return { success: false, error: error.message };
+    }
+    return { success: true };
+}
+
+/**
+ * Rejects a deletion request by clearing the delete_requested flag.
+ */
+export async function rejectDeleteCollaborationContract(id: string) {
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from('collaboration_contracts')
+        .update({ delete_requested: false, updated_at: new Date().toISOString() })
+        .eq('id', id);
+        
+    if (error) {
+        return { success: false, error: error.message };
+    }
+    return { success: true };
+}
+
+

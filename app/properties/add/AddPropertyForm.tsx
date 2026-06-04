@@ -30,7 +30,7 @@ import {
     Move
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
-import { createCollaborationContract, getCollaborationContractForProperty } from '@/app/lib/actions/collaboration-contracts';
+import { createCollaborationContract, getCollaborationContractForProperty, getCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
 import { supabase } from '@/app/lib/supabase/client';
 import LocationMap from '@/app/components/LocationMap';
 import AddressAutocomplete from '@/app/components/AddressAutocomplete';
@@ -226,7 +226,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     });
 
     const [agentProfile, setAgentProfile] = useState<any>(null);
-    const [existingContractId, setExistingContractId] = useState<string | null>(null);
+    const [existingContract, setExistingContract] = useState<any | null>(null);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -249,7 +249,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         if (propertyId) {
             getCollaborationContractForProperty(propertyId).then((res) => {
                 if (res.success && res.contract) {
-                    setExistingContractId(res.contract.id);
+                    setExistingContract(res.contract);
                 }
             });
         }
@@ -654,7 +654,10 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                 throw new Error(res.error || 'Failed to save contract');
             }
 
-            setExistingContractId(res.contractId);
+            const contractRes = await getCollaborationContract(res.contractId);
+            if (contractRes.success && contractRes.contract) {
+                setExistingContract(contractRes.contract);
+            }
 
             const previewUrl = `/properties/contract-preview?id=${res.contractId}`;
             window.open(previewUrl, '_blank');
@@ -1728,15 +1731,27 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                     <FileText className="w-4 h-4" />
                                                     Generate Collaboration Contract
                                                 </button>
-                                                {existingContractId && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => window.open(`/properties/contract-preview?id=${existingContractId}`, '_blank')}
-                                                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 text-sm border border-slate-700 active:scale-[0.98]"
-                                                    >
-                                                        <FileText className="w-4 h-4 text-orange-400" />
-                                                        {contractLanguage === 'ro' ? 'Vezi Contract existent' : 'View Existing Contract'}
-                                                    </button>
+                                                {existingContract && (
+                                                    <div className="flex gap-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => window.open(`/properties/contract-preview?id=${existingContract.id}`, '_blank')}
+                                                            className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 text-sm border border-slate-700 active:scale-[0.98]"
+                                                        >
+                                                            <FileText className="w-4 h-4 text-orange-400" />
+                                                            {contractLanguage === 'ro' ? 'Vezi Contract existent' : 'View Existing Contract'}
+                                                        </button>
+                                                        {existingContract.anexa_data && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => window.open(`/properties/anexa1-preview?id=${existingContract.id}`, '_blank')}
+                                                                className="px-6 py-3 bg-cyan-900/40 hover:bg-cyan-900/60 text-cyan-200 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 text-sm border border-cyan-800/80 active:scale-[0.98]"
+                                                            >
+                                                                <FileText className="w-4 h-4 text-cyan-400" />
+                                                                {contractLanguage === 'ro' ? 'Vezi Anexa 1' : 'View Annex 1'}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>

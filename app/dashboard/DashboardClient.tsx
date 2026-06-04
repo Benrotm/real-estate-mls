@@ -2,12 +2,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift } from 'lucide-react';
+import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
 import { getUnreadNotificationsCount } from '@/app/lib/actions/notifications';
 import { getTotalUnreadMessagesCount } from '@/app/lib/actions/chat';
+import { getCollaborationContractDeleteRequests } from '@/app/lib/actions/collaboration-contracts';
 
 export default function DashboardClient({
     children,
@@ -31,6 +32,7 @@ export default function DashboardClient({
     const [chatUnread, setChatUnread] = useState(0);
     const [leadsUnread, setLeadsUnread] = useState(0);
     const [credits, setCredits] = useState(0);
+    const [deletionRequestsCount, setDeletionRequestsCount] = useState(0);
 
     const fetchCounts = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -40,9 +42,25 @@ export default function DashboardClient({
         const unreadMsgCount = await getTotalUnreadMessagesCount(user.id);
         setChatUnread(unreadMsgCount);
 
-        // Fetch User Credits
-        const { data: profile } = await supabase.from('profiles').select('credits').eq('id', user.id).single();
-        if (profile) setCredits(profile.credits || 0);
+        // Fetch User Profile info for Credits and Deletion Requests
+        const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('credits, role, plan_tier')
+            .eq('id', user.id)
+            .single();
+
+        if (userProfile) {
+            setCredits(userProfile.credits || 0);
+            
+            const isUserAdmin = userProfile.role === 'super_admin' || userProfile.role === 'admin';
+            const isUserTeamLeader = userProfile.role === 'agent' && userProfile.plan_tier === 'enterprise';
+            if (isUserAdmin || isUserTeamLeader) {
+                const delRes = await getCollaborationContractDeleteRequests();
+                if (delRes.success && delRes.contracts) {
+                    setDeletionRequestsCount(delRes.contracts.length);
+                }
+            }
+        }
 
         // 2. Get Lead/CRM notifications by type for existing badges
         const { data: notifs } = await supabase
@@ -83,9 +101,20 @@ export default function DashboardClient({
                 )
                 .subscribe();
 
+            // Listener for REALTIME contracts (deletion requests)
+            const contractChannel = supabase
+                .channel('dashboard-badges-contracts')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'collaboration_contracts' },
+                    () => fetchCounts()
+                )
+                .subscribe();
+
             return () => {
                 supabase.removeChannel(notifChannel);
                 supabase.removeChannel(msgChannel);
+                supabase.removeChannel(contractChannel);
             };
         };
 
@@ -103,6 +132,7 @@ export default function DashboardClient({
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/admin/pipeline' },
         { name: 'My Properties', icon: Home, href: '/dashboard/admin/my-properties' },
         { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
+        { name: 'Contract Deletions', icon: ShieldAlert, href: '/dashboard/admin/contract-deletions' },
         { name: 'AI Studio', icon: Wand2, href: '/dashboard/admin/ai-staging' },
         { name: 'All Virtual Tours', icon: Globe, href: '/dashboard/admin/tours' },
         { name: 'Tour Maker', icon: Camera, href: '/dashboard/owner/tours' },
@@ -134,6 +164,7 @@ export default function DashboardClient({
             { name: 'My Team', icon: Users, href: '/dashboard/agent/team' },
             { name: 'Agency ROI', icon: TrendingUp, href: '/dashboard/agent/roi' },
             { name: 'Team Activities', icon: Activity, href: '/dashboard/agent/team-activities' },
+            { name: 'Contract Deletions', icon: ShieldAlert, href: '/dashboard/agent/contract-deletions' },
         ] : []),
         { name: 'My Finances', icon: DollarSign, href: '/dashboard/agent/finances' },
         { name: 'My Listings', icon: Home, href: '/dashboard/agent/listings' },
@@ -238,6 +269,11 @@ export default function DashboardClient({
                             {item.name === 'Leads & CRM' && leadsUnread > 0 && (
                                 <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                                     {leadsUnread > 9 ? '9+' : leadsUnread}
+                                </span>
+                            )}
+                            {item.name === 'Contract Deletions' && deletionRequestsCount > 0 && (
+                                <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                    {deletionRequestsCount}
                                 </span>
                             )}
                         </Link>

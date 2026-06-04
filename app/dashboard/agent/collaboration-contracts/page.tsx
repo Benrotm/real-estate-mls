@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getCollaborationContractsForAgent } from '@/app/lib/actions/collaboration-contracts';
-import { FileText, Search, Share2, Printer, ExternalLink, Calendar, CheckCircle2, Clock } from 'lucide-react';
+import { getCollaborationContractsForAgent, deleteCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
+import { FileText, Search, Share2, Printer, ExternalLink, Calendar, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AgentCollaborationContractsPage() {
@@ -10,6 +10,30 @@ export default function AgentCollaborationContractsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    const handleDeleteContract = async (contract: any) => {
+        const isLocked = contract.is_locked;
+        let confirmMsg = '';
+        if (isLocked) {
+            confirmMsg = 'Acest contract este BLOCAT. Ștergerea lui necesită aprobarea unui administrator sau a liderului de echipă. Trimiteți solicitarea de ștergere?';
+        } else {
+            confirmMsg = 'Sunteți sigur că doriți să ștergeți acest contract definitiv?';
+        }
+        
+        if (!window.confirm(confirmMsg)) return;
+        
+        const res = await deleteCollaborationContract(contract.id);
+        if (res.success) {
+            if (res.deleted) {
+                alert('Contractul a fost șters cu succes.');
+            } else if (res.deleteRequested) {
+                alert('Contractul este blocat. Solicitarea de ștergere a fost trimisă către admin/team leader.');
+            }
+            loadContracts();
+        } else {
+            alert('Eroare: ' + res.error);
+        }
+    };
 
     const loadContracts = async () => {
         setLoading(true);
@@ -157,11 +181,22 @@ export default function AgentCollaborationContractsPage() {
                                     <Link
                                         href={`/properties/contract-preview?id=${c.id}`}
                                         target="_blank"
-                                        className="flex-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all"
+                                        className="flex-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold py-2 px-2.5 rounded-xl text-xs flex items-center justify-center gap-1 transition-all"
                                     >
-                                        <ExternalLink className="w-3.5 h-3.5" />
-                                        Deschide
+                                        <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                                        <span>Deschide</span>
                                     </Link>
+
+                                    {c.anexa_data && (
+                                        <Link
+                                            href={`/properties/anexa1-preview?id=${c.id}`}
+                                            target="_blank"
+                                            className="flex-1 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 text-cyan-700 font-semibold py-2 px-2.5 rounded-xl text-xs flex items-center justify-center gap-1 transition-all"
+                                        >
+                                            <FileText className="w-3.5 h-3.5 text-cyan-500" />
+                                            <span>Vezi Anexa 1</span>
+                                        </Link>
+                                    )}
 
                                     <button
                                         type="button"
@@ -178,6 +213,15 @@ export default function AgentCollaborationContractsPage() {
                                         ) : (
                                             <Share2 className="w-4 h-4" />
                                         )}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteContract(c)}
+                                        className="p-2 rounded-xl border bg-slate-50 hover:bg-rose-50 border-slate-200 hover:border-rose-300 text-slate-400 hover:text-rose-600 transition-all flex items-center justify-center"
+                                        title={c.is_locked ? "Solicită ștergerea (Contract Blocat)" : "Șterge contractul"}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
