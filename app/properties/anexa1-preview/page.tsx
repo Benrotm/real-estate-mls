@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Printer, Share2, Globe, Trash2, Check, FileText, Save, Sparkles, Activity, AlertCircle, Lock, Unlock } from 'lucide-react';
 import { getCollaborationContract, updateAnexaSignatures, lockCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
+import { supabase } from '@/app/lib/supabase/client';
 
 interface SignaturePadProps {
     id: string;
@@ -269,6 +270,7 @@ function AnexaPreviewContent() {
     const [contractData, setContractData] = useState<any>(null);
     const [lang, setLang] = useState<'ro' | 'en'>('ro');
     const [copied, setCopied] = useState(false);
+    const [canManage, setCanManage] = useState(false);
 
     const loadContract = async (id: string) => {
         const res = await getCollaborationContract(id);
@@ -288,6 +290,36 @@ function AnexaPreviewContent() {
             loadContract(id);
         }
     }, [searchParams]);
+
+    useEffect(() => {
+        const checkPermission = async () => {
+            if (!contractData) return;
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    setCanManage(false);
+                    return;
+                }
+                
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                
+                const agentId = contractData.agent_id || contractData.agent_details?.id;
+                const isCreator = user.id === agentId;
+                const isAdminOrAgent = profile && ['admin', 'super_admin', 'agent'].includes(profile.role);
+                
+                setCanManage(!!(isCreator || isAdminOrAgent));
+            } catch (err) {
+                console.error('Error checking permissions:', err);
+                setCanManage(false);
+            }
+        };
+        
+        checkPermission();
+    }, [contractData]);
 
     if (!contractData) {
         return (
@@ -321,14 +353,27 @@ function AnexaPreviewContent() {
         window.print();
     };
 
-    const handleShare = () => {
-        try {
-            const shareUrl = `${window.location.origin}/properties/anexa1-preview?id=${contractId}`;
-            navigator.clipboard.writeText(shareUrl);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy link:', err);
+    const handleShare = async () => {
+        const shareUrl = `${window.location.origin}/properties/anexa1-preview?id=${contractId}`;
+        
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: isRo ? 'Anexa Nr. 1' : 'Annex No. 1',
+                    text: isRo ? 'Vizualizează Anexa Nr. 1 la contract.' : 'View Annex No. 1 to the contract.',
+                    url: shareUrl,
+                });
+            } catch (err) {
+                console.log('Share was cancelled or failed:', err);
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch (err) {
+                console.error('Failed to copy link:', err);
+            }
         }
     };
 
@@ -363,7 +408,7 @@ function AnexaPreviewContent() {
         if (clickedCount > 0) {
             alert(isRo ? 'Semnăturile se salvează...' : 'Saving signatures...');
         } else {
-            alert(isRo ? 'Nu există semnături noi de salvat sau anexa este deja salvată.' : 'No new signatures to save or annex is already saved.');
+            alert(isRo ? 'Anexa a fost salvată cu succes!' : 'Annex saved successfully!');
         }
     };
 
@@ -526,27 +571,29 @@ function AnexaPreviewContent() {
                         </button>
 
                         {/* Share link button */}
-                        <button
-                            type="button"
-                            onClick={handleShare}
-                            className={`p-2 px-4 rounded-xl flex items-center gap-2 text-xs font-semibold border transition-all ${
-                                copied
-                                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
-                                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
-                            }`}
-                        >
-                            {copied ? (
-                                <>
-                                    <Check className="w-4 h-4" />
-                                    <span>{isRo ? 'Copiat!' : 'Copied!'}</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Share2 className="w-4 h-4" />
-                                    <span>{isRo ? 'Copiază link' : 'Copy link'}</span>
-                                </>
-                            )}
-                        </button>
+                        {canManage && (
+                            <button
+                                type="button"
+                                onClick={handleShare}
+                                className={`p-2 px-4 rounded-xl flex items-center gap-2 text-xs font-semibold border transition-all ${
+                                    copied
+                                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                                        : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+                                }`}
+                            >
+                                {copied ? (
+                                    <>
+                                        <Check className="w-4 h-4" />
+                                        <span>{isRo ? 'Copiat!' : 'Copied!'}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Share2 className="w-4 h-4" />
+                                        <span>{isRo ? 'Partajează' : 'Share'}</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
 
                         {/* Print Button */}
                         <button
@@ -569,7 +616,7 @@ function AnexaPreviewContent() {
                         </button>
 
                         {/* Lock Button / Status */}
-                        {contractId && (
+                        {canManage && contractId && (
                             contractData.is_locked ? (
                                 <span className="p-2 px-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md">
                                     <Lock className="w-4 h-4 text-emerald-500" />

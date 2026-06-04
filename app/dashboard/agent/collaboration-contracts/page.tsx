@@ -48,14 +48,26 @@ export default function AgentCollaborationContractsPage() {
         loadContracts();
     }, []);
 
-    const handleShare = (id: string) => {
-        try {
-            const shareUrl = `${window.location.origin}/properties/contract-preview?id=${id}`;
-            navigator.clipboard.writeText(shareUrl);
-            setCopiedId(id);
-            setTimeout(() => setCopiedId(null), 2000);
-        } catch (err) {
-            console.error('Failed to copy link:', err);
+    const handleShare = async (id: string) => {
+        const shareUrl = `${window.location.origin}/properties/contract-preview?id=${id}`;
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Contract de Colaborare & Anexă',
+                    text: 'Vizualizează contractul de colaborare și anexa.',
+                    url: shareUrl
+                });
+            } catch (err) {
+                console.log('Share was cancelled or failed:', err);
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                setCopiedId(id);
+                setTimeout(() => setCopiedId(null), 2000);
+            } catch (err) {
+                console.error('Failed to copy link:', err);
+            }
         }
     };
 
