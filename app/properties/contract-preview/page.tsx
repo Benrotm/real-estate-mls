@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Printer, Share2, Globe, Trash2, Check, FileText, Save } from 'lucide-react';
+import { Printer, Share2, Globe, Trash2, Check, FileText, Save, Sparkles } from 'lucide-react';
 import { getCollaborationContract, updateCollaborationSignatures } from '@/app/lib/actions/collaboration-contracts';
 
 interface SignaturePadProps {
@@ -20,6 +20,15 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
     const [hasSigned, setHasSigned] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const saveTimeoutRef = useRef<any>(null);
+
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
         const canvas = canvasRef.current;
@@ -60,6 +69,10 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
         setIsDrawing(true);
         setHasSigned(true);
         setIsSaved(false);
+
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
     };
 
     const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -79,6 +92,27 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
 
     const stopDrawing = () => {
         setIsDrawing(false);
+
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+
+        if (onSave) {
+            saveTimeoutRef.current = setTimeout(async () => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                setIsSaving(true);
+                try {
+                    const dataUrl = canvas.toDataURL();
+                    await onSave(dataUrl);
+                    setIsSaved(true);
+                } catch (error) {
+                    console.error('Failed to auto-save signature:', error);
+                } finally {
+                    setIsSaving(false);
+                }
+            }, 1000);
+        }
     };
 
     const clearCanvas = () => {
@@ -89,6 +123,14 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isRo }: S
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         setHasSigned(false);
         setIsSaved(false);
+
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+
+        if (onSave) {
+            onSave('');
+        }
     };
 
     const handleSave = async () => {
@@ -232,7 +274,9 @@ function ContractPreviewContent() {
                 timeStr: contract.form_data?.timeStr || new Date(contract.created_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' }),
                 agent_signature: contract.agent_signature,
                 owner_signature: contract.owner_signature,
-                status: contract.status
+                status: contract.status,
+                propertyId: contract.property_id,
+                personal_property_id: contract.personal_property_id
             });
             setContractId(id);
             if (contract.language) {
@@ -528,14 +572,35 @@ function ContractPreviewContent() {
                             )}
                         </button>
 
-                        {/* Print / Save PDF Button */}
+                        {/* Generate Anexa 1 button */}
+                        {contractId && contractData.propertyId && (
+                            <a
+                                href={`/calculator-comisioane?property_id=${contractData.propertyId}`}
+                                className="p-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl flex items-center gap-2 text-xs font-semibold transition-all shadow-md"
+                            >
+                                <Sparkles className="w-4 h-4 text-orange-500" />
+                                <span>{isRo ? 'Generează Anexa 1' : 'Generate Annex 1'}</span>
+                            </a>
+                        )}
+
+                        {/* Print Button */}
+                        <button
+                            type="button"
+                            onClick={handlePrint}
+                            className="p-2 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl flex items-center gap-2 text-xs font-semibold transition-all shadow-md"
+                        >
+                            <Printer className="w-4 h-4" />
+                            <span>{isRo ? 'Printează' : 'Print'}</span>
+                        </button>
+
+                        {/* Save PDF Button */}
                         <button
                             type="button"
                             onClick={handlePrint}
                             className="p-2 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl flex items-center gap-2 text-xs font-bold transition-all shadow-md shadow-orange-500/10 border border-orange-500/20 active:scale-[0.98]"
                         >
-                            <Printer className="w-4 h-4" />
-                            <span>{isRo ? 'Printează / Salvează PDF' : 'Print / Save PDF'}</span>
+                            <Save className="w-4 h-4" />
+                            <span>{isRo ? 'Salvează PDF' : 'Save PDF'}</span>
                         </button>
                     </div>
                 </div>
@@ -553,6 +618,9 @@ function ContractPreviewContent() {
                             </h2>
                             <div className="flex justify-between text-xs text-slate-500 font-mono mt-4">
                                 <span>{t.series}: <strong className="text-slate-800">{contractSerial}</strong> / {t.nr}: <strong className="text-slate-800">{contractNumber}</strong></span>
+                                {contractData.personal_property_id && (
+                                    <span>ID Imobil: <strong className="text-slate-800">#{contractData.personal_property_id}</strong></span>
+                                )}
                                 <span>{t.date}: <strong className="text-slate-800">{dateStr}</strong> | {t.hour}: <strong className="text-slate-800">{timeStr}</strong></span>
                             </div>
                         </div>
@@ -647,6 +715,12 @@ function ContractPreviewContent() {
                                     <span className="block text-[10px] uppercase font-bold text-slate-400">{t.propPrice}</span>
                                     <span className="font-semibold text-slate-900">
                                         {formData.price ? `${formData.price} ${formData.currency}` : '................................................'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="block text-[10px] uppercase font-bold text-slate-400">ID PROPRIETATE / PROPERTY ID:</span>
+                                    <span className="font-semibold text-slate-900">
+                                        {contractData.personal_property_id ? `#${contractData.personal_property_id}` : (contractData.propertyId ? `#${contractData.propertyId}` : '................................................')}
                                     </span>
                                 </div>
                             </div>

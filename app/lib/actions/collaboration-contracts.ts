@@ -62,7 +62,26 @@ export async function getCollaborationContract(id: string) {
         return { success: false, error: error.message };
     }
 
-    return { success: true, contract: data };
+    // Fetch personal_property_id if property_id is set
+    let personal_property_id = null;
+    if (data.property_id) {
+        const { data: propData } = await supabase
+            .from('properties')
+            .select('personal_property_id')
+            .eq('id', data.property_id)
+            .maybeSingle();
+        if (propData) {
+            personal_property_id = propData.personal_property_id;
+        }
+    }
+
+    return { 
+        success: true, 
+        contract: {
+            ...data,
+            personal_property_id
+        }
+    };
 }
 
 /**
