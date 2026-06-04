@@ -72,6 +72,9 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
     const [isExclusive, setIsExclusive] = useState<boolean>(false);
     const [exclusivityPeriodDays, setExclusivityPeriodDays] = useState<number>(90);
     const [showAuthAlert, setShowAuthAlert] = useState<boolean>(false);
+    const [useCustomCommission, setUseCustomCommission] = useState<boolean>(false);
+    const [customSellerPercent, setCustomSellerPercent] = useState<number>(0);
+    const [customBuyerPercent, setCustomBuyerPercent] = useState<number>(0);
 
     const searchParams = useSearchParams();
     const [propertyId, setPropertyId] = useState<string | null>(null);
@@ -209,6 +212,7 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
         });
 
         // Sum components and apply primary party adjustment (Regula 3)
+        // Sum components and apply primary party adjustment (Regula 3)
         let finalSellerPercent = baseSellerPercent;
         let finalBuyerPercent = baseBuyerPercent;
 
@@ -219,12 +223,17 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
         }
 
         // Clamp final percentages (Regula 6: Math.max(0, value)) and fix float precision
-        finalSellerPercent = Math.max(0, Math.round(finalSellerPercent * 10000) / 10000);
-        finalBuyerPercent = Math.max(0, Math.round(finalBuyerPercent * 10000) / 10000);
+        let finalSellerPercentComputed = Math.max(0, Math.round(finalSellerPercent * 10000) / 10000);
+        let finalBuyerPercentComputed = Math.max(0, Math.round(finalBuyerPercent * 10000) / 10000);
+
+        if (useCustomCommission) {
+            finalSellerPercentComputed = customSellerPercent;
+            finalBuyerPercentComputed = customBuyerPercent;
+        }
 
         // Convert to absolute EUR values
-        const sellerCommissionEUR = Math.round((propertyValue * finalSellerPercent) / 100);
-        const buyerCommissionEUR = Math.round((propertyValue * finalBuyerPercent) / 100);
+        const sellerCommissionEUR = Math.round((propertyValue * finalSellerPercentComputed) / 100);
+        const buyerCommissionEUR = Math.round((propertyValue * finalBuyerPercentComputed) / 100);
         const totalCommissionEUR = sellerCommissionEUR + buyerCommissionEUR;
 
         // Total outlay of the seller (Seller Commission + Separate Services Cash Cost)
@@ -251,8 +260,8 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
             serviceCommissionPercentAddition,
             includedServicesCost,
             separateServicesCost,
-            finalSellerPercent,
-            finalBuyerPercent,
+            finalSellerPercent: finalSellerPercentComputed,
+            finalBuyerPercent: finalBuyerPercentComputed,
             sellerCommissionEUR,
             buyerCommissionEUR,
             totalCommissionEUR,
@@ -260,7 +269,7 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
             totalServicesCostEUR,
             monthlyServicesCostEUR
         };
-    }, [propertyValue, activeModel, isExclusive, exclusivityPeriodDays, services, initialSettings]);
+    }, [propertyValue, activeModel, isExclusive, exclusivityPeriodDays, services, initialSettings, useCustomCommission, customSellerPercent, customBuyerPercent]);
 
     // ----------------------------------------------------
     // 4. Input Toggles
@@ -309,6 +318,14 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
             case 'admin': return 'Administrator';
             case 'super_admin': return 'Super Administrator';
             default: return role;
+        }
+    };
+
+    const handleToggleCustom = (checked: boolean) => {
+        setUseCustomCommission(checked);
+        if (checked) {
+            setCustomSellerPercent(calculations.finalSellerPercent);
+            setCustomBuyerPercent(calculations.finalBuyerPercent);
         }
     };
 
@@ -911,6 +928,79 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                             {activeModelObj.desc}
                         </div>
                     </div>
+                </div>
+
+                {/* 2.5. CUSTOM COMMISSION (NEGOTIATED) */}
+                <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden backdrop-blur-md">
+                    <div className="flex justify-between items-center mb-4">
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-orange-500" />
+                            Comision negociat / personalizat
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => handleToggleCustom(!useCustomCommission)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                                useCustomCommission ? 'bg-orange-500' : 'bg-slate-850'
+                            }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    useCustomCommission ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                            />
+                        </button>
+                    </div>
+
+                    {useCustomCommission ? (
+                        <div className="space-y-4 animate-in fade-in duration-200">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label htmlFor="customSellerInput" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Comision Vânzător (Proprietar) %
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            id="customSellerInput"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={customSellerPercent}
+                                            onChange={(e) => setCustomSellerPercent(Math.max(0, parseFloat(e.target.value) || 0))}
+                                            className="w-full bg-slate-950 border border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-lg font-bold text-white focus:outline-none focus:ring-1 focus:ring-orange-500/30 pr-10"
+                                        />
+                                        <span className="absolute right-4 top-3 text-lg font-bold text-slate-500">%</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label htmlFor="customBuyerInput" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Comision Cumpărător (Client) %
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            id="customBuyerInput"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={customBuyerPercent}
+                                            onChange={(e) => setCustomBuyerPercent(Math.max(0, parseFloat(e.target.value) || 0))}
+                                            className="w-full bg-slate-950 border border-slate-800 focus:border-orange-500/50 rounded-xl px-4 py-3 text-lg font-bold text-white focus:outline-none focus:ring-1 focus:ring-orange-500/30 pr-10"
+                                        />
+                                        <span className="absolute right-4 top-3 text-lg font-bold text-slate-500">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-slate-500 italic">
+                                * Notă: Procentele introduse mai sus vor fi afișate pe Anexă și folosite direct în calcule, înlocuind comisionul standard configurat pentru modelul selectat.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="text-xs text-slate-500">
+                            Activați pentru a introduce valori negociate manual pentru procente de comision, în loc să folosiți formulele standard ale modelului.
+                        </div>
+                    )}
                 </div>
 
                 {/* 3. EXCLUSIVITY SECTION */}
