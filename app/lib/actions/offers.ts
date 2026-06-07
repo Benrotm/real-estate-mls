@@ -59,6 +59,7 @@ export interface PropertyWithOffers {
     features: string[];
     offers: PropertyOffer[];
     inquiries: PropertyInquiry[];
+    auction?: any;
 }
 
 // Get all properties with their offers for the current user (owner/agent)
@@ -122,6 +123,20 @@ export async function getUserPropertiesWithOffers(filters?: any): Promise<Proper
 
     // Get offers for all properties
     const propertyIds = properties.map(p => p.id);
+
+    // Get auctions for all properties
+    const { data: auctions, error: auctionsError } = await supabase
+        .from('property_auctions')
+        .select('*')
+        .in('property_id', propertyIds);
+
+    const latestAuctions: Record<string, any> = {};
+    if (!auctionsError && auctions) {
+        const sortedAuctions = [...auctions].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        sortedAuctions.forEach(a => {
+            latestAuctions[a.property_id] = a;
+        });
+    }
 
     const { data: offers, error: offersError } = await supabase
         .from('property_offers')
@@ -195,7 +210,8 @@ export async function getUserPropertiesWithOffers(filters?: any): Promise<Proper
         shares_count: sharesCount[property.id] || 0,
         features: property.features || [],
         offers: (offers || []).filter(o => o.property_id === property.id),
-        inquiries: (detailInquiries || []).filter(i => i.property_id === property.id)
+        inquiries: (detailInquiries || []).filter(i => i.property_id === property.id),
+        auction: latestAuctions[property.id] || null
     }));
 }
 

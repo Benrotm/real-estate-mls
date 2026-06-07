@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { 
     PropertyWithOffers, 
     PropertyOffer, 
@@ -12,7 +12,7 @@ import {
     convertOfferToAuction,
     addOfferToActiveAuction
 } from '@/app/lib/actions/offers';
-import { getAuctionForProperty, PropertyAuction } from '@/app/lib/actions/auctions';
+import { getAuctionForProperty, PropertyAuction, createAuction, closeAuction } from '@/app/lib/actions/auctions';
 import { deleteProperty } from '@/app/lib/actions/properties';
 import { findMatchingLeads } from '@/app/lib/actions/scoring';
 import { startConversationWithUser, sendMessage } from '@/app/lib/actions/chat';
@@ -24,7 +24,7 @@ import {
     ExternalLink, Plus, Building2, MapPin, Calendar,
     Award, MessageSquare, Trash2, Zap, User, Phone,
     Mail, AlertCircle, Info, Users, Smartphone, Send,
-    Activity, Loader2, Gavel, Sparkles, ArrowRight
+    Activity, Loader2, Gavel, Sparkles, ArrowRight, Lock
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -574,6 +574,105 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [selectedLeadForContact, setSelectedLeadForContact] = useState<any>(null);
 
+    // Open Offers Management Modal State
+    const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
+    const [auctionData, setAuctionData] = useState<PropertyAuction | null>(property.auction || null);
+    const [isLoadingAuctionData, setIsLoadingAuctionData] = useState(false);
+    const [offersFormError, setOffersFormError] = useState<string | null>(null);
+    const [offersFormSuccess, setOffersFormSuccess] = useState<string | null>(null);
+    const [isOffersPending, startOffersTransition] = useTransition();
+
+    // Owner start form input states
+    const [startStartingPrice, setStartStartingPrice] = useState<string>(String(property.price));
+    const [startMinIncrement, setStartMinIncrement] = useState<string>('500');
+    const [startDurationDays, setStartDurationDays] = useState<string>('7');
+    const [confirmClose, setConfirmClose] = useState<boolean>(false);
+
+    const handleOpenOffersModal = async () => {
+        setIsOffersModalOpen(true);
+        setIsLoadingAuctionData(true);
+        setOffersFormError(null);
+        setOffersFormSuccess(null);
+        try {
+            const data = await getAuctionForProperty(property.id);
+            setAuctionData(data);
+            if (data) {
+                setStartStartingPrice(String(data.starting_price));
+                setStartMinIncrement(String(data.min_increment));
+            }
+        } catch (err) {
+            console.error(err);
+            setOffersFormError('Failed to load open offers data.');
+        } finally {
+            setIsLoadingAuctionData(false);
+        }
+    };
+
+    const handleStartOffers = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setOffersFormError(null);
+        setOffersFormSuccess(null);
+
+        const price = Number(startStartingPrice);
+        const increment = Number(startMinIncrement);
+        const duration = Number(startDurationDays);
+
+        if (isNaN(price) || price <= 0) {
+            setOffersFormError('Starting price must be a positive number.');
+            return;
+        }
+        if (isNaN(increment) || increment < 0) {
+            setOffersFormError('Recommended increment must be a non-negative number.');
+            return;
+        }
+
+        startOffersTransition(async () => {
+            const now = new Date();
+            const endTime = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
+            const res = await createAuction(
+                property.id,
+                price,
+                null,
+                increment,
+                now.toISOString(),
+                endTime.toISOString()
+            );
+            if (res.success) {
+                setOffersFormSuccess('Live Open Offers started successfully!');
+                const updatedData = await getAuctionForProperty(property.id);
+                setAuctionData(updatedData);
+                router.refresh();
+            } else {
+                setOffersFormError(res.error || 'Failed to start Live Open Offers.');
+            }
+        });
+    };
+
+    const handleCloseOffers = async () => {
+        if (!auctionData) return;
+        if (!confirmClose) {
+            setConfirmClose(true);
+            setTimeout(() => setConfirmClose(false), 3000);
+            return;
+        }
+
+        setConfirmClose(false);
+        setOffersFormError(null);
+        setOffersFormSuccess(null);
+
+        startOffersTransition(async () => {
+            const res = await closeAuction(auctionData.id);
+            if (res.success) {
+                setOffersFormSuccess('Live Open Offers session closed successfully!');
+                const updatedData = await getAuctionForProperty(property.id);
+                setAuctionData(updatedData);
+                router.refresh();
+            } else {
+                setOffersFormError(res.error || 'Failed to close open offers session.');
+            }
+        });
+    };
+
     const handleLoadMatches = async () => {
         setIsMatchingLoading(true);
         setMatchError(null);
@@ -734,6 +833,23 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                         <span className="text-xs text-slate-400">shares</span>
                     </div>
                     <div className="ml-auto flex items-center gap-2">
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleOpenOffersModal();
+                            }}
+                            className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors mr-1 cursor-pointer relative z-10 flex items-center gap-1"
+                            title="Manage Open Offers"
+                        >
+                            <Gavel className="w-4 h-4" />
+                            {property.auction && (property.auction.status === 'active' || property.auction.status === 'scheduled') && (
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                            )}
+                        </button>
                         <Link
                             href={`/properties/${property.id}`}
                             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
@@ -1025,6 +1141,173 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                     currentUserEmail={null}
                     currentUserId={currentUserId || null}
                 />
+            )}
+
+            {/* Open Offers Management Modal */}
+            {isOffersModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                                <Gavel className="w-5 h-5 text-violet-500" />
+                                Manage Open Offers
+                            </h3>
+                            <button
+                                onClick={() => setIsOffersModalOpen(false)}
+                                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                            {/* Error & Success Messages */}
+                            {offersFormError && (
+                                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold px-4 py-3 rounded-2xl flex items-start gap-2">
+                                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                                    <span>{offersFormError}</span>
+                                </div>
+                            )}
+
+                            {offersFormSuccess && (
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold px-4 py-3 rounded-2xl flex items-start gap-2">
+                                    <Check className="w-4 h-4 shrink-0 mt-0.5" />
+                                    <span>{offersFormSuccess}</span>
+                                </div>
+                            )}
+
+                            {isLoadingAuctionData ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                    <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+                                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Loading session data...</p>
+                                </div>
+                            ) : auctionData && (auctionData.status === 'active' || auctionData.status === 'scheduled') ? (
+                                /* Active Open Offers Session */
+                                <div className="space-y-4">
+                                    <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="relative flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                            </span>
+                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                {auctionData.status === 'active' ? 'Live Open Offers Active' : 'Upcoming Open Offers Scheduled'}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs text-slate-400 font-mono">
+                                            Starts: {new Date(auctionData.start_time).toLocaleDateString()}
+                                        </span>
+                                    </div>
+
+                                    <div className="bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 flex justify-between items-center">
+                                        <div>
+                                            <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-0.5">Starting Offer Price</span>
+                                            <span className="text-2xl font-black">{formatCurrency(auctionData.starting_price, property.currency)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-0.5">Recommended Increment</span>
+                                            <span className="text-sm font-bold text-orange-400">+{formatCurrency(auctionData.min_increment, property.currency)}</span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleCloseOffers}
+                                        disabled={isOffersPending}
+                                        className={`w-full py-3.5 px-6 rounded-2xl font-bold tracking-wide shadow-lg transition duration-150 flex items-center justify-center gap-2 ${
+                                            confirmClose 
+                                                ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20 animate-pulse'
+                                                : 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20'
+                                        }`}
+                                    >
+                                        <Lock className="w-4 h-4" />
+                                        {confirmClose ? 'Confirm Close Open Offers?' : 'Close Open Offers Session'}
+                                    </button>
+                                </div>
+                            ) : (
+                                /* Start Live Open Offers Form */
+                                <form onSubmit={handleStartOffers} className="space-y-4">
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        Create a Live Open Offers session for this property. Users will be able to make offers dynamically from the public listing page.
+                                    </p>
+
+                                    <div>
+                                        <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1.5">
+                                            Starting Offer Price ({property.currency})
+                                        </label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="1"
+                                            step="1"
+                                            value={startStartingPrice}
+                                            onChange={(e) => setStartStartingPrice(e.target.value)}
+                                            disabled={isOffersPending}
+                                            className="w-full bg-slate-50 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 px-4 text-slate-900 dark:text-white font-black text-md focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition disabled:opacity-50"
+                                            placeholder="e.g. 150000"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1.5">
+                                            Recommended increment ({property.currency})
+                                        </label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="0"
+                                            step="1"
+                                            value={startMinIncrement}
+                                            onChange={(e) => setStartMinIncrement(e.target.value)}
+                                            disabled={isOffersPending}
+                                            className="w-full bg-slate-50 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 px-4 text-slate-900 dark:text-white font-bold text-md focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition disabled:opacity-50"
+                                            placeholder="e.g. 500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1.5">
+                                            Duration (Days)
+                                        </label>
+                                        <select
+                                            value={startDurationDays}
+                                            onChange={(e) => setStartDurationDays(e.target.value)}
+                                            disabled={isOffersPending}
+                                            className="w-full bg-slate-50 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 px-4 text-slate-900 dark:text-white font-bold text-md focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition disabled:opacity-50"
+                                        >
+                                            <option value="1">1 Day</option>
+                                            <option value="3">3 Days</option>
+                                            <option value="5">5 Days</option>
+                                            <option value="7">7 Days</option>
+                                            <option value="14">14 Days</option>
+                                            <option value="30">30 Days</option>
+                                        </select>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={isOffersPending}
+                                        className="w-full py-4 px-6 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-bold tracking-wide shadow-lg shadow-orange-500/20 active:scale-98 transition duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {isOffersPending ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                Starting Open Offers...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Gavel className="w-4 h-4" />
+                                                Start Live Open Offers
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
