@@ -87,7 +87,7 @@ export async function getAuctionForProperty(propertyId: string): Promise<Propert
             )
         `)
         .eq('auction_id', auction.id)
-        .order('bid_amount', { ascending: false });
+        .order('created_at', { ascending: false });
 
     if (!bidsError && bids) {
         auction.bids = bids.map((b: any) => ({
@@ -246,13 +246,66 @@ export async function cancelAuction(auctionId: string) {
     return { success: true };
 }
 
-// Place a bid in an auction
+// Close/end an auction manually
+export async function closeAuction(auctionId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'You must be logged in to close this open offers session.' };
+    }
+
+    const { data: auction } = await supabase
+        .from('property_auctions')
+        .select('*')
+        .eq('id', auctionId)
+        .single();
+
+    if (!auction) {
+        return { success: false, error: 'Offers session not found.' };
+    }
+
+    if (auction.owner_id !== user.id) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+            return { success: false, error: 'You are not authorized to close this open offers session.' };
+        }
+    }
+
+    const now = new Date().toISOString();
+    const { error: updateError } = await supabase
+        .from('property_auctions')
+        .update({ 
+            status: 'ended', 
+            end_time: now,
+            updated_at: now 
+        })
+        .eq('id', auctionId);
+
+    if (updateError) {
+        console.error('Close auction error:', updateError);
+        return { success: false, error: updateError.message };
+    }
+
+    revalidatePath(`/properties/${auction.property_id}`);
+    revalidatePath(`/dashboard/owner/properties`);
+    revalidatePath(`/dashboard/agent/listings`);
+
+    return { success: true };
+}
+
+// Place a bid/offer in an open offers session
 export async function placeBid(auctionId: string, bidAmount: number) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        return { success: false, error: 'You must be logged in to place a bid.' };
+        return { success: false, error: 'You must be logged in to send an offer.' };
     }
 
     // Get auction details
@@ -263,7 +316,7 @@ export async function placeBid(auctionId: string, bidAmount: number) {
         .single();
 
     if (auctionError || !auction) {
-        return { success: false, error: 'Auction not found.' };
+        return { success: false, error: 'Offers session not found.' };
     }
 
     if (auction.status !== 'active') {
@@ -273,7 +326,7 @@ export async function placeBid(auctionId: string, bidAmount: number) {
         const end = new Date(auction.end_time);
 
         if (now < start) {
-            return { success: false, error: 'This auction has not started yet.' };
+            return { success: false, error: 'This offers session has not started yet.' };
         }
         if (now >= end) {
             // Update db status to ended
@@ -281,43 +334,26 @@ export async function placeBid(auctionId: string, bidAmount: number) {
                 .from('property_auctions')
                 .update({ status: 'ended', updated_at: now.toISOString() })
                 .eq('id', auctionId);
-            return { success: false, error: 'This auction has ended.' };
+            return { success: false, error: 'This offers session has ended.' };
         }
         
         // If it's within start and end, but status wasn't active in db, it's actually active
         if (auction.status !== 'scheduled') {
-            return { success: false, error: 'This auction is not active.' };
+            return { success: false, error: 'This offers session is not active.' };
         }
     }
 
-    // Prevent property owner from bidding on their own property
+    // Prevent property owner from making offers on their own property
     if (auction.owner_id === user.id) {
-        return { success: false, error: 'You cannot bid on your own property.' };
+        return { success: false, error: 'You cannot send offers on your own property.' };
     }
 
-    // Get current highest bid
-    const { data: highestBids } = await supabase
-        .from('property_bids')
-        .select('bid_amount')
-        .eq('auction_id', auctionId)
-        .order('bid_amount', { ascending: false })
-        .limit(1);
-
-    const currentHighestBid = highestBids && highestBids.length > 0 ? Number(highestBids[0].bid_amount) : 0;
-
-    // Validate bid amount
-    const minRequiredBid = currentHighestBid > 0 
-        ? currentHighestBid + Number(auction.min_increment)
-        : Number(auction.starting_price);
-
-    if (bidAmount < minRequiredBid) {
-        return { 
-            success: false, 
-            error: `Your bid must be at least ${minRequiredBid} (Minimum increment is ${auction.min_increment}).` 
-        };
+    // Validate offer amount
+    if (bidAmount <= 0) {
+        return { success: false, error: 'Your offer must be a positive amount.' };
     }
 
-    // Insert bid
+    // Insert bid/offer
     const { data: bid, error: insertError } = await supabase
         .from('property_bids')
         .insert({
@@ -329,7 +365,7 @@ export async function placeBid(auctionId: string, bidAmount: number) {
         .single();
 
     if (insertError) {
-        console.error('Place bid error:', insertError);
+        console.error('Place offer error:', insertError);
         return { success: false, error: insertError.message };
     }
 
@@ -344,13 +380,13 @@ export async function placeBid(auctionId: string, bidAmount: number) {
     try {
         await createNotification({
             user_id: auction.owner_id,
-            type: 'offer', // Use offer type for bids as well
-            title: 'New Bid Received',
-            content: `A new bid of ${bidAmount} has been placed on your property "${property?.title || 'Property'}"`,
+            type: 'offer',
+            title: 'New Offer Received',
+            content: `A new offer of ${bidAmount} has been sent for your property "${property?.title || 'Property'}"`,
             link: `/properties/${auction.property_id}`
         });
     } catch (notifyError) {
-        console.error('Error triggering bid notification:', notifyError);
+        console.error('Error triggering offer notification:', notifyError);
     }
 
     revalidatePath(`/properties/${auction.property_id}`);

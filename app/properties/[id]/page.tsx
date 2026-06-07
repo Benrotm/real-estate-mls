@@ -868,12 +868,14 @@ export default async function PropertyDetailPage({
 
                 {/* Sidebar */}
                 <div className="lg:col-span-1 space-y-6">
-                    {auction && auction.status !== 'cancelled' && (
+                    {((auction && auction.status !== 'cancelled') || (user && property.owner_id === user.id)) && (
                         <AuctionWidget
                             auction={auction}
                             propertyId={property.id}
                             currentUser={user}
                             currency={property.currency || 'EUR'}
+                            ownerId={property.owner_id}
+                            propertyPrice={property.price}
                         />
                     )}
 

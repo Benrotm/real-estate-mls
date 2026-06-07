@@ -176,11 +176,11 @@ function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpd
                 new Date(endTime).toISOString()
             );
             if (res.success) {
-                setSuccessMsg('Successfully converted offer to auction!');
+                setSuccessMsg('Successfully converted offer to open offers!');
                 setShowAuctionForm(false);
                 onStatusUpdate();
             } else {
-                setErrorMsg(res.error || 'Failed to convert offer to auction.');
+                setErrorMsg(res.error || 'Failed to convert offer to open offers.');
             }
         } catch (err: any) {
             setErrorMsg(err.message || 'An unexpected error occurred.');
@@ -197,10 +197,10 @@ function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpd
         try {
             const res = await addOfferToActiveAuction(offer.id, activeAuction.id);
             if (res.success) {
-                setSuccessMsg('Successfully placed offer as a bid in the active auction!');
+                setSuccessMsg('Successfully placed offer in the active open offers session!');
                 onStatusUpdate();
             } else {
-                setErrorMsg(res.error || 'Failed to place bid.');
+                setErrorMsg(res.error || 'Failed to send offer.');
             }
         } catch (err: any) {
             setErrorMsg(err.message || 'An unexpected error occurred.');
@@ -317,10 +317,10 @@ function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpd
                                         onClick={handleAddToAuction}
                                         disabled={isUpdating}
                                         className="p-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors disabled:opacity-50 shadow-sm flex items-center gap-1 text-xs font-bold px-3"
-                                        title="Submit as Bid to Active Auction"
+                                        title="Submit to Active Open Offers Session"
                                     >
                                         <Gavel className="w-4 h-4" />
-                                        Submit Bid
+                                        Submit Offer
                                     </button>
                                 ) : (
                                     <button
@@ -332,10 +332,10 @@ function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpd
                                         className={`p-2.5 rounded-xl transition-colors disabled:opacity-50 shadow-sm flex items-center gap-1 text-xs font-bold px-3 ${
                                             showAuctionForm ? 'bg-violet-700 text-white' : 'bg-violet-500 text-white hover:bg-violet-600'
                                         }`}
-                                        title="Start Auction from this Offer"
+                                        title="Start Open Offers from this Offer"
                                     >
                                         <Gavel className="w-4 h-4" />
-                                        Auction
+                                        Open Offers
                                     </button>
                                 )
                             )}
@@ -410,18 +410,18 @@ function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpd
                 </form>
             )}
 
-            {/* Convert to Auction form */}
+            {/* Convert to Open Offers form */}
             {showAuctionForm && (
                 <form onSubmit={handleConvertSubmit} className="p-4 bg-violet-50/50 border border-violet-100 rounded-xl space-y-3 animate-in slide-in-from-top duration-200">
                     <div className="text-sm font-bold text-violet-900 flex items-center gap-1">
-                        <Gavel className="w-4 h-4 text-violet-600" /> Start Live Auction
+                        <Gavel className="w-4 h-4 text-violet-600" /> Start Live Open Offers
                     </div>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                        This starts an auction for this property, using this offer's price of <span className="font-bold text-slate-700">{formatCurrency(offer.offer_amount, offer.currency)}</span> as the starting bid.
+                        This starts an open offers session for this property, using this offer's price of <span className="font-bold text-slate-700">{formatCurrency(offer.offer_amount, offer.currency)}</span> as the starting offer.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500">Min Bid Increment ({offer.currency})</label>
+                            <label className="text-xs font-semibold text-slate-500">Recommended increment ({offer.currency})</label>
                             <input
                                 type="number"
                                 required
@@ -465,7 +465,7 @@ function OfferRow({ offer, onStatusUpdate }: { offer: PropertyOffer; onStatusUpd
                             className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-violet-600/10 flex items-center gap-1"
                         >
                             {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Gavel className="w-3.5 h-3.5" />}
-                            Start Auction
+                            Start Open Offers
                         </button>
                     </div>
                 </form>
