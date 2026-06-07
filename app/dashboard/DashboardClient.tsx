@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert, History } from 'lucide-react';
+import { Bell, LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert, History } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -21,11 +21,18 @@ export default function DashboardClient({
 }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
-    const isAgent = pathname.includes('/dashboard/agent');
-    const isOwner = pathname.includes('/dashboard/owner');
-    const isDeveloper = pathname.includes('/dashboard/developer');
-    const isClient = pathname.includes('/dashboard/client');
-    const isAdmin = pathname.includes('/dashboard/admin');
+    const activeRole = pathname.includes('/dashboard/agent') ? 'agent'
+        : pathname.includes('/dashboard/owner') ? 'owner'
+        : pathname.includes('/dashboard/developer') ? 'developer'
+        : pathname.includes('/dashboard/client') ? 'client'
+        : pathname.includes('/dashboard/admin') ? 'admin'
+        : profile?.role;
+
+    const isAgent = activeRole === 'agent';
+    const isOwner = activeRole === 'owner';
+    const isDeveloper = activeRole === 'developer';
+    const isClient = activeRole === 'client';
+    const isAdmin = activeRole === 'admin' || activeRole === 'super_admin' || activeRole === 'superadmin';
 
     const hasFeature = (key: string) => features.includes(key);
 
@@ -177,6 +184,7 @@ export default function DashboardClient({
         { name: 'Single Import', icon: Globe, href: '/dashboard/admin/properties/import' },
         { name: 'Bulk Import', icon: FileDown, href: '/dashboard/admin/bulk-import' },
         { name: 'Bulk Import OLX', icon: Globe, href: '/dashboard/admin/bulk-import-olx' },
+        { name: 'Centru Notificări', icon: Bell, href: '/dashboard/notifications' },
         { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
         { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
@@ -200,6 +208,7 @@ export default function DashboardClient({
         { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/agent/analytics' },
         { name: 'Daily Activities', icon: Calendar, href: '/dashboard/agent/activities' },
+        { name: 'Centru Notificări', icon: Bell, href: '/dashboard/notifications' },
         { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
         { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/agent/chat' },
@@ -215,6 +224,7 @@ export default function DashboardClient({
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/owner/valuation' },
         { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/owner/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/owner/analytics' },
+        { name: 'Centru Notificări', icon: Bell, href: '/dashboard/notifications' },
         { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
         { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/owner/chat' },
@@ -226,6 +236,7 @@ export default function DashboardClient({
         { name: 'My Projects', icon: Building, href: '/dashboard/developer/projects' },
         ...(hasFeature(SYSTEM_FEATURES.VALUATION_REPORTS) ? [{ name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/developer/valuation' }] : []),
         { name: 'Analytics', icon: BarChart2, href: '/dashboard/developer/analytics' },
+        { name: 'Centru Notificări', icon: Bell, href: '/dashboard/notifications' },
         { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
         { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/developer/chat' },
@@ -241,6 +252,7 @@ export default function DashboardClient({
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/client/valuation' },
         { name: 'ACP Market Insights', icon: BarChart2, href: '/dashboard/client/market' },
         { name: 'Market Analytics', icon: TrendingUp, href: '/dashboard/client/analytics' },
+        { name: 'Centru Notificări', icon: Bell, href: '/dashboard/notifications' },
         { name: 'Alimentare Credite', icon: Coins, href: '/cont/plati' },
         { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/client/chat' },
