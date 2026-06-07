@@ -1,7 +1,7 @@
 import { getUserProfile } from '@/app/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Heart, Search, User, MapPin, ArrowRight, Home, BarChart, TrendingUp, FileText } from 'lucide-react';
+import { Heart, Search, User, MapPin, ArrowRight, Home, BarChart, TrendingUp, FileText, Coins, Gift, Plus } from 'lucide-react';
 
 export default async function ClientDashboard() {
     const profile = await getUserProfile();
@@ -26,6 +26,55 @@ export default async function ClientDashboard() {
                 <p className="text-slate-600 mt-2">
                     Manage your favorite properties and searches from your personal dashboard.
                 </p>
+            </div>
+
+            {/* Plan Card */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 text-slate-800">
+                {/* Plan & Balance */}
+                <div className="flex items-center gap-6 shrink-0">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Plan</span>
+                            <span className="bg-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                {profile.plan_tier || 'Free'}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-900 font-extrabold text-sm">
+                            <Coins className="w-4 h-4 text-yellow-500" />
+                            <span className="font-mono">{profile.credits || 0} CR</span>
+                            <Link 
+                                href="/cont/plati" 
+                                className="text-[9.5px] bg-slate-900 hover:bg-slate-800 text-white px-2 py-0.5 rounded-md transition-colors font-bold uppercase ml-1.5"
+                            >
+                                Alimentează
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 flex-1 max-w-xl">
+                    {/* Ad Free Credits */}
+                    <div className="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                        <div>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Ad Free Credits</span>
+                            <span className="text-sm font-black text-slate-900 dark:text-white font-mono">{profile.listings_limit || 0} Slots</span>
+                        </div>
+                        <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                            <Gift className="w-4 h-4" />
+                        </div>
+                    </div>
+
+                    {/* Ad Credits */}
+                    <div className="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                        <div>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Ad Credits</span>
+                            <span className="text-sm font-black text-slate-900 dark:text-white font-mono">{profile.bonus_listings || 0} Slots</span>
+                        </div>
+                        <div className="w-8 h-8 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
+                            <Plus className="w-4 h-4" />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Stats / Quick Links Grid */}

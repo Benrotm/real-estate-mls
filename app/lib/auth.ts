@@ -12,6 +12,7 @@ export interface UserProfile {
     bonus_listings?: number;
     featured_limit?: number;
     listings_count: number;
+    credits?: number;
     avatar_url?: string;
     phone?: string;
     email?: string;
