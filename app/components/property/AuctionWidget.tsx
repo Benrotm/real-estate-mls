@@ -498,7 +498,7 @@ export default function AuctionWidget({
                         </p>
                         <ul className="list-disc pl-4 space-y-1 mt-1">
                             <li><strong>Deschidere Sesiune:</strong> Costă proprietarul <strong>{costs['open_offers_start'] ?? 5}</strong> credite.</li>
-                            <li><strong>Trimitere Ofertă:</strong> Costă ofertantul <strong>{costs['open_offers_submit'] ?? 1}</strong> credite.</li>
+                            <li><strong>Trimitere Ofertă:</strong> Costă ofertantul <strong>{costs['open_offers_submit'] ?? 1} credite</strong> pentru a evita ofertele false fara interes real.</li>
                             <li><strong>Anulare de către Proprietar:</strong> Proprietarul este penalizat cu <strong>{costs['open_offers_cancel'] ?? 10}</strong> credite, iar ofertanții își primesc creditele înapoi.</li>
                             <li><strong>Selectare Câștigător:</strong> Proprietarul alege o ofertă câștigătoare. Creditele nu se returnează, iar proprietarul nu plătește taxa de anulare.</li>
                         </ul>

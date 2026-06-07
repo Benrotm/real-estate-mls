@@ -590,6 +590,11 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
     const [startDurationDays, setStartDurationDays] = useState<string>('7');
     const [confirmClose, setConfirmClose] = useState<boolean>(false);
 
+    // Dynamic Costs State
+    const [openOffersStartCost, setOpenOffersStartCost] = useState<number>(5);
+    const [openOffersSubmitCost, setOpenOffersSubmitCost] = useState<number>(1);
+    const [openOffersCancelCost, setOpenOffersCancelCost] = useState<number>(10);
+
     const handleOpenOffersModal = async () => {
         setIsOffersModalOpen(true);
         setIsLoadingAuctionData(true);
@@ -601,6 +606,19 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
             if (data) {
                 setStartStartingPrice(String(data.starting_price));
                 setStartMinIncrement(String(data.min_increment));
+            }
+            const { getFeatureCosts } = await import('@/app/lib/actions/settings');
+            const res = await getFeatureCosts();
+            if (res && res.costs) {
+                if (res.costs['open_offers_start'] !== undefined) {
+                    setOpenOffersStartCost(res.costs['open_offers_start']);
+                }
+                if (res.costs['open_offers_submit'] !== undefined) {
+                    setOpenOffersSubmitCost(res.costs['open_offers_submit']);
+                }
+                if (res.costs['open_offers_cancel'] !== undefined) {
+                    setOpenOffersCancelCost(res.costs['open_offers_cancel']);
+                }
             }
         } catch (err) {
             console.error(err);
@@ -1235,9 +1253,9 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                             Pentru protecția utilizatorilor, activarea unei sesiuni și trimiterea ofertelor consumă credite:
                                         </p>
                                         <ul className="list-disc pl-4 space-y-1 mt-1">
-                                            <li><strong>Deschidere:</strong> Proprietarul folosește credite pentru deschiderea sesiunii.</li>
-                                            <li><strong>Oferte:</strong> Fiecare ofertă trimisă costă credite pentru ofertant.</li>
-                                            <li><strong>Anulare Sesiune:</strong> Dacă proprietarul închide manual sesiunea fără a alege un câștigător, acesta plătește o taxă de anulare în credite, iar toate creditele ofertanților sunt returnate automat.</li>
+                                            <li><strong>Deschidere:</strong> Proprietarul folosește <span className="font-extrabold text-slate-800 dark:text-slate-200">{openOffersStartCost} credite</span> pentru deschiderea sesiunii.</li>
+                                            <li><strong>Oferte:</strong> Fiecare ofertă trimisă costă <span className="font-extrabold text-slate-800 dark:text-slate-200">{openOffersSubmitCost} credite</span> pentru ofertant pentru a evita ofertele false fara interes real.</li>
+                                            <li><strong>Anulare Sesiune:</strong> Dacă proprietarul închide manual sesiunea fără a alege un câștigător, acesta plătește o taxă de anulare de <span className="font-extrabold text-rose-600 dark:text-rose-400">{openOffersCancelCost} credite</span>, iar toate creditele ofertanților sunt returnate automat.</li>
                                             <li><strong>Selectare Câștigător:</strong> Dacă proprietarul alege o ofertă câștigătoare, sesiunea se încheie normal: creditele nu se returnează, iar proprietarul nu plătește taxa de anulare.</li>
                                         </ul>
                                     </div>
@@ -1297,7 +1315,7 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                             }`}
                                         >
                                             <Lock className="w-4 h-4" />
-                                            {confirmClose ? 'Confirm Close Open Offers?' : 'Close Open Offers Session'}
+                                            {confirmClose ? 'Confirm Close Open Offers?' : `Close Open Offers Session (Penalty: ${openOffersCancelCost} CR)`}
                                         </button>
                                     )}
 
@@ -1430,7 +1448,7 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                         ) : (
                                             <>
                                                 <Gavel className="w-4 h-4" />
-                                                Start Live Open Offers
+                                                Start Live Open Offers (Cost: {openOffersStartCost} CR)
                                             </>
                                         )}
                                     </button>
