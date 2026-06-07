@@ -207,3 +207,78 @@ export async function getUserCreditTransactions() {
     return { transactions: data || [] };
 }
 
+export async function checkValuationUnlock(propertyId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { unlocked: false, loggedIn: false };
+
+    // 1. Check if user is owner/admin
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', propertyId)
+        .single();
+
+    const isOwner = property?.owner_id === user.id;
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin' || profile?.role === 'superadmin';
+
+    if (isOwner || isAdmin) {
+        return { unlocked: true, loggedIn: true, bypass: true };
+    }
+
+    // 2. Check if a transaction exists
+    const { data: txn, error } = await supabase
+        .from('credit_transactions')
+        .select('id')
+        .eq('user_id', user.id)
+        .contains('metadata', { property_id: propertyId, feature_key: 'valuation_reports' })
+        .limit(1);
+
+    if (error) {
+        console.error('Error checking valuation unlock:', error);
+        return { unlocked: false, loggedIn: true, error: error.message };
+    }
+
+    return { unlocked: txn && txn.length > 0, loggedIn: true };
+}
+
+export async function unlockValuation(propertyId: string, propertyTitle: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    // Fetch cost
+    const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (settingsData?.setting_value as Record<string, number>) || {};
+    const cost = costsMap['valuation_reports'] !== undefined ? costsMap['valuation_reports'] : 1;
+
+    if (cost === 0) {
+        return { success: true, cost: 0 };
+    }
+
+    // Perform deduction
+    const res = await deductUserCredits(
+        cost,
+        `Unlock Smart Valuation: ${propertyTitle}`,
+        { property_id: propertyId, feature_key: 'valuation_reports' }
+    );
+
+    if (res.error) {
+        return { error: res.error, insufficient: res.insufficient };
+    }
+
+    return { success: true, cost, remaining: res.remaining };
+}
+
+
