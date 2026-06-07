@@ -96,94 +96,69 @@ export default function YourPlanCard({
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg text-slate-900">Your Plan</h3>
-                <span className="inline-block bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded uppercase tracking-wide">
-                    {profile.plan_tier || 'Free'}
-                </span>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 text-slate-800">
+            {/* Plan & Balance */}
+            <div className="flex items-center gap-4 shrink-0">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Plan</span>
+                        <span className="bg-orange-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wide">
+                            {profile.plan_tier || 'Free'}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-900 font-extrabold text-sm">
+                        <Coins className="w-4 h-4 text-yellow-500" />
+                        <span className="font-mono">{profile.credits || 0} CR</span>
+                        <Link 
+                            href="/cont/plati" 
+                            className="text-[9.5px] bg-slate-900 hover:bg-slate-800 text-white px-2 py-0.5 rounded-md transition-colors font-bold uppercase ml-1.5"
+                        >
+                            Alimentează
+                        </Link>
+                    </div>
+                </div>
             </div>
 
-            {/* Listings Progress & Purchase */}
-            <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold text-slate-700">
-                    <span>Listings Used</span>
-                    <span>{usageCount} / {totalLimit}</span>
+            {/* Listings Usage */}
+            <div className="flex-1 min-w-[180px] space-y-1.5">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+                    <span className="flex items-center gap-1">Anunțuri: <span className="font-mono text-slate-900 font-extrabold">{usageCount}/{totalLimit}</span></span>
+                    <button
+                        onClick={handleBuyListing}
+                        disabled={isPurchasingListing || profile.credits < addListingCost}
+                        className="text-[9.5px] bg-white border border-slate-205 hover:border-slate-300 text-slate-700 px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors font-bold disabled:opacity-50 cursor-pointer"
+                    >
+                        {isPurchasingListing ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Plus className="w-2.5 h-2.5 text-slate-500" />}
+                        Slot (+1: {addListingCost} CR)
+                    </button>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-2">
+                <div className="w-full bg-slate-100 rounded-full h-1.5">
                     <div
-                        className={`h-2 rounded-full transition-all duration-300 ${usagePercent >= 100 ? 'bg-red-500' : 'bg-orange-500'}`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${usagePercent >= 100 ? 'bg-red-500' : 'bg-orange-500'}`}
                         style={{ width: `${usagePercent}%` }}
                     ></div>
                 </div>
-                <div className="flex justify-between text-[11px] text-slate-400">
-                    <span>{availableListings} available</span>
-                    {bonus > 0 && <span className="text-emerald-600 font-bold">+{bonus} Bonus included</span>}
-                </div>
-
-                <button
-                    onClick={handleBuyListing}
-                    disabled={isPurchasingListing || profile.credits < addListingCost}
-                    className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-50 transition-colors disabled:opacity-50"
-                >
-                    {isPurchasingListing ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                        <Plus className="w-3.5 h-3.5 text-slate-500" />
-                    )}
-                    Adaugă slot (+1 slot: {addListingCost} CR)
-                </button>
             </div>
 
-            {/* Featured Progress & Purchase */}
-            <div className="space-y-2 pt-2">
-                <div className="flex justify-between text-xs font-bold text-slate-700">
-                    <span>Featured Slots</span>
-                    <span>{featuredCount} / {featuredLimit}</span>
+            {/* Featured Usage */}
+            <div className="flex-1 min-w-[180px] space-y-1.5">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+                    <span className="flex items-center gap-1">Promovate: <span className="font-mono text-slate-900 font-extrabold">{featuredCount}/{featuredLimit}</span></span>
+                    <button
+                        onClick={handleBuyFeatured}
+                        disabled={isPurchasingFeatured || profile.credits < featuredListingCost}
+                        className="text-[9.5px] bg-white border border-slate-205 hover:border-slate-300 text-slate-700 px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors font-bold disabled:opacity-50 cursor-pointer"
+                    >
+                        {isPurchasingFeatured ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Plus className="w-2.5 h-2.5 text-slate-500" />}
+                        Slot (+1: {featuredListingCost} CR)
+                    </button>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-2">
+                <div className="w-full bg-slate-100 rounded-full h-1.5">
                     <div
-                        className={`h-2 rounded-full transition-all duration-300 ${featuredPercent >= 100 ? 'bg-red-500' : 'bg-purple-500'}`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${featuredPercent >= 100 ? 'bg-red-500' : 'bg-purple-500'}`}
                         style={{ width: `${featuredPercent}%` }}
                     ></div>
                 </div>
-                <p className="text-[11px] text-slate-400 text-right">{availableFeatured} available</p>
-
-                <button
-                    onClick={handleBuyFeatured}
-                    disabled={isPurchasingFeatured || profile.credits < featuredListingCost}
-                    className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-50 transition-colors disabled:opacity-50"
-                >
-                    {isPurchasingFeatured ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                        <Plus className="w-3.5 h-3.5 text-slate-500" />
-                    )}
-                    Adaugă slot promovat (+1 slot: {featuredListingCost} CR)
-                </button>
-            </div>
-
-            {/* Credits Section */}
-            <div className="mt-4 pt-6 border-t border-slate-150 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                    <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                        <Coins className="w-4 h-4 text-yellow-500" /> Balance
-                    </span>
-                    <span className="font-mono font-black text-indigo-600">{profile.credits || 0} CR</span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                    <Link href="/cont/plati" className="bg-slate-900 text-white font-bold py-2.5 px-2 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-1">
-                        <Coins className="w-3.5 h-3.5" /> Alimentează
-                    </Link>
-                    <Link href="/cont/profil" className="border border-slate-200 text-slate-700 font-bold py-2.5 px-2 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-1">
-                        <Gift className="w-3.5 h-3.5 text-orange-500" /> Free Credits
-                    </Link>
-                </div>
-                
-                <Link href="/cont/profil" className="block text-center text-xs text-indigo-600 hover:text-indigo-800 font-bold tracking-wide transition-colors">
-                    Invite a Friend
-                </Link>
             </div>
         </div>
     );
