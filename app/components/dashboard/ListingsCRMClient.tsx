@@ -653,6 +653,27 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                         Draft - Private
                                     </span>
                                 )}
+                                {property.status === 'active' && (() => {
+                                    const publishedDate = property.published_at ? new Date(property.published_at) : new Date(property.created_at);
+                                    const diffTime = new Date().getTime() - publishedDate.getTime();
+                                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                                    const remainingDays = Math.max(0, 30 - diffDays);
+                                    
+                                    let badgeColor = 'bg-emerald-600';
+                                    let pulseClass = '';
+                                    if (remainingDays <= 5) {
+                                        badgeColor = 'bg-red-500';
+                                        pulseClass = 'animate-pulse';
+                                    } else if (remainingDays <= 10) {
+                                        badgeColor = 'bg-amber-500';
+                                    }
+                                    
+                                    return (
+                                        <span className={`${badgeColor} ${pulseClass} text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0`}>
+                                            {remainingDays} {remainingDays === 1 ? 'Zi Rămasă' : 'Zile Rămase'}
+                                        </span>
+                                    );
+                                })()}
                                 {property.friendly_id && (
                                     <span className="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-slate-700 shrink-0">
                                         #{property.friendly_id}

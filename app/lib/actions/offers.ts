@@ -51,6 +51,7 @@ export interface PropertyWithOffers {
     score?: number;
     is_published: boolean;
     created_at: string;
+    published_at?: string | null;
     views_count: number;
     favorites_count: number;
     inquiries_count: number;
@@ -187,6 +188,7 @@ export async function getUserPropertiesWithOffers(filters?: any): Promise<Proper
         score: property.score,
         is_published: property.status === 'active',
         created_at: property.created_at,
+        published_at: property.published_at,
         views_count: viewsCount[property.id] || 0,
         favorites_count: favoritesCount[property.id] || 0,
         inquiries_count: inquiriesCount[property.id] || 0,

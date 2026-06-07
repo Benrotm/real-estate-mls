@@ -27,7 +27,7 @@ import {
     getUserPurchases 
 } from '@/app/lib/actions/credit-purchases';
 import { getReferralStats } from '@/app/lib/actions/referrals';
-import { getUserCredits } from '@/app/lib/actions/credits';
+import { getUserCredits, getUserCreditTransactions } from '@/app/lib/actions/credits';
 import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
 const PACKAGES = [
@@ -47,6 +47,7 @@ export default function PlatiPage() {
     const [companyBank, setCompanyBank] = useState({ name: '', iban: '' });
     const [activePurchase, setActivePurchase] = useState<any | null>(null);
     const [purchasesLog, setPurchasesLog] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<any[]>([]);
     const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [referralLink, setReferralLink] = useState('');
@@ -76,12 +77,13 @@ export default function PlatiPage() {
 
     const loadData = async () => {
         setLoading(true);
-        const [creditsRes, bankRes, activeRes, logRes, refRes] = await Promise.all([
+        const [creditsRes, bankRes, activeRes, logRes, refRes, transactionRes] = await Promise.all([
             getUserCredits(),
             getCompanyBankDetails(),
             getActivePendingPurchase(),
             getUserPurchases(),
-            getReferralStats()
+            getReferralStats(),
+            getUserCreditTransactions()
         ]);
 
         if (creditsRes && 'credits' in creditsRes) {
@@ -98,6 +100,10 @@ export default function PlatiPage() {
 
         if (logRes && 'purchases' in logRes) {
             setPurchasesLog(logRes.purchases || []);
+        }
+
+        if (transactionRes && 'transactions' in transactionRes) {
+            setTransactions(transactionRes.transactions || []);
         }
 
         if (refRes && 'referralLink' in refRes) {
@@ -543,44 +549,37 @@ export default function PlatiPage() {
                         Istoricul tranzacțiilor tale
                     </h2>
 
-                    {purchasesLog.length === 0 ? (
-                        <p className="text-sm text-slate-500 italic">Nu ai nicio tranzacție inițiată încă.</p>
+                    {transactions.length === 0 ? (
+                        <p className="text-sm text-slate-500 italic">Nu ai nicio tranzacție de credit înregistrată încă.</p>
                     ) : (
                         <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
                             <div className="divide-y divide-slate-800/50">
-                                {purchasesLog.map((item) => (
-                                    <div key={item.id} className="p-4 sm:px-6 flex items-center justify-between gap-4 hover:bg-slate-900/30 transition-colors">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2.5">
-                                                <span className="font-mono text-xs font-bold text-slate-300">{item.reference_id}</span>
-                                                <span className="text-[10px] text-slate-500">
-                                                    {new Date(item.created_at).toLocaleDateString('ro-RO')}
-                                                </span>
+                                {transactions.map((tx) => {
+                                    const isPositive = tx.amount > 0;
+                                    return (
+                                        <div key={tx.id} className="p-4 sm:px-6 flex items-center justify-between gap-4 hover:bg-slate-900/30 transition-colors">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2.5">
+                                                    <span className="font-semibold text-white text-xs sm:text-sm">
+                                                        {tx.description || 'Tranzacție credite'}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-500 font-mono">
+                                                        {new Date(tx.created_at).toLocaleString('ro-RO')}
+                                                    </span>
+                                                </div>
+                                                {tx.metadata?.reference_id && (
+                                                    <div className="text-[10px] text-slate-500 font-mono">
+                                                        Ref: {tx.metadata.reference_id}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="text-xs text-slate-400">
-                                                Alimentare: {item.amount_ron} RON pentru {item.credits} credite
-                                            </div>
-                                        </div>
 
-                                        <div>
-                                            {item.status === 'pending' && (
-                                                <span className="inline-flex items-center gap-1 text-xs text-orange-400 font-semibold bg-orange-400/10 px-2 py-0.5 rounded">
-                                                    <Clock className="w-3.5 h-3.5" /> În Așteptare
-                                                </span>
-                                            )}
-                                            {item.status === 'approved' && (
-                                                <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-semibold bg-emerald-400/10 px-2 py-0.5 rounded">
-                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Aprobat
-                                                </span>
-                                            )}
-                                            {item.status === 'cancelled' && (
-                                                <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-semibold bg-slate-800 px-2 py-0.5 rounded">
-                                                    <XCircle className="w-3.5 h-3.5" /> Anulat
-                                                </span>
-                                            )}
+                                            <div className={`font-mono font-bold text-sm ${isPositive ? 'text-emerald-400' : 'text-slate-400'}`}>
+                                                {isPositive ? `+${tx.amount}` : tx.amount} CR
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

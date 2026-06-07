@@ -57,6 +57,30 @@ export async function submitSoldPrice(
         throw new Error("Failed to submit sold price");
     }
 
+    // Reward user with credits for price contribution
+    try {
+        const { data: costData } = await supabase
+            .from('platform_settings')
+            .select('setting_value')
+            .eq('setting_key', 'feature_costs')
+            .single();
+        
+        const costsMap = (costData?.setting_value as Record<string, number>) || {};
+        const rewardAmount = costsMap['price_contribution_reward'] !== undefined ? costsMap['price_contribution_reward'] : 10;
+        
+        if (rewardAmount > 0) {
+            const { rewardUserCredits } = await import('./credits');
+            await rewardUserCredits(
+                user.id,
+                rewardAmount,
+                `Recompensă raportare tranzacție (SOLD)`,
+                { property_id: propertyId }
+            );
+        }
+    } catch (e) {
+        console.error("Error rewarding credits for sold price submission:", e);
+    }
+
     // 2. Update property status to 'sold'
     const { error: propError } = await supabase
         .from('properties')

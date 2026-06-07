@@ -80,6 +80,7 @@ export interface Property {
 
     created_at: string;
     updated_at: string;
+    published_at?: string;
 
     score?: number; // Added score field
 

@@ -27,9 +27,11 @@ import {
     FileText,
     RefreshCw,
     Calendar,
-    Move
+    Move,
+    Coins
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
+import { getFeatureCosts } from '@/app/lib/actions/settings';
 import { createCollaborationContract, getCollaborationContractForProperty, getCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
 import { supabase } from '@/app/lib/supabase/client';
 import LocationMap from '@/app/components/LocationMap';
@@ -77,6 +79,32 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     // Photo reordering states
     const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
     const [hoveredPhotoIndex, setHoveredPhotoIndex] = useState<number | null>(null);
+
+    const [portalCosts, setPortalCosts] = useState<Record<string, number>>({
+        publish_imobiliare: 2,
+        publish_storia: 2,
+        publish_romimo: 2,
+        publish_homezz: 2,
+        publish_imobiliarepret: 2,
+        price_contribution_reward: 10,
+        add_listing_reward: 5
+    });
+
+    useEffect(() => {
+        getFeatureCosts().then(res => {
+            if (res && res.costs) {
+                setPortalCosts({
+                    publish_imobiliare: res.costs.publish_imobiliare ?? 2,
+                    publish_storia: res.costs.publish_storia ?? 2,
+                    publish_romimo: res.costs.publish_romimo ?? 2,
+                    publish_homezz: res.costs.publish_homezz ?? 2,
+                    publish_imobiliarepret: res.costs.publish_imobiliarepret ?? 2,
+                    price_contribution_reward: res.costs.price_contribution_reward ?? 10,
+                    add_listing_reward: res.costs.add_listing_reward ?? 5
+                });
+            }
+        });
+    }, []);
 
     useEffect(() => {
         getVirtualTours().then(tours => {
@@ -1780,8 +1808,16 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                         className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
                                                     />
                                                 </div>
-                                                <div>
-                                                    <p className={`font-semibold ${formData.publishImobiliare ? 'text-blue-400' : 'text-slate-300'}`}>Publish to Imobiliare.ro</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className={`font-semibold ${formData.publishImobiliare ? 'text-blue-400' : 'text-slate-300'}`}>Publish to Imobiliare.ro</p>
+                                                        {portalCosts.publish_imobiliare > 0 && (
+                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                                {portalCosts.publish_imobiliare} CR
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-sm text-slate-500 mt-1">Include this property in the Imobiliare XML auto-sync feed</p>
                                                 </div>
                                             </label>
@@ -1795,8 +1831,16 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                         className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
                                                     />
                                                 </div>
-                                                <div>
-                                                    <p className={`font-semibold ${formData.publishStoria ? 'text-cyan-400' : 'text-slate-300'}`}>Publish to Storia / OLX</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className={`font-semibold ${formData.publishStoria ? 'text-cyan-400' : 'text-slate-300'}`}>Publish to Storia / OLX</p>
+                                                        {portalCosts.publish_storia > 0 && (
+                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                                {portalCosts.publish_storia} CR
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-sm text-slate-500 mt-1">Include this property in the Storia XML auto-sync feed</p>
                                                 </div>
                                             </label>
@@ -1810,8 +1854,16 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                         className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
                                                     />
                                                 </div>
-                                                <div>
-                                                    <p className={`font-semibold ${formData.publishRomimo ? 'text-indigo-400' : 'text-slate-300'}`}>Publish to Romimo / Publi24</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className={`font-semibold ${formData.publishRomimo ? 'text-indigo-400' : 'text-slate-300'}`}>Publish to Romimo / Publi24</p>
+                                                        {portalCosts.publish_romimo > 0 && (
+                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                                {portalCosts.publish_romimo} CR
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-sm text-slate-500 mt-1">Include this property in the Romimo/Publi24 XML auto-sync feed</p>
                                                 </div>
                                             </label>
@@ -1825,8 +1877,16 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                         className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
                                                     />
                                                 </div>
-                                                <div>
-                                                    <p className={`font-semibold ${formData.publishHomezz ? 'text-violet-400' : 'text-slate-300'}`}>Publish to HomeZZ / LaJumate</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className={`font-semibold ${formData.publishHomezz ? 'text-violet-400' : 'text-slate-300'}`}>Publish to HomeZZ / LaJumate</p>
+                                                        {portalCosts.publish_homezz > 0 && (
+                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                                {portalCosts.publish_homezz} CR
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-sm text-slate-500 mt-1">Include this property in the HomeZZ/LaJumate XML auto-sync feed</p>
                                                 </div>
                                             </label>
@@ -1840,8 +1900,16 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                         className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
                                                     />
                                                 </div>
-                                                <div>
-                                                    <p className={`font-semibold ${formData.publishImobiliarepret ? 'text-emerald-400' : 'text-slate-300'}`}>Publish to ImobiliarePret.ro</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className={`font-semibold ${formData.publishImobiliarepret ? 'text-emerald-400' : 'text-slate-300'}`}>Publish to ImobiliarePret.ro</p>
+                                                        {portalCosts.publish_imobiliarepret > 0 && (
+                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                                {portalCosts.publish_imobiliarepret} CR
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-sm text-slate-500 mt-1">Include this property in the ImobiliarePret XML auto-sync feed</p>
                                                 </div>
                                             </label>
@@ -1894,7 +1962,14 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     <CheckCircle2 className="w-6 h-6 text-emerald-400" />
                                                     <div className="text-left">
-                                                        <p className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Ad Transaction Price</p>
+                                                        <p className="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                                                            Ad Transaction Price
+                                                            {portalCosts.price_contribution_reward > 0 && (
+                                                                <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-0.5 border border-emerald-500/30 font-mono normal-case">
+                                                                    +{portalCosts.price_contribution_reward} CR Reward
+                                                                </span>
+                                                            )}
+                                                        </p>
                                                         <p className="text-lg font-black text-white leading-tight">Report SOLD</p>
                                                     </div>
                                                     <ArrowRight className="w-5 h-5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
@@ -1903,11 +1978,19 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         </>
                                     ) : (
                                         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="p-2 bg-emerald-500/20 rounded-lg">
-                                                    <DollarSign className="w-5 h-5 text-emerald-400" />
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                                        <DollarSign className="w-5 h-5 text-emerald-400" />
+                                                    </div>
+                                                    <h3 className="text-lg font-bold text-white">Contribute to Price / Market Valuation</h3>
                                                 </div>
-                                                <h3 className="text-lg font-bold text-white">Contribute to Price / Market Valuation</h3>
+                                                {portalCosts.price_contribution_reward > 0 && (
+                                                    <span className="bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full font-bold text-xs flex items-center gap-1 border border-emerald-500/20 font-mono">
+                                                        <Coins className="w-3.5 h-3.5 text-emerald-450" />
+                                                        +{portalCosts.price_contribution_reward} CR Reward
+                                                    </span>
+                                                )}
                                             </div>
                                             <p className="text-slate-400 text-sm">
                                                 Save the property first to enable market valuation and price contribution features.
@@ -1968,27 +2051,35 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                             </button>
                         ) : (
-                            <button
-                                key="submit-listing-btn"
-                                type="submit"
-                                disabled={submitting}
-                                className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-10 py-3 rounded-xl font-bold hover:from-emerald-500 hover:to-teal-500 transition-all disabled:opacity-50 shadow-lg shadow-emerald-900/20 group relative overflow-hidden border border-emerald-500/20"
-                            >
-                                <span className="relative z-10 flex items-center gap-2">
-                                    {submitting ? (
-                                        <>
-                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            Submitting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            Save Property
-                                            <Check className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                        </>
-                                    )}
-                                </span>
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                            </button>
+                            <div className="flex flex-col items-end">
+                                <button
+                                    key="submit-listing-btn"
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-10 py-3 rounded-xl font-bold hover:from-emerald-500 hover:to-teal-500 transition-all disabled:opacity-50 shadow-lg shadow-emerald-900/20 group relative overflow-hidden border border-emerald-500/20"
+                                >
+                                    <span className="relative z-10 flex items-center gap-2">
+                                        {submitting ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Submitting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Save Property
+                                                <Check className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                            </>
+                                        )}
+                                    </span>
+                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                </button>
+                                {portalCosts.add_listing_reward > 0 && (
+                                    <p className="text-[10px] text-emerald-400 font-bold text-right mt-2 flex items-center justify-end gap-1">
+                                        <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
+                                        +{portalCosts.add_listing_reward} CR Recompensă Publicare Anunț Activ
+                                    </p>
+                                )}
+                            </div>
                         )}
                     </div>
                 </form >

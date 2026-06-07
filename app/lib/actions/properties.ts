@@ -102,9 +102,58 @@ export async function createProperty(formData: FormData) {
             publish_romimo: formData.get('publish_romimo') === 'true',
             publish_homezz: formData.get('publish_homezz') === 'true',
             publish_imobiliarepret: formData.get('publish_imobiliarepret') === 'true',
+            published_at: (formData.get('status') as 'active' | 'draft') === 'active' ? new Date().toISOString() : null,
 
             status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
+
+        // Check portal exports credits and deduct them
+        let portalCostSum = 0;
+        const enabledPortals: string[] = [];
+        
+        const { getFeatureCosts } = await import('./settings');
+        const costsRes = await getFeatureCosts();
+        const getPortalCost = (key: string) => {
+            if (costsRes.costs && costsRes.costs[key] !== undefined) {
+                return costsRes.costs[key];
+            }
+            return 2;
+        };
+
+        if (propertyData.publish_imobiliare) {
+            portalCostSum += getPortalCost('publish_imobiliare');
+            enabledPortals.push('Imobiliare.ro');
+        }
+        if (propertyData.publish_storia) {
+            portalCostSum += getPortalCost('publish_storia');
+            enabledPortals.push('Storia/OLX');
+        }
+        if (propertyData.publish_romimo) {
+            portalCostSum += getPortalCost('publish_romimo');
+            enabledPortals.push('Romimo/Publi24');
+        }
+        if (propertyData.publish_homezz) {
+            portalCostSum += getPortalCost('publish_homezz');
+            enabledPortals.push('HomeZZ/LaJumate');
+        }
+        if (propertyData.publish_imobiliarepret) {
+            portalCostSum += getPortalCost('publish_imobiliarepret');
+            enabledPortals.push('ImobiliarePret.ro');
+        }
+
+        const { deductUserCredits } = await import('./credits');
+        if (portalCostSum > 0) {
+            const deduction = await deductUserCredits(
+                portalCostSum,
+                `Export portaluri: ${enabledPortals.join(', ')}`,
+                {
+                    portals: enabledPortals
+                }
+            );
+            if (deduction.error) {
+                return { error: `Fonduri insuficiente pentru exportul pe portaluri. Cost total: ${portalCostSum} credite.` };
+            }
+        }
 
         // Calculate property score
         const score = await calculatePropertyScore(propertyData as Partial<Property>);
@@ -149,6 +198,20 @@ export async function createProperty(formData: FormData) {
         if (error) {
             console.error('Error creating property:', error);
             return { error: error.message };
+        }
+
+        // Reward user for adding listing if active
+        if (data && data.status === 'active') {
+            const rewardAmount = costsRes.costs?.['add_listing_reward'] !== undefined ? costsRes.costs['add_listing_reward'] : 5;
+            if (rewardAmount > 0) {
+                const { rewardUserCredits } = await import('./credits');
+                await rewardUserCredits(
+                    user.id,
+                    rewardAmount,
+                    `Recompensă adăugare anunț: ${data.title}`,
+                    { property_id: data.id }
+                );
+            }
         }
 
         revalidatePath('/properties');
@@ -524,7 +587,7 @@ export async function updateProperty(id: string, formData: FormData) {
 
     const { data: property } = await supabase
         .from('properties')
-        .select('owner_id')
+        .select('owner_id, status, publish_imobiliare, publish_storia, publish_romimo, publish_homezz, publish_imobiliarepret')
         .eq('id', id)
         .single();
 
@@ -620,12 +683,68 @@ export async function updateProperty(id: string, formData: FormData) {
             status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
 
+        // Check if listing is transitioning to active to update published_at
+        const isTransitioningToActive = propertyData.status === 'active' && property?.status !== 'active';
+        const updatePayload: Record<string, any> = {
+            ...propertyData,
+            ...(isTransitioningToActive ? { published_at: new Date().toISOString() } : {})
+        };
+
+        // Check portal exports credits and deduct them
+        let portalCostSum = 0;
+        const enabledPortals: string[] = [];
+        
+        const { getFeatureCosts } = await import('./settings');
+        const costsRes = await getFeatureCosts();
+        const getPortalCost = (key: string) => {
+            if (costsRes.costs && costsRes.costs[key] !== undefined) {
+                return costsRes.costs[key];
+            }
+            return 2;
+        };
+
+        if (propertyData.publish_imobiliare && !property?.publish_imobiliare) {
+            portalCostSum += getPortalCost('publish_imobiliare');
+            enabledPortals.push('Imobiliare.ro');
+        }
+        if (propertyData.publish_storia && !property?.publish_storia) {
+            portalCostSum += getPortalCost('publish_storia');
+            enabledPortals.push('Storia/OLX');
+        }
+        if (propertyData.publish_romimo && !property?.publish_romimo) {
+            portalCostSum += getPortalCost('publish_romimo');
+            enabledPortals.push('Romimo/Publi24');
+        }
+        if (propertyData.publish_homezz && !property?.publish_homezz) {
+            portalCostSum += getPortalCost('publish_homezz');
+            enabledPortals.push('HomeZZ/LaJumate');
+        }
+        if (propertyData.publish_imobiliarepret && !property?.publish_imobiliarepret) {
+            portalCostSum += getPortalCost('publish_imobiliarepret');
+            enabledPortals.push('ImobiliarePret.ro');
+        }
+
+        const { deductUserCredits } = await import('./credits');
+        if (portalCostSum > 0) {
+            const deduction = await deductUserCredits(
+                portalCostSum,
+                `Export portaluri: ${enabledPortals.join(', ')}`,
+                {
+                    property_id: id,
+                    portals: enabledPortals
+                }
+            );
+            if (deduction.error) {
+                return { error: `Fonduri insuficiente pentru exportul pe portaluri. Cost total: ${portalCostSum} credite.` };
+            }
+        }
+
         // Calculate property score
         const score = await calculatePropertyScore(propertyData as Partial<Property>);
 
         const { data, error } = await supabase
             .from('properties')
-            .update({ ...propertyData, score })
+            .update({ ...updatePayload, score })
             .eq('id', id)
             .select()
             .single();
@@ -633,6 +752,23 @@ export async function updateProperty(id: string, formData: FormData) {
         if (error) {
             console.error('Error updating property:', error);
             return { error: error.message };
+        }
+
+        // Reward user for adding listing if active and was never rewarded
+        if (data && data.status === 'active') {
+            const { checkListingRewardAlreadyGiven, rewardUserCredits } = await import('./credits');
+            const alreadyRewarded = await checkListingRewardAlreadyGiven(data.id);
+            if (!alreadyRewarded) {
+                const rewardAmount = costsRes.costs?.['add_listing_reward'] !== undefined ? costsRes.costs['add_listing_reward'] : 5;
+                if (rewardAmount > 0) {
+                    await rewardUserCredits(
+                        user.id,
+                        rewardAmount,
+                        `Recompensă adăugare anunț: ${data.title}`,
+                        { property_id: data.id }
+                    );
+                }
+            }
         }
 
         revalidatePath('/properties');

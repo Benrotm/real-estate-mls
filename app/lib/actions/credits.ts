@@ -393,4 +393,138 @@ export async function buyFeaturedSlot() {
     return { success: true, newLimit: currentLimit + 1, remaining: deduction.remaining };
 }
 
+export async function rewardUserCredits(userId: string, amount: number, description: string = 'Recompensă acțiune', metadata: Record<string, any> = {}) {
+    const supabaseAdmin = createAdminClient();
+    
+    // Fetch profile to get current credits
+    const { data: profile, error: readError } = await supabaseAdmin
+        .from('profiles')
+        .select('credits')
+        .eq('id', userId)
+        .single();
+        
+    if (readError) return { error: readError.message };
+    
+    const newBalance = (profile.credits || 0) + amount;
+    
+    // Update credits
+    const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({ credits: newBalance })
+        .eq('id', userId);
+        
+    if (updateError) return { error: updateError.message };
+    
+    // Log transaction
+    const { error: logError } = await supabaseAdmin
+        .from('credit_transactions')
+        .insert({
+            user_id: userId,
+            amount: amount,
+            description: description,
+            metadata: { reward: true, ...metadata }
+        });
+        
+    if (logError) {
+        console.error('Error logging reward transaction:', logError);
+    }
+    
+    return { success: true, newBalance };
+}
+
+export async function checkListingRewardAlreadyGiven(propertyId: string) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('credit_transactions')
+        .select('id')
+        .eq('metadata->>property_id', propertyId)
+        .ilike('description', 'Recompensă adăugare anunț%')
+        .limit(1);
+
+    if (error || !data || data.length === 0) {
+        return false;
+    }
+    return true;
+}
+
+export async function getAdminCreditHistory() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    // Verify admin
+    const { data: adminProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (!adminProfile || (adminProfile.role !== 'admin' && adminProfile.role !== 'super_admin')) {
+        return { error: 'Unauthorized' };
+    }
+
+    const { data, error } = await supabase
+        .from('credit_transactions')
+        .select('*, profiles(id, full_name, email, role, phone)')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching admin credit history:', error);
+        return { error: error.message };
+    }
+
+    return { transactions: data || [] };
+}
+
+export async function deductUserCreditsByAdmin(userId: string, amount: number, description: string = 'Consum servicii', metadata: Record<string, any> = {}) {
+    const supabaseAdmin = createAdminClient();
+    
+    // Get current balance
+    const { data: profile, error: readError } = await supabaseAdmin
+        .from('profiles')
+        .select('credits')
+        .eq('id', userId)
+        .single();
+        
+    if (readError) return { error: readError.message };
+    
+    const currentCredits = profile.credits || 0;
+    if (currentCredits < amount) {
+        return { error: 'Fonduri insuficiente', insufficient: true };
+    }
+    
+    const newBalance = currentCredits - amount;
+    
+    // Update balance
+    const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({ credits: newBalance })
+        .eq('id', userId);
+        
+    if (updateError) return { error: updateError.message };
+    
+    // Log transaction
+    const { error: logTxError } = await supabaseAdmin
+        .from('credit_transactions')
+        .insert({
+            user_id: userId,
+            amount: -amount,
+            description: description,
+            metadata: { feature_cost: amount, ...metadata }
+        });
+        
+    if (logTxError) {
+        console.error('Error logging admin-deduction transaction:', logTxError);
+        // Rollback balance update
+        await supabaseAdmin
+            .from('profiles')
+            .update({ credits: currentCredits })
+            .eq('id', userId);
+        return { error: 'Failed to record transaction log: ' + logTxError.message };
+    }
+    
+    return { success: true, remaining: newBalance };
+}
+
+
 

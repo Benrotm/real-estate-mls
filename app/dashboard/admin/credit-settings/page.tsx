@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { Coins, Save, AlertCircle, Wand2, Calculator, Settings, Plus } from 'lucide-react';
+import { Coins, Save, AlertCircle, Wand2, Calculator, Settings, Plus, Globe } from 'lucide-react';
 import { getFeatureCosts, updateFeatureCosts } from '@/app/lib/actions/settings';
 import { fetchAllFeatures } from '@/app/lib/admin';
 
@@ -128,6 +128,130 @@ export default function CreditSettingsPage() {
                                     min="0"
                                     value={costs['featured_listing'] !== undefined ? costs['featured_listing'] : 10}
                                     onChange={(e) => handleChange('featured_listing', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800 col-span-1 md:col-span-2">
+                            <span className="font-semibold">Cost Prelungire Anunț (după 30 de zile)</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['listing_renewal'] !== undefined ? costs['listing_renewal'] : 2}
+                                    onChange={(e) => handleChange('listing_renewal', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Rewards & Contributions Section */}
+                <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 border-b border-slate-800 pb-4">
+                        <Coins className="text-yellow-500 animate-pulse" /> Rewards & Contributions
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Recompensă Raportare SOLD (Contribuție Preț)</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['price_contribution_reward'] !== undefined ? costs['price_contribution_reward'] : 10}
+                                    onChange={(e) => handleChange('price_contribution_reward', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Recompensă Adăugare Anunț Activ</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['add_listing_reward'] !== undefined ? costs['add_listing_reward'] : 5}
+                                    onChange={(e) => handleChange('add_listing_reward', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Portal Export Features Section */}
+                <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 border-b border-slate-800 pb-4">
+                        <Globe className="text-blue-400" /> Portal Export Features
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Export Imobiliare.ro</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['publish_imobiliare'] !== undefined ? costs['publish_imobiliare'] : 2}
+                                    onChange={(e) => handleChange('publish_imobiliare', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Export Storia / OLX</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['publish_storia'] !== undefined ? costs['publish_storia'] : 2}
+                                    onChange={(e) => handleChange('publish_storia', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Export Romimo / Publi24</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['publish_romimo'] !== undefined ? costs['publish_romimo'] : 2}
+                                    onChange={(e) => handleChange('publish_romimo', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Export HomeZZ / LaJumate</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['publish_homezz'] !== undefined ? costs['publish_homezz'] : 2}
+                                    onChange={(e) => handleChange('publish_homezz', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Export ImobiliarePret.ro</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['publish_imobiliarepret'] !== undefined ? costs['publish_imobiliarepret'] : 2}
+                                    onChange={(e) => handleChange('publish_imobiliarepret', e.target.value)}
                                     className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
                                 />
                                 <Coins size={14} className="text-yellow-500" />
