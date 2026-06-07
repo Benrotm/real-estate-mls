@@ -23,25 +23,22 @@ export default async function AgentListingsPage({
     const featuredListingCost = costsRes.costs?.['featured_listing'] ?? 10;
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-                <Suspense fallback={<div className="h-20 bg-slate-50 animate-pulse rounded-xl" />}>
-                    <PropertySearchFilters basePath="/dashboard/agent/listings" />
-                </Suspense>
+        <div className="max-w-6xl mx-auto space-y-6">
+            <YourPlanCard
+                initialProfile={profile}
+                usageCount={usageCount}
+                featuredCount={featuredCount}
+                addListingCost={addListingCost}
+                featuredListingCost={featuredListingCost}
+            />
 
-                <Suspense fallback={<div className="h-96 bg-white border border-slate-200 rounded-2xl animate-pulse" />}>
-                    <ListingsCRMClient properties={properties} />
-                </Suspense>
-            </div>
-            <div className="space-y-6 lg:mt-14">
-                <YourPlanCard
-                    initialProfile={profile}
-                    usageCount={usageCount}
-                    featuredCount={featuredCount}
-                    addListingCost={addListingCost}
-                    featuredListingCost={featuredListingCost}
-                />
-            </div>
+            <Suspense fallback={<div className="h-20 bg-slate-50 animate-pulse rounded-xl" />}>
+                <PropertySearchFilters basePath="/dashboard/agent/listings" />
+            </Suspense>
+
+            <Suspense fallback={<div className="h-96 bg-white border border-slate-200 rounded-2xl animate-pulse" />}>
+                <ListingsCRMClient properties={properties} />
+            </Suspense>
         </div>
     );
 }

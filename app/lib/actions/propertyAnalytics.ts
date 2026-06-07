@@ -38,73 +38,27 @@ export async function recordPropertyView(propertyId: string, sessionHash?: strin
 // Get analytics summary for a property
 export async function getPropertyAnalytics(propertyId: string) {
     try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        // Fetch actual counts using Admin Client to bypass RLS restrictions
+        const { createAdminClient } = await import('@/app/lib/supabase/admin');
+        const supabaseAdmin = createAdminClient();
 
-        // 1. Determine if user can see analytics
-        let canViewAnalytics = false;
+        const [views, favorites, inquiries, offers, shares, propData] = await Promise.all([
+            supabaseAdmin.from('property_views').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
+            supabaseAdmin.from('property_favorites').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
+            supabaseAdmin.from('property_inquiries').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
+            supabaseAdmin.from('property_offers').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
+            supabaseAdmin.from('property_shares').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
+            supabaseAdmin.from('properties').select('created_at').eq('id', propertyId).single()
+        ]);
 
-        if (user) {
-            // Check if owner
-            const { data: property } = await supabase.from('properties').select('owner_id').eq('id', propertyId).single();
-            if (property && property.owner_id === user.id) {
-                canViewAnalytics = true;
-            } else {
-                // Check if has "Property Insights" feature
-                // We import it dynamically or use the string key to avoid circular deps if any
-                const { checkUserFeatureAccess, SYSTEM_FEATURES } = await import('@/app/lib/auth/features');
-                canViewAnalytics = await checkUserFeatureAccess(user.id, SYSTEM_FEATURES.PROPERTY_INSIGHTS);
-            }
-        }
-
-        // 2. Fetch Data
-        // If authorized (Owner or Premium Plan), use Admin client to bypass RLS "owner only" policies if necessary.
-        // If the RPC `get_property_analytics_counts` is strictly locked to owner in SQL, we must bypass it.
-        // Assuming the RPC might check `auth.uid() = owner_id`.
-
-        let counts = {
-            views_count: 0,
-            favorites_count: 0,
-            inquiries_count: 0,
-            offers_count: 0,
-            shares_count: 0
+        const counts = {
+            views_count: views.count || 0,
+            favorites_count: favorites.count || 0,
+            inquiries_count: inquiries.count || 0,
+            offers_count: offers.count || 0,
+            shares_count: shares.count || 0
         };
-        let created_at = null;
-
-        if (canViewAnalytics) {
-            // Use Admin Client to ensure we get data regardless of RLS
-            // (Note: This assumes we want to show stats even to non-owners who paid for the feature)
-            const { createAdminClient } = await import('@/app/lib/supabase/admin');
-            const supabaseAdmin = createAdminClient();
-
-            // We can't easily call the RPC as admin if the RPC relies on `auth.uid()`. 
-            // Instead, we manually aggregate. This is heavier but guaranteed to work.
-
-            const [views, favorites, inquiries, offers, shares, propData] = await Promise.all([
-                supabaseAdmin.from('property_views').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
-                supabaseAdmin.from('property_favorites').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
-                supabaseAdmin.from('property_inquiries').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
-                supabaseAdmin.from('property_offers').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
-                supabaseAdmin.from('property_shares').select('*', { count: 'exact', head: true }).eq('property_id', propertyId),
-                supabaseAdmin.from('properties').select('created_at').eq('id', propertyId).single()
-            ]);
-
-            counts = {
-                views_count: views.count || 0,
-                favorites_count: favorites.count || 0,
-                inquiries_count: inquiries.count || 0,
-                offers_count: offers.count || 0,
-                shares_count: shares.count || 0
-            };
-            created_at = propData.data?.created_at;
-
-        } else {
-            // Not authorized: Return 0s (or public views if we wanted, but requirement says 0)
-            // We still fetch created_at for the "Listed" date if that's public info?
-            // Usually listed date is public.
-            const { data: propData } = await supabase.from('properties').select('created_at').eq('id', propertyId).single();
-            created_at = propData?.created_at;
-        }
+        const created_at = propData.data?.created_at;
 
         return {
             views: Number(counts.views_count),
