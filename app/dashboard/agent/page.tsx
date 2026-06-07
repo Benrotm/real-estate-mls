@@ -112,6 +112,17 @@ export default async function AgentDashboard() {
                     </div>
                 </div>
 
+                {/* Your Plan (Slots Management) */}
+                <div className="mb-8">
+                    <YourPlanCard
+                        initialProfile={profile}
+                        usageCount={usageCount}
+                        featuredCount={featuredCount}
+                        addListingCost={addListingCost}
+                        featuredListingCost={featuredListingCost}
+                    />
+                </div>
+
                 {/* 2. Portfolio Banner */}
                 <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
                     <div className="relative z-10">
@@ -186,29 +197,13 @@ export default async function AgentDashboard() {
                     </Link>
                 </div>
 
-                {/* 4. Main Widgets Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* 4. Main Widgets Stack */}
+                <div className="space-y-8">
+                    {/* Recent Inquiries */}
+                    <RecentInquiriesWidget inquiries={recentInquiries} viewAllLink="/dashboard/agent/leads" />
 
-                    {/* Left Column (2/3 width) */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Recent Inquiries */}
-                        <RecentInquiriesWidget inquiries={recentInquiries} viewAllLink="/dashboard/agent/leads" />
-
-                        {/* My Listings */}
-                        <RecentPropertiesWidget properties={userProperties} viewAllLink="/dashboard/agent/listings" addLink="/properties/add" />
-                    </div>
-
-                    {/* Right Column (1/3 width) */}
-                    <div className="space-y-8">
-                        {/* Your Plan (Dynamic Slots Management) */}
-                        <YourPlanCard
-                            initialProfile={profile}
-                            usageCount={usageCount}
-                            featuredCount={featuredCount}
-                            addListingCost={addListingCost}
-                            featuredListingCost={featuredListingCost}
-                        />
-                    </div>
+                    {/* My Listings */}
+                    <RecentPropertiesWidget properties={userProperties} viewAllLink="/dashboard/agent/listings" addLink="/properties/add" />
                 </div>
 
             </div>
