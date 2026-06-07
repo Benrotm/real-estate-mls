@@ -463,17 +463,40 @@ export async function getAdminCreditHistory() {
         return { error: 'Unauthorized' };
     }
 
-    const { data, error } = await supabase
+    const { data: transactions, error: txError } = await supabase
         .from('credit_transactions')
-        .select('*, profiles(id, full_name, email, role, phone)')
+        .select('*')
         .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error('Error fetching admin credit history:', error);
-        return { error: error.message };
+    if (txError) {
+        console.error('Error fetching admin credit history:', txError);
+        return { error: txError.message };
     }
 
-    return { transactions: data || [] };
+    const userIds = Array.from(new Set((transactions || []).map(tx => tx.user_id).filter(Boolean)));
+    const profilesMap: Record<string, any> = {};
+
+    if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, role, phone')
+            .in('id', userIds);
+
+        if (profilesError) {
+            console.error('Error fetching profiles for admin history:', profilesError);
+        } else if (profiles) {
+            profiles.forEach(p => {
+                profilesMap[p.id] = p;
+            });
+        }
+    }
+
+    const combined = (transactions || []).map(tx => ({
+        ...tx,
+        profiles: profilesMap[tx.user_id] || null
+    }));
+
+    return { transactions: combined };
 }
 
 export async function deductUserCreditsByAdmin(userId: string, amount: number, description: string = 'Consum servicii', metadata: Record<string, any> = {}) {
