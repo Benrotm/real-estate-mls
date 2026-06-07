@@ -14,6 +14,7 @@ export interface PropertyAuction {
     start_time: string;
     end_time: string;
     status: 'scheduled' | 'active' | 'ended' | 'cancelled';
+    winner_bid_id?: string | null;
     created_at: string;
     updated_at: string;
     bids?: PropertyBid[];
@@ -169,6 +170,26 @@ export async function createAuction(
         return { success: false, error: 'Auction end time must be in the future.' };
     }
 
+    // 1. Fetch feature cost for starting open offers
+    const { getFeatureCosts } = await import('./settings');
+    const costsRes = await getFeatureCosts();
+    const startCost = costsRes.costs?.['open_offers_start'] !== undefined ? costsRes.costs['open_offers_start'] : 5;
+
+    // 2. If startCost > 0, deduct credits from owner/creator
+    const { deductUserCredits, rewardUserCredits } = await import('./credits');
+    let creditsDeducted = false;
+    if (startCost > 0) {
+        const deduction = await deductUserCredits(
+            startCost,
+            `Deschidere sesiune oferte deschise pentru proprietatea "${property.title}"`,
+            { property_id: propertyId, feature_key: 'open_offers_start' }
+        );
+        if (deduction.error) {
+            return { success: false, error: `Fonduri insuficiente. Deschideria sesiunii costă ${startCost} credite.` };
+        }
+        creditsDeducted = true;
+    }
+
     const initialStatus = now >= start ? 'active' : 'scheduled';
 
     const { data: auction, error: insertError } = await supabase
@@ -188,6 +209,15 @@ export async function createAuction(
 
     if (insertError) {
         console.error('Create auction error:', insertError);
+        // Refund if we already deducted credits
+        if (creditsDeducted && startCost > 0) {
+            await rewardUserCredits(
+                user.id,
+                startCost,
+                `Rambursare credit - eroare activare sesiune`,
+                { property_id: propertyId, feature_key: 'open_offers_start_refund' }
+            );
+        }
         return { success: false, error: insertError.message };
     }
 
@@ -246,7 +276,7 @@ export async function cancelAuction(auctionId: string) {
     return { success: true };
 }
 
-// Close/end an auction manually
+// Close/end an auction manually (Owner cancels session)
 export async function closeAuction(auctionId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -265,16 +295,137 @@ export async function closeAuction(auctionId: string) {
         return { success: false, error: 'Offers session not found.' };
     }
 
-    if (auction.owner_id !== user.id) {
+    const isUserAdmin = await (async () => {
         const { data: profile } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', user.id)
             .single();
+        return profile?.role === 'admin' || profile?.role === 'superadmin' || profile?.role === 'super_admin';
+    })();
 
-        if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
-            return { success: false, error: 'You are not authorized to close this open offers session.' };
+    if (auction.owner_id !== user.id && !isUserAdmin) {
+        return { success: false, error: 'You are not authorized to close this open offers session.' };
+    }
+
+    // 1. Fetch feature costs
+    const { getFeatureCosts } = await import('./settings');
+    const costsRes = await getFeatureCosts();
+    const cancelCost = costsRes.costs?.['open_offers_cancel'] !== undefined ? costsRes.costs['open_offers_cancel'] : 10;
+    const submitCost = costsRes.costs?.['open_offers_submit'] !== undefined ? costsRes.costs['open_offers_submit'] : 1;
+
+    // 2. Deduct cancellation credits from owner (or admin penalty)
+    const { deductUserCredits, deductUserCreditsByAdmin, rewardUserCredits } = await import('./credits');
+    if (cancelCost > 0) {
+        if (auction.owner_id === user.id) {
+            const deduction = await deductUserCredits(
+                cancelCost,
+                `Penalizare anulare manuală sesiune oferte deschise pentru proprietatea #${auction.property_id}`,
+                { auction_id: auctionId, feature_key: 'open_offers_cancel' }
+            );
+            if (deduction.error) {
+                return { success: false, error: `Credit insuficient pentru a anula sesiunea. Penalizarea de anulare este de ${cancelCost} credite.` };
+            }
+        } else if (isUserAdmin) {
+            // Admin closing it on behalf of the owner. Charge owner.
+            const deduction = await deductUserCreditsByAdmin(
+                auction.owner_id,
+                cancelCost,
+                `Penalizare anulare manuală sesiune oferte (de către admin) pentru proprietatea #${auction.property_id}`,
+                { auction_id: auctionId, feature_key: 'open_offers_cancel', cancelled_by: user.id }
+            );
+            if (deduction.error) {
+                console.warn(`Admin cancelled auction, but owner had insufficient credits for penalty:`, deduction.error);
+            }
         }
+    }
+
+    // 3. Fetch all bids to refund the bidders
+    const { data: bids } = await supabase
+        .from('property_bids')
+        .select('user_id, bid_amount')
+        .eq('auction_id', auctionId);
+
+    if (bids && bids.length > 0 && submitCost > 0) {
+        for (const bid of bids) {
+            try {
+                await rewardUserCredits(
+                    bid.user_id,
+                    submitCost,
+                    `Rambursare credit - anulare sesiune oferte deschise de către proprietar`,
+                    { auction_id: auctionId, refund_for_bid_amount: Number(bid.bid_amount) }
+                );
+            } catch (err) {
+                console.error(`Error refunding user ${bid.user_id} for bid of ${bid.bid_amount}:`, err);
+            }
+        }
+    }
+
+    // 4. Update status to 'cancelled'
+    const now = new Date().toISOString();
+    const { error: updateError } = await supabase
+        .from('property_auctions')
+        .update({ 
+            status: 'cancelled', 
+            end_time: now,
+            updated_at: now 
+        })
+        .eq('id', auctionId);
+
+    if (updateError) {
+        console.error('Close/cancel auction error:', updateError);
+        return { success: false, error: updateError.message };
+    }
+
+    revalidatePath(`/properties/${auction.property_id}`);
+    revalidatePath(`/dashboard/owner/properties`);
+    revalidatePath(`/dashboard/agent/listings`);
+
+    return { success: true };
+}
+
+// Choose a winner for an open offers session (no refunds, no penalty, sets status to ended)
+export async function chooseOffersWinner(auctionId: string, winnerBidId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'You must be logged in to choose a winner.' };
+    }
+
+    const { data: auction } = await supabase
+        .from('property_auctions')
+        .select('*')
+        .eq('id', auctionId)
+        .single();
+
+    if (!auction) {
+        return { success: false, error: 'Offers session not found.' };
+    }
+
+    const isUserAdmin = await (async () => {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+        return profile?.role === 'admin' || profile?.role === 'superadmin' || profile?.role === 'super_admin';
+    })();
+
+    if (auction.owner_id !== user.id && !isUserAdmin) {
+        return { success: false, error: 'You are not authorized to choose a winner for this session.' };
+    }
+
+    // Verify bid belongs to this auction
+    const { data: bid } = await supabase
+        .from('property_bids')
+        .select('id, user_id, bid_amount')
+        .eq('id', winnerBidId)
+        .eq('auction_id', auctionId)
+        .single();
+
+    if (!bid) {
+        return { success: false, error: 'Oferta selectată nu a fost găsită sau nu aparține acestei sesiuni.' };
     }
 
     const now = new Date().toISOString();
@@ -283,13 +434,34 @@ export async function closeAuction(auctionId: string) {
         .update({ 
             status: 'ended', 
             end_time: now,
+            winner_bid_id: winnerBidId,
             updated_at: now 
         })
         .eq('id', auctionId);
 
     if (updateError) {
-        console.error('Close auction error:', updateError);
+        console.error('Choose winner error:', updateError);
         return { success: false, error: updateError.message };
+    }
+
+    // Get property details for notification
+    const { data: property } = await supabase
+        .from('properties')
+        .select('title')
+        .eq('id', auction.property_id)
+        .single();
+
+    // Trigger Notification for the Winner
+    try {
+        await createNotification({
+            user_id: bid.user_id,
+            type: 'system',
+            title: 'Ofertă Acceptată!',
+            content: `Proprietarul a selectat oferta ta de ${Number(bid.bid_amount).toLocaleString()} EUR ca fiind câștigătoare pentru proprietatea "${property?.title || 'Proprietate'}"!`,
+            link: `/properties/${auction.property_id}`
+        });
+    } catch (notifyError) {
+        console.error('Error triggering winner notification:', notifyError);
     }
 
     revalidatePath(`/properties/${auction.property_id}`);
@@ -352,6 +524,31 @@ export async function placeBid(auctionId: string, bidAmount: number) {
     if (bidAmount <= 0) {
         return { success: false, error: 'Your offer must be a positive amount.' };
     }
+    const { data: property } = await supabase
+        .from('properties')
+        .select('title')
+        .eq('id', auction.property_id)
+        .single();
+
+    // 1. Fetch feature cost for submitting open offers
+    const { getFeatureCosts } = await import('./settings');
+    const costsRes = await getFeatureCosts();
+    const submitCost = costsRes.costs?.['open_offers_submit'] !== undefined ? costsRes.costs['open_offers_submit'] : 1;
+
+    // 2. Deduct credits from bidder
+    const { deductUserCredits, rewardUserCredits } = await import('./credits');
+    let creditsDeducted = false;
+    if (submitCost > 0) {
+        const deduction = await deductUserCredits(
+            submitCost,
+            `Trimitere ofertă în valoare de ${bidAmount} EUR pentru proprietatea "${property?.title || 'Proprietate'}"`,
+            { auction_id: auctionId, feature_key: 'open_offers_submit' }
+        );
+        if (deduction.error) {
+            return { success: false, error: `Credit insuficient pentru a trimite oferta. Necesar: ${submitCost} credite.` };
+        }
+        creditsDeducted = true;
+    }
 
     // Insert bid/offer
     const { data: bid, error: insertError } = await supabase
@@ -366,15 +563,17 @@ export async function placeBid(auctionId: string, bidAmount: number) {
 
     if (insertError) {
         console.error('Place offer error:', insertError);
+        // Refund if we already deducted credits
+        if (creditsDeducted && submitCost > 0) {
+            await rewardUserCredits(
+                user.id,
+                submitCost,
+                `Rambursare credit - eroare trimitere ofertă`,
+                { auction_id: auctionId, feature_key: 'open_offers_submit_refund' }
+            );
+        }
         return { success: false, error: insertError.message };
     }
-
-    // Get property details for notification
-    const { data: property } = await supabase
-        .from('properties')
-        .select('title')
-        .eq('id', auction.property_id)
-        .single();
 
     // Trigger Notification for Owner
     try {

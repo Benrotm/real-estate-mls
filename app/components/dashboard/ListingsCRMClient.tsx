@@ -12,7 +12,7 @@ import {
     convertOfferToAuction,
     addOfferToActiveAuction
 } from '@/app/lib/actions/offers';
-import { getAuctionForProperty, PropertyAuction, createAuction, closeAuction } from '@/app/lib/actions/auctions';
+import { getAuctionForProperty, PropertyAuction, createAuction, closeAuction, chooseOffersWinner } from '@/app/lib/actions/auctions';
 import { deleteProperty } from '@/app/lib/actions/properties';
 import { findMatchingLeads } from '@/app/lib/actions/scoring';
 import { startConversationWithUser, sendMessage } from '@/app/lib/actions/chat';
@@ -24,7 +24,8 @@ import {
     ExternalLink, Plus, Building2, MapPin, Calendar,
     Award, MessageSquare, Trash2, Zap, User, Phone,
     Mail, AlertCircle, Info, Users, Smartphone, Send,
-    Activity, Loader2, Gavel, Sparkles, ArrowRight, Lock
+    Activity, Loader2, Gavel, Sparkles, ArrowRight, Lock,
+    Coins, Trophy, HelpCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -581,6 +582,7 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
     const [offersFormError, setOffersFormError] = useState<string | null>(null);
     const [offersFormSuccess, setOffersFormSuccess] = useState<string | null>(null);
     const [isOffersPending, startOffersTransition] = useTransition();
+    const [showInfoPopup, setShowInfoPopup] = useState(false);
 
     // Owner start form input states
     const [startStartingPrice, setStartStartingPrice] = useState<string>(String(property.price));
@@ -669,6 +671,28 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                 router.refresh();
             } else {
                 setOffersFormError(res.error || 'Failed to close open offers session.');
+            }
+        });
+    };
+
+    const handleSelectWinner = async (bidId: string, amount: number, bidderName: string | undefined) => {
+        if (!auctionData) return;
+        if (!confirm(`Sunteți sigur că doriți să alegeți oferta de ${amount} EUR a lui ${bidderName || 'anonim'} ca fiind câștigătoare? Această acțiune va închide sesiunea și creditele nu vor fi returnate.`)) {
+            return;
+        }
+
+        setOffersFormError(null);
+        setOffersFormSuccess(null);
+
+        startOffersTransition(async () => {
+            const res = await chooseOffersWinner(auctionData.id, bidId);
+            if (res.success) {
+                setOffersFormSuccess('Câștigătorul a fost selectat și notificat cu succes!');
+                const updatedData = await getAuctionForProperty(property.id);
+                setAuctionData(updatedData);
+                router.refresh();
+            } else {
+                setOffersFormError(res.error || 'Eroare la selectarea câștigătorului.');
             }
         });
     };
@@ -839,10 +863,23 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                 e.stopPropagation();
                                 handleOpenOffersModal();
                             }}
-                            className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors mr-1 cursor-pointer relative z-10 flex items-center gap-1"
-                            title="Manage Open Offers"
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition duration-150 relative z-10 flex items-center gap-1.5 cursor-pointer ${
+                                property.auction && property.auction.status === 'active'
+                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20'
+                                    : property.auction && property.auction.status === 'scheduled'
+                                    ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20 hover:bg-indigo-500/20'
+                                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700'
+                            }`}
+                            title="Manage Live Open Offers"
                         >
-                            <Gavel className="w-4 h-4" />
+                            <Gavel className="w-3.5 h-3.5" />
+                            <span>
+                                {property.auction && property.auction.status === 'active'
+                                    ? 'Live Offers: Active'
+                                    : property.auction && property.auction.status === 'scheduled'
+                                    ? 'Live Offers: Scheduled'
+                                    : 'Start Open Offers'}
+                            </span>
                             {property.auction && (property.auction.status === 'active' || property.auction.status === 'scheduled') && (
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -1178,12 +1215,41 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                 </div>
                             )}
 
+                            {/* Educational Info Section */}
+                            <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4 text-xs space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                        <Info className="w-4 h-4 text-blue-500" /> Sistemul de Garantare prin Credite
+                                    </span>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowInfoPopup(!showInfoPopup)}
+                                        className="text-blue-500 hover:underline font-bold"
+                                    >
+                                        {showInfoPopup ? 'Ascunde' : 'Vezi detalii'}
+                                    </button>
+                                </div>
+                                {showInfoPopup && (
+                                    <div className="text-slate-500 dark:text-slate-400 leading-relaxed space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 animate-in fade-in duration-150">
+                                        <p>
+                                            Pentru protecția utilizatorilor, activarea unei sesiuni și trimiterea ofertelor consumă credite:
+                                        </p>
+                                        <ul className="list-disc pl-4 space-y-1 mt-1">
+                                            <li><strong>Deschidere:</strong> Proprietarul folosește credite pentru deschiderea sesiunii.</li>
+                                            <li><strong>Oferte:</strong> Fiecare ofertă trimisă costă credite pentru ofertant.</li>
+                                            <li><strong>Anulare Sesiune:</strong> Dacă proprietarul închide manual sesiunea fără a alege un câștigător, acesta plătește o taxă de anulare în credite, iar toate creditele ofertanților sunt returnate automat.</li>
+                                            <li><strong>Selectare Câștigător:</strong> Dacă proprietarul alege o ofertă câștigătoare, sesiunea se încheie normal: creditele nu se returnează, iar proprietarul nu plătește taxa de anulare.</li>
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+
                             {isLoadingAuctionData ? (
                                 <div className="flex flex-col items-center justify-center py-12 gap-3">
                                     <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
                                     <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Loading session data...</p>
                                 </div>
-                            ) : auctionData && (auctionData.status === 'active' || auctionData.status === 'scheduled') ? (
+                            ) : auctionData && (auctionData.status === 'active' || auctionData.status === 'scheduled' || auctionData.status === 'ended') ? (
                                 /* Active Open Offers Session */
                                 <div className="space-y-4">
                                     <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex items-center justify-between">
@@ -1193,7 +1259,7 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                                             </span>
                                             <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                                {auctionData.status === 'active' ? 'Live Open Offers Active' : 'Upcoming Open Offers Scheduled'}
+                                                {auctionData.status === 'active' ? 'Live Open Offers Active' : auctionData.status === 'scheduled' ? 'Upcoming Open Offers Scheduled' : 'Open Offers Completed'}
                                             </span>
                                         </div>
                                         <span className="text-xs text-slate-400 font-mono">
@@ -1212,19 +1278,84 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                         </div>
                                     </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={handleCloseOffers}
-                                        disabled={isOffersPending}
-                                        className={`w-full py-3.5 px-6 rounded-2xl font-bold tracking-wide shadow-lg transition duration-150 flex items-center justify-center gap-2 ${
-                                            confirmClose 
-                                                ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20 animate-pulse'
-                                                : 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20'
-                                        }`}
-                                    >
-                                        <Lock className="w-4 h-4" />
-                                        {confirmClose ? 'Confirm Close Open Offers?' : 'Close Open Offers Session'}
-                                    </button>
+                                    {auctionData.winner_bid_id ? (
+                                        <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-800 dark:text-yellow-400 text-xs font-bold p-4 rounded-2xl flex items-center gap-2">
+                                            <Trophy className="w-5 h-5 text-yellow-500 animate-bounce shrink-0" />
+                                            <div>
+                                                Sesiune finalizată! Câștigător selectat.
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleCloseOffers}
+                                            disabled={isOffersPending}
+                                            className={`w-full py-3.5 px-6 rounded-2xl font-bold tracking-wide shadow-lg transition duration-150 flex items-center justify-center gap-2 ${
+                                                confirmClose 
+                                                    ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20 animate-pulse'
+                                                    : 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20'
+                                            }`}
+                                        >
+                                            <Lock className="w-4 h-4" />
+                                            {confirmClose ? 'Confirm Close Open Offers?' : 'Close Open Offers Session'}
+                                        </button>
+                                    )}
+
+                                    {/* Bids history and winner selection */}
+                                    <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                            Oferte primite în această sesiune ({auctionData.bids?.length || 0})
+                                        </h4>
+                                        
+                                        {!auctionData.bids || auctionData.bids.length === 0 ? (
+                                            <div className="text-center py-6 text-slate-400 text-xs bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800/60">
+                                                Nu s-au primit oferte în această sesiune.
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                                {auctionData.bids.map((bid) => {
+                                                    const isWinner = auctionData.winner_bid_id === bid.id;
+                                                    const hasWinner = !!auctionData.winner_bid_id;
+                                                    return (
+                                                        <div 
+                                                            key={bid.id} 
+                                                            className={`p-3 rounded-2xl border text-xs flex items-center justify-between transition-all duration-200 ${
+                                                                isWinner 
+                                                                    ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-900 dark:text-yellow-400 font-bold'
+                                                                    : 'bg-slate-50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                                                            }`}
+                                                        >
+                                                            <div className="space-y-0.5">
+                                                                <div className="font-bold flex items-center gap-1 text-slate-800 dark:text-slate-200">
+                                                                    {isWinner && <Trophy className="w-3.5 h-3.5 text-yellow-500 shrink-0" />}
+                                                                    {bid.user_name || 'Ofertant Anonim'}
+                                                                </div>
+                                                                <div className="text-[10px] text-slate-400 font-medium">
+                                                                    {new Date(bid.created_at).toLocaleString('ro-RO')}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2.5">
+                                                                <span className="font-black text-slate-900 dark:text-white">
+                                                                    {Number(bid.bid_amount).toLocaleString()} EUR
+                                                                </span>
+                                                                
+                                                                {!hasWinner && (auctionData.status === 'active' || auctionData.status === 'ended') && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleSelectWinner(bid.id, bid.bid_amount, bid.user_name)}
+                                                                        disabled={isOffersPending}
+                                                                        className="px-2.5 py-1 bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold rounded-lg transition-colors cursor-pointer text-[10px] shadow hover:shadow-md"
+                                                                    >
+                                                                        Alege
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 /* Start Live Open Offers Form */

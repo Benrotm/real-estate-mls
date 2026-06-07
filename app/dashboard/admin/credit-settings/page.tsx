@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { Coins, Save, AlertCircle, Wand2, Calculator, Settings, Plus, Globe } from 'lucide-react';
+import { Coins, Save, AlertCircle, Wand2, Calculator, Settings, Plus, Globe, Gavel } from 'lucide-react';
 import { getFeatureCosts, updateFeatureCosts } from '@/app/lib/actions/settings';
 import { fetchAllFeatures } from '@/app/lib/admin';
 
@@ -141,6 +141,55 @@ export default function CreditSettingsPage() {
                                     min="0"
                                     value={costs['listing_renewal'] !== undefined ? costs['listing_renewal'] : 2}
                                     onChange={(e) => handleChange('listing_renewal', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Live Open Offers Section */}
+                <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 border-b border-slate-800 pb-4">
+                        <Gavel className="text-violet-500" /> Live Open Offers Features
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Deschidere Sesiune Oferte (Cost Proprietar)</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['open_offers_start'] !== undefined ? costs['open_offers_start'] : 5}
+                                    onChange={(e) => handleChange('open_offers_start', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Trimitere Ofertă (Cost Ofertant)</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['open_offers_submit'] !== undefined ? costs['open_offers_submit'] : 1}
+                                    onChange={(e) => handleChange('open_offers_submit', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800 col-span-1 md:col-span-2">
+                            <span className="font-semibold">Anulare Sesiune manual (Penalizare Proprietar)</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['open_offers_cancel'] !== undefined ? costs['open_offers_cancel'] : 10}
+                                    onChange={(e) => handleChange('open_offers_cancel', e.target.value)}
                                     className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
                                 />
                                 <Coins size={14} className="text-yellow-500" />

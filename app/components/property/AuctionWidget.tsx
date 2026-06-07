@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Gavel, Clock, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, CheckCircle, Info, Lock } from 'lucide-react';
-import { PropertyAuction, placeBid, createAuction, closeAuction } from '@/app/lib/actions/auctions';
+import { Gavel, Clock, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, CheckCircle, Info, Lock, Trophy, Coins } from 'lucide-react';
+import { PropertyAuction, placeBid, createAuction, closeAuction, chooseOffersWinner } from '@/app/lib/actions/auctions';
 
 interface AuctionWidgetProps {
     auction: PropertyAuction | null;
@@ -29,6 +29,19 @@ export default function AuctionWidget({
     const [formError, setFormError] = useState<string | null>(null);
     const [formSuccess, setFormSuccess] = useState<string | null>(null);
     const [showHistory, setShowHistory] = useState<boolean>(false);
+    const [showInfoPopup, setShowInfoPopup] = useState<boolean>(false);
+    const [costs, setCosts] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        const fetchCosts = async () => {
+            const { getFeatureCosts } = await import('@/app/lib/actions/settings');
+            const res = await getFeatureCosts();
+            if (res.costs) {
+                setCosts(res.costs);
+            }
+        };
+        fetchCosts();
+    }, []);
 
     // Owner start form states
     const [startStartingPrice, setStartStartingPrice] = useState<string>(
@@ -236,6 +249,26 @@ export default function AuctionWidget({
         });
     };
 
+    const handleSelectWinner = async (bidId: string, amount: number, bidderName: string | undefined) => {
+        if (!auction) return;
+        if (!confirm(`Sunteți sigur că doriți să alegeți oferta de ${amount} EUR a lui ${bidderName || 'anonim'} ca fiind câștigătoare? Această acțiune va închide sesiunea și creditele nu vor fi returnate.`)) {
+            return;
+        }
+
+        setFormError(null);
+        setFormSuccess(null);
+
+        startTransition(async () => {
+            const res = await chooseOffersWinner(auction.id, bidId);
+            if (res.success) {
+                setFormSuccess('Câștigătorul a fost selectat și notificat cu succes!');
+                router.refresh();
+            } else {
+                setFormError(res.error || 'Eroare la selectarea câștigătorului.');
+            }
+        });
+    };
+
     const isOwner = currentUser?.id && ownerId ? currentUser.id === ownerId : (currentUser?.id && auction ? currentUser.id === auction.owner_id : false);
 
     // Quick increment steps based on recommended increment
@@ -366,6 +399,14 @@ export default function AuctionWidget({
                 ))}
             </div>
 
+            {/* Credits note for bidders */}
+            <div className="flex items-start gap-1.5 bg-slate-50 dark:bg-slate-850/40 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/60 text-[11px] text-slate-500 dark:text-slate-400">
+                <Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                <div className="leading-relaxed">
+                    Trimiterea unei oferte costă <strong>{costs['open_offers_submit'] ?? 1} credite</strong>. Dacă proprietarul anulează sesiunea, creditele îți vor fi returnate automat.
+                </div>
+            </div>
+
             <button
                 type="submit"
                 disabled={isPending}
@@ -419,6 +460,19 @@ export default function AuctionWidget({
                                 : 'Open Offers Ended'
                             }
                         </span>
+
+                        {auction && (
+                            <button
+                                type="button"
+                                onClick={() => setShowInfoPopup(!showInfoPopup)}
+                                className={`p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-lg cursor-pointer ${
+                                    showInfoPopup ? 'bg-blue-500/10 text-blue-500' : ''
+                                }`}
+                                title="Reguli Sesiune Oferte & Credite"
+                            >
+                                <Info className="w-3.5 h-3.5" />
+                            </button>
+                        )}
                     </div>
 
                     {auction && (
@@ -433,6 +487,23 @@ export default function AuctionWidget({
                         </div>
                     )}
                 </div>
+
+                {showInfoPopup && (
+                    <div className="mb-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl p-4 text-xs space-y-2 text-slate-600 dark:text-slate-300 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <h4 className="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white">
+                            <Coins className="w-4 h-4 text-blue-500" /> Regulament Sesiune Open Offers
+                        </h4>
+                        <p className="leading-relaxed">
+                            Pentru a asigura corectitudinea ofertelor și a proteja participanții, platforma folosește credite astfel:
+                        </p>
+                        <ul className="list-disc pl-4 space-y-1 mt-1">
+                            <li><strong>Deschidere Sesiune:</strong> Costă proprietarul <strong>{costs['open_offers_start'] ?? 5}</strong> credite.</li>
+                            <li><strong>Trimitere Ofertă:</strong> Costă ofertantul <strong>{costs['open_offers_submit'] ?? 1}</strong> credite.</li>
+                            <li><strong>Anulare de către Proprietar:</strong> Proprietarul este penalizat cu <strong>{costs['open_offers_cancel'] ?? 10}</strong> credite, iar ofertanții își primesc creditele înapoi.</li>
+                            <li><strong>Selectare Câștigător:</strong> Proprietarul alege o ofertă câștigătoare. Creditele nu se returnează, iar proprietarul nu plătește taxa de anulare.</li>
+                        </ul>
+                    </div>
+                )}
 
                 {/* Countdown Timer Visuals */}
                 {auction && auctionStatus !== 'ended' && (
@@ -481,8 +552,13 @@ export default function AuctionWidget({
                             </div>
                         </div>
 
-                        {/* Reserve price status if configured */}
-                        {auction.reserve_price !== null && auction.reserve_price > 0 && (
+                        {/* Winner status if selected */}
+                        {auction.winner_bid_id ? (
+                            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center gap-2 text-yellow-400 text-xs font-bold">
+                                <Trophy className="w-4 h-4 text-yellow-500 animate-bounce shrink-0" />
+                                <span>Sesiune Finalizată! Oferta câștigătoare a fost selectată.</span>
+                            </div>
+                        ) : auction.reserve_price !== null && auction.reserve_price > 0 ? (
                             <div className="mt-4 pt-3 border-t border-slate-800 flex items-center gap-2">
                                 {currentHighestOffer >= auction.reserve_price ? (
                                     <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold">
@@ -496,7 +572,7 @@ export default function AuctionWidget({
                                     </div>
                                 )}
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 )}
 
@@ -631,37 +707,58 @@ export default function AuctionWidget({
                                         No offers sent yet. Be the first to send an offer!
                                     </div>
                                 ) : (
-                                    bids.map((bid, index) => (
-                                        <div 
-                                            key={bid.id} 
-                                            className={`flex items-center justify-between p-3 rounded-2xl border text-xs transition duration-150 ${
-                                                bid.bid_amount === currentHighestOffer
-                                                    ? 'bg-emerald-500/5 dark:bg-emerald-500/[0.02] border-emerald-500/20' 
-                                                    : 'bg-slate-50/50 dark:bg-slate-800/20 border-slate-100 dark:border-slate-900/60'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-bold ${
-                                                    bid.bid_amount === currentHighestOffer
-                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' 
-                                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                                                }`}>
-                                                    {bid.bid_amount === currentHighestOffer ? '🏆' : index + 1}
+                                    bids.map((bid, index) => {
+                                        const isWinner = auction.winner_bid_id === bid.id;
+                                        const hasWinner = !!auction.winner_bid_id;
+                                        return (
+                                            <div 
+                                                key={bid.id} 
+                                                className={`flex items-center justify-between p-3 rounded-2xl border text-xs transition duration-155 ${
+                                                    isWinner
+                                                        ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-900 dark:text-yellow-400 font-bold'
+                                                        : bid.bid_amount === currentHighestOffer
+                                                        ? 'bg-emerald-500/5 dark:bg-emerald-500/[0.02] border-emerald-500/20' 
+                                                        : 'bg-slate-50/50 dark:bg-slate-800/20 border-slate-100 dark:border-slate-900/60'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-bold ${
+                                                        isWinner
+                                                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400'
+                                                            : bid.bid_amount === currentHighestOffer
+                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' 
+                                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                    }`}>
+                                                        {isWinner ? <Trophy className="w-3.5 h-3.5" /> : bid.bid_amount === currentHighestOffer ? '🏆' : index + 1}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                                            {obfuscateName(bid.user_name, bid.user_id, currentUser?.id)}
+                                                            {isWinner && <span className="text-[9px] bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Winner</span>}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 mt-0.5">
+                                                            {formatRelativeTime(bid.created_at)}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-slate-900 dark:text-white">
-                                                        {obfuscateName(bid.user_name, bid.user_id, currentUser?.id)}
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="font-extrabold text-slate-900 dark:text-white">
+                                                        {formatPrice(bid.bid_amount)}
                                                     </div>
-                                                    <div className="text-[10px] text-slate-400 mt-0.5">
-                                                        {formatRelativeTime(bid.created_at)}
-                                                    </div>
+                                                    {isOwner && !hasWinner && (auction.status === 'active' || auction.status === 'ended') && (
+                                                        <button
+                                                            type="button"
+                                                            disabled={isPending}
+                                                            onClick={() => handleSelectWinner(bid.id, bid.bid_amount, bid.user_name)}
+                                                            className="px-2.5 py-1 bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold rounded-lg transition-colors cursor-pointer text-[10px] shadow"
+                                                        >
+                                                            Alege
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <div className="font-extrabold text-slate-900 dark:text-white">
-                                                {formatPrice(bid.bid_amount)}
-                                            </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         )}
