@@ -281,4 +281,116 @@ export async function unlockValuation(propertyId: string, propertyTitle: string)
     return { success: true, cost, remaining: res.remaining };
 }
 
+export async function buyListingSlot() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    // Fetch cost
+    const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (settingsData?.setting_value as Record<string, number>) || {};
+    const cost = costsMap['add_listing'] !== undefined ? costsMap['add_listing'] : 5;
+
+    // Fetch profile
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('credits, bonus_listings')
+        .eq('id', user.id)
+        .single();
+
+    if (profileError || !profile) {
+        return { error: 'Failed to retrieve user profile.' };
+    }
+
+    if ((profile.credits || 0) < cost) {
+        return { error: 'Fonduri insuficiente', insufficient: true, cost };
+    }
+
+    // Deduct credits
+    const deduction = await deductUserCredits(
+        cost,
+        'Cumpărare slot anunț suplimentar',
+        { feature_key: 'add_listing' }
+    );
+
+    if (deduction.error) {
+        return { error: deduction.error, insufficient: deduction.insufficient, cost };
+    }
+
+    // Increment bonus_listings
+    const currentBonus = profile.bonus_listings || 0;
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ bonus_listings: currentBonus + 1 })
+        .eq('id', user.id);
+
+    if (updateError) {
+        console.error('Error incrementing bonus listings:', updateError);
+        return { error: 'Failed to update listing limit. Contact support.' };
+    }
+
+    return { success: true, newBonus: currentBonus + 1, remaining: deduction.remaining };
+}
+
+export async function buyFeaturedSlot() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    // Fetch cost
+    const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (settingsData?.setting_value as Record<string, number>) || {};
+    const cost = costsMap['featured_listing'] !== undefined ? costsMap['featured_listing'] : 10;
+
+    // Fetch profile
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('credits, featured_limit')
+        .eq('id', user.id)
+        .single();
+
+    if (profileError || !profile) {
+        return { error: 'Failed to retrieve user profile.' };
+    }
+
+    if ((profile.credits || 0) < cost) {
+        return { error: 'Fonduri insuficiente', insufficient: true, cost };
+    }
+
+    // Deduct credits
+    const deduction = await deductUserCredits(
+        cost,
+        'Cumpărare slot anunț promovat (Featured)',
+        { feature_key: 'featured_listing' }
+    );
+
+    if (deduction.error) {
+        return { error: deduction.error, insufficient: deduction.insufficient, cost };
+    }
+
+    // Increment featured_limit
+    const currentLimit = profile.featured_limit || 0;
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ featured_limit: currentLimit + 1 })
+        .eq('id', user.id);
+
+    if (updateError) {
+        console.error('Error incrementing featured limit:', updateError);
+        return { error: 'Failed to update featured limit. Contact support.' };
+    }
+
+    return { success: true, newLimit: currentLimit + 1, remaining: deduction.remaining };
+}
+
 

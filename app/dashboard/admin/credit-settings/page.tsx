@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { Coins, Save, AlertCircle, Wand2, Calculator, Settings } from 'lucide-react';
+import { Coins, Save, AlertCircle, Wand2, Calculator, Settings, Plus } from 'lucide-react';
 import { getFeatureCosts, updateFeatureCosts } from '@/app/lib/actions/settings';
 import { fetchAllFeatures } from '@/app/lib/admin';
 
@@ -97,6 +97,42 @@ export default function CreditSettingsPage() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </section>
+
+                {/* Listing & Promotion Features Section */}
+                <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 border-b border-slate-800 pb-4">
+                        <Plus className="text-emerald-500" /> Listing & Promotion Features
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Adăugare Slot Anunț Suplimentar</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['add_listing'] !== undefined ? costs['add_listing'] : 5}
+                                    onChange={(e) => handleChange('add_listing', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Adăugare Slot Promovat (Featured)</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['featured_listing'] !== undefined ? costs['featured_listing'] : 10}
+                                    onChange={(e) => handleChange('featured_listing', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
                     </div>
                 </section>
 

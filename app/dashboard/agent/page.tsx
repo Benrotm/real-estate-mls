@@ -8,6 +8,8 @@ import { formatCompactCurrency } from '../../lib/format';
 import RecentInquiriesWidget from '../../components/dashboard/RecentInquiriesWidget';
 import RecentPropertiesWidget from '../../components/dashboard/RecentPropertiesWidget';
 import TeamInvitationBanner from '../../components/dashboard/TeamInvitationBanner';
+import { getFeatureCosts } from '../../lib/actions/settings';
+import YourPlanCard from '../../components/dashboard/YourPlanCard';
 
 export default async function AgentDashboard() {
     const profile = await getUserProfile();
@@ -19,6 +21,9 @@ export default async function AgentDashboard() {
     const totalLeads = await getLeadsCount();
     const portfolioValue = await getActivePortfolioValue();
     const userProperties = await getUserProperties();
+    const costsRes = await getFeatureCosts();
+    const addListingCost = costsRes.costs?.['add_listing'] ?? 5;
+    const featuredListingCost = costsRes.costs?.['featured_listing'] ?? 10;
 
     const baseLimit = profile?.listings_limit || 5;
     const bonus = profile?.bonus_listings || 0;
@@ -195,49 +200,14 @@ export default async function AgentDashboard() {
 
                     {/* Right Column (1/3 width) */}
                     <div className="space-y-8">
-                        {/* Your Plan */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                            <h3 className="font-bold text-slate-900 mb-6 flex items-center justify-between">
-                                Your Plan
-                                <span className="inline-block bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded uppercase tracking-wide">
-                                    {profile?.plan_tier || 'Free'}
-                                </span>
-                            </h3>
-
-                            {/* Listings Progress */}
-                            <div className="mb-6">
-                                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                                    <span>Listings Used</span>
-                                    <span>{usageCount} / {limit}</span>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-2 mb-1">
-                                    <div
-                                        className={`h-2 rounded-full ${usagePercent >= 100 ? 'bg-red-500' : 'bg-orange-500'}`}
-                                        style={{ width: `${usagePercent}%` }}
-                                    ></div>
-                                </div>
-                                <p className="text-xs text-slate-400 text-right">{availableListings} available{bonus > 0 && <span className="text-emerald-600 font-bold ml-1">+{bonus} Bonus</span>}</p>
-                            </div>
-
-                            {/* Featured Progress */}
-                            <div className="mb-6">
-                                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                                    <span>Featured Slots</span>
-                                    <span>{featuredCount} / {featuredLimit}</span>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-2 mb-1">
-                                    <div
-                                        className={`h-2 rounded-full ${featuredPercent >= 100 ? 'bg-red-500' : 'bg-purple-500'}`}
-                                        style={{ width: `${featuredPercent}%` }}
-                                    ></div>
-                                </div>
-                                <p className="text-xs text-slate-400 text-right">{availableFeatured} available</p>
-                            </div>
-
-                            <button className="w-full border border-slate-200 text-slate-700 font-bold py-2.5 rounded-lg hover:border-slate-400 hover:bg-slate-50 transition-colors text-sm">
-                                Upgrade Plan
-                            </button>
-                        </div>
+                        {/* Your Plan (Dynamic Slots Management) */}
+                        <YourPlanCard
+                            initialProfile={profile}
+                            usageCount={usageCount}
+                            featuredCount={featuredCount}
+                            addListingCost={addListingCost}
+                            featuredListingCost={featuredListingCost}
+                        />
                     </div>
                 </div>
 

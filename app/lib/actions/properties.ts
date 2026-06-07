@@ -270,6 +270,18 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
     }
 
     // Apply Sorting (After all filters)
+    const hasFilters = filters && (
+        filters.type || 
+        filters.listing_type || 
+        filters.rooms || 
+        filters.area || 
+        filters.minPrice || 
+        filters.maxPrice
+    );
+    if (hasFilters) {
+        query = query.order('promoted', { ascending: false });
+    }
+
     const sortVal = filters?.sort || 'newest';
     switch (sortVal) {
         case 'score_desc':
