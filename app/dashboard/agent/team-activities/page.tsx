@@ -262,6 +262,8 @@ export default function TeamActivities() {
                         agents={activeAgents} 
                         startDateStr={derivedStartDate} 
                         endDateStr={derivedEndDate} 
+                        autoListings={autoListings}
+                        autoLeads={autoLeads}
                     />
                 );
             })()}

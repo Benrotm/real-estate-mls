@@ -11,6 +11,8 @@ export default function PersonalConsistencyWidget() {
     const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     
     const [activities, setActivities] = useState<any[]>([]);
+    const [autoListings, setAutoListings] = useState<any[]>([]);
+    const [autoLeads, setAutoLeads] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -26,6 +28,12 @@ export default function PersonalConsistencyWidget() {
                 
                 if (data.activities) {
                     setActivities(data.activities);
+                }
+                if (data.autoListingsRaw) {
+                    setAutoListings(data.autoListingsRaw);
+                }
+                if (data.autoLeadsRaw) {
+                    setAutoLeads(data.autoLeadsRaw);
                 }
             } catch (e) {
                 console.error(e);
@@ -90,6 +98,8 @@ export default function PersonalConsistencyWidget() {
                         agents={[{ id: 'user', full_name: 'My Activities' }]} 
                         startDateStr={derivedStartDate} 
                         endDateStr={derivedEndDate} 
+                        autoListings={autoListings}
+                        autoLeads={autoLeads}
                     />
                 </div>
             </div>

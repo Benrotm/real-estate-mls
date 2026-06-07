@@ -7,9 +7,11 @@ interface Props {
     agents: any[];
     startDateStr: string;
     endDateStr: string;
+    autoListings?: any[];
+    autoLeads?: any[];
 }
 
-export default function ActivityConsistencyTable({ activities, agents, startDateStr, endDateStr }: Props) {
+export default function ActivityConsistencyTable({ activities, agents, startDateStr, endDateStr, autoListings, autoLeads }: Props) {
     if (!startDateStr || !endDateStr) return null;
 
     let days: Date[] = [];
@@ -34,7 +36,7 @@ export default function ActivityConsistencyTable({ activities, agents, startDate
                     </div>
                     <div>
                         <h3 className="font-bold text-slate-800 tracking-tight text-lg">Logging Consistency</h3>
-                        <p className="text-xs text-slate-500 font-medium">Checkmarks indicate days where ANY activity was logged.</p>
+                        <p className="text-xs text-slate-500 font-medium">Checkmarks indicate days where ANY activity was logged (including listings added, leads created, or manual activities such as calls, appointments, and contracts).</p>
                     </div>
                 </div>
             </div>
@@ -65,7 +67,34 @@ export default function ActivityConsistencyTable({ activities, agents, startDate
                                 </td>
                                 {days.map((d, i) => {
                                     const dateStr = format(d, 'yyyy-MM-dd');
-                                    const hasActivity = activities.some(a => (a.agent_id === agent.id || agent.id === 'user') && a.date === dateStr && a.quantity > 0);
+                                    
+                                    // 1. Check manual activities
+                                    const hasManualActivity = activities.some(a => (a.agent_id === agent.id || agent.id === 'user') && a.date === dateStr && a.quantity > 0);
+                                    
+                                    // 2. Check auto-generated listings
+                                    const hasAutoListing = (autoListings || []).some((l: any) => {
+                                        const ownerId = l.owner_id || l.agent_id;
+                                        const matchesAgent = agent.id === 'user' || ownerId === agent.id;
+                                        try {
+                                            const itemDateStr = format(parseISO(l.created_at), 'yyyy-MM-dd');
+                                            return matchesAgent && itemDateStr === dateStr;
+                                        } catch (e) {
+                                            return false;
+                                        }
+                                    });
+                                    
+                                    // 3. Check auto-generated leads
+                                    const hasAutoLead = (autoLeads || []).some((l: any) => {
+                                        const matchesAgent = agent.id === 'user' || l.agent_id === agent.id;
+                                        try {
+                                            const itemDateStr = format(parseISO(l.created_at), 'yyyy-MM-dd');
+                                            return matchesAgent && itemDateStr === dateStr;
+                                        } catch (e) {
+                                            return false;
+                                        }
+                                    });
+                                    
+                                    const hasActivity = hasManualActivity || hasAutoListing || hasAutoLead;
                                     
                                     return (
                                         <td key={i} className="p-3 text-center border-r border-slate-100 bg-white group-hover:bg-slate-50/80 transition-colors">
