@@ -54,26 +54,32 @@ export default async function ClientDashboard() {
 
                 <div className="flex flex-col sm:flex-row gap-4 flex-1 max-w-xl">
                     {/* Ad Free Credits */}
-                    <div className="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                    <Link 
+                        href="/cont/profil" 
+                        className="flex-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/40 dark:hover:bg-slate-800/60 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between transition-colors group"
+                    >
                         <div>
                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Ad Free Credits</span>
-                            <span className="text-sm font-black text-slate-900 dark:text-white font-mono">{profile.listings_limit || 0} Slots</span>
+                            <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-orange-500 transition-colors">Invită un Prieten</span>
                         </div>
-                        <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center shrink-0">
                             <Gift className="w-4 h-4" />
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Ad Credits */}
-                    <div className="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                    <Link 
+                        href="/cont/plati" 
+                        className="flex-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/40 dark:hover:bg-slate-800/60 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between transition-colors group"
+                    >
                         <div>
                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Ad Credits</span>
-                            <span className="text-sm font-black text-slate-900 dark:text-white font-mono">{profile.bonus_listings || 0} Slots</span>
+                            <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-orange-500 transition-colors">Alimentează Credite</span>
                         </div>
-                        <div className="w-8 h-8 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center shrink-0">
                             <Plus className="w-4 h-4" />
                         </div>
-                    </div>
+                    </Link>
                 </div>
             </div>
 
