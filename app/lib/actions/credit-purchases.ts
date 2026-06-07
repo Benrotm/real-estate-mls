@@ -66,6 +66,38 @@ export async function createPendingPurchase(amountRon: number, credits: number) 
 
     if (error) return { error: error.message };
 
+    // Fetch user name for the notification
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+    const userName = userProfile?.full_name || 'Un utilizator';
+
+    // Fetch all admins/superadmins to notify them
+    const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['admin', 'super_admin']);
+
+    if (admins && admins.length > 0) {
+        try {
+            const { createNotification } = await import('@/app/lib/actions/notifications');
+            for (const admin of admins) {
+                await createNotification({
+                    user_id: admin.id,
+                    type: 'offer',
+                    title: 'Plată în așteptare',
+                    content: `${userName} a trimis o cerere de plată manuală de ${amountRon} RON (Ref: ${referenceId})`,
+                    link: '/dashboard/admin/validare-plati'
+                });
+            }
+        } catch (notifErr) {
+            console.error('Failed to notify admins of pending purchase:', notifErr);
+        }
+    }
+
     revalidatePath('/cont/plati');
     return { success: true, purchase: data };
 }

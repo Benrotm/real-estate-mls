@@ -33,6 +33,7 @@ export default function DashboardClient({
     const [leadsUnread, setLeadsUnread] = useState(0);
     const [credits, setCredits] = useState(0);
     const [deletionRequestsCount, setDeletionRequestsCount] = useState(0);
+    const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
 
     const fetchCounts = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -59,6 +60,17 @@ export default function DashboardClient({
                 if (delRes.success && delRes.contracts) {
                     setDeletionRequestsCount(delRes.contracts.length);
                 }
+            }
+            if (isUserAdmin) {
+                const { count, error } = await supabase
+                    .from('credit_purchases')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'pending');
+                if (!error && count !== null) {
+                    setPendingPaymentsCount(count);
+                }
+            } else {
+                setPendingPaymentsCount(0);
             }
         }
 
@@ -101,7 +113,6 @@ export default function DashboardClient({
                 )
                 .subscribe();
 
-            // Listener for REALTIME contracts (deletion requests)
             const contractChannel = supabase
                 .channel('dashboard-badges-contracts')
                 .on(
@@ -111,10 +122,21 @@ export default function DashboardClient({
                 )
                 .subscribe();
 
+            // Listener for REALTIME credit purchases
+            const purchaseChannel = supabase
+                .channel('dashboard-badges-purchases')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'credit_purchases' },
+                    () => fetchCounts()
+                )
+                .subscribe();
+
             return () => {
                 supabase.removeChannel(notifChannel);
                 supabase.removeChannel(msgChannel);
                 supabase.removeChannel(contractChannel);
+                supabase.removeChannel(purchaseChannel);
             };
         };
 
@@ -275,6 +297,11 @@ export default function DashboardClient({
                             {item.name === 'Contract Deletions' && deletionRequestsCount > 0 && (
                                 <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                                     {deletionRequestsCount}
+                                </span>
+                            )}
+                            {item.name === 'Validare Plăți' && pendingPaymentsCount > 0 && (
+                                <span className="bg-yellow-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-md animate-pulse">
+                                    {pendingPaymentsCount}
                                 </span>
                             )}
                         </Link>
