@@ -549,5 +549,126 @@ export async function deductUserCreditsByAdmin(userId: string, amount: number, d
     return { success: true, remaining: newBalance };
 }
 
+export async function checkContactUnlock(propertyId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { unlocked: false, loggedIn: false };
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', propertyId)
+        .single();
+
+    const isOwner = property?.owner_id === user.id;
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin' || profile?.role === 'superadmin';
+
+    if (isOwner || isAdmin) {
+        return { unlocked: true, loggedIn: true, bypass: true };
+    }
+
+    const { data: txn, error } = await supabase
+        .from('credit_transactions')
+        .select('id')
+        .eq('user_id', user.id)
+        .contains('metadata', { property_id: propertyId, feature_key: 'view_owner_contact' })
+        .limit(1);
+
+    if (error) {
+        console.error('Error checking contact unlock:', error);
+        return { unlocked: false, loggedIn: true, error: error.message };
+    }
+
+    return { unlocked: txn && txn.length > 0, loggedIn: true };
+}
+
+export async function unlockContact(propertyId: string, propertyTitle: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (settingsData?.setting_value as Record<string, number>) || {};
+    const cost = costsMap['view_owner_contact'] !== undefined ? costsMap['view_owner_contact'] : 1;
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile) return { error: 'Profile not found' };
+
+    // Check if already unlocked (bypass or previous txn)
+    const unlockCheck = await checkContactUnlock(propertyId);
+    let remainingCredits = profile.credits || 0;
+
+    if (!unlockCheck.unlocked) {
+        if (remainingCredits < cost) {
+            return { error: 'Fonduri insuficiente', insufficient: true, cost };
+        }
+
+        const res = await deductUserCredits(
+            cost,
+            `Unlock Contact: ${propertyTitle}`,
+            { property_id: propertyId, feature_key: 'view_owner_contact' }
+        );
+
+        if (res.error) {
+            return { error: res.error, insufficient: res.insufficient };
+        }
+        remainingCredits = res.remaining ?? remainingCredits;
+    }
+
+    // Resolve owner contact details securely
+    const { data: property } = await supabase
+        .from('properties')
+        .select('owner_id, owner_name, owner_phone')
+        .eq('id', propertyId)
+        .single();
+
+    if (!property) {
+        return { error: 'Property not found' };
+    }
+
+    const { data: ownerProfile } = await supabase
+        .from('profiles')
+        .select('full_name, phone, role')
+        .eq('id', property.owner_id)
+        .single();
+
+    let resolvedName = 'Owner';
+    let resolvedPhone = '';
+
+    const isCreatorAdmin = ownerProfile?.role === 'admin' || ownerProfile?.role === 'super_admin' || ownerProfile?.role === 'superadmin';
+
+    if (isCreatorAdmin) {
+        resolvedName = property.owner_name || ownerProfile?.full_name || 'Owner';
+        resolvedPhone = property.owner_phone || ownerProfile?.phone || '';
+    } else {
+        resolvedName = ownerProfile?.full_name || 'Agent';
+        resolvedPhone = ownerProfile?.phone || '';
+    }
+
+    return { 
+        success: true, 
+        cost, 
+        remaining: remainingCredits,
+        contactName: resolvedName,
+        contactPhone: resolvedPhone
+    };
+}
+
 
 

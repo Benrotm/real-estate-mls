@@ -23,6 +23,8 @@ import ReportListingButton from '@/app/components/property/ReportListingButton';
 import PropertyAmenities from '@/app/components/properties/PropertyAmenities';
 import { getAuctionForProperty } from "@/app/lib/actions/auctions";
 import AuctionWidget from "@/app/components/property/AuctionWidget";
+import RevealContactWidget from '@/app/components/property/RevealContactWidget';
+import { checkContactUnlock } from '@/app/lib/actions/credits';
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
@@ -66,6 +68,8 @@ export default async function PropertyDetailPage({
     let hasAccess = false;
     let canViewContact = false;
     let auction: any = null;
+    let cost = 1;
+    let userCredits = 0;
 
     try {
         // 1. Try to fetch from Supabase if ID is valid UUID
@@ -209,12 +213,13 @@ export default async function PropertyDetailPage({
         if (user) {
             const { data: currentUserProfile } = await supabase
                 .from('profiles')
-                .select('role, plan_tier')
+                .select('role, plan_tier, credits')
                 .eq('id', user.id)
                 .single();
 
             if (currentUserProfile) {
                 userRole = currentUserProfile.role;
+                userCredits = currentUserProfile.credits || 0;
             }
 
             if (property.owner_id === user.id) {
@@ -239,8 +244,26 @@ export default async function PropertyDetailPage({
                         canViewContact = true;
                     }
                 }
+
+                // If not unlocked by features, check if they spent credits
+                if (!canViewContact) {
+                    const unlockCheck = await checkContactUnlock(property.id);
+                    if (unlockCheck.unlocked) {
+                        canViewContact = true;
+                    }
+                }
             }
         }
+
+        // Fetch view contact cost from settings
+        const { data: settingsData } = await supabase
+            .from('platform_settings')
+            .select('setting_value')
+            .eq('setting_key', 'feature_costs')
+            .single();
+
+        const costsMap = (settingsData?.setting_value as Record<string, number>) || {};
+        cost = costsMap['view_owner_contact'] !== undefined ? costsMap['view_owner_contact'] : 1;
 
         // Fetch collaboration contract if uuid is valid
         if (isUuid && property) {
@@ -286,6 +309,23 @@ export default async function PropertyDetailPage({
         phone: ownerProfile?.phone,
         email: ownerProfile?.email
     };
+
+    // Determine secure contact reveal info
+    const isCreatorAdmin = ownerProfile?.role === 'admin' || ownerProfile?.role === 'super_admin' || ownerProfile?.role === 'superadmin';
+    const initialContactName = isCreatorAdmin ? 'Proprietar' : 'Agent';
+
+    let resolvedContactName = initialContactName;
+    let resolvedContactPhone = '';
+
+    if (canViewContact) {
+        if (isCreatorAdmin) {
+            resolvedContactName = property.owner_name || ownerProfile?.full_name || 'Proprietar';
+            resolvedContactPhone = property.owner_phone || ownerProfile?.phone || '';
+        } else {
+            resolvedContactName = ownerProfile?.full_name || 'Agent';
+            resolvedContactPhone = ownerProfile?.phone || '';
+        }
+    }
 
     return (
         <div className={`min-h-screen ${isModal ? 'pb-0' : 'pb-20'} bg-gray-50`}>
@@ -898,6 +938,19 @@ export default async function PropertyDetailPage({
                                 <div className="font-bold text-slate-900">{agent.name}</div>
                                 <div className="text-sm text-slate-500">{agent.role}</div>
                             </div>
+                        </div>
+
+                        <div className="mb-6">
+                            <RevealContactWidget
+                                propertyId={property.id}
+                                propertyTitle={property.title}
+                                isLoggedIn={!!user}
+                                initialUnlocked={canViewContact}
+                                cost={cost}
+                                userCredits={userCredits}
+                                contactName={resolvedContactName}
+                                contactPhone={resolvedContactPhone}
+                            />
                         </div>
 
                         <ContactForm
