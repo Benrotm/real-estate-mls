@@ -94,6 +94,7 @@ function SignaturePad({ id, label, clearLabel, savedSignature, onSave, isLocked 
 
     const stopDrawing = () => {
         if (isLocked) return;
+        if (!isDrawing) return;
         setIsDrawing(false);
 
         if (saveTimeoutRef.current) {
@@ -360,6 +361,8 @@ function PresentationContractContent() {
 
     const { agentProfile, clientProfile, contractSerial, contractNumber, created_at, status, property, property_price, negotiated_commission_type, negotiated_commission_buy, negotiated_commission_rent, calculated_commission, is_locked } = contractData;
 
+    const displayPropertyId = property?.personal_property_id || (property?.id ? 'P' + property.id.substring(0, 5).toUpperCase() : '');
+
     const handlePrint = () => {
         window.print();
     };
@@ -625,6 +628,13 @@ function PresentationContractContent() {
                     
                     {/* Header: Title */}
                     <div className="text-center space-y-2 pb-6 border-b border-slate-800/60 print:border-slate-200">
+                        <div className="text-sm font-extrabold text-orange-500 uppercase tracking-widest print:text-orange-600">
+                            Real Estate Hub - www.imobum.com
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-semibold italic max-w-lg mx-auto print:text-slate-600 leading-normal">
+                            Primul Hub de Imobiliare Romanesc unde peste 200 de Brokeri Imobiliari lucreaza in colaborare pentru tine.
+                        </div>
+                        <div className="h-2" />
                         <h2 className="text-xl sm:text-2xl font-black text-white print:text-slate-900 tracking-tight">
                             CONTRACT DE VIZIONARE ȘI PRESTĂRI SERVICII IMOBILIARE
                         </h2>
@@ -745,6 +755,7 @@ function PresentationContractContent() {
                         {/* Selected Property details */}
                         <div className="party-info bg-slate-950 p-4 rounded-xl border border-slate-850 print:bg-slate-50 print:border-slate-200 text-xs">
                             <div className="font-bold text-white print:text-slate-900 mb-1">Identificare Imobil Prezentat:</div>
+                            <div><strong>ID Proprietate:</strong> {displayPropertyId}</div>
                             <div><strong>Denumire/Titlu:</strong> {property?.title || 'Proprietate înregistrată'}</div>
                             <div><strong>Adresă proprietate:</strong> {property?.address || 'Nespecificată'}</div>
                             <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-850/50 print:border-slate-200">
@@ -826,7 +837,7 @@ function PresentationContractContent() {
                                     clearLabel="Șterge"
                                     savedSignature={contractData.agent_signature}
                                     onSave={handleSaveAgentSignature}
-                                    isLocked={is_locked || !!contractData.agent_signature}
+                                    isLocked={is_locked}
                                 />
                             </div>
 
@@ -838,7 +849,7 @@ function PresentationContractContent() {
                                     clearLabel="Șterge"
                                     savedSignature={contractData.client_signature}
                                     onSave={handleSaveClientSignature}
-                                    isLocked={is_locked || !!contractData.client_signature}
+                                    isLocked={is_locked}
                                 />
                             </div>
                         </div>
