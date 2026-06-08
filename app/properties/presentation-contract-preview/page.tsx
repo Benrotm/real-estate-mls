@@ -628,51 +628,51 @@ function PresentationContractContent() {
                     
                     {/* Header: Title */}
                     <div className="text-center space-y-2 pb-6 border-b border-slate-800/60 print:border-slate-200">
-                        <div className="text-sm font-extrabold text-orange-500 uppercase tracking-widest print:text-orange-600">
+                        <div className="text-sm font-semibold text-orange-500 uppercase tracking-widest print:text-orange-600">
                             Real Estate Hub - www.imobum.com
                         </div>
-                        <div className="text-[11px] text-slate-400 font-semibold italic max-w-lg mx-auto print:text-slate-600 leading-normal">
+                        <div className="text-[11px] text-slate-400 italic max-w-lg mx-auto print:text-slate-600 leading-normal">
                             Primul Hub de Imobiliare Romanesc unde peste 200 de Brokeri Imobiliari lucreaza in colaborare pentru tine.
                         </div>
                         <div className="h-2" />
-                        <h2 className="text-xl sm:text-2xl font-black text-white print:text-slate-900 tracking-tight">
+                        <h2 className="text-xl sm:text-2xl font-semibold text-white print:text-slate-900 tracking-tight">
                             CONTRACT DE VIZIONARE ȘI PRESTĂRI SERVICII IMOBILIARE
                         </h2>
-                        <div className="text-xs font-bold text-slate-400 tracking-widest uppercase">
+                        <div className="text-xs font-normal text-slate-400 tracking-widest uppercase">
                             Seria {contractSerial} Nr. {contractNumber} din {dateFormatted}
                         </div>
                     </div>
 
                     {/* Parties Section */}
                     <div className="space-y-4">
-                        <h3 className="font-extrabold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
+                        <h3 className="font-semibold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
                             1. PĂRȚILE CONTRACTANTE
                         </h3>
 
                         {/* Party A: Broker/Agency */}
                         <div className="party-info bg-slate-950 p-5 rounded-2xl border border-slate-855 space-y-2 print:bg-slate-50 print:border-slate-200">
-                            <h4 className="font-bold text-white print:text-slate-900 text-xs uppercase tracking-wider text-orange-500">
+                            <h4 className="font-semibold text-orange-500 print:text-orange-600 text-xs uppercase tracking-wider">
                                 PRESTATOR (Agenția Imobiliară / Broker)
-</h4>
+                            </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                <div><strong>Denumire Societate:</strong> {agentProfile?.companyName || 'Nespecificat'}</div>
-                                <div><strong>Reprezentant Legal:</strong> {agentProfile?.companyRepresentative || agentProfile?.fullName || 'Nespecificat'}</div>
-                                <div><strong>CUI / CIF:</strong> {agentProfile?.companyCui || 'Nespecificat'}</div>
-                                <div><strong>Reg. Comerțului:</strong> {agentProfile?.companyRegCom || 'Nespecificat'}</div>
-                                <div className="sm:col-span-2"><strong>Sediu Social:</strong> {agentProfile?.companyAddress || 'Nespecificat'}</div>
-                                <div><strong>Telefon:</strong> {agentProfile?.phone}</div>
-                                <div><strong>Email:</strong> {agentProfile?.email}</div>
+                                <div><span className="text-slate-400">Denumire Societate:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{agentProfile?.companyName || 'Nespecificat'}</span></div>
+                                <div><span className="text-slate-400">Reprezentant Legal:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{agentProfile?.companyRepresentative || agentProfile?.fullName || 'Nespecificat'}</span></div>
+                                <div><span className="text-slate-400">CUI / CIF:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{agentProfile?.companyCui || 'Nespecificat'}</span></div>
+                                <div><span className="text-slate-400">Reg. Comerțului:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{agentProfile?.companyRegCom || 'Nespecificat'}</span></div>
+                                <div className="sm:col-span-2"><span className="text-slate-400">Sediu Social:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{agentProfile?.companyAddress || 'Nespecificat'}</span></div>
+                                <div><span className="text-slate-400">Telefon:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{agentProfile?.phone}</span></div>
+                                <div><span className="text-slate-400">Email:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{agentProfile?.email}</span></div>
                             </div>
                         </div>
 
                         {/* Party B: Client/Lead */}
                         <div className="party-info bg-slate-950 p-5 rounded-2xl border border-slate-855 space-y-4 print:bg-slate-50 print:border-slate-200">
                             <div className="flex justify-between items-center">
-                                <h4 className="font-bold text-white print:text-slate-900 text-xs uppercase tracking-wider text-orange-500">
+                                <h4 className="font-semibold text-orange-500 print:text-orange-600 text-xs uppercase tracking-wider">
                                     BENEFICIAR (Client / Cumpărător / Chiriaș)
                                 </h4>
                                 {!is_locked && (
-                                    <span className="text-[10px] bg-orange-600/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 no-print flex items-center gap-1">
+                                    <span className="text-[10px] bg-orange-600/10 text-orange-500 font-medium px-2 py-0.5 rounded border border-orange-500/20 no-print flex items-center gap-1">
                                         <AlertCircle className="w-3 h-3" /> Date Editabile
                                     </span>
                                 )}
@@ -680,24 +680,24 @@ function PresentationContractContent() {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                                 <div>
-                                    <strong className="block text-slate-400 mb-1">Nume Complet Client:</strong>
-                                    <span className="text-sm font-bold text-white print:text-slate-900">{clientProfile?.name}</span>
+                                    <span className="block text-slate-400 mb-1">Nume Complet Client:</span>
+                                    <span className="text-sm font-medium text-white print:text-slate-900">{clientProfile?.name}</span>
                                 </div>
                                 <div>
-                                    <strong className="block text-slate-400 mb-1">Telefon contact:</strong>
-                                    <span>{clientProfile?.phone || 'Fără telefon'}</span>
+                                    <span className="block text-slate-400 mb-1">Telefon contact:</span>
+                                    <span className="text-sm font-medium text-white print:text-slate-900">{clientProfile?.phone || 'Fără telefon'}</span>
                                 </div>
                                 <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-850/50 print:border-slate-200">
                                     {/* Document Type Dropdown */}
                                     <div className="space-y-1">
-                                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tip Document Identitate:</span>
+                                        <span className="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">Tip Document Identitate:</span>
                                         {is_locked ? (
-                                            <span className="text-sm font-bold text-white print:text-slate-900">{clientIdType}</span>
+                                            <span className="text-sm font-medium text-white print:text-slate-900">{clientIdType}</span>
                                         ) : (
                                             <select
                                                 value={clientIdType}
                                                 onChange={(e) => setClientIdType(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-850 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500 print:border-none print:bg-transparent print:p-0 print:font-bold print:text-slate-900"
+                                                className="w-full bg-slate-900 border border-slate-850 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500 print:border-none print:bg-transparent print:p-0 print:font-medium print:text-slate-900"
                                             >
                                                 <option value="C.I.">C.I. (Carte Identitate)</option>
                                                 <option value="Pasaport">Pașaport</option>
@@ -708,9 +708,9 @@ function PresentationContractContent() {
                                     </div>
                                     {/* Series/Number Input */}
                                     <div className="space-y-1">
-                                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">Serie și Nr. Buletin:</span>
+                                        <span className="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">Serie și Nr. Buletin:</span>
                                         {is_locked ? (
-                                            <span className="text-sm font-bold text-white print:text-slate-900">{clientIdSeries}</span>
+                                            <span className="text-sm font-medium text-white print:text-slate-900">{clientIdSeries}</span>
                                         ) : (
                                             <input
                                                 type="text"
@@ -718,15 +718,15 @@ function PresentationContractContent() {
                                                 value={clientIdSeries}
                                                 onChange={(e) => setClientIdSeries(e.target.value.toUpperCase())}
                                                 placeholder="Ex: AX 123456"
-                                                className="w-full bg-slate-900 border border-slate-850 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500 print:border-none print:bg-transparent print:p-0 print:font-bold print:text-slate-900"
+                                                className="w-full bg-slate-900 border border-slate-850 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500 print:border-none print:bg-transparent print:p-0 print:font-medium print:text-slate-900"
                                             />
                                         )}
                                     </div>
                                     {/* CNP Input */}
                                     <div className="space-y-1">
-                                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide">CNP (13 cifre):</span>
+                                        <span className="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">CNP (13 cifre):</span>
                                         {is_locked ? (
-                                            <span className="text-sm font-bold text-white print:text-slate-900">{clientCnp}</span>
+                                            <span className="text-sm font-medium text-white print:text-slate-900">{clientCnp}</span>
                                         ) : (
                                             <input
                                                 type="text"
@@ -734,7 +734,7 @@ function PresentationContractContent() {
                                                 value={clientCnp}
                                                 onChange={(e) => setClientCnp(e.target.value.replace(/\D/g, '').substring(0, 13))}
                                                 placeholder="Ex: 1901234567890"
-                                                className="w-full bg-slate-900 border border-slate-850 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500 print:border-none print:bg-transparent print:p-0 print:font-bold print:text-slate-900"
+                                                className="w-full bg-slate-900 border border-slate-850 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500 print:border-none print:bg-transparent print:p-0 print:font-medium print:text-slate-900"
                                             />
                                         )}
                                     </div>
@@ -745,7 +745,7 @@ function PresentationContractContent() {
 
                     {/* Object Section */}
                     <div className="space-y-3">
-                        <h3 className="font-extrabold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
+                        <h3 className="font-semibold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
                             2. OBIECTUL CONTRACTULUI
                         </h3>
                         <p className="text-justify text-xs text-slate-300 print:text-slate-700 leading-normal">
@@ -753,21 +753,21 @@ function PresentationContractContent() {
                         </p>
                         
                         {/* Selected Property details */}
-                        <div className="party-info bg-slate-950 p-4 rounded-xl border border-slate-850 print:bg-slate-50 print:border-slate-200 text-xs">
-                            <div className="font-bold text-white print:text-slate-900 mb-1">Identificare Imobil Prezentat:</div>
-                            <div><strong>ID Proprietate:</strong> {displayPropertyId}</div>
-                            <div><strong>Denumire/Titlu:</strong> {property?.title || 'Proprietate înregistrată'}</div>
-                            <div><strong>Adresă proprietate:</strong> {property?.address || 'Nespecificată'}</div>
+                        <div className="party-info bg-slate-950 p-4 rounded-xl border border-slate-850 print:bg-slate-50 print:border-slate-200 text-xs space-y-1">
+                            <div className="font-semibold text-white print:text-slate-900 mb-1.5">Identificare Imobil Prezentat:</div>
+                            <div><span className="text-slate-400">ID Proprietate:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{displayPropertyId}</span></div>
+                            <div><span className="text-slate-400">Denumire/Titlu:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{property?.title || 'Proprietate înregistrată'}</span></div>
+                            <div><span className="text-slate-400">Adresă proprietate:</span> <span className="text-slate-200 print:text-slate-800 font-normal">{property?.address || 'Nespecificată'}</span></div>
                             <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-850/50 print:border-slate-200">
-                                <span><strong>Preț promovare proprietate:</strong></span>
-                                <span className="font-black text-sm text-white print:text-slate-900">{formatEUR(property_price)}</span>
+                                <span className="text-slate-400">Preț promovare proprietate:</span>
+                                <span className="font-semibold text-sm text-white print:text-slate-900">{formatEUR(property_price)}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Commissions Section */}
                     <div className="space-y-3">
-                        <h3 className="font-extrabold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
+                        <h3 className="font-semibold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
                             3. COMISIOANE ȘI MODALITATE DE PLATĂ
                         </h3>
                         <p className="text-justify text-xs text-slate-300 print:text-slate-700 leading-normal">
@@ -776,21 +776,21 @@ function PresentationContractContent() {
                         
                         <div className="bg-slate-950 p-4 border border-slate-850 rounded-xl print:bg-slate-50 print:border-slate-200 grid grid-cols-2 gap-4 text-xs">
                             <div>
-                                <strong className="text-slate-400 block">Comision Cumpărare Negociat:</strong>
-                                <span className="text-sm font-bold text-white print:text-slate-900">
+                                <span className="text-slate-400 block mb-1">Comision Cumpărare Negociat:</span>
+                                <span className="text-sm font-medium text-white print:text-slate-900">
                                     {negotiated_commission_type === 'percent' ? `${negotiated_commission_buy}% din valoarea tranzacției` : formatEUR(negotiated_commission_buy)}
                                 </span>
                             </div>
                             <div>
-                                <strong className="text-slate-400 block">Comision Închiriere Negociat:</strong>
-                                <span className="text-sm font-bold text-white print:text-slate-900">
+                                <span className="text-slate-400 block mb-1">Comision Închiriere Negociat:</span>
+                                <span className="text-sm font-medium text-white print:text-slate-900">
                                     {negotiated_commission_type === 'percent' ? `${negotiated_commission_rent}% din chiria pe o lună` : formatEUR(negotiated_commission_rent)}
                                 </span>
                             </div>
                             {calculated_commission > 0 && (
                                 <div className="col-span-2 pt-2 border-t border-slate-850/50 print:border-slate-200 flex justify-between items-center">
-                                    <strong className="text-orange-500">Valoare Estimată Comision (la prețul de listă):</strong>
-                                    <span className="font-black text-sm text-orange-500 print:text-slate-900">{formatEUR(calculated_commission)}</span>
+                                    <span className="text-orange-500">Valoare Estimată Comision (la prețul de listă):</span>
+                                    <span className="font-semibold text-sm text-orange-500 print:text-slate-900">{formatEUR(calculated_commission)}</span>
                                 </div>
                             )}
                         </div>
@@ -801,20 +801,20 @@ function PresentationContractContent() {
 
                     {/* Rights & Broker Protection Section */}
                     <div className="space-y-2">
-                        <h3 className="font-extrabold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
+                        <h3 className="font-semibold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
                             4. PROTECȚIA PRESTATORULUI ȘI OBLIGAȚII CLIENT
                         </h3>
                         <p className="text-justify text-xs text-slate-300 print:text-slate-700 leading-normal">
                             4.1. Beneficiarul se obligă să nu contacteze direct proprietarul imobilului prezentat și să nu divulge nicio informație despre imobil (adresă, proprietar, număr de telefon) către terțe persoane fără acordul scris prealabil al Prestatorului.
                         </p>
                         <p className="text-justify text-xs text-slate-300 print:text-slate-700 leading-normal">
-                            4.2. **Clauză penală:** În cazul în care Beneficiarul achiziționează/închiriază imobilul prezentat, direct sau prin interpuși, ocolind Prestatorul pentru a evita plata comisionului, Beneficiarul va datora Prestatorului cu titlu de daune interese o sumă egală cu dublul comisionului negociat în prezentul contract, calculate la valoarea tranzacției realizate sau la prețul de listă.
+                            4.2. <span className="font-semibold text-white print:text-slate-900">Clauză penală:</span> În cazul în care Beneficiarul achiziționează/închiriază imobilul prezentat, direct sau prin interpuși, ocolind Prestatorul pentru a evita plata comisionului, Beneficiarul va datora Prestatorului cu titlu de daune interese o sumă egală cu dublul comisionului negociat în prezentul contract, calculate la valoarea tranzacției realizate sau la prețul de listă.
                         </p>
                     </div>
 
                     {/* GDPR Section */}
                     <div className="space-y-2">
-                        <h3 className="font-extrabold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
+                        <h3 className="font-semibold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
                             5. GDPR (PROTECȚIA DATELOR CU CARACTER PERSONAL)
                         </h3>
                         <p className="text-justify text-xs text-slate-300 print:text-slate-700 leading-normal">
@@ -824,7 +824,7 @@ function PresentationContractContent() {
 
                     {/* Signatures Section */}
                     <div className="space-y-4 pt-6 border-t border-slate-800 print:border-slate-200">
-                        <h3 className="font-extrabold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
+                        <h3 className="font-semibold text-white print:text-slate-900 text-base border-l-4 border-orange-500 pl-2">
                             6. SEMNĂTURILE PĂRȚILOR
                         </h3>
 
