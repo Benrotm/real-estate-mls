@@ -361,7 +361,7 @@ function PresentationContractContent() {
 
     const { agentProfile, clientProfile, contractSerial, contractNumber, created_at, status, property, property_price, negotiated_commission_type, negotiated_commission_buy, negotiated_commission_rent, calculated_commission, is_locked } = contractData;
 
-    const displayPropertyId = property?.personal_property_id || (property?.id ? 'P' + property.id.substring(0, 5).toUpperCase() : '');
+    const displayPropertyId = property?.friendly_id || property?.personal_property_id || (property?.id ? 'P' + property.id.substring(0, 5).toUpperCase() : '');
 
     const handlePrint = () => {
         window.print();

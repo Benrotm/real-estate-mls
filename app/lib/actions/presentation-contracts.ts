@@ -245,7 +245,7 @@ export async function getPresentationContract(id: string) {
     if (data.property_id) {
         const { data: propData } = await supabase
             .from('properties')
-            .select('title, address, personal_property_id, price, currency')
+            .select('id, title, address, friendly_id, personal_property_id, price, currency')
             .eq('id', data.property_id)
             .maybeSingle();
         if (propData) {
