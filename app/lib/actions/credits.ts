@@ -670,5 +670,130 @@ export async function unlockContact(propertyId: string, propertyTitle: string) {
     };
 }
 
+export async function checkMarketInsightsUnlock() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { unlocked: false, loggedIn: false };
+
+    const { data: txn, error } = await supabase
+        .from('credit_transactions')
+        .select('id')
+        .eq('user_id', user.id)
+        .contains('metadata', { feature_key: 'unlock_market_insights' })
+        .limit(1);
+
+    if (error) {
+        console.error('Error checking market insights unlock:', error);
+        return { unlocked: false, loggedIn: true, error: error.message };
+    }
+
+    return { unlocked: txn && txn.length > 0, loggedIn: true };
+}
+
+export async function unlockMarketInsights() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (settingsData?.setting_value as Record<string, number>) || {};
+    const cost = costsMap['unlock_market_insights'] !== undefined ? costsMap['unlock_market_insights'] : 20;
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile) return { error: 'Profile not found' };
+
+    const currentCredits = profile.credits || 0;
+    if (currentCredits < cost) {
+        return { error: 'Fonduri insuficiente', insufficient: true, cost };
+    }
+
+    const res = await deductUserCredits(
+        cost,
+        `Deblocare ACP Market Insights`,
+        { feature_key: 'unlock_market_insights' }
+    );
+
+    if (res.error) {
+        return { error: res.error, insufficient: res.insufficient };
+    }
+
+    return { 
+        success: true, 
+        cost, 
+        remaining: res.remaining
+    };
+}
+
+export async function upgradeToAgencyAccount() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (settingsData?.setting_value as Record<string, number>) || {};
+    const cost = costsMap['upgrade_agency_cost'] !== undefined ? costsMap['upgrade_agency_cost'] : 500;
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits, plan_tier')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile) return { error: 'Profile not found' };
+    if (profile.plan_tier === 'enterprise') {
+        return { error: 'Ai deja un cont de tip Agency' };
+    }
+
+    const currentCredits = profile.credits || 0;
+    if (currentCredits < cost) {
+        return { error: 'Fonduri insuficiente', insufficient: true, cost };
+    }
+
+    const res = await deductUserCredits(
+        cost,
+        `Upgrade la cont Agency`,
+        { feature_key: 'upgrade_agency_account' }
+    );
+
+    if (res.error) {
+        return { error: res.error, insufficient: res.insufficient };
+    }
+
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+            plan_tier: 'enterprise',
+            listings_limit: 500,
+            featured_limit: 250
+        })
+        .eq('id', user.id);
+
+    if (updateError) {
+        console.error('Error upgrading plan_tier:', updateError);
+        return { error: updateError.message };
+    }
+
+    return { 
+        success: true, 
+        cost, 
+        remaining: res.remaining
+    };
+}
+
 
 

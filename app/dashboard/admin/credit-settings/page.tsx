@@ -234,6 +234,42 @@ export default function CreditSettingsPage() {
                     </div>
                 </section>
 
+                {/* Advanced Feature Upgrades Section */}
+                <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 border-b border-slate-800 pb-4">
+                        <Settings className="text-yellow-500" /> Advanced Feature Upgrades
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Cost Deblocare ACP Market Insights</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['unlock_market_insights'] !== undefined ? costs['unlock_market_insights'] : 20}
+                                    onChange={(e) => handleChange('unlock_market_insights', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Cost Upgrade la cont Agency</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['upgrade_agency_cost'] !== undefined ? costs['upgrade_agency_cost'] : 500}
+                                    onChange={(e) => handleChange('upgrade_agency_cost', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {/* Portal Export Features Section */}
                 <section className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
                     <h2 className="text-xl font-bold mb-6 flex items-center gap-2 border-b border-slate-800 pb-4">

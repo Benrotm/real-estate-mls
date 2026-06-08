@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '../context/LanguageContext';
-import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X, Hammer, Calculator } from 'lucide-react';
+import { User, Menu, Home, Plus, Globe, ChevronDown, Settings, LogOut, Shield, X, Hammer, Calculator, Sparkles, Loader2, Coins } from 'lucide-react';
 import { SERVICES } from '../lib/services';
 import { UserProfile } from '../lib/auth';
 import NotificationBell from './notifications/NotificationBell';
+import { upgradeToAgencyAccount } from '@/app/lib/actions/credits';
+import { getFeatureCosts } from '@/app/lib/actions/settings';
 
 interface NavbarProps {
   user: UserProfile | null;
@@ -19,6 +21,41 @@ export default function Navbar({ user }: NavbarProps) {
   const userRole = user?.role;
   const isSuperAdmin = userRole === 'super_admin';
   const pathname = usePathname();
+  const router = useRouter();
+  const [agencyCost, setAgencyCost] = useState<number>(500);
+  const [loadingCost, setLoadingCost] = useState<boolean>(true);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      getFeatureCosts().then(res => {
+        if (res && res.costs && res.costs['upgrade_agency_cost'] !== undefined) {
+          setAgencyCost(res.costs['upgrade_agency_cost']);
+        }
+        setLoadingCost(false);
+      }).catch(err => {
+        console.error('Error fetching upgrade agency cost:', err);
+        setLoadingCost(false);
+      });
+    }
+  }, [isLoggedIn]);
+
+  const handleUpgradeToAgency = async () => {
+    if (!confirm(`Sunteți sigur că doriți să faceți upgrade la contul Agency pentru ${agencyCost} credite?`)) {
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await upgradeToAgencyAccount();
+      if (res.success) {
+        alert('Contul tău a fost promovat la Agency cu succes!');
+        setIsUserMenuOpen(false);
+        window.location.reload();
+      } else {
+        alert(`Eroare: ${res.error}`);
+      }
+    });
+  };
 
   const { language, setLanguage } = useLanguage();
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -255,6 +292,22 @@ export default function Navbar({ user }: NavbarProps) {
                           <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                             <div className="w-5"><Settings className="w-4 h-4" /></div> Profile
                           </Link>
+                          {user?.plan_tier !== 'enterprise' && (
+                            <button
+                              onClick={handleUpgradeToAgency}
+                              disabled={isPending || loadingCost}
+                              className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-bold text-orange-600 hover:text-orange-700 disabled:opacity-50 transition-colors cursor-pointer"
+                            >
+                              <div className="w-5">
+                                {isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-4 h-4 text-orange-500 animate-pulse" />
+                                )}
+                              </div>
+                              {loadingCost ? 'Loading...' : `Upgrade to Agency account (${agencyCost} CR)`}
+                            </button>
+                          )}
                           <form action="/auth/signout" method="post">
                             <button className="w-full text-left px-4 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm font-bold text-red-500">
                               <div className="w-5"><LogOut className="w-4 h-4" /></div> Logout
