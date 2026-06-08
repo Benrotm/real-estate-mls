@@ -52,13 +52,25 @@ export async function createPresentationContract(input: PresentationContractInpu
         };
 
         // 2. Fetch lead details (trying standard query first to check ownership/access)
+        let resolvedLeadId = input.leadId.trim().replace(/^(id\s*:\s*)+/i, '').trim();
+        const validIdRegex = /^[0-9a-f-]{8,36}$/i;
+        if (validIdRegex.test(resolvedLeadId)) {
+            const { createAdminClient } = await import('@/app/lib/supabase/admin');
+            const adminSupabase = createAdminClient();
+            const { data: rpcResolved } = await adminSupabase
+                .rpc('get_lead_id_by_short_id', { short_id: resolvedLeadId });
+            if (rpcResolved) {
+                resolvedLeadId = rpcResolved;
+            }
+        }
+
         let lead = null;
         let hasAccess = false;
 
         const { data: userLead } = await supabase
             .from('leads')
             .select('*')
-            .eq('id', input.leadId)
+            .eq('id', resolvedLeadId)
             .maybeSingle();
 
         if (userLead) {
@@ -71,7 +83,7 @@ export async function createPresentationContract(input: PresentationContractInpu
             const { data: adminLead } = await adminSupabase
                 .from('leads')
                 .select('*')
-                .eq('id', input.leadId)
+                .eq('id', resolvedLeadId)
                 .maybeSingle();
 
             if (adminLead) {
@@ -599,18 +611,32 @@ export async function verifyLeadForContract(leadId: string) {
         return { success: false, error: 'Unauthorized' };
     }
 
-    // UUID validation
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(leadId)) {
-        return { success: false, exists: false, error: 'Format ID invalid' };
+    const cleanLeadId = leadId.trim().replace(/^(id\s*:\s*)+/i, '').trim();
+    // Validate character format (alphanumeric hex digits and dashes, length 8 to 36)
+    const validIdRegex = /^[0-9a-f-]{8,36}$/i;
+    if (!validIdRegex.test(cleanLeadId)) {
+        return { success: false, exists: false, error: 'Format ID invalid. Vă rugăm introduceți un ID de minim 8 caractere hexazecimale.' };
     }
 
     try {
+        const { createAdminClient } = await import('@/app/lib/supabase/admin');
+        const adminSupabase = createAdminClient();
+
+        // Resolve the short ID or full ID to the database UUID using get_lead_id_by_short_id
+        const { data: resolvedUuid, error: rpcError } = await adminSupabase
+            .rpc('get_lead_id_by_short_id', { short_id: cleanLeadId });
+
+        if (rpcError || !resolvedUuid) {
+            return { success: true, exists: false };
+        }
+
+        const fullUuid = resolvedUuid;
+
         // 1. Try to fetch lead using the user's standard client (respects RLS)
         const { data: lead } = await supabase
             .from('leads')
             .select('*')
-            .eq('id', leadId)
+            .eq('id', fullUuid)
             .maybeSingle();
 
         if (lead) {
@@ -618,22 +644,8 @@ export async function verifyLeadForContract(leadId: string) {
             return { success: true, exists: true, hasAccess: true, lead };
         }
 
-        // 2. If standard query returned nothing, check if the lead exists using the admin client (bypasses RLS)
-        const { createAdminClient } = await import('@/app/lib/supabase/admin');
-        const adminSupabase = createAdminClient();
-        
-        const { data: adminLead } = await adminSupabase
-            .from('leads')
-            .select('id')
-            .eq('id', leadId)
-            .maybeSingle();
-
-        if (adminLead) {
-            // Lead exists in database, but user doesn't own/have access to it
-            return { success: true, exists: true, hasAccess: false };
-        }
-
-        return { success: true, exists: false };
+        // 2. If standard query returned nothing, it exists but is hidden (belongs to another agent/team)
+        return { success: true, exists: true, hasAccess: false, leadId: fullUuid };
     } catch (err: any) {
         console.error("Error verifying lead for contract:", err);
         return { success: false, error: err.message };

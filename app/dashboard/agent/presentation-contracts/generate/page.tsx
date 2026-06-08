@@ -44,21 +44,27 @@ function ContractGeneratorForm() {
     }, [selectionMode]);
 
     const handleVerifyLead = async () => {
-        if (!manualLeadId.trim()) return;
+        const cleanedInput = manualLeadId.trim().replace(/^(id\s*:\s*)+/i, '').trim();
+        if (!cleanedInput) return;
+        
+        // Update input field state to show the cleaned hex ID/UUID
+        setManualLeadId(cleanedInput);
+        
         setVerifyingLead(true);
         setVerificationStatus('verifying');
         
         try {
-            const res = await verifyLeadForContract(manualLeadId.trim());
+            const res = await verifyLeadForContract(cleanedInput);
             if (res.success && res.exists) {
-                if (res.hasAccess) {
+                if (res.hasAccess && res.lead) {
                     setVerificationStatus('valid_accessible');
-                    setSelectedLead(res.lead || null);
-                    setSelectedLeadId(manualLeadId.trim());
+                    setSelectedLead(res.lead);
+                    setSelectedLeadId(res.lead.id);
                 } else {
                     setVerificationStatus('valid_hidden');
+                    const resolvedId = res.leadId || cleanedInput;
                     setSelectedLead({
-                        id: manualLeadId.trim(),
+                        id: resolvedId,
                         name: 'Client (Date ascunse)',
                         phone: '',
                         email: '',
@@ -67,7 +73,7 @@ function ContractGeneratorForm() {
                         cnp: '',
                         isHidden: true
                     });
-                    setSelectedLeadId(manualLeadId.trim());
+                    setSelectedLeadId(resolvedId);
                 }
             } else {
                 setVerificationStatus('invalid');
@@ -277,14 +283,19 @@ function ContractGeneratorForm() {
                                 <div className="space-y-4">
                                     <div className="space-y-1.5">
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                            ID Lead (UUID)
+                                            ID Lead (UUID sau ID Scurt)
                                         </label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
-                                                placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+                                                placeholder="e.g. 74d548bb sau 550e8400-e29b-41d4-a716-446655440000"
                                                 value={manualLeadId}
-                                                onChange={(e) => setManualLeadId(e.target.value)}
+                                                onChange={(e) => {
+                                                    setManualLeadId(e.target.value);
+                                                    if (verificationStatus !== 'idle') {
+                                                        setVerificationStatus('idle');
+                                                    }
+                                                }}
                                                 className="flex-1 px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium text-sm"
                                             />
                                             <button
@@ -300,6 +311,9 @@ function ContractGeneratorForm() {
                                                 )}
                                             </button>
                                         </div>
+                                        <p className="text-[10px] text-slate-400 font-medium">
+                                            Introduceți ID-ul scurt (ex: 74d548bb) sau UUID-ul complet. Sunt acceptate și prefixe de tipul "ID: 74d548bb".
+                                        </p>
                                     </div>
 
                                     {/* Verification Status Messages */}
@@ -321,7 +335,7 @@ function ContractGeneratorForm() {
                                     )}
                                     {verificationStatus === 'invalid' && (
                                         <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-medium">
-                                            ✗ ID Lead invalid sau inexistent în baza de date. Verificați UUID-ul introdus.
+                                            ✗ ID Lead invalid sau inexistent în baza de date. Verificați ID-ul/UUID-ul introdus.
                                         </div>
                                     )}
                                 </div>
