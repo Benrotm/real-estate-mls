@@ -25,6 +25,7 @@ import { getAuctionForProperty } from "@/app/lib/actions/auctions";
 import AuctionWidget from "@/app/components/property/AuctionWidget";
 import RevealContactWidget from '@/app/components/property/RevealContactWidget';
 import { checkContactUnlock } from '@/app/lib/actions/credits';
+import { getPresentationContractsForProperty } from '@/app/lib/actions/presentation-contracts';
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
@@ -61,6 +62,7 @@ export default async function PropertyDetailPage({
     let user = null;
     let userRole = null;
     let collaborationContract = null;
+    let presentationContracts: any[] = [];
     let analytics: { views: number; favorites: number; inquiries: number; offers: number; shares: number; createdAt: string | null } = { views: 0, favorites: 0, inquiries: 0, offers: 0, shares: 0, createdAt: null };
     let propertyEvents: any[] = [];
     let showMakeOffer = false;
@@ -276,6 +278,14 @@ export default async function PropertyDetailPage({
                 .maybeSingle();
             collaborationContract = contractData;
         }
+
+        // Fetch presentation contracts if uuid is valid and user is logged in
+        if (isUuid && property && user) {
+            const res = await getPresentationContractsForProperty(property.id);
+            if (res.success && res.contracts) {
+                presentationContracts = res.contracts;
+            }
+        }
     } catch (err) {
         console.error("Critical error in PropertyDetailPage:", err);
     }
@@ -450,6 +460,17 @@ export default async function PropertyDetailPage({
                                             <Edit3 className="w-4 h-4 text-violet-400" />
                                             <span>EDIT PROPERTY</span>
                                         </Link>
+
+                                        {/* Generate Presentation Contract (Fișă de vizionare) */}
+                                        {['agent', 'agency', 'developer', 'admin', 'super_admin', 'superadmin'].includes(userRole || '') && (
+                                            <Link
+                                                href={`/dashboard/agent/presentation-contracts/generate?property_id=${property.id}`}
+                                                className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2 shadow-lg shadow-emerald-500/10"
+                                            >
+                                                <FileText className="w-4 h-4 text-emerald-200" />
+                                                <span>GENERATE PRESENTATION CONTRACT</span>
+                                            </Link>
+                                        )}
 
                                         {/* Generate / View Collaboration Contract */}
                                         {collaborationContract ? (
@@ -928,6 +949,9 @@ export default async function PropertyDetailPage({
                         createdAt={analytics.createdAt}
                         price={property.price}
                         area={property.area_usable || property.area_built}
+                        presentationContracts={presentationContracts}
+                        propertyId={property.id}
+                        userRole={userRole}
                     />
 
                     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm sticky top-24">

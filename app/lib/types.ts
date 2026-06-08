@@ -7,6 +7,9 @@ export interface LeadData {
     status: string;
     source?: string;
     notes?: string;
+    id_document_type?: string;
+    id_series_number?: string;
+    cnp?: string;
 
     preference_type?: string;
     preference_listing_type?: string;

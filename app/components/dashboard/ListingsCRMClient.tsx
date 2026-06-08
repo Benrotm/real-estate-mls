@@ -25,7 +25,7 @@ import {
     Award, MessageSquare, Trash2, Zap, User, Phone,
     Mail, AlertCircle, Info, Users, Smartphone, Send,
     Activity, Loader2, Gavel, Sparkles, ArrowRight, Lock,
-    Coins, Trophy, HelpCircle
+    Coins, Trophy, HelpCircle, FileText
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -911,6 +911,13 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                             title="View property"
                         >
                             <ExternalLink className="w-4 h-4" />
+                        </Link>
+                        <Link
+                            href={`/dashboard/agent/presentation-contracts/generate?property_id=${property.id}`}
+                            className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                            title="Contract de vizionare"
+                        >
+                            <FileText className="w-4 h-4" />
                         </Link>
                         <Link
                             href={`/dashboard/owner/properties/${property.id}/edit`}

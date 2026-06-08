@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Calendar, Heart, MessageCircle, DollarSign, Share2, Calculator } from 'lucide-react';
+import { Eye, Calendar, Heart, MessageCircle, DollarSign, Share2, Calculator, Plus, ExternalLink, FileText } from 'lucide-react';
 
 interface PropertyAnalyticsWidgetProps {
     views: number;
@@ -11,6 +11,9 @@ interface PropertyAnalyticsWidgetProps {
     createdAt: string | null;
     price?: number;
     area?: number | null;
+    presentationContracts?: any[];
+    propertyId?: string;
+    userRole?: string | null;
 }
 
 export default function PropertyAnalyticsWidget({
@@ -21,7 +24,10 @@ export default function PropertyAnalyticsWidget({
     shares,
     createdAt,
     price,
-    area
+    area,
+    presentationContracts = [],
+    propertyId,
+    userRole
 }: PropertyAnalyticsWidgetProps) {
     const formatDate = (dateStr: string | null) => {
         if (!dateStr) return 'N/A';
@@ -93,6 +99,69 @@ export default function PropertyAnalyticsWidget({
                     </div>
                 ))}
             </div>
+
+            {/* Presentation Contracts Section (Insights for Agent/Admin) */}
+            {['agent', 'agency', 'developer', 'admin', 'super_admin', 'superadmin'].includes(userRole || '') && (
+                <div className="mt-6 pt-6 border-t border-slate-250/80 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <FileText className="w-4 h-4 text-orange-500" />
+                            Vizionări ({presentationContracts.length})
+                        </h4>
+                        {propertyId && (
+                            <a
+                                href={`/dashboard/agent/presentation-contracts/generate?property_id=${propertyId}`}
+                                className="text-[10px] font-bold text-orange-600 hover:text-orange-750 bg-orange-50 hover:bg-orange-100/60 px-2.5 py-1.5 rounded-lg border border-orange-200 transition-all flex items-center gap-1 shadow-sm"
+                            >
+                                <Plus className="w-3.5 h-3.5" /> Contract nou
+                            </a>
+                        )}
+                    </div>
+
+                    {presentationContracts.length > 0 ? (
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            {presentationContracts.map((c: any) => {
+                                const isSigned = c.status === 'signed';
+                                return (
+                                    <div
+                                        key={c.id}
+                                        className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs hover:border-slate-200 transition-all"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <div className="font-bold text-slate-800 truncate max-w-[140px]">
+                                                {c.client_details?.name || 'Client'}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 font-mono">
+                                                {c.contract_serial}/{c.contract_number}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] uppercase border ${
+                                                isSigned
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                    : 'bg-amber-50 text-amber-700 border-amber-100'
+                                            }`}>
+                                                {isSigned ? 'Semnat' : 'Trimis'}
+                                            </span>
+                                            <a
+                                                href={`/properties/presentation-contract-preview?id=${c.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-slate-500 transition-colors"
+                                                title="Deschide contract"
+                                            >
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                            </a>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-slate-400 italic">Nu s-a generat niciun contract de vizionare.</p>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

@@ -47,6 +47,9 @@ const DEFAULT_FORM_DATA: LeadData = {
     name: '',
     email: '',
     phone: '',
+    id_document_type: 'C.I.',
+    id_series_number: '',
+    cnp: '',
     status: 'new',
     source: '',
     notes: '',
@@ -262,6 +265,34 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             <div className="md:col-span-2">
                                 <label className={labelClass}>Source</label>
                                 <input type="text" name="source" placeholder="e.g. Website, Walk-in, Referral" value={formData.source || ''} onChange={handleChange} className={inputClass} />
+                            </div>
+
+                            {/* Presentation Contract Verification Fields */}
+                            <div className="md:col-span-2 mt-4 pt-4 border-t border-slate-100">
+                                <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    🪪 Date Identitate Cumpărător / Chiriaș (Contract de Vizionare)
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className={labelClass}>Tip Document Identitate</label>
+                                        <div className="relative">
+                                            <select name="id_document_type" value={formData.id_document_type || 'C.I.'} onChange={handleChange} className={selectClass}>
+                                                <option value="C.I.">Carte de Identitate (C.I.)</option>
+                                                <option value="Pasaport">Pașaport</option>
+                                                <option value="NIF">NIF / NIF CIF</option>
+                                                <option value="Altele">Altele</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className={labelClass}>Serie și Număr Act</label>
+                                        <input type="text" name="id_series_number" value={formData.id_series_number || ''} onChange={handleChange} className={inputClass} placeholder="Ex: AX 123456" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className={labelClass}>Cod Numeric Personal (CNP)</label>
+                                        <input type="text" name="cnp" value={formData.cnp || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 1900101......" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

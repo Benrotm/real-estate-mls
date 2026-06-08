@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert, History } from 'lucide-react';
+import { Bell, LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert, History, FileText } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -162,6 +162,7 @@ export default function DashboardClient({
         { name: 'My Properties', icon: Home, href: '/dashboard/admin/my-properties' },
         { name: 'All Properties', icon: Building, href: '/dashboard/admin/properties' },
         { name: 'Contract Deletions', icon: ShieldAlert, href: '/dashboard/admin/contract-deletions' },
+        { name: 'Presentation Contracts', icon: FileText, href: '/dashboard/admin/presentation-contracts' },
         { name: 'AI Studio', icon: Wand2, href: '/dashboard/admin/ai-staging' },
         { name: 'All Virtual Tours', icon: Globe, href: '/dashboard/admin/tours' },
         { name: 'Tour Maker', icon: Camera, href: '/dashboard/owner/tours' },
@@ -203,6 +204,7 @@ export default function DashboardClient({
         { name: 'Leads & CRM', icon: Users, href: '/dashboard/agent/leads' },
         { name: 'Pipeline', icon: BarChart2, href: '/dashboard/agent/pipeline' },
         { name: 'Collaboration Contracts', icon: CopyCheck, href: '/dashboard/agent/collaboration-contracts' },
+        { name: 'Presentation Contracts', icon: FileText, href: '/dashboard/agent/presentation-contracts' },
         ...(hasFeature(SYSTEM_FEATURES.AI_STUDIO) ? [{ name: 'AI Studio', icon: Wand2, href: '/dashboard/agent/ai-staging' }] : []),
         { name: 'Valuation Reports', icon: BarChart2, href: '/dashboard/agent/valuation' },
         { name: 'ACP Market Insights', icon: Briefcase, href: '/dashboard/agent/market' },
