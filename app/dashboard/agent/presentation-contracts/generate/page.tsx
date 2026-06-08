@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { createPresentationContract } from '@/app/lib/actions/presentation-contracts';
+import { createPresentationContract, verifyLeadForContract } from '@/app/lib/actions/presentation-contracts';
 import { fetchLeads } from '@/app/lib/actions/leads';
 import { supabase } from '@/app/lib/supabase/client';
 import { FileText, ArrowLeft, Loader2, Sparkles, DollarSign, Calculator, HelpCircle } from 'lucide-react';
@@ -22,6 +22,11 @@ function ContractGeneratorForm() {
     const [selectedLeadId, setSelectedLeadId] = useState('');
     const [selectedLead, setSelectedLead] = useState<any>(null);
     
+    const [selectionMode, setSelectionMode] = useState<'select' | 'manual'>('select');
+    const [manualLeadId, setManualLeadId] = useState('');
+    const [verifyingLead, setVerifyingLead] = useState(false);
+    const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'valid_accessible' | 'valid_hidden' | 'invalid'>('idle');
+
     const [commType, setCommType] = useState<'percent' | 'fixed'>('percent');
     const [buyComm, setBuyComm] = useState<number>(2.00); // 2% default buy commission
     const [rentComm, setRentComm] = useState<number>(50.00); // 50% default rent commission (half a month)
@@ -29,6 +34,55 @@ function ContractGeneratorForm() {
     
     const [contractNumber, setContractNumber] = useState('');
     const [contractSerial, setContractSerial] = useState('VZN');
+
+    // Reset lead selections when selection mode changes
+    useEffect(() => {
+        setSelectedLeadId('');
+        setSelectedLead(null);
+        setManualLeadId('');
+        setVerificationStatus('idle');
+    }, [selectionMode]);
+
+    const handleVerifyLead = async () => {
+        if (!manualLeadId.trim()) return;
+        setVerifyingLead(true);
+        setVerificationStatus('verifying');
+        
+        try {
+            const res = await verifyLeadForContract(manualLeadId.trim());
+            if (res.success && res.exists) {
+                if (res.hasAccess) {
+                    setVerificationStatus('valid_accessible');
+                    setSelectedLead(res.lead || null);
+                    setSelectedLeadId(manualLeadId.trim());
+                } else {
+                    setVerificationStatus('valid_hidden');
+                    setSelectedLead({
+                        id: manualLeadId.trim(),
+                        name: 'Client (Date ascunse)',
+                        phone: '',
+                        email: '',
+                        id_document_type: '',
+                        id_series_number: '',
+                        cnp: '',
+                        isHidden: true
+                    });
+                    setSelectedLeadId(manualLeadId.trim());
+                }
+            } else {
+                setVerificationStatus('invalid');
+                setSelectedLead(null);
+                setSelectedLeadId('');
+            }
+        } catch (e) {
+            console.error(e);
+            setVerificationStatus('invalid');
+            setSelectedLead(null);
+            setSelectedLeadId('');
+        } finally {
+            setVerifyingLead(false);
+        }
+    };
 
     // Load property details and leads list
     useEffect(() => {
@@ -73,13 +127,15 @@ function ContractGeneratorForm() {
 
     // Handle lead selection changes
     useEffect(() => {
-        if (selectedLeadId) {
-            const leadObj = leads.find(l => l.id === selectedLeadId);
-            setSelectedLead(leadObj || null);
-        } else {
-            setSelectedLead(null);
+        if (selectionMode === 'select') {
+            if (selectedLeadId) {
+                const leadObj = leads.find(l => l.id === selectedLeadId);
+                setSelectedLead(leadObj || null);
+            } else {
+                setSelectedLead(null);
+            }
         }
-    }, [selectedLeadId, leads]);
+    }, [selectedLeadId, leads, selectionMode]);
 
     // Calculate commission dynamically
     useEffect(() => {
@@ -191,38 +247,126 @@ function ContractGeneratorForm() {
                             👤 Selectează Clientul (Lead-ul)
                         </h3>
 
+                        <div className="flex gap-2 p-1 bg-slate-50 border border-slate-200 rounded-xl mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setSelectionMode('select')}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                                    selectionMode === 'select'
+                                        ? 'bg-slate-900 text-white shadow'
+                                        : 'text-slate-500 hover:bg-slate-100'
+                                }`}
+                            >
+                                Selectează din CRM
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSelectionMode('manual')}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                                    selectionMode === 'manual'
+                                        ? 'bg-slate-900 text-white shadow'
+                                        : 'text-slate-500 hover:bg-slate-100'
+                                }`}
+                            >
+                                Introdu ID Lead Manual
+                            </button>
+                        </div>
+
                         <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    Alege Client
-                                </label>
-                                <select
-                                    required
-                                    value={selectedLeadId}
-                                    onChange={(e) => setSelectedLeadId(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium cursor-pointer"
-                                >
-                                    <option value="">-- Alege un client din CRM --</option>
-                                    {leads.map(l => (
-                                        <option key={l.id} value={l.id}>
-                                            {l.name} {l.phone ? `(${l.phone})` : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {selectionMode === 'manual' ? (
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            ID Lead (UUID)
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+                                                value={manualLeadId}
+                                                onChange={(e) => setManualLeadId(e.target.value)}
+                                                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium text-sm"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleVerifyLead}
+                                                disabled={verifyingLead || !manualLeadId.trim()}
+                                                className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 shrink-0 disabled:bg-slate-205 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                            >
+                                                {verifyingLead ? (
+                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                ) : (
+                                                    'Verifică'
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Verification Status Messages */}
+                                    {verificationStatus === 'valid_accessible' && (
+                                        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-medium">
+                                            ✓ Lead identificat! Aveți acces la datele acestuia (vor fi precompletate în contract).
+                                        </div>
+                                    )}
+                                    {verificationStatus === 'valid_hidden' && (
+                                        <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs space-y-1">
+                                            <div className="font-bold text-amber-900">✓ Lead identificat în platformă!</div>
+                                            <p className="text-slate-600 leading-normal">
+                                                Acest lead aparține altui broker/team. Din motive de securitate, datele de contact (nume, telefon, email, documente) **NU sunt extrase**.
+                                            </p>
+                                            <p className="text-orange-700 font-semibold leading-normal pt-1">
+                                                ⚠️ Clientul va introduce manual datele sale complete de identitate (nume, telefon, email, ID, CNP, etc.) pe ecranul de semnare.
+                                            </p>
+                                        </div>
+                                    )}
+                                    {verificationStatus === 'invalid' && (
+                                        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-medium">
+                                            ✗ ID Lead invalid sau inexistent în baza de date. Verificați UUID-ul introdus.
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Alege Client
+                                    </label>
+                                    <select
+                                        required
+                                        value={selectedLeadId}
+                                        onChange={(e) => setSelectedLeadId(e.target.value)}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium cursor-pointer"
+                                    >
+                                        <option value="">-- Alege un client din CRM --</option>
+                                        {leads.map(l => (
+                                            <option key={l.id} value={l.id}>
+                                                {l.name} {l.phone ? `(${l.phone})` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             {selectedLead && (
                                 <div className="p-4 bg-orange-50/50 rounded-xl border border-orange-100 space-y-2 text-xs animate-in fade-in slide-in-from-top-2 duration-200">
                                     <div className="font-bold text-orange-800">Date Client înregistrate:</div>
-                                    <div className="grid grid-cols-2 gap-2 text-slate-700">
-                                        <div><strong>Nume:</strong> {selectedLead.name}</div>
-                                        <div><strong>Telefon:</strong> {selectedLead.phone || 'Nespecificat'}</div>
-                                        <div><strong>Email:</strong> {selectedLead.email || 'Nespecificat'}</div>
-                                        <div><strong>Tip ID:</strong> {selectedLead.id_document_type || 'CI (necompletat)'}</div>
-                                        <div><strong>Serie/Număr:</strong> {selectedLead.id_series_number || 'necompletat'}</div>
-                                        <div><strong>CNP:</strong> {selectedLead.cnp || 'necompletat'}</div>
-                                    </div>
-                                    {(!selectedLead.cnp || !selectedLead.id_series_number) && (
+                                    {selectedLead.isHidden ? (
+                                        <div className="space-y-1.5 text-slate-700">
+                                            <p><strong>Nume:</strong> {selectedLead.name}</p>
+                                            <p className="text-amber-800 font-medium italic">
+                                                🔒 Datele de contact ale acestui client aparțin altui broker. Vor fi completate de către client la semnarea contractului.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-2 text-slate-700">
+                                            <div><strong>Nume:</strong> {selectedLead.name}</div>
+                                            <div><strong>Telefon:</strong> {selectedLead.phone || 'Nespecificat'}</div>
+                                            <div><strong>Email:</strong> {selectedLead.email || 'Nespecificat'}</div>
+                                            <div><strong>Tip ID:</strong> {selectedLead.id_document_type || 'CI (necompletat)'}</div>
+                                            <div><strong>Serie/Număr:</strong> {selectedLead.id_series_number || 'necompletat'}</div>
+                                            <div><strong>CNP:</strong> {selectedLead.cnp || 'necompletat'}</div>
+                                        </div>
+                                    )}
+                                    {(!selectedLead.cnp || !selectedLead.id_series_number || selectedLead.isHidden) && (
                                         <p className="text-[10px] text-slate-400 italic pt-1 leading-normal">
                                             💡 Datele de identitate lipsă pot fi introduse direct de către client în momentul în care primește link-ul și semnează contractul.
                                         </p>

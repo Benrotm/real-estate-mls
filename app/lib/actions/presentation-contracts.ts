@@ -51,47 +51,86 @@ export async function createPresentationContract(input: PresentationContractInpu
             isCompany: !!brokerProfile.is_company
         };
 
-        // 2. Fetch lead details
-        const { data: lead, error: leadErr } = await supabase
+        // 2. Fetch lead details (trying standard query first to check ownership/access)
+        let lead = null;
+        let hasAccess = false;
+
+        const { data: userLead } = await supabase
             .from('leads')
             .select('*')
             .eq('id', input.leadId)
-            .single();
+            .maybeSingle();
 
-        if (leadErr || !lead) {
-            return { success: false, error: 'Lead not found.' };
-        }
-
-        // Try to find if lead has a client account on the platform by email match
-        let clientId = null;
-        let cnpValue = lead.cnp || '';
-        let idSeriesValue = lead.id_series_number || '';
-        let idDocTypeValue = lead.id_document_type || 'C.I.';
-
-        if (lead.email) {
-            const { data: clientProfile } = await supabase
-                .from('profiles')
-                .select('id, cnp, id_series_number')
-                .eq('email', lead.email)
+        if (userLead) {
+            lead = userLead;
+            hasAccess = true;
+        } else {
+            // Check if it exists via admin client (bypassing RLS)
+            const { createAdminClient } = await import('@/app/lib/supabase/admin');
+            const adminSupabase = createAdminClient();
+            const { data: adminLead } = await adminSupabase
+                .from('leads')
+                .select('*')
+                .eq('id', input.leadId)
                 .maybeSingle();
 
-            if (clientProfile) {
-                clientId = clientProfile.id;
-                cnpValue = clientProfile.cnp || cnpValue;
-                idSeriesValue = clientProfile.id_series_number || idSeriesValue;
+            if (adminLead) {
+                lead = adminLead;
+                hasAccess = false;
             }
         }
 
-        const clientDetails = {
-            id: clientId,
-            leadId: lead.id,
-            name: lead.name || '',
-            phone: lead.phone || '',
-            email: lead.email || '',
-            idDocumentType: idDocTypeValue,
-            idSeriesNumber: idSeriesValue,
-            cnp: cnpValue
-        };
+        if (!lead) {
+            return { success: false, error: 'Lead-ul cu acest ID nu a fost găsit în baza de date.' };
+        }
+
+        let clientDetails;
+        let clientId = null;
+
+        if (hasAccess) {
+            // Populate contact data normally
+            let cnpValue = lead.cnp || '';
+            let idSeriesValue = lead.id_series_number || '';
+            let idDocTypeValue = lead.id_document_type || 'C.I.';
+
+            if (lead.email) {
+                const { data: clientProfile } = await supabase
+                    .from('profiles')
+                    .select('id, cnp, id_series_number')
+                    .eq('email', lead.email)
+                    .maybeSingle();
+
+                if (clientProfile) {
+                    clientId = clientProfile.id;
+                    cnpValue = clientProfile.cnp || cnpValue;
+                    idSeriesValue = clientProfile.id_series_number || idSeriesValue;
+                }
+            }
+
+            clientDetails = {
+                id: clientId,
+                leadId: lead.id,
+                name: lead.name || '',
+                phone: lead.phone || '',
+                email: lead.email || '',
+                idDocumentType: idDocTypeValue,
+                idSeriesNumber: idSeriesValue,
+                cnp: cnpValue
+            };
+        } else {
+            // Standard data is hidden/not retrieved because lead is owned by someone else.
+            // Client details will be left blank and introduced manually by the client.
+            clientDetails = {
+                id: null,
+                leadId: lead.id,
+                name: '',
+                phone: '',
+                email: '',
+                idDocumentType: '',
+                idSeriesNumber: '',
+                cnp: ''
+            };
+        }
 
         // 3. Insert the presentation contract record
         const { data: contract, error: insertErr } = await supabase
@@ -353,10 +392,12 @@ export async function updatePresentationSignatures(
     // Sync client details back to the lead and profile records if updated
     if (updates.client_details) {
         const { leadId, idDocumentType, idSeriesNumber, cnp, email } = updates.client_details;
+        const { createAdminClient } = await import('@/app/lib/supabase/admin');
+        const adminSupabase = createAdminClient();
         
         // 1. Sync to Lead
         if (leadId) {
-            await supabase
+            await adminSupabase
                 .from('leads')
                 .update({
                     id_document_type: idDocumentType,
@@ -368,7 +409,7 @@ export async function updatePresentationSignatures(
 
         // 2. Sync to Profile (if client has registered account)
         if (email) {
-            await supabase
+            await adminSupabase
                 .from('profiles')
                 .update({
                     cnp: cnp,
@@ -542,4 +583,59 @@ export async function getPresentationContractsForProperty(propertyId: string) {
     }
 
     return { success: true, contracts: data || [] };
+}
+
+/**
+ * Verifies if a Lead ID exists, and checks if the current user has ownership/access to it.
+ * If the user has access, returns the full lead details.
+ * If the user does not have access but the lead exists, returns { exists: true, hasAccess: false }.
+ * If it does not exist, returns { exists: false }.
+ */
+export async function verifyLeadForContract(leadId: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    // UUID validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(leadId)) {
+        return { success: false, exists: false, error: 'Format ID invalid' };
+    }
+
+    try {
+        // 1. Try to fetch lead using the user's standard client (respects RLS)
+        const { data: lead } = await supabase
+            .from('leads')
+            .select('*')
+            .eq('id', leadId)
+            .maybeSingle();
+
+        if (lead) {
+            // User owns/has access to this lead
+            return { success: true, exists: true, hasAccess: true, lead };
+        }
+
+        // 2. If standard query returned nothing, check if the lead exists using the admin client (bypasses RLS)
+        const { createAdminClient } = await import('@/app/lib/supabase/admin');
+        const adminSupabase = createAdminClient();
+        
+        const { data: adminLead } = await adminSupabase
+            .from('leads')
+            .select('id')
+            .eq('id', leadId)
+            .maybeSingle();
+
+        if (adminLead) {
+            // Lead exists in database, but user doesn't own/have access to it
+            return { success: true, exists: true, hasAccess: false };
+        }
+
+        return { success: true, exists: false };
+    } catch (err: any) {
+        console.error("Error verifying lead for contract:", err);
+        return { success: false, error: err.message };
+    }
 }
