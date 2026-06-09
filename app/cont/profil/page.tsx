@@ -33,12 +33,14 @@ import { getReferralStats, checkAndProcessReferral } from '@/app/lib/actions/ref
 import { getUserCreditTransactions } from '@/app/lib/actions/credits';
 import AvatarUpload from '@/app/components/AvatarUpload';
 import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
+import ShareModal from '@/app/components/ShareModal';
 
 export default function ProfilPage() {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
+    const [isShareOpen, setIsShareOpen] = useState(false);
 
     // Profile state
     const [profile, setProfile] = useState<any | null>(null);
@@ -397,21 +399,33 @@ export default function ProfilPage() {
                             {/* Invitation link generator */}
                             <div className="space-y-2">
                                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400">Link-ul tău de invitație</label>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
                                     <input 
                                         type="text" 
                                         value={displayReferralLink} 
                                         readOnly
                                         className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono text-slate-300 focus:border-emerald-500 outline-none select-all"
                                     />
-                                    <button
-                                        onClick={copyToClipboard}
-                                        className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white font-bold px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-xs"
-                                        title="Copiază link-ul"
-                                    >
-                                        {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
-                                        {copied ? 'Copiat!' : 'Copiază'}
-                                    </button>
+                                    <div className="flex gap-2 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={copyToClipboard}
+                                            className="flex-1 sm:flex-initial bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-xs min-w-[100px]"
+                                            title="Copiază link-ul"
+                                        >
+                                            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
+                                            {copied ? 'Copiat!' : 'Copiază'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsShareOpen(true)}
+                                            className="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-xs min-w-[100px]"
+                                            title="Trimite link-ul"
+                                        >
+                                            <Share2 className="w-4 h-4" />
+                                            Trimite
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -499,6 +513,11 @@ export default function ProfilPage() {
                     </div>
                 </div>
             </div>
+            <ShareModal 
+                isOpen={isShareOpen} 
+                onClose={() => setIsShareOpen(false)} 
+                shareUrl={displayReferralLink} 
+            />
         </div>
     );
 }
