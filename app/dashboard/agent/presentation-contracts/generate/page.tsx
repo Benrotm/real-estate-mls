@@ -107,12 +107,16 @@ function ContractGeneratorForm() {
             }
 
             try {
-                // 1. Fetch Property
+                // 1. Fetch Property (supporting both UUID and friendly ID/short ID)
+                const cleanRef = propertyId.trim();
+                const cleanRefNoP = cleanRef.toLowerCase().startsWith('p') ? cleanRef.substring(1) : cleanRef;
+
                 const { data: propData, error: propErr } = await supabase
                     .from('properties')
                     .select('id, title, price, currency, listing_type, address')
-                    .eq('id', propertyId)
-                    .single();
+                    .or(`id.eq."${cleanRef}",friendly_id.eq."${cleanRef}",friendly_id.eq."P${cleanRef}",friendly_id.eq."P${cleanRefNoP}",friendly_id.eq."${cleanRefNoP}"`)
+                    .limit(1)
+                    .maybeSingle();
 
                 if (propErr || !propData) {
                     alert('Proprietatea nu a fost găsită!');
@@ -215,7 +219,7 @@ function ContractGeneratorForm() {
         }
     };
 
-    if (loading) {
+    if (loading || !property) {
         return (
             <div className="min-h-[400px] flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
