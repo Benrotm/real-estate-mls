@@ -90,25 +90,42 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
         'Lost': 'bg-zinc-200 text-zinc-700 border-zinc-300',
         'View Contract SEND': 'bg-amber-100 text-amber-700 border-amber-300',
         'View Contract Signed': 'bg-emerald-100 text-emerald-700 border-emerald-300',
+        'Trimite Fișă Vizionare': 'bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200/70',
         'WhatsApp': 'bg-[#25D366]/20 text-[#128C7E] border-[#25D366]/30',
         'Email': 'bg-sky-100 text-sky-700 border-sky-200'
     };
 
-    const TAGS = Object.keys(TAG_STYLES).filter(tag => tag !== 'WhatsApp' && tag !== 'Email');
+    const TAGS = Object.keys(TAG_STYLES).filter(
+        tag => tag !== 'WhatsApp' && 
+               tag !== 'Email' && 
+               tag !== 'View Contract SEND' && 
+               tag !== 'View Contract Signed'
+    );
 
     const formatNoteText = (text: string) => {
-        // Match the pattern: [PropertyID] (URL) 
-        // e.g., "Shared Property [p123334] (https://www.imobum.com/properties/p123334)"
-        const parts = text.split(/(\[[a-zA-Z0-9_-]+\]\s*\([^\)]+\))/g);
+        // Match either property links [propId](url) or contract numbers like PROP nr. 20260608-200759
+        const regex = /(\[([a-zA-Z0-9_-]+)\]\s*\(([^\)]+)\))|((PROP\s+(?:nr\.|no\.)\s*([0-9]{8}-[0-9]{6})))/gi;
         
-        return parts.map((part, i) => {
-            const match = part.match(/\[([a-zA-Z0-9_-]+)\]\s*\(([^\)]+)\)/);
-            if (match) {
-                const propId = match[1];
-                const url = match[2];
-                return (
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+        
+        // Reset regex index
+        regex.lastIndex = 0;
+        
+        while ((match = regex.exec(text)) !== null) {
+            // Add preceding text
+            if (match.index > lastIndex) {
+                parts.push(<span key={`txt-${lastIndex}`}>{text.substring(lastIndex, match.index)}</span>);
+            }
+            
+            if (match[1]) {
+                // Property link match
+                const propId = match[2];
+                const url = match[3];
+                parts.push(
                     <a 
-                        key={i} 
+                        key={`link-${match.index}`} 
                         href={url} 
                         target="_blank" 
                         rel="noopener noreferrer"
@@ -117,9 +134,43 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                         {propId.toUpperCase()}
                     </a>
                 );
+            } else if (match[4]) {
+                // Contract number match
+                const fullMatchText = match[4];
+                const contractNum = match[6];
+                const foundContract = contracts.find(c => c.contract_number === contractNum);
+                
+                if (foundContract) {
+                    const isSigned = foundContract.status === 'signed';
+                    const themeStyles = isSigned
+                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 hover:border-emerald-300'
+                        : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200 hover:border-amber-300';
+                    
+                    parts.push(
+                        <span key={`contract-${match.index}`} className="inline-flex items-center gap-1.5 flex-wrap">
+                            <strong className="font-semibold">{fullMatchText}</strong>
+                            <button
+                                onClick={() => setSelectedContractForPrint(foundContract)}
+                                className={`inline-flex items-center gap-1.5 py-0.5 px-2 rounded text-[11px] font-bold transition-all ml-1.5 cursor-pointer align-middle select-none border shadow-sm ${themeStyles}`}
+                            >
+                                <Printer className="w-3.5 h-3.5" />
+                                Vizualizează/Printează Fișă
+                            </button>
+                        </span>
+                    );
+                } else {
+                    parts.push(<strong key={`contract-raw-${match.index}`} className="font-semibold">{fullMatchText}</strong>);
+                }
             }
-            return <span key={i}>{part}</span>;
-        });
+            
+            lastIndex = regex.lastIndex;
+        }
+        
+        if (lastIndex < text.length) {
+            parts.push(<span key={`txt-${lastIndex}`}>{text.substring(lastIndex)}</span>);
+        }
+        
+        return parts.length > 0 ? parts : text;
     };
 
     const renderNoteContent = (content: string) => {
@@ -572,6 +623,63 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                 {/* NOTES TAB */}
                 {activeTab === 'notes' && (
                     <div className="space-y-6">
+                        {/* Interactive Contracts List */}
+                        {contracts.length > 0 && (
+                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 mb-6 animate-in fade-in duration-300">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <FileText className="w-4 h-4 text-orange-600" />
+                                        Istoric Fișe de Vizionare ({contracts.length})
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsContractModalOpen(true)}
+                                        className="text-[10px] font-bold text-orange-600 hover:text-orange-700 uppercase tracking-wider transition-colors flex items-center gap-1 hover:underline"
+                                    >
+                                        + Trimite Fișă Nouă
+                                    </button>
+                                </div>
+                                <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                                    {contracts.map((c) => {
+                                        const isSigned = c.status === 'signed';
+                                        return (
+                                            <div 
+                                                key={c.id} 
+                                                className="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-lg border border-slate-100 transition-colors text-xs gap-3 group"
+                                            >
+                                                <div className="flex flex-col min-w-0 flex-1">
+                                                    <span className="font-bold text-slate-800 truncate">
+                                                        {c.property_details?.friendlyId || c.property_details?.id || 'Proprietate'} - {c.property_details?.title || 'Fără titlu'}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400 mt-0.5">
+                                                        Seria {c.contract_serial} nr. {c.contract_number} | {new Date(c.created_at).toLocaleDateString('ro-RO')}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {isSigned ? (
+                                                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[9px] font-bold uppercase tracking-wider">
+                                                            Semnat
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[9px] font-bold uppercase tracking-wider">
+                                                            Trimis
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        onClick={() => setSelectedContractForPrint(c)}
+                                                        className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-500 hover:text-slate-700 transition-colors border border-transparent hover:border-slate-300 bg-slate-50 group-hover:bg-white"
+                                                        title="Vizualizează / Printează"
+                                                    >
+                                                        <Printer className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {initialNotes.length > 0 ? (
                             initialNotes.map((note) => (
                                 <div key={note.id} className="relative pl-6 border-l-2 border-slate-200 pb-1 last:pb-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -635,29 +743,15 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                                         setIsCalendarModalOpen(true);
                                     } else if (tag === 'Propose Properties') {
                                         handleProposePropertiesClick();
-                                    } else if (tag === 'View Contract SEND') {
-                                        const sentContract = contracts.find(c => c.status === 'sent');
-                                        if (sentContract) {
-                                            setSelectedContractForPrint(sentContract);
-                                        } else {
-                                            setIsContractModalOpen(true);
-                                        }
-                                    } else if (tag === 'View Contract Signed') {
-                                        const signedContract = contracts.find(c => c.status === 'signed');
-                                        if (signedContract) {
-                                            setSelectedContractForPrint(signedContract);
-                                        } else {
-                                            alert('Nu există nicio fișă de vizionare semnată.');
-                                        }
+                                    } else if (tag === 'Trimite Fișă Vizionare') {
+                                        setIsContractModalOpen(true);
                                     } else {
                                         setSelectedTag(selectedTag === tag ? null : tag);
                                     }
                                 }}
                                 className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all hover:brightness-95 ${TAG_STYLES[tag]} ${
-                                    tag === 'View Contract SEND' && contracts.some(c => c.status === 'sent')
+                                    tag === 'Trimite Fișă Vizionare'
                                         ? 'ring-2 ring-amber-500 ring-offset-1 font-extrabold shadow-sm'
-                                        : tag === 'View Contract Signed' && contracts.some(c => c.status === 'signed')
-                                        ? 'ring-2 ring-emerald-500 ring-offset-1 font-extrabold shadow-sm'
                                         : selectedTag === tag
                                         ? 'ring-2 ring-offset-1 ring-orange-500 shadow-sm'
                                         : 'opacity-80'
