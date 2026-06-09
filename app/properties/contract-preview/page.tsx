@@ -1045,6 +1045,19 @@ function ContractPreviewContent() {
                         {/* Annex 1 Section (Rendered only if contractData.anexa_data exists) */}
                         {contractData.anexa_data && (
                             <div className="page-break-before-always border-t-2 border-dashed border-slate-300 mt-12 pt-12 print:border-none">
+                                {/* Hub Header Info */}
+                                <div className="text-center mb-6 text-slate-500 font-sans border-b border-slate-100 pb-4">
+                                    <p className="font-extrabold text-sm tracking-wide text-slate-700 uppercase">
+                                        Real Estate Hub - <span className="text-orange-500">www.imobum.com</span>
+                                    </p>
+                                    <p className="text-[11px] italic font-medium mt-1 leading-relaxed max-w-md mx-auto text-slate-500">
+                                        {isRo 
+                                            ? 'Primul Hub de Imobiliare Românesc unde peste 200 de Brokeri Imobiliari lucrează în colaborare pentru tine.'
+                                            : 'The first Romanian Real Estate Hub where over 200 Real Estate Brokers work in collaboration for you.'
+                                        }
+                                    </p>
+                                </div>
+
                                 {/* Annex Header */}
                                 <div className="text-center mb-8 border-b-2 double border-slate-200 pb-6">
                                     <h2 className="font-serif text-xl sm:text-2xl font-bold uppercase tracking-wider text-slate-900 mb-2">
