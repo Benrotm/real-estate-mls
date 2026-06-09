@@ -97,6 +97,8 @@ export async function generateMetadata({
         : `Vezi detalii despre această proprietate pe Imobum. Preț: ${property.price} ${property.currency || 'EUR'}`;
 
     const imageUrl = property.images && property.images.length > 0 ? property.images[0] : "https://www.imobum.com/icon.png";
+    const isJpeg = imageUrl.toLowerCase().endsWith('.jpg') || imageUrl.toLowerCase().endsWith('.jpeg');
+    const imageType = isJpeg ? 'image/jpeg' : (imageUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
 
     return {
         title,
@@ -109,7 +111,10 @@ export async function generateMetadata({
             images: [
                 {
                     url: imageUrl,
-                    alt: property.title
+                    alt: property.title,
+                    width: 1200,
+                    height: 630,
+                    type: imageType
                 }
             ],
             siteName: "Imobum"
