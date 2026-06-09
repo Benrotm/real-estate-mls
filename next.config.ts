@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['playwright-core', 'playwright', 'tesseract.js', 'jimp'],
+  serverExternalPackages: ['playwright-core', 'playwright', 'tesseract.js', 'jimp', 'sharp'],
   images: {
     remotePatterns: [
       {

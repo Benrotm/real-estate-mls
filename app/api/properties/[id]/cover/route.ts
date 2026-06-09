@@ -54,10 +54,21 @@ export async function GET(
         }
 
         const imageData = await imageResponse.arrayBuffer();
-        const contentType = imageResponse.headers.get('Content-Type') || 'image/jpeg';
+        let buffer = Buffer.from(imageData);
+        let contentType = imageResponse.headers.get('Content-Type') || 'image/jpeg';
+
+        if (contentType.includes('webp') || imageUrl.toLowerCase().endsWith('.webp')) {
+            try {
+                const sharp = (await import('sharp')).default;
+                buffer = await sharp(buffer).jpeg({ quality: 85 }).toBuffer();
+                contentType = 'image/jpeg';
+            } catch (err) {
+                console.error("Failed to convert webp to jpeg:", err);
+            }
+        }
 
         // Return the image directly from our domain with clean headers (no x-robots-tag: none)
-        return new Response(imageData, {
+        return new Response(buffer, {
             headers: {
                 'Content-Type': contentType,
                 'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
