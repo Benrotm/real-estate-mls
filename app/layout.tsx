@@ -19,7 +19,30 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Imobum | Premium Real Estate & Valuation",
-  description: "Advanced Real Estate Marketplace with AI Price Valuation",
+  description: "Platformă imobiliară inteligentă. Găsește proprietăți premium și evaluează-le folosind inteligența artificială.",
+  metadataBase: new URL("https://www.imobum.com"),
+  openGraph: {
+    title: "Imobum | Premium Real Estate & Valuation",
+    description: "Platformă imobiliară inteligentă. Găsește proprietăți premium și evaluează-le folosind inteligența artificială.",
+    url: "https://www.imobum.com",
+    siteName: "Imobum",
+    images: [
+      {
+        url: "/icon.png",
+        width: 512,
+        height: 512,
+        alt: "Imobum Logo",
+      },
+    ],
+    locale: "ro_RO",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Imobum | Premium Real Estate & Valuation",
+    description: "Platformă imobiliară inteligentă. Găsește proprietăți premium și evaluează-le folosind inteligența artificială.",
+    images: ["/icon.png"],
+  },
 };
 
 export const dynamic = 'force-dynamic';

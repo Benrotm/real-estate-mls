@@ -1,4 +1,5 @@
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
+import type { Metadata } from 'next';
 import { checkUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,87 @@ function getYouTubeEmbedUrl(url: string) {
     }
 
     return url;
+}
+
+export async function generateMetadata({
+    params
+}: {
+    params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+    const { id } = await params;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isUuid = uuidRegex.test(id);
+
+    let property: any = null;
+
+    if (isUuid) {
+        try {
+            const supabase = await createClient();
+            let { data: dbProperty } = await supabase
+                .from('properties')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (!dbProperty) {
+                const { createAdminClient } = await import('@/app/lib/supabase/admin');
+                const adminSupabase = createAdminClient();
+                const { data: adminProp } = await adminSupabase
+                    .from('properties')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+                if (adminProp && adminProp.status === 'sold') {
+                    dbProperty = adminProp;
+                }
+            }
+            property = dbProperty;
+        } catch (e) {
+            console.error("Error fetching metadata for property:", e);
+        }
+    }
+
+    if (!property) {
+        property = MOCK_PROPERTIES.find(p => p.id === id);
+    }
+
+    if (!property) {
+        return {
+            title: "Proprietate | Imobum",
+            description: "Detalii proprietate pe Imobum."
+        };
+    }
+
+    const title = `${property.title} | Imobum`;
+    const description = property.description 
+        ? (property.description.length > 160 ? property.description.substring(0, 157) + '...' : property.description)
+        : `Vezi detalii despre această proprietate pe Imobum. Preț: ${property.price} ${property.currency || 'EUR'}`;
+
+    const imageUrl = property.images && property.images.length > 0 ? property.images[0] : "https://www.imobum.com/icon.png";
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title: property.title,
+            description,
+            type: "website",
+            url: `https://www.imobum.com/properties/${id}`,
+            images: [
+                {
+                    url: imageUrl,
+                    alt: property.title
+                }
+            ],
+            siteName: "Imobum"
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: property.title,
+            description,
+            images: [imageUrl]
+        }
+    };
 }
 
 export default async function PropertyDetailPage({
