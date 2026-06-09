@@ -12,6 +12,7 @@ function ContractGeneratorForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const propertyId = searchParams.get('property_id') || '';
+    const leadIdParam = searchParams.get('lead_id') || '';
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -37,18 +38,18 @@ function ContractGeneratorForm() {
 
     // Reset lead selections when selection mode changes
     useEffect(() => {
-        setSelectedLeadId('');
-        setSelectedLead(null);
-        setManualLeadId('');
-        setVerificationStatus('idle');
-    }, [selectionMode]);
+        // Do not reset if it was loaded from query params on mount
+        if (!leadIdParam) {
+            setSelectedLeadId('');
+            setSelectedLead(null);
+            setManualLeadId('');
+            setVerificationStatus('idle');
+        }
+    }, [selectionMode, leadIdParam]);
 
-    const handleVerifyLead = async () => {
-        const cleanedInput = manualLeadId.trim().replace(/^(id\s*:\s*)+/i, '').trim();
+    const performVerification = async (leadIdToVerify: string) => {
+        const cleanedInput = leadIdToVerify.trim().replace(/^(id\s*:\s*)+/i, '').trim();
         if (!cleanedInput) return;
-        
-        // Update input field state to show the cleaned hex ID/UUID
-        setManualLeadId(cleanedInput);
         
         setVerifyingLead(true);
         setVerificationStatus('verifying');
@@ -90,6 +91,12 @@ function ContractGeneratorForm() {
         }
     };
 
+    const handleVerifyLead = async () => {
+        const cleanedInput = manualLeadId.trim().replace(/^(id\s*:\s*)+/i, '').trim();
+        setManualLeadId(cleanedInput);
+        await performVerification(cleanedInput);
+    };
+
     // Load property details and leads list
     useEffect(() => {
         const loadInitialData = async () => {
@@ -121,6 +128,19 @@ function ContractGeneratorForm() {
                 // 3. Generate random contract number
                 setContractNumber(Math.floor(100000 + Math.random() * 900000).toString());
 
+                // 4. Auto-fill lead_id if provided
+                if (leadIdParam) {
+                    const existsInCRM = leadsData?.some((l: any) => l.id === leadIdParam);
+                    if (existsInCRM) {
+                        setSelectionMode('select');
+                        setSelectedLeadId(leadIdParam);
+                    } else {
+                        setSelectionMode('manual');
+                        setManualLeadId(leadIdParam);
+                        await performVerification(leadIdParam);
+                    }
+                }
+
             } catch (err) {
                 console.error(err);
             } finally {
@@ -129,7 +149,7 @@ function ContractGeneratorForm() {
         };
 
         loadInitialData();
-    }, [propertyId]);
+    }, [propertyId, leadIdParam]);
 
     // Handle lead selection changes
     useEffect(() => {

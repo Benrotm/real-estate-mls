@@ -651,3 +651,50 @@ export async function verifyLeadForContract(leadId: string) {
         return { success: false, error: err.message };
     }
 }
+
+/**
+ * Fetches all presentation contracts associated with a lead.
+ */
+export async function getLeadPresentationContracts(leadId: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('presentation_contracts')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching lead presentation contracts:', error);
+        return [];
+    }
+
+    // Map and load property details for each contract so it renders nicely in the UI
+    const contractsWithProps = await Promise.all((data || []).map(async (c) => {
+        let propertyDetails = null;
+        if (c.property_id) {
+            const { data: propData } = await supabase
+                .from('properties')
+                .select('id, title, address, friendly_id')
+                .eq('id', c.property_id)
+                .maybeSingle();
+            propertyDetails = propData;
+        }
+        return {
+            ...c,
+            property_details: propertyDetails ? {
+                id: propertyDetails.id,
+                friendlyId: propertyDetails.friendly_id,
+                title: propertyDetails.title,
+                address: propertyDetails.address
+            } : null
+        };
+    }));
+
+    return contractsWithProps;
+}
+
