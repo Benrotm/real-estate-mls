@@ -54,7 +54,7 @@ export async function GET(
         }
 
         const imageData = await imageResponse.arrayBuffer();
-        let buffer = Buffer.from(imageData);
+        let buffer: any = Buffer.from(imageData);
         let contentType = imageResponse.headers.get('Content-Type') || 'image/jpeg';
 
         if (contentType.includes('webp') || imageUrl.toLowerCase().endsWith('.webp')) {
