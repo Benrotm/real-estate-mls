@@ -175,6 +175,29 @@ export default function PlatiPage() {
         }
     };
 
+    const handleShareClick = async () => {
+        const shareUrl = displayReferralLink;
+        if (!shareUrl) return;
+        const customText = 'Bună! Te invit pe Imobum, platforma imobiliară inteligentă. Înregistrează-te folosind link-ul meu și primești credite cadou pentru a testa instrumentele AI:';
+
+        if (typeof navigator !== 'undefined' && 'share' in navigator) {
+            try {
+                await navigator.share({
+                    title: 'Invitație Imobum',
+                    text: customText,
+                    url: shareUrl,
+                });
+            } catch (error: any) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error sharing native:', error);
+                    setIsShareOpen(true);
+                }
+            }
+        } else {
+            setIsShareOpen(true);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
@@ -544,7 +567,7 @@ export default function PlatiPage() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setIsShareOpen(true)}
+                                        onClick={handleShareClick}
                                         className="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors text-xs min-w-[100px]"
                                         title="Trimite invitație"
                                     >
