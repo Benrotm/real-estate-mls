@@ -10,13 +10,28 @@ interface PropertyModalProps {
 }
 
 export default function PropertyModal({ propertyId, onClose }: PropertyModalProps) {
-    // Prevent background scrolling when modal is open
+    // Prevent background scrolling and dynamically update browser URL when modal is open
     useEffect(() => {
         document.body.style.overflow = 'hidden';
+
+        const originalUrl = window.location.pathname + window.location.search;
+        // Update URL to the listing URL (without reloading the page)
+        window.history.pushState({ modalOpen: true }, '', `/properties/${propertyId}`);
+
+        const handlePopState = () => {
+            onClose();
+        };
+        window.addEventListener('popstate', handlePopState);
+
         return () => {
             document.body.style.overflow = 'unset';
+            window.removeEventListener('popstate', handlePopState);
+            // Restore original URL when closing modal (if we haven't already navigated away)
+            if (window.location.pathname.startsWith(`/properties/${propertyId}`)) {
+                window.history.replaceState(null, '', originalUrl);
+            }
         };
-    }, []);
+    }, [propertyId, onClose]);
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 md:p-12">

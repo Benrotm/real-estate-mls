@@ -698,6 +698,7 @@ export default async function PropertyDetailPage({
                                         propertyId={property.id}
                                         title={property.title}
                                         description={`Check out ${property.title} on Imobum!`}
+                                        url={`${typeof window !== 'undefined' ? window.location.origin : 'https://www.imobum.com'}/properties/${property.id}`}
                                     />
                                     <MakeOfferButton
                                         propertyId={property.id}
