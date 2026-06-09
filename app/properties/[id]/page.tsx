@@ -95,7 +95,7 @@ export async function generateMetadata({
     const imageUrl = property.images && property.images.length > 0 ? property.images[0] : "https://www.imobum.com/icon.png";
     const isJpeg = imageUrl.toLowerCase().endsWith('.jpg') || imageUrl.toLowerCase().endsWith('.jpeg');
     const imageType = isJpeg ? 'image/jpeg' : (imageUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
-    const proxyImageUrl = `/api/properties/${id}/cover`;
+    const proxyImageUrl = `https://www.imobum.com/api/properties/${id}/cover`;
 
     return {
         title,
