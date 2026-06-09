@@ -16,8 +16,8 @@ export default function ShareModal({
     isOpen,
     onClose,
     shareUrl,
-    title = 'Trimite Invitația',
-    customText = 'Bună! Te invit pe Imobum, platforma imobiliară inteligentă. Înregistrează-te folosind link-ul meu și primești credite cadou pentru a testa instrumentele AI:'
+    title = 'Bună! Te invit pe Imobum.com',
+    customText = 'Imobum.com, platforma imobiliară inteligentă. Înregistrează-te folosind acest link și primești credite cadou pentru a testa instrumentele AI:'
 }: ShareModalProps) {
     const [copied, setCopied] = useState(false);
     const [canShare, setCanShare] = useState(false);

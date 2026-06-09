@@ -178,12 +178,12 @@ export default function PlatiPage() {
     const handleShareClick = async () => {
         const shareUrl = displayReferralLink;
         if (!shareUrl) return;
-        const customText = 'Bună! Te invit pe Imobum, platforma imobiliară inteligentă. Înregistrează-te folosind link-ul meu și primești credite cadou pentru a testa instrumentele AI:';
+        const customText = 'Imobum.com, platforma imobiliară inteligentă. Înregistrează-te folosind acest link și primești credite cadou pentru a testa instrumentele AI';
 
         if (typeof navigator !== 'undefined' && 'share' in navigator) {
             try {
                 await navigator.share({
-                    title: 'Invitație Imobum',
+                    title: 'Bună! Te invit pe Imobum.com',
                     text: customText,
                     url: shareUrl,
                 });

@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Înregistrare Imobum | Primește Credite Cadou",
-  description: "Creează un cont pe Imobum folosind link-ul de recomandare și primești credite cadou pentru a folosi instrumentele noastre AI de evaluare și analiză.",
+  title: "Bună! Te invit pe Imobum.com",
+  description: "Imobum.com, platforma imobiliară inteligentă. Înregistrează-te folosind acest link și primești credite cadou pentru a testa instrumentele AI",
   openGraph: {
-    title: "Înregistrare Imobum | Primește Credite Cadou",
-    description: "Creează un cont pe Imobum folosind link-ul de recomandare și primești credite cadou pentru a folosi instrumentele noastre AI de evaluare și analiză.",
+    title: "Bună! Te invit pe Imobum.com",
+    description: "Imobum.com, platforma imobiliară inteligentă. Înregistrează-te folosind acest link și primești credite cadou pentru a testa instrumentele AI",
     images: [
       {
         url: "/icon.png",
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Înregistrare Imobum | Primește Credite Cadou",
-    description: "Creează un cont pe Imobum folosind link-ul de recomandare și primești credite cadou pentru a folosi instrumentele noastre AI de evaluare și analiză.",
+    title: "Bună! Te invit pe Imobum.com",
+    description: "Imobum.com, platforma imobiliară inteligentă. Înregistrează-te folosind acest link și primești credite cadou pentru a testa instrumentele AI",
     images: ["/icon.png"],
   },
 };
