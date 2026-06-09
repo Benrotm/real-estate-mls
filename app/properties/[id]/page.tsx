@@ -56,26 +56,17 @@ export async function generateMetadata({
 
     if (isUuid) {
         try {
-            const supabase = await createClient();
-            let { data: dbProperty } = await supabase
+            const { createAdminClient } = await import('@/app/lib/supabase/admin');
+            const adminSupabase = createAdminClient();
+            let { data: adminProp } = await adminSupabase
                 .from('properties')
                 .select('*')
                 .eq('id', id)
                 .single();
 
-            if (!dbProperty) {
-                const { createAdminClient } = await import('@/app/lib/supabase/admin');
-                const adminSupabase = createAdminClient();
-                const { data: adminProp } = await adminSupabase
-                    .from('properties')
-                    .select('*')
-                    .eq('id', id)
-                    .single();
-                if (adminProp && adminProp.status === 'sold') {
-                    dbProperty = adminProp;
-                }
+            if (adminProp) {
+                property = adminProp;
             }
-            property = dbProperty;
         } catch (e) {
             console.error("Error fetching metadata for property:", e);
         }
