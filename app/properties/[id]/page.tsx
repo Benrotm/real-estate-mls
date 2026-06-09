@@ -104,6 +104,7 @@ export async function generateMetadata({
     const imageUrl = property.images && property.images.length > 0 ? property.images[0] : "https://www.imobum.com/icon.png";
     const isJpeg = imageUrl.toLowerCase().endsWith('.jpg') || imageUrl.toLowerCase().endsWith('.jpeg');
     const imageType = isJpeg ? 'image/jpeg' : (imageUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+    const proxyImageUrl = `/api/properties/${id}/cover`;
 
     return {
         title,
@@ -115,7 +116,7 @@ export async function generateMetadata({
             url: `https://www.imobum.com/properties/${id}`,
             images: [
                 {
-                    url: imageUrl,
+                    url: proxyImageUrl,
                     alt: decodedTitle,
                     width: 1200,
                     height: 630,
@@ -128,7 +129,7 @@ export async function generateMetadata({
             card: "summary_large_image",
             title: decodedTitle,
             description,
-            images: [imageUrl]
+            images: [proxyImageUrl]
         }
     };
 }
