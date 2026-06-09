@@ -8,6 +8,7 @@ import PropertyManageButtons from './PropertyManageButtons';
 import { useState } from 'react';
 import UpgradeModal from './UpgradeModal';
 import FavoriteButton from './property/FavoriteButton';
+import { decodeHtmlEntities } from '@/app/lib/utils/string';
 
 interface PropertyCardProps {
     property: Property;
@@ -31,7 +32,7 @@ export default function PropertyCard({ property, showEditButton }: PropertyCardP
                     <Link href={`/properties/${property.id}`}>
                         <Image
                             src={property.images[0]}
-                            alt={property.title}
+                            alt={decodeHtmlEntities(property.title)}
                             fill
                             className="object-cover"
                         />
@@ -77,7 +78,7 @@ export default function PropertyCard({ property, showEditButton }: PropertyCardP
 
                     <div className="flex justify-between items-end mb-1">
                         <h3 className="text-lg font-bold text-slate-900 line-clamp-1 group-hover:text-violet-600 transition-colors">
-                            {property.title}
+                            {decodeHtmlEntities(property.title)}
                         </h3>
                         <span className="text-xl font-black text-slate-900 whitespace-nowrap ml-2">
                             {formatPrice(property.price)}

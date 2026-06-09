@@ -27,6 +27,7 @@ import AuctionWidget from "@/app/components/property/AuctionWidget";
 import RevealContactWidget from '@/app/components/property/RevealContactWidget';
 import { checkContactUnlock } from '@/app/lib/actions/credits';
 import { getPresentationContractsForProperty } from '@/app/lib/actions/presentation-contracts';
+import { decodeHtmlEntities } from '@/app/lib/utils/string';
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
@@ -91,10 +92,14 @@ export async function generateMetadata({
         };
     }
 
-    const title = `${property.title} | Imobum`;
-    const description = property.description 
-        ? (property.description.length > 160 ? property.description.substring(0, 157) + '...' : property.description)
-        : `Vezi detalii despre această proprietate pe Imobum. Preț: ${property.price} ${property.currency || 'EUR'}`;
+    const decodedTitle = decodeHtmlEntities(property.title || '');
+    const decodedDescRaw = property.description || '';
+    const decodedDesc = decodeHtmlEntities(
+        decodedDescRaw.length > 160 ? decodedDescRaw.substring(0, 157) + '...' : decodedDescRaw
+    ) || `Vezi detalii despre această proprietate pe Imobum. Preț: ${property.price} ${property.currency || 'EUR'}`;
+
+    const title = `${decodedTitle} | Imobum`;
+    const description = decodedDesc;
 
     const imageUrl = property.images && property.images.length > 0 ? property.images[0] : "https://www.imobum.com/icon.png";
     const isJpeg = imageUrl.toLowerCase().endsWith('.jpg') || imageUrl.toLowerCase().endsWith('.jpeg');
@@ -104,14 +109,14 @@ export async function generateMetadata({
         title,
         description,
         openGraph: {
-            title: property.title,
+            title: decodedTitle,
             description,
             type: "website",
             url: `https://www.imobum.com/properties/${id}`,
             images: [
                 {
                     url: imageUrl,
-                    alt: property.title,
+                    alt: decodedTitle,
                     width: 1200,
                     height: 630,
                     type: imageType
@@ -121,7 +126,7 @@ export async function generateMetadata({
         },
         twitter: {
             card: "summary_large_image",
-            title: property.title,
+            title: decodedTitle,
             description,
             images: [imageUrl]
         }
@@ -190,9 +195,9 @@ export default async function PropertyDetailPage({
                     id: dbProperty.id,
                     listing_type: dbProperty.listing_type || 'For Sale',
                     currency: dbProperty.currency || 'EUR',
-                    title: dbProperty.title || '',
-                    description: dbProperty.description || '',
-                    address: dbProperty.address || '',
+                    title: decodeHtmlEntities(dbProperty.title || ''),
+                    description: decodeHtmlEntities(dbProperty.description || ''),
+                    address: decodeHtmlEntities(dbProperty.address || ''),
                     location_city: dbProperty.location_city || '',
                     location_county: dbProperty.location_county || '',
                     location_area: dbProperty.location_area || null,
