@@ -111,7 +111,7 @@ export default function PropertyMap({ center = defaultCenter, zoom = 10, markers
                             key={marker.id}
                             position={{ lat: marker.lat, lng: marker.lng }}
                             title={marker.title}
-                            icon={window.google ? {
+                            icon={typeof window !== 'undefined' && window.google ? {
                                 url: '/premium-pin.png',
                                 scaledSize: new window.google.maps.Size(40, 40)
                             } : undefined}
