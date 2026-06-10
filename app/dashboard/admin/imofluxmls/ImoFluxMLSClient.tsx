@@ -210,7 +210,9 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                     platformUser: config.username,
                     platformPassword: config.password,
                     regionFilter: config.region_filter,
-                    cityFilter: config.city_filter
+                    cityFilter: config.city_filter,
+                    propertyTypeFilter: config.property_type_filter,
+                    transactionTypeFilter: config.transaction_type_filter
                 })
             });
 
@@ -374,6 +376,26 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                                         value={settings.immoflux_integration.city_filter || ''}
                                         onChange={(e) => handleImmofluxChange('city_filter', e.target.value)}
                                         placeholder="All Cities (None)"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Transaction Type</label>
+                                    <input
+                                        type="text"
+                                        value={settings.immoflux_integration.transaction_type_filter || ''}
+                                        onChange={(e) => handleImmofluxChange('transaction_type_filter', e.target.value)}
+                                        placeholder="e.g. Vanzare"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Property Type</label>
+                                    <input
+                                        type="text"
+                                        value={settings.immoflux_integration.property_type_filter || ''}
+                                        onChange={(e) => handleImmofluxChange('property_type_filter', e.target.value)}
+                                        placeholder="e.g. Apartament"
                                         className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
                                     />
                                 </div>
