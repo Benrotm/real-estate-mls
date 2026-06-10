@@ -80,7 +80,9 @@ export async function POST(req: Request) {
         });
 
         if (!res.ok) {
-            console.error('Microservice returned an error status:', res.status);
+            const errorText = await res.text();
+            console.error('Microservice returned an error status:', res.status, errorText);
+            return NextResponse.json({ error: `Microservice Error: ${res.status} ${res.statusText}. The scraper server might be suspended or offline.` }, { status: 502 });
         }
 
         return NextResponse.json({ success: true, message: 'Dynamic Crawler execution started' });

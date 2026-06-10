@@ -285,7 +285,12 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
     return (
         <div className="max-w-4xl space-y-8 animate-in fade-in duration-500">
             {message.text && (
-                <div className={`p-4 rounded-xl border ${message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                <div className={`p-4 rounded-xl border ${
+                    message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 
+                    message.type === 'info' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
+                    message.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' :
+                    'bg-red-500/10 border-red-500/20 text-red-400'
+                }`}>
                     {message.text}
                 </div>
             )}
