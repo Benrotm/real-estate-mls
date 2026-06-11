@@ -561,6 +561,7 @@ function InquiryRow({ inquiry, onStatusUpdate }: { inquiry: PropertyInquiry; onS
 
 function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOffers; currentUserId?: string }) {
     const router = useRouter();
+    const pathname = usePathname();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isInquiriesExpanded, setIsInquiriesExpanded] = useState(false);
     const [isMatchesExpanded, setIsMatchesExpanded] = useState(false);
@@ -920,7 +921,10 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                             <FileText className="w-4 h-4" />
                         </Link>
                         <Link
-                            href={`/dashboard/owner/properties/${property.id}/edit`}
+                            href={pathname?.includes('/dashboard/admin')
+                                ? `/dashboard/admin/properties/${property.id}/edit`
+                                : `/dashboard/owner/properties/${property.id}/edit`
+                            }
                             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors mr-2"
                             title="Edit property"
                         >

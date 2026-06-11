@@ -21,12 +21,18 @@ export default function DashboardClient({
 }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
-    const activeRole = pathname.includes('/dashboard/agent') ? 'agent'
+    const primaryRole = profile?.role;
+    const isPrimaryAdmin = primaryRole === 'admin' || primaryRole === 'super_admin' || primaryRole === 'superadmin';
+    const isPrimaryAgent = primaryRole === 'agent';
+
+    const activeRole = isPrimaryAdmin ? 'admin'
+        : isPrimaryAgent ? 'agent'
+        : pathname.includes('/dashboard/agent') ? 'agent'
         : pathname.includes('/dashboard/owner') ? 'owner'
         : pathname.includes('/dashboard/developer') ? 'developer'
         : pathname.includes('/dashboard/client') ? 'client'
         : pathname.includes('/dashboard/admin') ? 'admin'
-        : profile?.role;
+        : primaryRole;
 
     const isAgent = activeRole === 'agent';
     const isOwner = activeRole === 'owner';
