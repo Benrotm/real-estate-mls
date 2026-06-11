@@ -892,6 +892,7 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             owner_name: data.owner_name || '',
             owner_phone: data.owner_phone || '',
             private_notes: data.private_notes || '',
+            documents: sourceUrl && sourceUrl !== 'immoflux_batch' ? Array.from(new Set([sourceUrl, ...(data.documents || [])])) : (data.documents || []),
 
             // Media
             images: data.images || [],
