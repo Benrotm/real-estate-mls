@@ -358,19 +358,69 @@ export async function GET(request: NextRequest) {
                     item.listingObj.images = galleryImages.length > 0 ? galleryImages : item.fallbackImages;
 
                     const panelText = $panel.text();
-                    const baiMatch = panelText.match(/Bai:\s*(\d+)/i);
+                    
+                    // Extract full description from detail panel using DOM siblings
+                    let descH4 = $panel('h4').filter((_, el) => $panel(el).text().trim().toLowerCase() === 'descriere');
+                    if (descH4.length === 0) {
+                        descH4 = $panel('.example-title').filter((_, el) => $panel(el).text().trim().toLowerCase().includes('descriere'));
+                    }
+                    if (descH4.length > 0) {
+                        const parentContents = descH4.parent().contents();
+                        const startIndex = parentContents.index(descH4);
+                        if (startIndex !== -1) {
+                            const descParts: string[] = [];
+                            for (let j = startIndex + 1; j < parentContents.length; j++) {
+                                const node = parentContents.eq(j);
+                                const tagName = node.prop('tagName')?.toLowerCase();
+                                if (tagName === 'h4' || tagName === 'h3' || tagName === 'script' || tagName === 'style') {
+                                    break;
+                                }
+                                if (node.hasClass('site-action') || node.hasClass('slidePanel-actions')) {
+                                    break;
+                                }
+                                
+                                if (node[0].type === 'text') {
+                                    const rawText = (node[0] as any).data;
+                                    if (rawText) descParts.push(rawText);
+                                } else {
+                                    const text = node.text();
+                                    if (text) descParts.push(text);
+                                }
+                            }
+                            if (descParts.length > 0) {
+                                item.listingObj.description = descParts.join('').trim();
+                            }
+                        }
+                    }
+
+                    // Fallback description extraction
+                    if (!item.listingObj.description) {
+                        const container = $panel('.slidePanel-inner-section');
+                        if (container.length > 0) {
+                            const fullText = container.text().trim();
+                            const descMatch = fullText.match(/Descriere\s*:?\s*([\s\S]+)/i);
+                            if (descMatch && descMatch[1]) {
+                                let immoDesc = descMatch[1].trim();
+                                const cutOffMatch = immoDesc.match(/([\s\S]+?)(?:\s+Detalii suplimentare|\s+Caracteristici|\s+Dotari|\s*Zona|$)/i);
+                                item.listingObj.description = cutOffMatch ? cutOffMatch[1].trim() : immoDesc;
+                            }
+                        }
+                    }
+
+                    // Specs extraction (diacritic-agnostic regex)
+                    const baiMatch = panelText.match(/(?:Bai|Băi)\s*:\s*(\d+)/i);
                     if (baiMatch) item.listingObj.bathrooms = parseInt(baiMatch[1], 10);
 
-                    const yearMatch = panelText.match(/An constructie:\s*(\d{4})/i);
+                    const yearMatch = panelText.match(/(?:An constructie|An construcție)\s*:\s*(\d{4})/i);
                     if (yearMatch) item.listingObj.year_built = parseInt(yearMatch[1], 10);
 
-                    const areaMatch = panelText.match(/Suprafata utila:\s*([\d.,]+)/i);
+                    const areaMatch = panelText.match(/(?:Suprafata utila|Suprafață utilă)\s*:\s*([\d.,]+)/i);
                     if (areaMatch) item.listingObj.area_usable = parseFloat(areaMatch[1].replace(',', '.'));
 
-                    const balcMatch = panelText.match(/Balcoane:\s*(\d+)/i);
+                    const balcMatch = panelText.match(/Balcoane\s*:\s*(\d+)/i);
                     if (balcMatch) item.listingObj.area_terrace = parseInt(balcMatch[1], 10);
 
-                    const parkMatch = panelText.match(/Locuri de parcare:\s*(\d+)/i);
+                    const parkMatch = panelText.match(/Locuri de parcare\s*:\s*(\d+)/i);
                     if (parkMatch && parseInt(parkMatch[1], 10) > 0) item.listingObj.features.push('Parking');
 
                     const regimMatch = panelText.match(/[Rr]egim(?:\s+de)?\s+(?:inaltime|înălțime|in[aă]l[tț]ime)[:\s]*P\s*\+\s*(\d+)/i);
