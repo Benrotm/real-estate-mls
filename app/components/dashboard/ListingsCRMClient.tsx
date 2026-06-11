@@ -845,36 +845,36 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                 </div>
 
                 {/* Analytics Row */}
-                <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100 overflow-x-auto pb-3 md:pb-0 no-scrollbar">
+                    <div className="flex items-center gap-2 text-slate-600 shrink-0">
                         <Eye className="w-4 h-4 text-blue-500" />
                         <span className="font-bold">{property.views_count}</span>
                         <span className="text-xs text-slate-400">views</span>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-600">
+                    <div className="flex items-center gap-2 text-slate-600 shrink-0">
                         <Heart className="w-4 h-4 text-pink-500" />
                         <span className="font-bold">{property.favorites_count}</span>
                         <span className="text-xs text-slate-400">saves</span>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-600">
+                    <div className="flex items-center gap-2 text-slate-600 shrink-0">
                         <MessageCircle className="w-4 h-4 text-emerald-500" />
                         <span className="font-bold">{property.inquiries_count}</span>
                         <span className="text-xs text-slate-400">inquiries</span>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-600">
+                    <div className="flex items-center gap-2 text-slate-600 shrink-0">
                         <DollarSign className="w-4 h-4 text-amber-500" />
                         <span className="font-bold">{property.offers.length}</span>
                         <span className="text-xs text-slate-400">offers</span>
                         {pendingOffers > 0 && (
-                            <span className="px-1.5 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full">{pendingOffers} new</span>
+                            <span className="px-1.5 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full shrink-0">{pendingOffers} new</span>
                         )}
                     </div>
-                    <div className="flex items-center gap-2 text-slate-600">
+                    <div className="flex items-center gap-2 text-slate-600 shrink-0">
                         <Share2 className="w-4 h-4 text-indigo-500" />
                         <span className="font-bold">{property.shares_count || 0}</span>
                         <span className="text-xs text-slate-400">shares</span>
                     </div>
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ml-auto flex items-center gap-2 shrink-0">
                         <button
                             onClick={(e) => {
                                 e.preventDefault();
