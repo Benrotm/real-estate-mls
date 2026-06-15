@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { LeadData } from '@/app/lib/types';
 import { upsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
-import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle } from 'lucide-react';
+import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap } from 'lucide-react';
 import ShareMatchesModal from '@/app/components/dashboard/ShareMatchesModal';
 
 interface Props {
@@ -29,6 +29,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const loadAISuggestions = async () => {
         setIsLoadingAI(true);
         try {
+            if (!lead.id) return;
             const results = await findMatchingProperties(lead.id);
             // Filter out properties that are already in initialMatches
             const existingIds = matches.map(m => m.property_id || m.property?.id);
@@ -42,6 +43,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     };
 
     const handleUpdateStatus = async (propertyId: string, status: string) => {
+        if (!lead.id) return;
         setUpdatingIds(prev => [...prev, propertyId]);
         try {
             const res = await upsertMatchStatus(lead.id, propertyId, status);

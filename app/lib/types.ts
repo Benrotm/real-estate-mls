@@ -10,6 +10,7 @@ export interface LeadData {
     id_document_type?: string;
     id_series_number?: string;
     cnp?: string;
+    public_share_token?: string;
 
     preference_type?: string;
     preference_listing_type?: string;
