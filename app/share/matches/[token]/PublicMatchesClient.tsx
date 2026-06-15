@@ -23,7 +23,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
         return m.status === activeTab;
     });
 
-    const handleUpdateStatus = async (matchId: string, status: 'interested' | 'not_interested' | 'visit_scheduled') => {
+    const handleUpdateStatus = async (matchId: string, status: 'interested' | 'not_interested' | 'visit_scheduled' | 'sold') => {
         setUpdatingIds(prev => [...prev, matchId]);
         try {
             const res = await updatePublicMatchStatus(token, matchId, status);
@@ -211,7 +211,22 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                                         <ThumbsUp className="w-4 h-4" /> Interested
                                                     </button>
                                                 </div>
-                                            ) : (isVisitScheduled || isNegotiation) ? (
+                                            ) : isNegotiation ? (
+                                                <div className="flex flex-col gap-2">
+                                                    <button 
+                                                        onClick={() => handleUpdateStatus(match.id, 'sold')}
+                                                        className="py-2.5 bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 text-white rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all"
+                                                    >
+                                                        <CheckCircle className="w-4 h-4" /> Mark as Sold!
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleUpdateStatus(match.id, 'not_interested')}
+                                                        className="py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                                                    >
+                                                        <ThumbsDown className="w-3.5 h-3.5" /> Not Interested Anymore
+                                                    </button>
+                                                </div>
+                                            ) : isVisitScheduled ? (
                                                 <div className="flex flex-col gap-2">
                                                     <div className="text-center py-2 text-xs font-bold text-slate-500">
                                                         Your agent is handling this property for you.
