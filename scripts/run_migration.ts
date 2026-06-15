@@ -38,7 +38,7 @@ const configs = [
 ];
 
 const MIGRATIONS = [
-    'supabase/migrations/20260402000000_ai_matching_dynamic_config.sql'
+    'supabase/migrations/20260615170000_lead_property_matches.sql'
 ];
 
 async function run() {

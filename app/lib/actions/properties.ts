@@ -214,6 +214,14 @@ export async function createProperty(formData: FormData) {
             }
         }
 
+        // Trigger Romimo API Sync
+        if (data && data.publish_romimo && data.status === 'active' && user.email) {
+            import('@/app/lib/api/romimo').then(({ upsertRomimoArticle }) => {
+                upsertRomimoArticle(data, user.email!).catch(console.error);
+            });
+        }
+
+
         revalidatePath('/properties');
         revalidatePath('/dashboard/owner');
 
@@ -770,6 +778,18 @@ export async function updateProperty(id: string, formData: FormData) {
                 }
             }
         }
+
+        // Trigger Romimo API Sync
+        if (data && user.email) {
+            import('@/app/lib/api/romimo').then(({ upsertRomimoArticle, deleteRomimoArticle }) => {
+                if (data.publish_romimo && data.status === 'active') {
+                    upsertRomimoArticle(data, user.email!).catch(console.error);
+                } else if ((!data.publish_romimo || data.status !== 'active') && property?.publish_romimo && property?.status === 'active') {
+                    deleteRomimoArticle(user.email!, data.id).catch(console.error);
+                }
+            });
+        }
+
 
         revalidatePath('/properties');
         revalidatePath('/dashboard/owner');

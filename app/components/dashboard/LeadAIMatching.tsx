@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, CheckCircle, AlertCircle, Building2, Zap, ArrowUpRight, MessageSquare, Activity, MapPin } from 'lucide-react';
+import { Mail, Phone, CheckCircle, AlertCircle, Building2, Zap, ArrowUpRight, MessageSquare, Activity, MapPin, BookmarkPlus, XCircle, ListFilter } from 'lucide-react';
 import { LeadData } from '@/app/lib/types';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
+import { upsertMatchStatus } from '@/app/lib/actions/matches';
 import ContactPartnerModal from '../ContactPartnerModal';
+import { useRouter } from 'next/navigation';
 
 interface Props {
     lead: LeadData;
@@ -13,11 +15,13 @@ interface Props {
 }
 
 export default function LeadAIMatching({ lead, currentUserId }: Props) {
+    const router = useRouter();
     const [matches, setMatches] = useState<any[]>([]);
     const [isMatchingLoading, setIsMatchingLoading] = useState(false);
     const [selectedPropertyIds, setSelectedPropertyIds] = useState<string[]>([]);
     const [matchError, setMatchError] = useState<string | null>(null);
     const [hasScanned, setHasScanned] = useState(false);
+    const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
 
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [selectedPartnerForContact, setSelectedPartnerForContact] = useState<any>(null);
@@ -44,6 +48,27 @@ export default function LeadAIMatching({ lead, currentUserId }: Props) {
         setSelectedPropertyIds(prev =>
             prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
         );
+    };
+
+    const handleQuickAction = async (propertyId: string, status: 'saved' | 'dismissed', e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!lead.id) return;
+
+        setSavingStates(prev => ({ ...prev, [propertyId]: true }));
+        try {
+            await upsertMatchStatus(lead.id, propertyId, status);
+            // Optionally remove from view if dismissed
+            if (status === 'dismissed') {
+                setMatches(prev => prev.filter(m => m.id !== propertyId));
+            } else {
+                alert('Property saved to matches list!');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Failed to save status');
+        } finally {
+            setSavingStates(prev => ({ ...prev, [propertyId]: false }));
+        }
     };
 
     const handleContactPartner = (property: any) => {
@@ -96,22 +121,31 @@ export default function LeadAIMatching({ lead, currentUserId }: Props) {
                         </div>
                     </div>
 
-                    {selectedPropertyIds.length > 0 && (
-                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
-                            <button
-                                onClick={handleShareWhatsApp}
-                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-green-600/20"
-                            >
-                                <Phone className="w-4 h-4" /> Share WhatsApp ({selectedPropertyIds.length})
-                            </button>
-                            <button
-                                onClick={handleShareEmail}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-blue-600/20"
-                            >
-                                <Mail className="w-4 h-4" /> Share Email
-                            </button>
-                        </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                        {selectedPropertyIds.length > 0 && (
+                            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
+                                <button
+                                    onClick={handleShareWhatsApp}
+                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-green-600/20"
+                                >
+                                    <Phone className="w-4 h-4" /> Share WhatsApp ({selectedPropertyIds.length})
+                                </button>
+                                <button
+                                    onClick={handleShareEmail}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-blue-600/20"
+                                >
+                                    <Mail className="w-4 h-4" /> Share Email
+                                </button>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => router.push(`/dashboard/agent/leads/${lead.id}/matches`)}
+                            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-slate-900/20"
+                        >
+                            <ListFilter className="w-4 h-4" />
+                            Curate Matches & Share
+                        </button>
+                    </div>
                 </div>
 
                 {!hasScanned && !isMatchingLoading ? (
@@ -158,8 +192,28 @@ export default function LeadAIMatching({ lead, currentUserId }: Props) {
                                                 alt={property.title}
                                                 className="w-full h-full object-cover"
                                             />
+                                            {/* Action Overlay buttons */}
+                                            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={(e) => handleQuickAction(property.id, 'saved', e)}
+                                                    disabled={savingStates[property.id]}
+                                                    className="p-1.5 bg-white/90 backdrop-blur-sm text-slate-700 hover:text-green-600 rounded-lg shadow-sm"
+                                                    title="Save to Matches"
+                                                >
+                                                    <BookmarkPlus className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleQuickAction(property.id, 'dismissed', e)}
+                                                    disabled={savingStates[property.id]}
+                                                    className="p-1.5 bg-white/90 backdrop-blur-sm text-slate-700 hover:text-red-600 rounded-lg shadow-sm"
+                                                    title="Dismiss"
+                                                >
+                                                    <XCircle className="w-4 h-4" />
+                                                </button>
+                                            </div>
+
                                             {/* Selection Indicator */}
-                                            <div className={`absolute inset-0 bg-orange-600/20 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${selectedPropertyIds.includes(property.id) ? 'opacity-100' : 'opacity-0'}`}>
+                                            <div className={`absolute inset-0 bg-orange-600/20 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 pointer-events-none ${selectedPropertyIds.includes(property.id) ? 'opacity-100' : 'opacity-0'}`}>
                                                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-2xl">
                                                     <CheckCircle className="w-8 h-8 text-orange-600" />
                                                 </div>
