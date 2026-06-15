@@ -211,9 +211,21 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                                         <ThumbsUp className="w-4 h-4" /> Interested
                                                     </button>
                                                 </div>
-                                            ) : (isVisitScheduled || isNegotiation || isSold) ? (
+                                            ) : (isVisitScheduled || isNegotiation) ? (
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="text-center py-2 text-xs font-bold text-slate-500">
+                                                        Your agent is handling this property for you.
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => handleUpdateStatus(match.id, 'not_interested')}
+                                                        className="py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                                                    >
+                                                        <ThumbsDown className="w-3.5 h-3.5" /> Not Interested Anymore
+                                                    </button>
+                                                </div>
+                                            ) : isSold ? (
                                                 <div className="text-center py-2 text-xs font-bold text-slate-500">
-                                                    Your agent is handling this property for you.
+                                                    Congratulations on this property!
                                                 </div>
                                             ) : isInterested ? (
                                                 <div className="flex flex-col gap-2">
