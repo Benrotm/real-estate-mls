@@ -147,8 +147,8 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                         
                                         {/* Status Overlay */}
                                         {(isInterested || isVisitScheduled || isNegotiation) && (
-                                            <div className="absolute inset-0 bg-green-600/20 backdrop-blur-sm flex items-center justify-center pointer-events-none">
-                                                <div className="bg-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 text-green-700 font-black tracking-widest uppercase">
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
+                                                <div className="bg-white/95 backdrop-blur px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 text-green-700 font-black tracking-widest uppercase">
                                                     {isInterested && <><CheckCircle className="w-5 h-5" /> Interested</>}
                                                     {isVisitScheduled && <><Calendar className="w-5 h-5" /> Visit Scheduled</>}
                                                     {isNegotiation && <><Handshake className="w-5 h-5" /> Negotiation</>}
@@ -156,8 +156,8 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                             </div>
                                         )}
                                         {isNotInterested && (
-                                            <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center pointer-events-none">
-                                                <div className="bg-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 text-slate-600 font-black tracking-widest uppercase">
+                                            <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center pointer-events-none p-4">
+                                                <div className="bg-white/95 backdrop-blur px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 text-slate-700 font-black tracking-widest uppercase">
                                                     <ThumbsDown className="w-5 h-5" /> Skipped
                                                 </div>
                                             </div>
