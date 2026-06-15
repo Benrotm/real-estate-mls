@@ -219,9 +219,9 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         </div>
                         <div>
                             <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
-                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {new Date(lead.updated_at).toLocaleDateString()}</span>
+                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {lead.updated_at ? new Date(lead.updated_at).toLocaleDateString() : 'N/A'}</span>
                                 <span className="w-1 h-1 rounded-full bg-slate-500"></span>
-                                <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id.slice(0, 8)}</span>
+                                <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id ? lead.id.slice(0, 8) : 'N/A'}</span>
                             </div>
                         </div>
                     </div>
