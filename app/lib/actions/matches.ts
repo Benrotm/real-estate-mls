@@ -98,7 +98,7 @@ export async function getPublicMatchesByToken(token: string) {
     return { lead, matches: matches || [] };
 }
 
-export async function updatePublicMatchStatus(token: string, matchId: string, newStatus: 'interested' | 'not_interested') {
+export async function updatePublicMatchStatus(token: string, matchId: string, newStatus: 'interested' | 'not_interested' | 'visit_scheduled') {
     const supabase = createAdminClient();
 
     // Verify token corresponds to lead

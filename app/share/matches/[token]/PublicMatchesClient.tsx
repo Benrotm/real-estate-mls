@@ -22,7 +22,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
         return m.status === activeTab;
     });
 
-    const handleUpdateStatus = async (matchId: string, status: 'interested' | 'not_interested') => {
+    const handleUpdateStatus = async (matchId: string, status: 'interested' | 'not_interested' | 'visit_scheduled') => {
         setUpdatingIds(prev => [...prev, matchId]);
         try {
             const res = await updatePublicMatchStatus(token, matchId, status);
@@ -212,12 +212,27 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                                 <div className="text-center py-2 text-xs font-bold text-slate-500">
                                                     Your agent is handling this property for you.
                                                 </div>
+                                            ) : isInterested ? (
+                                                <div className="flex flex-col gap-2">
+                                                    <button 
+                                                        onClick={() => handleUpdateStatus(match.id, 'visit_scheduled')}
+                                                        className="py-2.5 bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-600/20 text-white rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all"
+                                                    >
+                                                        <Calendar className="w-4 h-4" /> Schedule Visit
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleUpdateStatus(match.id, 'not_interested')}
+                                                        className="w-full py-1 bg-transparent text-slate-400 hover:text-slate-600 underline text-xs font-bold transition-colors"
+                                                    >
+                                                        Change my mind (mark as Pass)
+                                                    </button>
+                                                </div>
                                             ) : (
                                                 <button 
-                                                    onClick={() => handleUpdateStatus(match.id, isInterested ? 'not_interested' : 'interested')}
+                                                    onClick={() => handleUpdateStatus(match.id, 'interested')}
                                                     className="w-full py-2 bg-transparent text-slate-400 hover:text-slate-600 underline text-xs font-bold transition-colors"
                                                 >
-                                                    Change my mind (mark as {isInterested ? 'Pass' : 'Interested'})
+                                                    Change my mind (mark as Interested)
                                                 </button>
                                             )}
                                         </div>
