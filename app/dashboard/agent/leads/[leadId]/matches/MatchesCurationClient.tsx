@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { LeadData } from '@/app/lib/types';
 import { upsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
-import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap } from 'lucide-react';
+import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight } from 'lucide-react';
 import ShareMatchesModal from '@/app/components/dashboard/ShareMatchesModal';
+import Link from 'next/link';
 
 interface Props {
     lead: LeadData;
@@ -116,11 +117,21 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                     <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-3">
                         <MapPin className="w-3 h-3" /> {property.location_city} {property.location_area && `• ${property.location_area}`}
                     </div>
-                    <div className="text-lg font-black text-orange-600 mb-4">
-                        {property.price?.toLocaleString()} {property.currency}
+                    <div className="flex items-center justify-between mt-auto mb-4 border-t border-slate-100 pt-3">
+                        <div className="text-lg font-black text-orange-600 leading-none">
+                            {property.price?.toLocaleString()} {property.currency}
+                        </div>
+                        <Link
+                            href={`/properties/${property.id}`}
+                            target="_blank"
+                            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                            title="View Full Details"
+                        >
+                            <ArrowUpRight className="w-4 h-4" />
+                        </Link>
                     </div>
 
-                    <div className="mt-auto grid grid-cols-2 gap-2 pt-4 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-2 pt-2">
                         {(!status || status === 'dismissed') && (
                             <>
                                 <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="px-3 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
