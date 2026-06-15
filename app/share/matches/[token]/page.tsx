@@ -19,5 +19,5 @@ export default async function PublicShareMatchesPage({ params }: { params: Promi
         );
     }
 
-    return <PublicMatchesClient token={token} lead={lead} initialMatches={matches} />;
+    return <PublicMatchesClient token={token} lead={lead} initialMatches={matches || []} />;
 }

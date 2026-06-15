@@ -70,7 +70,7 @@ export async function getPublicMatchesByToken(token: string) {
     // 1. Find lead by token
     const { data: lead, error: leadError } = await supabase
         .from('leads')
-        .select('id, name, public_share_token')
+        .select('*')
         .eq('public_share_token', token)
         .single();
 
