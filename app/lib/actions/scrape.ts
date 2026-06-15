@@ -754,7 +754,7 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             }
 
             // Specs extraction (Immoflux-specific)
-            const areaMatch = fullBodyText.match(/(?:Suprafata utila|Suprafață utilă)\s*:\s*([\d.,]+)/i) || fullBodyText.match(/SU\s+([\d.,]+)\s*mp/i) || fullBodyText.match(/SU\s*:\s*([\d.,]+)/i);
+            const areaMatch = fullBodyText.match(/(?:Suprafata utila|Suprafață utilă)\s*:\s*([\d.,]+)/i) || fullBodyText.match(/SU\s+([\d.,]+)\s*mp/i) || fullBodyText.match(/SU\s*:\s*([\d.,]+)/i) || fullBodyText.match(/suprafat[aă]\s*(?:util[aă])?\s*(?:de\s*)?([\d.,]+)\s*m/i);
             if (areaMatch) {
                 data.area_usable = parseFloat(areaMatch[1].replace(',', '.'));
             }
