@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { updatePublicMatchStatus } from '@/app/lib/actions/matches';
-import { Building2, ThumbsUp, ThumbsDown, CheckCircle, ArrowUpRight, MapPin, Clock, List, Activity } from 'lucide-react';
+import { Building2, ThumbsUp, ThumbsDown, CheckCircle, ArrowUpRight, MapPin, Clock, List, Activity, Calendar, Handshake } from 'lucide-react';
 import Link from 'next/link';
 import LeadProfileDetails from '@/app/components/dashboard/LeadProfileDetails';
 
@@ -15,6 +15,12 @@ interface Props {
 export default function PublicMatchesClient({ token, lead, initialMatches }: Props) {
     const [matches, setMatches] = useState<any[]>(initialMatches);
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
+    const [activeTab, setActiveTab] = useState<'all' | 'not_interested' | 'interested' | 'visit_scheduled' | 'negotiation'>('all');
+
+    const filteredMatches = matches.filter(m => {
+        if (activeTab === 'all') return true;
+        return m.status === activeTab;
+    });
 
     const handleUpdateStatus = async (matchId: string, status: 'interested' | 'not_interested') => {
         setUpdatingIds(prev => [...prev, matchId]);
@@ -89,6 +95,26 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                     </p>
                 </div>
 
+                {matches.length > 0 && (
+                    <div className="mb-6 flex flex-wrap bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm gap-1 max-w-3xl mx-auto justify-center">
+                        <button onClick={() => setActiveTab('all')} className={`px-4 py-2 rounded-lg text-sm font-black uppercase transition-all ${activeTab === 'all' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            All ({matches.length})
+                        </button>
+                        <button onClick={() => setActiveTab('not_interested')} className={`px-4 py-2 rounded-lg text-sm font-black uppercase transition-all ${activeTab === 'not_interested' ? 'bg-slate-200 text-slate-800 shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            Skipped ({matches.filter(m => m.status === 'not_interested').length})
+                        </button>
+                        <button onClick={() => setActiveTab('interested')} className={`px-4 py-2 rounded-lg text-sm font-black uppercase transition-all ${activeTab === 'interested' ? 'bg-green-500 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            Interested ({matches.filter(m => m.status === 'interested').length})
+                        </button>
+                        <button onClick={() => setActiveTab('visit_scheduled')} className={`px-4 py-2 rounded-lg text-sm font-black uppercase transition-all ${activeTab === 'visit_scheduled' ? 'bg-purple-500 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            Visit ({matches.filter(m => m.status === 'visit_scheduled').length})
+                        </button>
+                        <button onClick={() => setActiveTab('negotiation')} className={`px-4 py-2 rounded-lg text-sm font-black uppercase transition-all ${activeTab === 'negotiation' ? 'bg-amber-500 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
+                            Negot. ({matches.filter(m => m.status === 'negotiation').length})
+                        </button>
+                    </div>
+                )}
+
                 {matches.length === 0 ? (
                     <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300 max-w-2xl mx-auto flex flex-col items-center justify-center">
                         <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mb-4">
@@ -99,13 +125,20 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                             Your agent hasn't marked any properties as "Sent" for your review yet. If your agent recently added properties, please ensure they click "Mark Sent" on their dashboard so they appear here!
                         </p>
                     </div>
+                ) : filteredMatches.length === 0 ? (
+                    <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300 max-w-2xl mx-auto flex flex-col items-center justify-center">
+                        <h3 className="text-lg font-black text-slate-900 mb-2">No properties in this category</h3>
+                        <p className="text-slate-500 font-bold">Try selecting a different tab above.</p>
+                    </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {matches.map((match) => {
+                        {filteredMatches.map((match) => {
                             const property = match.property;
                             const isUpdating = updatingIds.includes(match.id);
                             const isInterested = match.status === 'interested';
                             const isNotInterested = match.status === 'not_interested';
+                            const isVisitScheduled = match.status === 'visit_scheduled';
+                            const isNegotiation = match.status === 'negotiation';
 
                             return (
                                 <div key={match.id} className={`bg-white rounded-2xl overflow-hidden transition-all shadow-sm border border-slate-200 flex flex-col ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -113,10 +146,12 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                         <img src={property.images?.[0] || '/placeholder-property.jpg'} alt={property.title} className="w-full h-full object-cover" />
                                         
                                         {/* Status Overlay */}
-                                        {isInterested && (
+                                        {(isInterested || isVisitScheduled || isNegotiation) && (
                                             <div className="absolute inset-0 bg-green-600/20 backdrop-blur-sm flex items-center justify-center pointer-events-none">
                                                 <div className="bg-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 text-green-700 font-black tracking-widest uppercase">
-                                                    <CheckCircle className="w-5 h-5" /> Interested
+                                                    {isInterested && <><CheckCircle className="w-5 h-5" /> Interested</>}
+                                                    {isVisitScheduled && <><Calendar className="w-5 h-5" /> Visit Scheduled</>}
+                                                    {isNegotiation && <><Handshake className="w-5 h-5" /> Negotiation</>}
                                                 </div>
                                             </div>
                                         )}
@@ -158,7 +193,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                         </div>
 
                                         <div className="mt-auto flex flex-col gap-3">
-                                            {(!isInterested && !isNotInterested) ? (
+                                            {(!isInterested && !isNotInterested && !isVisitScheduled && !isNegotiation) ? (
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <button 
                                                         onClick={() => handleUpdateStatus(match.id, 'not_interested')}
@@ -172,6 +207,10 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                                     >
                                                         <ThumbsUp className="w-4 h-4" /> Interested
                                                     </button>
+                                                </div>
+                                            ) : (isVisitScheduled || isNegotiation) ? (
+                                                <div className="text-center py-2 text-xs font-bold text-slate-500">
+                                                    Your agent is handling this property for you.
                                                 </div>
                                             ) : (
                                                 <button 

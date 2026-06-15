@@ -17,7 +17,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const [matches, setMatches] = useState<any[]>(initialMatches);
     const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
     const [isLoadingAI, setIsLoadingAI] = useState(false);
-    const [activeTab, setActiveTab] = useState<'curate' | 'saved' | 'sent' | 'responses'>('curate');
+    const [activeTab, setActiveTab] = useState<'curate' | 'saved' | 'sent' | 'interested' | 'not_interested' | 'visit_scheduled' | 'negotiation'>('curate');
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
 
@@ -175,12 +175,15 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
 
     const savedMatches = matches.filter(m => m.status === 'saved');
     const sentMatches = matches.filter(m => m.status === 'sent');
-    const responseMatches = matches.filter(m => ['interested', 'not_interested', 'visit_scheduled', 'negotiation'].includes(m.status));
+    const interestedMatches = matches.filter(m => m.status === 'interested');
+    const notInterestedMatches = matches.filter(m => m.status === 'not_interested');
+    const visitedMatches = matches.filter(m => m.status === 'visit_scheduled');
+    const negotiationMatches = matches.filter(m => m.status === 'negotiation');
 
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex bg-slate-100 p-1 rounded-lg">
+                <div className="flex flex-wrap bg-slate-100 p-1 rounded-lg gap-1">
                     <button onClick={() => setActiveTab('curate')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'curate' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
                         Curate AI ({aiSuggestions.length})
                     </button>
@@ -190,14 +193,23 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                     <button onClick={() => setActiveTab('sent')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'sent' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         Sent ({sentMatches.length})
                     </button>
-                    <button onClick={() => setActiveTab('responses')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'responses' ? 'bg-white shadow text-green-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                        Responses ({responseMatches.length})
+                    <button onClick={() => setActiveTab('interested')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'interested' ? 'bg-white shadow text-green-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                        Interested ({interestedMatches.length})
+                    </button>
+                    <button onClick={() => setActiveTab('not_interested')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'not_interested' ? 'bg-white shadow text-slate-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                        Skipped ({notInterestedMatches.length})
+                    </button>
+                    <button onClick={() => setActiveTab('visit_scheduled')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'visit_scheduled' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                        Visit ({visitedMatches.length})
+                    </button>
+                    <button onClick={() => setActiveTab('negotiation')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'negotiation' ? 'bg-white shadow text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                        Negot. ({negotiationMatches.length})
                     </button>
                 </div>
                 
                 <button 
                     onClick={() => setIsShareModalOpen(true)}
-                    className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-slate-900/20"
+                    className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-slate-900/20 whitespace-nowrap"
                 >
                     <Share2 className="w-4 h-4" /> Share With Lead
                 </button>
@@ -262,18 +274,69 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                     </div>
                 )}
 
-                {activeTab === 'responses' && (
+                {activeTab === 'interested' && (
                     <div className="space-y-6">
                         <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                            <Eye className="w-5 h-5 text-green-600" /> Lead Responses & Active Pipeline
+                            <ThumbsUp className="w-5 h-5 text-green-600" /> Interested
                         </h2>
-                        {responseMatches.length > 0 ? (
+                        {interestedMatches.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {responseMatches.map(m => renderPropertyCard(m.property, m.status))}
+                                {interestedMatches.map(m => renderPropertyCard(m.property, m.status))}
                             </div>
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No responses from the lead yet.</p>
+                                <p className="text-slate-500 font-bold">No interested properties yet.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'not_interested' && (
+                    <div className="space-y-6">
+                        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <ThumbsDown className="w-5 h-5 text-slate-600" /> Skipped
+                        </h2>
+                        {notInterestedMatches.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {notInterestedMatches.map(m => renderPropertyCard(m.property, m.status))}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
+                                <p className="text-slate-500 font-bold">No skipped properties yet.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'visit_scheduled' && (
+                    <div className="space-y-6">
+                        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-purple-600" /> Visits
+                        </h2>
+                        {visitedMatches.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {visitedMatches.map(m => renderPropertyCard(m.property, m.status))}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
+                                <p className="text-slate-500 font-bold">No visits scheduled yet.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'negotiation' && (
+                    <div className="space-y-6">
+                        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <Handshake className="w-5 h-5 text-amber-600" /> Negotiation
+                        </h2>
+                        {negotiationMatches.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {negotiationMatches.map(m => renderPropertyCard(m.property, m.status))}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
+                                <p className="text-slate-500 font-bold">No properties in negotiation yet.</p>
                             </div>
                         )}
                     </div>
