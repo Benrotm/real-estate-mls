@@ -229,10 +229,10 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         <div className="text-right">
                             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Lead Score</div>
                             <div className="flex items-center gap-2">
-                                <div className={`text-2xl font-black ${(lead.score || lead.match_score || 0) >= 80 ? 'text-green-400' : (lead.score || lead.match_score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
-                                    {lead.score || lead.match_score || 0}
+                                <div className={`text-2xl font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
+                                    {lead.score || 0}
                                 </div>
-                                <Activity className={`w-6 h-6 ${(lead.score || lead.match_score || 0) >= 80 ? 'text-green-400' : (lead.score || lead.match_score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
+                                <Activity className={`w-6 h-6 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
                             </div>
                         </div>
                     </div>
