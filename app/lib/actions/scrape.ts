@@ -754,17 +754,17 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             }
 
             // Specs extraction (Immoflux-specific)
-            const areaMatch = fullBodyText.match(/(?:Suprafata utila|Suprafață utilă)\s*:\s*([\d.,]+)/i);
+            const areaMatch = fullBodyText.match(/(?:Suprafata utila|Suprafață utilă)\s*:\s*([\d.,]+)/i) || fullBodyText.match(/\bSU\s+([\d.,]+)\s*mp\b/i) || fullBodyText.match(/\bSU\s*:\s*([\d.,]+)\b/i);
             if (areaMatch) {
                 data.area_usable = parseFloat(areaMatch[1].replace(',', '.'));
             }
 
-            const yearMatch = fullBodyText.match(/(?:An constructie|An construcție)\s*:\s*(\d{4})/i);
+            const yearMatch = fullBodyText.match(/(?:An constructie|An construcție)[\s:]*(\d{4})/i);
             if (yearMatch) {
                 data.year_built = parseInt(yearMatch[1], 10);
             }
 
-            const roomsMatch = fullBodyText.match(/Camere\s*:\s*(\d+)/i);
+            const roomsMatch = fullBodyText.match(/Camere\s*:\s*(\d+)/i) || fullBodyText.match(/(\d+)\s*camere/i);
             if (roomsMatch && !data.rooms) {
                 data.rooms = parseInt(roomsMatch[1], 10);
             }
