@@ -19,6 +19,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
 
     const filteredMatches = matches.filter(m => {
         if (activeTab === 'all') return true;
+        if (activeTab === 'negotiation') return m.status === 'negotiation' || m.status === 'sold';
         return m.status === activeTab;
     });
 
@@ -110,7 +111,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                             Visit ({matches.filter(m => m.status === 'visit_scheduled').length})
                         </button>
                         <button onClick={() => setActiveTab('negotiation')} className={`px-4 py-2 rounded-lg text-sm font-black uppercase transition-all ${activeTab === 'negotiation' ? 'bg-amber-500 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
-                            Negot. ({matches.filter(m => m.status === 'negotiation').length})
+                            Negot. ({matches.filter(m => m.status === 'negotiation' || m.status === 'sold').length})
                         </button>
                     </div>
                 )}
@@ -139,6 +140,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                             const isNotInterested = match.status === 'not_interested';
                             const isVisitScheduled = match.status === 'visit_scheduled';
                             const isNegotiation = match.status === 'negotiation';
+                            const isSold = match.status === 'sold';
 
                             return (
                                 <div key={match.id} className={`bg-white rounded-2xl overflow-hidden transition-all shadow-sm border border-slate-200 flex flex-col ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -146,12 +148,13 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                         <img src={property.images?.[0] || '/placeholder-property.jpg'} alt={property.title} className="w-full h-full object-cover" />
                                         
                                         {/* Status Overlay */}
-                                        {(isInterested || isVisitScheduled || isNegotiation) && (
+                                        {(isInterested || isVisitScheduled || isNegotiation || isSold) && (
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
                                                 <div className="bg-white/95 backdrop-blur px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 text-green-700 font-black tracking-widest uppercase">
                                                     {isInterested && <><CheckCircle className="w-5 h-5" /> Interested</>}
                                                     {isVisitScheduled && <><Calendar className="w-5 h-5" /> Visit Scheduled</>}
                                                     {isNegotiation && <><Handshake className="w-5 h-5" /> Negotiation</>}
+                                                    {isSold && <><CheckCircle className="w-5 h-5" /> Sold</>}
                                                 </div>
                                             </div>
                                         )}
@@ -193,7 +196,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                         </div>
 
                                         <div className="mt-auto flex flex-col gap-3">
-                                            {(!isInterested && !isNotInterested && !isVisitScheduled && !isNegotiation) ? (
+                                            {(!isInterested && !isNotInterested && !isVisitScheduled && !isNegotiation && !isSold) ? (
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <button 
                                                         onClick={() => handleUpdateStatus(match.id, 'not_interested')}
@@ -208,7 +211,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                                         <ThumbsUp className="w-4 h-4" /> Interested
                                                     </button>
                                                 </div>
-                                            ) : (isVisitScheduled || isNegotiation) ? (
+                                            ) : (isVisitScheduled || isNegotiation || isSold) ? (
                                                 <div className="text-center py-2 text-xs font-bold text-slate-500">
                                                     Your agent is handling this property for you.
                                                 </div>

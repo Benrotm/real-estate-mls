@@ -88,7 +88,7 @@ export async function getPublicMatchesByToken(token: string) {
             property:properties (*)
         `)
         .eq('lead_id', lead.id)
-        .in('status', ['saved', 'sent', 'interested', 'not_interested', 'visit_scheduled', 'negotiation']);
+        .in('status', ['saved', 'sent', 'interested', 'not_interested', 'visit_scheduled', 'negotiation', 'sold']);
 
     if (matchError) {
         console.error('Error fetching public matches:', matchError);

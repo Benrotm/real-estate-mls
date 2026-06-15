@@ -80,6 +80,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
             case 'not_interested': return <ThumbsDown className="w-4 h-4 text-red-600" />;
             case 'visit_scheduled': return <Calendar className="w-4 h-4 text-purple-600" />;
             case 'negotiation': return <Handshake className="w-4 h-4 text-amber-600" />;
+            case 'sold': return <CheckCircle className="w-4 h-4 text-emerald-600" />;
             case 'dismissed': return <XCircle className="w-4 h-4 text-slate-400" />;
             default: return <AlertCircle className="w-4 h-4 text-slate-400" />;
         }
@@ -93,6 +94,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
             case 'not_interested': return 'bg-red-50 text-red-700 border-red-200';
             case 'visit_scheduled': return 'bg-purple-50 text-purple-700 border-purple-200';
             case 'negotiation': return 'bg-amber-50 text-amber-700 border-amber-200';
+            case 'sold': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
             case 'dismissed': return 'bg-slate-100 text-slate-600 border-slate-200';
             default: return 'bg-slate-100 text-slate-600 border-slate-200';
         }
@@ -152,7 +154,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                                 </button>
                             </>
                         )}
-                        {(status === 'sent' || status === 'interested' || status === 'visit_scheduled' || status === 'negotiation') && (
+                        {(status === 'sent' || status === 'interested') && (
                             <>
                                 <button onClick={() => handleUpdateStatus(property.id, 'visit_scheduled')} className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                     <Calendar className="w-3.5 h-3.5" /> Visit
@@ -162,9 +164,34 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                                 </button>
                             </>
                         )}
+                        {status === 'visit_scheduled' && (
+                            <>
+                                <button onClick={() => handleUpdateStatus(property.id, 'not_interested')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                    <ThumbsDown className="w-3.5 h-3.5" /> Skipped
+                                </button>
+                                <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                    <Handshake className="w-3.5 h-3.5" /> Negot.
+                                </button>
+                            </>
+                        )}
+                        {status === 'negotiation' && (
+                            <>
+                                <button onClick={() => handleUpdateStatus(property.id, 'not_interested')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                    <ThumbsDown className="w-3.5 h-3.5" /> Skipped
+                                </button>
+                                <button onClick={() => handleUpdateStatus(property.id, 'sold')} className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                    <CheckCircle className="w-3.5 h-3.5" /> Sold
+                                </button>
+                            </>
+                        )}
                         {status === 'not_interested' && (
                             <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="col-span-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                 <RefreshCw className="w-3.5 h-3.5" /> Re-Save
+                            </button>
+                        )}
+                        {status === 'sold' && (
+                            <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="col-span-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <RefreshCw className="w-3.5 h-3.5" /> Revert to Negotiation
                             </button>
                         )}
                     </div>
@@ -178,7 +205,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const interestedMatches = matches.filter(m => m.status === 'interested');
     const notInterestedMatches = matches.filter(m => m.status === 'not_interested');
     const visitedMatches = matches.filter(m => m.status === 'visit_scheduled');
-    const negotiationMatches = matches.filter(m => m.status === 'negotiation');
+    const negotiationMatches = matches.filter(m => m.status === 'negotiation' || m.status === 'sold');
 
     return (
         <div className="flex flex-col gap-6">
