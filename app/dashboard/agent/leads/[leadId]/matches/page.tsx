@@ -35,7 +35,7 @@ export default async function MatchesCurationPage({ params }: { params: Promise<
                 </Link>
                 <div>
                     <h1 className="text-2xl font-black text-slate-900 tracking-tight">Lead Property Matches</h1>
-                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{lead.name}</p>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">ID: {lead.id.slice(0, 8)}</p>
                 </div>
             </div>
 

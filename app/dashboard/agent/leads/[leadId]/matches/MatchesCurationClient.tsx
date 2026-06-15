@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { LeadData } from '@/app/lib/types';
 import { upsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
-import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight } from 'lucide-react';
+import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight, CheckCircle, Clock, List, Activity } from 'lucide-react';
 import ShareMatchesModal from '@/app/components/dashboard/ShareMatchesModal';
+import LeadProfileDetails from '@/app/components/dashboard/LeadProfileDetails';
 import Link from 'next/link';
 
 interface Props {
@@ -209,6 +210,39 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
 
     return (
         <div className="flex flex-col gap-6">
+            {/* Lead Profile Summary Card */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-2">
+                <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl font-black border border-white/20">
+                            {(lead.name || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {new Date(lead.updated_at).toLocaleDateString()}</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-500"></span>
+                                <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id.slice(0, 8)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="text-right">
+                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Lead Score</div>
+                            <div className="flex items-center gap-2">
+                                <div className={`text-2xl font-black ${(lead.score || lead.match_score || 0) >= 80 ? 'text-green-400' : (lead.score || lead.match_score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
+                                    {lead.score || lead.match_score || 0}
+                                </div>
+                                <Activity className={`w-6 h-6 ${(lead.score || lead.match_score || 0) >= 80 ? 'text-green-400' : (lead.score || lead.match_score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-8">
+                    <LeadProfileDetails lead={lead} />
+                </div>
+            </div>
+
+            {/* Tabs */}
             <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div className="flex flex-wrap bg-slate-100 p-1 rounded-lg gap-1">
                     <button onClick={() => setActiveTab('curate')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'curate' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>

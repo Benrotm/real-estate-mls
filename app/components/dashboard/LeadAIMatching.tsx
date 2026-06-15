@@ -140,10 +140,10 @@ export default function LeadAIMatching({ lead, currentUserId }: Props) {
                         )}
                         <button
                             onClick={() => router.push(`/dashboard/agent/leads/${lead.id}/matches`)}
-                            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-slate-900/20"
+                            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-all shadow-md shadow-slate-900/20"
                         >
                             <ListFilter className="w-4 h-4" />
-                            Curate Matches & Share
+                            Manage & Share
                         </button>
                     </div>
                 </div>
