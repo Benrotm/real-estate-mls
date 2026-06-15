@@ -6,7 +6,8 @@ import MatchesCurationClient from './MatchesCurationClient';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default async function MatchesCurationPage({ params }: { params: { leadId: string } }) {
+export default async function MatchesCurationPage({ params }: { params: Promise<{ leadId: string }> }) {
+    const { leadId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -17,7 +18,7 @@ export default async function MatchesCurationPage({ params }: { params: { leadId
     const { data: lead, error: leadError } = await supabase
         .from('leads')
         .select('*')
-        .eq('id', params.leadId)
+        .eq('id', leadId)
         .single();
 
     if (leadError || !lead) {

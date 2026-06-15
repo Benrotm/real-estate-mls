@@ -3,8 +3,8 @@ import { notFound } from 'next/navigation';
 import { getPublicMatchesByToken } from '@/app/lib/actions/matches';
 import PublicMatchesClient from './PublicMatchesClient';
 
-export default async function PublicShareMatchesPage({ params }: { params: { token: string } }) {
-    const { token } = params;
+export default async function PublicShareMatchesPage({ params }: { params: Promise<{ token: string }> }) {
+    const { token } = await params;
 
     const { lead, matches, error } = await getPublicMatchesByToken(token);
 
