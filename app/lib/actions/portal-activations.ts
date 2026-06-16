@@ -47,30 +47,43 @@ export async function getUserPortalActivations(userId: string) {
 }
 
 export async function getAllPendingActivations() {
-    const { data, error } = await supabaseAdmin
+    const { data: activations, error } = await supabaseAdmin
         .from('portal_activations')
-        .select(`
-            *,
-            profiles!portal_activations_user_id_fkey(full_name, phone)
-        `)
+        .select('*')
         .eq('status', 'pending')
         .order('requested_at', { ascending: false });
 
-    // Try fetching with auth.users if profiles join fails
     if (error) {
-        console.error('Error fetching pending activations with profiles:', error);
-        
-        // Fallback fetch
-        const fallback = await supabaseAdmin
-            .from('portal_activations')
-            .select('*')
-            .eq('status', 'pending')
-            .order('requested_at', { ascending: false });
-            
-        return { data: fallback.data || [] };
+        console.error('Error fetching pending activations:', error);
+        return { data: [] };
     }
 
-    return { data: data || [] };
+    if (!activations || activations.length === 0) {
+        return { data: [] };
+    }
+
+    const userIds = [...new Set(activations.map(a => a.user_id))];
+
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, phone, email')
+        .in('id', userIds);
+
+    if (profilesError) {
+        console.error('Error fetching profiles for activations:', profilesError);
+    }
+
+    const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const enrichedActivations = activations.map(act => {
+        const profile = profilesMap.get(act.user_id);
+        return {
+            ...act,
+            profiles: profile || null,
+            users: profile ? { email: profile.email } : null
+        };
+    });
+
+    return { data: enrichedActivations };
 }
 
 export async function updateActivationStatus(id: string, status: 'active' | 'rejected') {
