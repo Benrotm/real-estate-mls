@@ -28,7 +28,8 @@ import {
     RefreshCw,
     Calendar,
     Move,
-    Coins
+    Coins,
+    Info
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
 import { getFeatureCosts } from '@/app/lib/actions/settings';
@@ -72,6 +73,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const [success, setSuccess] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [showRomimoInfo, setShowRomimoInfo] = useState(false);
     const [isReportSoldModalOpen, setIsReportSoldModalOpen] = useState(false);
     const [availableTours, setAvailableTours] = useState<VirtualTour[]>([]);
     const [contractLanguage, setContractLanguage] = useState<'ro' | 'en'>('ro');
@@ -1795,7 +1797,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                                 </svg>
                                             </div>
-                                            <h3 className="text-lg font-bold text-white">Export to Portals (XML Feed)</h3>
+                                            <h3 className="text-lg font-bold text-white">Export to Portals & Auto-Posting</h3>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1856,7 +1858,20 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <p className={`font-semibold ${formData.publishRomimo ? 'text-indigo-400' : 'text-slate-300'}`}>Publish to Romimo / Publi24</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className={`font-semibold ${formData.publishRomimo ? 'text-indigo-400' : 'text-slate-300'}`}>Publish to Romimo / Publi24</p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setShowRomimoInfo(true);
+                                                                }}
+                                                                className="text-slate-400 hover:text-indigo-400 transition-colors"
+                                                            >
+                                                                <Info className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
                                                         {portalCosts.publish_romimo > 0 && (
                                                             <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
                                                                 <Coins className="w-2.5 h-2.5 text-yellow-500" />
@@ -2103,6 +2118,52 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     listingPrice={Number(formData.price)}
                     currency={formData.currency}
                 />
+            )}
+
+            {showRomimoInfo && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowRomimoInfo(false)}>
+                    <div 
+                        className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 relative shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button 
+                            type="button"
+                            onClick={() => setShowRomimoInfo(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <Info className="w-6 h-6 text-indigo-500" />
+                            Romimo & Publi24 Auto-Posting
+                        </h3>
+                        <div className="space-y-4 text-slate-300 text-sm">
+                            <p>
+                                This feature automatically pushes your property listing to both <strong>Romimo</strong> and <strong>Publi24</strong> using their official API integration. 
+                            </p>
+                            <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 space-y-2">
+                                <h4 className="font-semibold text-white">How it works:</h4>
+                                <ul className="list-disc pl-5 space-y-2 mt-2">
+                                    <li><strong>Publishing:</strong> Check the box before saving to instantly push your property live on both platforms.</li>
+                                    <li><strong>Updating:</strong> Any changes made here to price, description, or photos will sync automatically when you save.</li>
+                                    <li><strong>Unpublishing:</strong> If you uncheck the box, change the status to Draft, or mark the property as Sold, it will be automatically removed from Romimo and Publi24.</li>
+                                </ul>
+                            </div>
+                            <p className="text-slate-400 italic mt-4">
+                                Note: Credits are only spent when initially publishing the listing. Subsequent updates are free.
+                            </p>
+                        </div>
+                        <div className="mt-8 flex justify-end">
+                            <button 
+                                type="button"
+                                onClick={() => setShowRomimoInfo(false)}
+                                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors shadow-lg shadow-indigo-500/20"
+                            >
+                                Got it
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
