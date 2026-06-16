@@ -554,7 +554,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     };
 
     const nextStep = async () => {
-        if (step < 4) {
+        if (step < 5) {
             // Auto-save draft logic if needed, currently manual only or we can trigger it
             // For better UX, let's just move next. 
             // The user requested "logic to save the property by default when pressing the NEXT STEP".
@@ -809,7 +809,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                 {/* Stepper Navigation */}
                 <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-2xl p-1 mb-10 shadow-xl flex items-center justify-between relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-                    {[1, 2, 3, 4].map((s) => (
+                    {[1, 2, 3, 4, 5].map((s) => (
                         <div key={s} className="flex-1 relative z-10">
                             <button
                                 type="button"
@@ -835,6 +835,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         {s === 2 && 'Media'}
                                         {s === 3 && 'Amenities'}
                                         {s === 4 && 'Private Info'}
+                                        {s === 5 && 'Auto-Posting'}
                                     </div>
                                 </div>
                             </button>
@@ -2115,7 +2116,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                             </button>
                         </div>
 
-                        {step < 4 ? (
+                        {step < 5 ? (
                             <button
                                 key="next-step-btn"
                                 type="button"
