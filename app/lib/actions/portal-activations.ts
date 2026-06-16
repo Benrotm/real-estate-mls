@@ -100,3 +100,43 @@ export async function updateActivationStatus(id: string, status: 'active' | 'rej
     revalidatePath('/dashboard/admin/portal-activations');
     return { success: true };
 }
+
+export async function getProcessedActivations() {
+    const { data: activations, error } = await supabaseAdmin
+        .from('portal_activations')
+        .select('*')
+        .in('status', ['active', 'rejected'])
+        .order('approved_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching processed activations:', error);
+        return { data: [] };
+    }
+
+    if (!activations || activations.length === 0) {
+        return { data: [] };
+    }
+
+    const userIds = [...new Set(activations.map(a => a.user_id))];
+
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, phone, email')
+        .in('id', userIds);
+
+    if (profilesError) {
+        console.error('Error fetching profiles for activations:', profilesError);
+    }
+
+    const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const enrichedActivations = activations.map(act => {
+        const profile = profilesMap.get(act.user_id);
+        return {
+            ...act,
+            profiles: profile || null,
+            users: profile ? { email: profile.email } : null
+        };
+    });
+
+    return { data: enrichedActivations };
+}
