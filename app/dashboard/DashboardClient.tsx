@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert, History, FileText } from 'lucide-react';
+import { Bell, LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert, History, FileText, Key } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -183,6 +183,7 @@ export default function DashboardClient({
         { name: 'Calculator Settings', icon: Calculator, href: '/dashboard/admin/settings/calculator-comisioane' },
         { name: 'Credit & Costs System', icon: Coins, href: '/dashboard/admin/credit-settings' },
         { name: 'Validare Plăți', icon: DollarSign, href: '/dashboard/admin/validare-plati' },
+        { name: 'Portal Activations', icon: Key, href: '/dashboard/admin/portal-activations' },
         { name: 'Istoric Credite Global', icon: History, href: '/dashboard/admin/credit-history' },
         { name: 'AI Provider Config', icon: Settings, href: '/dashboard/admin/ai-settings' },
         { name: 'Imoflux', icon: CopyCheck, href: '/dashboard/admin/imofluxmls' },
