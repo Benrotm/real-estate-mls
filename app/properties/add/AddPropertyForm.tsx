@@ -307,9 +307,12 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     if (statsRes.ok) {
                         const json = await statsRes.json();
                         setRomimoStats(json.data);
+                    } else {
+                        setRomimoStats({ error: true });
                     }
                 } catch (e) {
                     console.error('Error fetching romimo stats', e);
+                    setRomimoStats({ error: true });
                 }
             }
         };
@@ -2022,11 +2025,39 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     )}
 
                                     {romimoStats && (
-                                        <div className="mt-4 p-3 bg-slate-900/80 rounded-lg border border-slate-700/50">
-                                            <div className="text-xs text-slate-400 mb-1 flex items-center gap-1"><Globe className="w-3 h-3" /> Romimo Package Info:</div>
-                                            <div className="text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap">
-                                               {JSON.stringify(romimoStats, null, 2)}
+                                        <div className="mt-4 p-4 bg-slate-950/40 rounded-xl border border-indigo-500/20 space-y-3">
+                                            <div className="text-xs font-semibold text-indigo-400 flex items-center gap-2">
+                                                <Globe className="w-3.5 h-3.5" />
+                                                <span>Romimo / Publi24 Package Details</span>
                                             </div>
+                                            {romimoStats.error ? (
+                                                <div className="text-xs text-amber-500/80 bg-amber-500/5 p-2.5 rounded-lg border border-amber-500/10">
+                                                    Could not load live package stats from Romimo. Make sure your Romimo account is active.
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-2 gap-3 text-xs">
+                                                    <div className="bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
+                                                        <div className="text-slate-500 mb-0.5">Package Status</div>
+                                                        <div className={`font-bold ${romimoStats.active ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                            {romimoStats.active ? 'Active' : 'Inactive'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
+                                                        <div className="text-slate-500 mb-0.5">Promo Points</div>
+                                                        <div className="font-bold text-white">{romimoStats.promoPoints}</div>
+                                                    </div>
+                                                    <div className="bg-slate-900/50 p-2.5 rounded-lg border border-slate-800 col-span-2 flex justify-between items-center">
+                                                        <div>
+                                                            <div className="text-slate-500 mb-0.5">Active Listing Slots</div>
+                                                            <div className="text-[10px] text-slate-500 font-mono">{romimoStats.email}</div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="text-sm font-bold text-white">{romimoStats.activeAdsCount}</span>
+                                                            <span className="text-slate-500"> / {romimoStats.activeAdsLimit} used</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -2209,6 +2240,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                             <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 space-y-2">
                                 <h4 className="font-semibold text-white">How it works:</h4>
                                 <ul className="list-disc pl-5 space-y-2 mt-2">
+                                    <li><strong>Activation:</strong> Request a User Account Activation on Romimo&Publi24. <strong>The phone number and email adress from your profile will be used when a Property is published on Romimo and Publi24. Make shure that you have the correct email and mobile number in your Profile page, from the right top menu bar, click on User icon.</strong></li>
                                     <li><strong>Publishing:</strong> Check the box before saving to instantly push your property live on both platforms.</li>
                                     <li><strong>Updating:</strong> Any changes made here to price, description, or photos will sync automatically when you save.</li>
                                     <li><strong>Unpublishing:</strong> If you uncheck the box, change the status to Draft, or mark the property as Sold, it will be automatically removed from Romimo and Publi24.</li>
