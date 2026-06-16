@@ -202,3 +202,31 @@ export async function deleteRomimoArticle(email: string, externalId: string) {
         return { error: error.message };
     }
 }
+
+/**
+ * Gets user package info from Romimo.
+ */
+export async function getRomimoUserPackage(email: string) {
+    const token = await getRomimoToken();
+    if (!token) return { error: 'Failed to obtain Romimo token' };
+
+    try {
+        const response = await fetch(`${ROMIMO_API_BASE}/User/Package?Email=${encodeURIComponent(email)}`, {
+            method: 'GET',
+            headers: {
+                'x-api-version': '2',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            return { error: `Romimo API error: ${response.status}`, details: errorText };
+        }
+
+        const data = await response.json();
+        return { success: true, data };
+    } catch (error: any) {
+        return { error: error.message };
+    }
+}

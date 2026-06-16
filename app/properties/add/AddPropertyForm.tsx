@@ -52,6 +52,8 @@ import {
 } from '@/app/lib/properties';
 import { getVirtualTours } from '@/app/lib/actions/tours';
 import { VirtualTour } from '@/app/lib/tours';
+import { requestPortalActivation, getUserPortalActivations } from '@/app/lib/actions/portal-activations';
+import toast from 'react-hot-toast';
 
 // FEATURE_CATEGORIES is now imported from @/app/lib/properties
 
@@ -257,6 +259,28 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
     const [agentProfile, setAgentProfile] = useState<any>(null);
     const [existingContract, setExistingContract] = useState<any | null>(null);
+    const [portalActivations, setPortalActivations] = useState<any[]>([]);
+    const [requestingActivation, setRequestingActivation] = useState<string | null>(null);
+    const [romimoStats, setRomimoStats] = useState<any | null>(null);
+
+    const handleRequestActivation = async (portalName: string) => {
+        if (!agentProfile?.id) return;
+        setRequestingActivation(portalName);
+        const { success, error } = await requestPortalActivation(portalName, agentProfile.id);
+        if (success) {
+            toast.success(`Activation request sent for ${portalName}`);
+            const actRes = await getUserPortalActivations(agentProfile.id);
+            if (actRes.data) setPortalActivations(actRes.data);
+        } else {
+            toast.error(error || `Failed to request activation for ${portalName}`);
+        }
+        setRequestingActivation(null);
+    };
+
+    const getActivationStatus = (portalName: string) => {
+        const act = portalActivations.find((a) => a.portal_name === portalName);
+        return act?.status || 'none';
+    };
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -269,6 +293,23 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     .single();
                 if (data) {
                     setAgentProfile(data);
+                }
+
+                // Fetch activations
+                const actRes = await getUserPortalActivations(user.id);
+                if (actRes.data) {
+                    setPortalActivations(actRes.data);
+                }
+                
+                // Fetch romimo stats
+                try {
+                    const statsRes = await fetch('/api/export/romimo/user?email=' + encodeURIComponent(user.email || ''));
+                    if (statsRes.ok) {
+                        const json = await statsRes.json();
+                        setRomimoStats(json.data);
+                    }
+                } catch (e) {
+                    console.error('Error fetching romimo stats', e);
                 }
             }
         };
@@ -1788,150 +1829,6 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     </div>
                                 </div>
 
-                                {/* Portal Distribution Section */}
-                                <div className="mt-8 pt-8 border-t border-slate-800">
-                                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="p-2 bg-blue-500/20 rounded-lg">
-                                                <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                                </svg>
-                                            </div>
-                                            <h3 className="text-lg font-bold text-white">Export to Portals & Auto-Posting</h3>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishImobiliare ? 'bg-blue-500/10 border-blue-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
-                                                <div className="flex items-center h-5 mt-1">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={formData.publishImobiliare}
-                                                        onChange={(e) => setFormData({ ...formData, publishImobiliare: e.target.checked })}
-                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <p className={`font-semibold ${formData.publishImobiliare ? 'text-blue-400' : 'text-slate-300'}`}>Publish to Imobiliare.ro</p>
-                                                        {portalCosts.publish_imobiliare > 0 && (
-                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
-                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
-                                                                {portalCosts.publish_imobiliare} CR
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the Imobiliare XML auto-sync feed</p>
-                                                </div>
-                                            </label>
-
-                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishStoria ? 'bg-cyan-500/10 border-cyan-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
-                                                <div className="flex items-center h-5 mt-1">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={formData.publishStoria}
-                                                        onChange={(e) => setFormData({ ...formData, publishStoria: e.target.checked })}
-                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <p className={`font-semibold ${formData.publishStoria ? 'text-cyan-400' : 'text-slate-300'}`}>Publish to Storia / OLX</p>
-                                                        {portalCosts.publish_storia > 0 && (
-                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
-                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
-                                                                {portalCosts.publish_storia} CR
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the Storia XML auto-sync feed</p>
-                                                </div>
-                                            </label>
-
-                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishRomimo ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
-                                                <div className="flex items-center h-5 mt-1">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={formData.publishRomimo}
-                                                        onChange={(e) => setFormData({ ...formData, publishRomimo: e.target.checked })}
-                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <p className={`font-semibold ${formData.publishRomimo ? 'text-indigo-400' : 'text-slate-300'}`}>Publish to Romimo / Publi24</p>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    setShowRomimoInfo(true);
-                                                                }}
-                                                                className="text-slate-400 hover:text-indigo-400 transition-colors"
-                                                            >
-                                                                <Info className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                        {portalCosts.publish_romimo > 0 && (
-                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
-                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
-                                                                {portalCosts.publish_romimo} CR
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the Romimo/Publi24 XML auto-sync feed</p>
-                                                </div>
-                                            </label>
-
-                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishHomezz ? 'bg-violet-500/10 border-violet-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
-                                                <div className="flex items-center h-5 mt-1">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={formData.publishHomezz}
-                                                        onChange={(e) => setFormData({ ...formData, publishHomezz: e.target.checked })}
-                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <p className={`font-semibold ${formData.publishHomezz ? 'text-violet-400' : 'text-slate-300'}`}>Publish to HomeZZ / LaJumate</p>
-                                                        {portalCosts.publish_homezz > 0 && (
-                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
-                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
-                                                                {portalCosts.publish_homezz} CR
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the HomeZZ/LaJumate XML auto-sync feed</p>
-                                                </div>
-                                            </label>
-
-                                            <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.publishImobiliarepret ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-900/50 border-slate-700 hover:border-slate-600'}`}>
-                                                <div className="flex items-center h-5 mt-1">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={formData.publishImobiliarepret}
-                                                        onChange={(e) => setFormData({ ...formData, publishImobiliarepret: e.target.checked })}
-                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <p className={`font-semibold ${formData.publishImobiliarepret ? 'text-emerald-400' : 'text-slate-300'}`}>Publish to ImobiliarePret.ro</p>
-                                                        {portalCosts.publish_imobiliarepret > 0 && (
-                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
-                                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
-                                                                {portalCosts.publish_imobiliarepret} CR
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-slate-500 mt-1">Include this property in the ImobiliarePret XML auto-sync feed</p>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 {/* Event Management Section */}
                                 <div className="mt-8 pt-8 border-t border-slate-800">
                                     {propertyId ? (
@@ -2017,7 +1914,174 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                         )
                     }
 
-                    <div className="bg-slate-950/30 backdrop-blur-sm px-8 py-6 border-t border-slate-800 flex justify-between items-center relative z-20">
+                    
+                    {/* Step 5: Auto-Posting */}
+                    {step === 5 && (
+                        <div className="p-8 md:p-10 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-indigo-500/30 shadow-inner">
+                                    <Globe className="w-6 h-6 text-indigo-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">Export to Portals & Auto-Posting</h2>
+                                    <p className="text-slate-400 text-sm">Distribute your property to multiple platforms automatically.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Imobiliare.ro */}
+                                <div className={`p-5 rounded-xl border transition-all ${getActivationStatus('imobiliare') === 'active' && formData.publishImobiliare ? 'bg-blue-500/10 border-blue-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <h4 className={`font-bold ${getActivationStatus('imobiliare') === 'active' && formData.publishImobiliare ? 'text-blue-400' : 'text-slate-300'}`}>Publish to Imobiliare.ro</h4>
+                                        {portalCosts.publish_imobiliare > 0 && (
+                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                {portalCosts.publish_imobiliare} CR
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-slate-500 mb-4">Include this property in the Imobiliare XML auto-sync feed.</p>
+                                    
+                                    {getActivationStatus('imobiliare') === 'active' ? (
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" checked={formData.publishImobiliare} onChange={(e) => setFormData({ ...formData, publishImobiliare: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500" />
+                                            <span className="text-sm font-medium text-slate-300">Enable Auto-Posting</span>
+                                        </label>
+                                    ) : getActivationStatus('imobiliare') === 'pending' ? (
+                                        <button disabled className="w-full py-2 bg-slate-800 text-slate-400 rounded-lg text-sm font-medium border border-slate-700 flex justify-center items-center gap-2 cursor-not-allowed">
+                                            <Check className="w-4 h-4" /> Request Sent for Activation
+                                        </button>
+                                    ) : (
+                                        <button type="button" onClick={(e) => { e.preventDefault(); handleRequestActivation('imobiliare'); }} disabled={requestingActivation === 'imobiliare'} className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium shadow-lg transition-colors flex justify-center items-center gap-2">
+                                            {requestingActivation === 'imobiliare' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Request Account Activation'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Storia / OLX */}
+                                <div className={`p-5 rounded-xl border transition-all ${getActivationStatus('storia') === 'active' && formData.publishStoria ? 'bg-cyan-500/10 border-cyan-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <h4 className={`font-bold ${getActivationStatus('storia') === 'active' && formData.publishStoria ? 'text-cyan-400' : 'text-slate-300'}`}>Publish to Storia / OLX</h4>
+                                        {portalCosts.publish_storia > 0 && (
+                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                {portalCosts.publish_storia} CR
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-slate-500 mb-4">Include this property in the Storia XML auto-sync feed.</p>
+                                    
+                                    {getActivationStatus('storia') === 'active' ? (
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" checked={formData.publishStoria} onChange={(e) => setFormData({ ...formData, publishStoria: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500" />
+                                            <span className="text-sm font-medium text-slate-300">Enable Auto-Posting</span>
+                                        </label>
+                                    ) : getActivationStatus('storia') === 'pending' ? (
+                                        <button disabled className="w-full py-2 bg-slate-800 text-slate-400 rounded-lg text-sm font-medium border border-slate-700 flex justify-center items-center gap-2 cursor-not-allowed">
+                                            <Check className="w-4 h-4" /> Request Sent for Activation
+                                        </button>
+                                    ) : (
+                                        <button type="button" onClick={(e) => { e.preventDefault(); handleRequestActivation('storia'); }} disabled={requestingActivation === 'storia'} className="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium shadow-lg transition-colors flex justify-center items-center gap-2">
+                                            {requestingActivation === 'storia' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Request Account Activation'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Romimo / Publi24 */}
+                                <div className={`p-5 rounded-xl border transition-all ${getActivationStatus('romimo') === 'active' && formData.publishRomimo ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className={`font-bold ${getActivationStatus('romimo') === 'active' && formData.publishRomimo ? 'text-indigo-400' : 'text-slate-300'}`}>Publish to Romimo / Publi24</h4>
+                                            <button type="button" onClick={(e) => { e.preventDefault(); setShowRomimoInfo(true); }} className="text-slate-400 hover:text-indigo-400 transition-colors">
+                                                <Info className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        {portalCosts.publish_romimo > 0 && (
+                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                {portalCosts.publish_romimo} CR
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-slate-500 mb-4">Direct integration with Romimo API.</p>
+                                    
+                                    {getActivationStatus('romimo') === 'active' ? (
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" checked={formData.publishRomimo} onChange={(e) => setFormData({ ...formData, publishRomimo: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500" />
+                                            <span className="text-sm font-medium text-slate-300">Enable Auto-Posting</span>
+                                        </label>
+                                    ) : getActivationStatus('romimo') === 'pending' ? (
+                                        <button disabled className="w-full py-2 bg-slate-800 text-slate-400 rounded-lg text-sm font-medium border border-slate-700 flex justify-center items-center gap-2 cursor-not-allowed">
+                                            <Check className="w-4 h-4" /> Request Sent for Activation
+                                        </button>
+                                    ) : (
+                                        <button type="button" onClick={(e) => { e.preventDefault(); handleRequestActivation('romimo'); }} disabled={requestingActivation === 'romimo'} className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium shadow-lg transition-colors flex justify-center items-center gap-2">
+                                            {requestingActivation === 'romimo' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Request Account Activation'}
+                                        </button>
+                                    )}
+
+                                    {romimoStats && (
+                                        <div className="mt-4 p-3 bg-slate-900/80 rounded-lg border border-slate-700/50">
+                                            <div className="text-xs text-slate-400 mb-1 flex items-center gap-1"><Globe className="w-3 h-3" /> Romimo Package Info:</div>
+                                            <div className="text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap">
+                                               {JSON.stringify(romimoStats, null, 2)}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* HomeZZ / LaJumate */}
+                                <div className={`p-5 rounded-xl border transition-all ${getActivationStatus('homezz') === 'active' && formData.publishHomezz ? 'bg-violet-500/10 border-violet-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <h4 className={`font-bold ${getActivationStatus('homezz') === 'active' && formData.publishHomezz ? 'text-violet-400' : 'text-slate-300'}`}>Publish to HomeZZ / LaJumate</h4>
+                                        {portalCosts.publish_homezz > 0 && (
+                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                {portalCosts.publish_homezz} CR
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-slate-500 mb-4">Include this property in the HomeZZ XML auto-sync feed.</p>
+                                    
+                                    {getActivationStatus('homezz') === 'active' ? (
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" checked={formData.publishHomezz} onChange={(e) => setFormData({ ...formData, publishHomezz: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500" />
+                                            <span className="text-sm font-medium text-slate-300">Enable Auto-Posting</span>
+                                        </label>
+                                    ) : getActivationStatus('homezz') === 'pending' ? (
+                                        <button disabled className="w-full py-2 bg-slate-800 text-slate-400 rounded-lg text-sm font-medium border border-slate-700 flex justify-center items-center gap-2 cursor-not-allowed">
+                                            <Check className="w-4 h-4" /> Request Sent for Activation
+                                        </button>
+                                    ) : (
+                                        <button type="button" onClick={(e) => { e.preventDefault(); handleRequestActivation('homezz'); }} disabled={requestingActivation === 'homezz'} className="w-full py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium shadow-lg transition-colors flex justify-center items-center gap-2">
+                                            {requestingActivation === 'homezz' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Request Account Activation'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* ImobiliarePret.ro (No activation required) */}
+                                <div className={`p-5 rounded-xl border transition-all ${formData.publishImobiliarepret ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <h4 className={`font-bold ${formData.publishImobiliarepret ? 'text-emerald-400' : 'text-slate-300'}`}>Publish to ImobiliarePret.ro</h4>
+                                        {portalCosts.publish_imobiliarepret > 0 && (
+                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[10px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                <Coins className="w-2.5 h-2.5 text-yellow-500" />
+                                                {portalCosts.publish_imobiliarepret} CR
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-slate-500 mb-4">Include this property in the ImobiliarePret feed.</p>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" checked={formData.publishImobiliarepret} onChange={(e) => setFormData({ ...formData, publishImobiliarepret: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500" />
+                                        <span className="text-sm font-medium text-slate-300">Enable Auto-Posting</span>
+                                    </label>
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+
+<div className="bg-slate-950/30 backdrop-blur-sm px-8 py-6 border-t border-slate-800 flex justify-between items-center relative z-20">
                         <button
                             type="button"
                             onClick={() => step > 1 ? setStep(step - 1) : router.push('/properties')}
