@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
 import { getFeatureCosts, getSocialLinks } from '@/app/lib/actions/settings';
+import { getAdminSettings } from '@/app/lib/actions/admin-settings';
 import { createCollaborationContract, getCollaborationContractForProperty, getCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
 import { supabase } from '@/app/lib/supabase/client';
 import LocationMap from '@/app/components/LocationMap';
@@ -97,6 +98,26 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const [availableTours, setAvailableTours] = useState<VirtualTour[]>([]);
     const [contractLanguage, setContractLanguage] = useState<'ro' | 'en'>('ro');
 
+    // Watermark Settings States
+    const [userWatermark, setUserWatermark] = useState({
+        is_active: false,
+        logo_url: '',
+        opacity: 0.5,
+        size: 20,
+        position: 'bottom-right'
+    });
+
+    const [adminWatermark, setAdminWatermark] = useState<{
+        is_active: boolean;
+        override_users: boolean;
+        logo_url: string;
+        opacity: number;
+        size: number;
+        position: string;
+    } | null>(null);
+
+    const [isUploadingUserLogo, setIsUploadingUserLogo] = useState(false);
+
     // Photo reordering states
     const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
     const [hoveredPhotoIndex, setHoveredPhotoIndex] = useState<number | null>(null);
@@ -138,6 +159,208 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
             }
         });
     }, []);
+
+    useEffect(() => {
+        // Load user watermark settings from Local Storage
+        const savedSettings = localStorage.getItem('imobum_watermark_settings');
+        if (savedSettings) {
+            try {
+                setUserWatermark(JSON.parse(savedSettings));
+            } catch (e) {
+                console.error("Failed to parse user watermark settings from localStorage:", e);
+            }
+        }
+
+        // Fetch admin global override watermark configuration
+        async function fetchAdminSettings() {
+            try {
+                const settings = await getAdminSettings();
+                if (settings && settings.global_watermark) {
+                    setAdminWatermark(settings.global_watermark);
+                }
+            } catch (e) {
+                console.error("Failed to fetch admin watermark settings:", e);
+            }
+        }
+        fetchAdminSettings();
+    }, []);
+
+    const saveUserWatermark = (newSettings: typeof userWatermark) => {
+        setUserWatermark(newSettings);
+        localStorage.setItem('imobum_watermark_settings', JSON.stringify(newSettings));
+    };
+
+    const handleUserLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Limit user logo size to 1.5MB to stay performant
+        if (file.size > 1.5 * 1024 * 1024) {
+            toast.error("User watermark logo must be under 1.5MB");
+            return;
+        }
+
+        setIsUploadingUserLogo(true);
+        try {
+            // Upload to property-images bucket under user_watermarks/
+            const fileExt = file.name.split('.').pop();
+            const fileName = `user_watermarks/wm_${Date.now()}.${fileExt}`;
+
+            const { data, error: uploadError } = await supabase.storage
+                .from('property-images')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: true
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(fileName);
+
+            const updatedSettings = { ...userWatermark, logo_url: publicUrl };
+            saveUserWatermark(updatedSettings);
+            toast.success("Watermark logo uploaded!");
+        } catch (error: any) {
+            console.error("User watermark logo upload failed:", error);
+            toast.error(`Logo upload failed: ${error.message || error}`);
+        } finally {
+            setIsUploadingUserLogo(false);
+        }
+    };
+
+    const applyWatermark = async (file: File): Promise<File> => {
+        // 1. Determine which watermark to use
+        const isAdminOverride = adminWatermark?.is_active && adminWatermark?.override_users && adminWatermark?.logo_url;
+        const isUserActive = userWatermark.is_active && userWatermark.logo_url;
+
+        // If neither is active, return original file
+        if (!isAdminOverride && !isUserActive) {
+            return file;
+        }
+
+        const activeLogoUrl = isAdminOverride ? adminWatermark.logo_url : userWatermark.logo_url;
+        const activeOpacity = isAdminOverride ? adminWatermark.opacity : userWatermark.opacity;
+        const activeSize = isAdminOverride ? adminWatermark.size : userWatermark.size; // percentage of image width
+        const activePosition = isAdminOverride ? adminWatermark.position : userWatermark.position;
+
+        return new Promise((resolve) => {
+            // Create image element from listing photo file
+            const img = new window.Image();
+            const url = URL.createObjectURL(file);
+            img.src = url;
+
+            img.onload = () => {
+                // Free URL object memory
+                URL.revokeObjectURL(url);
+
+                // Create watermark image element
+                const watermarkImg = new window.Image();
+                // CRITICAL: We must set crossOrigin = 'anonymous' for external URLs (CDN URLs)
+                watermarkImg.crossOrigin = 'anonymous';
+                watermarkImg.src = activeLogoUrl;
+
+                watermarkImg.onload = () => {
+                    // Create canvas
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        resolve(file);
+                        return;
+                    }
+
+                    // Set canvas dimensions equal to original image dimensions
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // Draw listing photo
+                    ctx.drawImage(img, 0, 0);
+
+                    // Configure watermark opacity
+                    ctx.globalAlpha = activeOpacity;
+
+                    // Compute watermark size (activeSize is percentage of photo width)
+                    const targetWidth = canvas.width * (activeSize / 100);
+                    const aspectRatio = watermarkImg.width / watermarkImg.height;
+                    const targetHeight = targetWidth / aspectRatio;
+
+                    // Helper to draw a single watermark instance
+                    const drawWatermark = (x: number, y: number) => {
+                        ctx.drawImage(watermarkImg, x, y, targetWidth, targetHeight);
+                    };
+
+                    // Draw based on position
+                    if (activePosition === 'tile') {
+                        // Tiled pattern - draw in grid
+                        const stepX = targetWidth * 2;
+                        const stepY = targetHeight * 2;
+                        for (let x = targetWidth / 2; x < canvas.width; x += stepX) {
+                            for (let y = targetHeight / 2; y < canvas.height; y += stepY) {
+                                drawWatermark(x - targetWidth / 2, y - targetHeight / 2);
+                            }
+                        }
+                    } else {
+                        // Single positioning
+                        let x = 0;
+                        let y = 0;
+                        const margin = Math.max(10, Math.round(canvas.width * 0.02)); // 2% margin from edges
+
+                        switch (activePosition) {
+                            case 'center':
+                                x = (canvas.width - targetWidth) / 2;
+                                y = (canvas.height - targetHeight) / 2;
+                                break;
+                            case 'top-left':
+                                x = margin;
+                                y = margin;
+                                break;
+                            case 'top-right':
+                                x = canvas.width - targetWidth - margin;
+                                y = margin;
+                                break;
+                            case 'bottom-left':
+                                x = margin;
+                                y = canvas.height - targetHeight - margin;
+                                break;
+                            case 'bottom-right':
+                            default:
+                                x = canvas.width - targetWidth - margin;
+                                y = canvas.height - targetHeight - margin;
+                                break;
+                        }
+                        drawWatermark(x, y);
+                    }
+
+                    // Reset globalAlpha
+                    ctx.globalAlpha = 1.0;
+
+                    // Convert canvas back to a File blob
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            resolve(file);
+                            return;
+                        }
+                        const watermarkedFile = new File([blob], file.name, {
+                            type: file.type,
+                            lastModified: Date.now()
+                        });
+                        resolve(watermarkedFile);
+                    }, file.type, 0.9); // high quality (90%) compression
+                };
+
+                watermarkImg.onerror = (err) => {
+                    console.error("Failed to load watermark logo image:", err);
+                    resolve(file); // Fallback to original image if watermark logo fails to load
+                };
+            };
+
+            img.onerror = (err) => {
+                console.error("Failed to load listing photo image for canvas:", err);
+                resolve(file);
+            };
+        });
+    };
 
     useEffect(() => {
         getVirtualTours().then(tours => {
@@ -488,7 +711,10 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         const maxFileSize = 5 * 1024 * 1024; // 5MB
 
         try {
-            const uploadPromises = files.map(async (file) => {
+            const uploadPromises = files.map(async (originalFile) => {
+                // Apply watermark overlay if active/configured
+                const file = await applyWatermark(originalFile);
+
                 // strict size check
                 if (file.size > maxFileSize) {
                     throw new Error(`File ${file.name} is too large (max 5MB)`);
@@ -1621,6 +1847,170 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         </label>
                                     )}
                                 </div>
+
+                                <div className="border-t border-slate-800 my-8" />
+
+                                {/* Watermark configuration section */}
+                                {adminWatermark?.is_active && adminWatermark?.override_users ? (
+                                    <div className="bg-violet-950/20 border border-violet-800/30 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+                                        <div className="w-12 h-12 rounded-full bg-violet-900/50 flex items-center justify-center border border-violet-500/20 flex-shrink-0">
+                                            <Info className="w-6 h-6 text-violet-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="text-white font-bold mb-1">Watermark Enforced by Admin</h4>
+                                            <p className="text-sm text-slate-400">
+                                                A default platform watermark logo is currently active. All listing images you upload will be stamped automatically using the platform's layout configuration.
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+                                        <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+                                            <ImageIcon className="w-6 h-6 text-pink-500" />
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white">Custom Image Watermark</h3>
+                                                <p className="text-slate-400 text-xs mt-0.5">Stamp your own brand or logo on listing photos before uploading them.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start justify-between gap-6">
+                                            <div className="flex-1">
+                                                <span className="text-sm font-semibold text-white">Enable Watermark Overlay</span>
+                                                <p className="text-slate-400 text-xs mt-1">If enabled, your logo watermark will be overlaid on all new images uploaded.</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newVal = !userWatermark.is_active;
+                                                    saveUserWatermark({ ...userWatermark, is_active: newVal });
+                                                }}
+                                                className={`relative inline-flex h-6 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${userWatermark.is_active ? 'bg-pink-500' : 'bg-slate-700'}`}
+                                            >
+                                                <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${userWatermark.is_active ? 'translate-x-6' : 'translate-x-0'}`} />
+                                            </button>
+                                        </div>
+
+                                        {userWatermark.is_active && (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-800/50">
+                                                <div className="space-y-5">
+                                                    <div>
+                                                        <label className="block text-xs font-semibold text-slate-300 mb-2">Watermark Logo (PNG/JPEG, max 1.5MB)</label>
+                                                        <div className="flex items-center gap-4">
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                id="user-watermark-logo-input"
+                                                                onChange={handleUserLogoUpload}
+                                                                className="hidden"
+                                                            />
+                                                            <label
+                                                                htmlFor="user-watermark-logo-input"
+                                                                className="flex items-center gap-2 cursor-pointer bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-xs font-medium text-slate-300 transition-colors"
+                                                            >
+                                                                <Upload className="w-3.5 h-3.5" />
+                                                                {isUploadingUserLogo ? 'Uploading...' : 'Choose Image'}
+                                                            </label>
+                                                            {userWatermark.logo_url && (
+                                                                <span className="text-xs text-emerald-400 font-medium">Uploaded & Loaded</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-slate-300 mb-2">
+                                                                Opacity ({Math.round(userWatermark.opacity * 100)}%)
+                                                            </label>
+                                                            <input
+                                                                type="range"
+                                                                min="0.1"
+                                                                max="1.0"
+                                                                step="0.05"
+                                                                value={userWatermark.opacity}
+                                                                onChange={(e) => saveUserWatermark({ ...userWatermark, opacity: parseFloat(e.target.value) })}
+                                                                className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-slate-300 mb-2">
+                                                                Size ({userWatermark.size}%)
+                                                            </label>
+                                                            <input
+                                                                type="range"
+                                                                min="10"
+                                                                max="50"
+                                                                step="1"
+                                                                value={userWatermark.size}
+                                                                onChange={(e) => saveUserWatermark({ ...userWatermark, size: parseInt(e.target.value) })}
+                                                                className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-xs font-semibold text-slate-300 mb-2">Watermark Position</label>
+                                                        <select
+                                                            value={userWatermark.position}
+                                                            onChange={(e) => saveUserWatermark({ ...userWatermark, position: e.target.value })}
+                                                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-500 transition-colors"
+                                                        >
+                                                            <option value="center">Center</option>
+                                                            <option value="top-left">Top Left</option>
+                                                            <option value="top-right">Top Right</option>
+                                                            <option value="bottom-left">Bottom Left</option>
+                                                            <option value="bottom-right">Bottom Right</option>
+                                                            <option value="tile">Tiled (Pattern)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-semibold text-slate-300 mb-2">Watermark Preview</span>
+                                                    <div className="w-full h-36 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center relative overflow-hidden">
+                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 select-none">
+                                                            <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Photo Backdrop</span>
+                                                        </div>
+
+                                                        {userWatermark.logo_url ? (
+                                                            userWatermark.position === 'tile' ? (
+                                                                <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 p-1.5 gap-1.5 pointer-events-none">
+                                                                    {[...Array(9)].map((_, i) => (
+                                                                        <div key={i} className="flex items-center justify-center">
+                                                                            <img
+                                                                                src={userWatermark.logo_url}
+                                                                                alt="Watermark Tile"
+                                                                                className="max-h-5 object-contain"
+                                                                                style={{ opacity: userWatermark.opacity }}
+                                                                            />
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <img
+                                                                    src={userWatermark.logo_url}
+                                                                    alt="Watermark Preview"
+                                                                    className={`absolute max-h-[85%] object-contain pointer-events-none transition-all ${
+                                                                        userWatermark.position === 'center' ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' :
+                                                                        userWatermark.position === 'top-left' ? 'top-2.5 left-2.5' :
+                                                                        userWatermark.position === 'top-right' ? 'top-2.5 right-2.5' :
+                                                                        userWatermark.position === 'bottom-left' ? 'bottom-2.5 left-2.5' :
+                                                                        'bottom-2.5 right-2.5'
+                                                                    }`}
+                                                                    style={{
+                                                                        width: `${userWatermark.size}%`,
+                                                                        opacity: userWatermark.opacity
+                                                                    }}
+                                                                />
+                                                            )
+                                                        ) : (
+                                                            <div className="text-slate-500 text-xs italic">Choose a logo to see the watermark preview</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )
                     }

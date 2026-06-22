@@ -71,6 +71,15 @@ export interface ProxyConfig {
     password?: string;
 }
 
+export interface GlobalWatermarkConfig {
+    is_active: boolean;
+    override_users: boolean;
+    logo_url: string;
+    opacity: number;      // 0.1 to 1.0
+    size: number;         // 10 to 50
+    position: string;     // 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'tile'
+}
+
 export interface AdminSettings {
     require_ownership_verification: boolean;
     enable_anti_duplicate_intelligence: boolean;
@@ -79,6 +88,7 @@ export interface AdminSettings {
     sold_immoflux_integration?: SoldImmofluxConfig;
     olx_integration?: OlxConfig;
     proxy_integration?: ProxyConfig;
+    global_watermark?: GlobalWatermarkConfig;
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -176,6 +186,14 @@ const DEFAULT_SETTINGS: AdminSettings = {
         is_active: false,
         host: "brd.superproxy.io",
         port: "22225"
+    },
+    global_watermark: {
+        is_active: false,
+        override_users: false,
+        logo_url: "",
+        opacity: 0.5,
+        size: 20,
+        position: "bottom-right"
     }
 };
 
@@ -192,7 +210,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
 
         const settings: any = { ...DEFAULT_SETTINGS };
         for (const row of data) {
-            if (row.key === 'immoflux_integration' || row.key === 'sold_immoflux_integration' || row.key === 'fluxmls_integration' || row.key === 'olx_integration' || row.key === 'proxy_integration') {
+            if (row.key === 'immoflux_integration' || row.key === 'sold_immoflux_integration' || row.key === 'fluxmls_integration' || row.key === 'olx_integration' || row.key === 'proxy_integration' || row.key === 'global_watermark') {
                 settings[row.key] = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
             } else {
                 if (row.value === 'true' || row.value === true) settings[row.key] = true;
@@ -343,6 +361,26 @@ export async function updateProxySetting(config: ProxyConfig) {
 
         if (error) {
             console.error("Failed to update Proxy details:", error.message);
+            return { success: false, error: error.message };
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function updateGlobalWatermarkSetting(config: GlobalWatermarkConfig) {
+    try {
+        const { error } = await supabase
+            .from('admin_settings')
+            .upsert({
+                key: 'global_watermark',
+                value: config,
+                description: 'Global watermark overlay configuration and settings override'
+            }, { onConflict: 'key' });
+
+        if (error) {
+            console.error("Failed to update Global Watermark details:", error.message);
             return { success: false, error: error.message };
         }
         return { success: true };
