@@ -61,3 +61,39 @@ export async function updateAIProviderKeys(keysMap: Record<string, string>) {
     if (error) return { error: error.message };
     return { success: true };
 }
+
+export async function getSocialLinks() {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'social_media_links')
+        .maybeSingle();
+        
+    if (error) return { error: error.message };
+    if (!data) return { links: {} as Record<string, string[]> };
+    return { links: data.setting_value as Record<string, string[]> };
+}
+
+export async function updateSocialLinks(linksMap: Record<string, string[]>) {
+    const supabase = await createClient();
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+    
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+        return { error: 'Insufficient permissions' };
+    }
+
+    const { error } = await supabase
+        .from('platform_settings')
+        .upsert({ 
+            setting_key: 'social_media_links', 
+            setting_value: linksMap 
+        }, { onConflict: 'setting_key' });
+
+    if (error) return { error: error.message };
+    return { success: true };
+}
+

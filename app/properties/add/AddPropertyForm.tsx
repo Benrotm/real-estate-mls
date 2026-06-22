@@ -32,10 +32,12 @@ import {
     Info,
     Share2,
     Instagram,
-    Facebook
+    Facebook,
+    Copy,
+    ExternalLink
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
-import { getFeatureCosts } from '@/app/lib/actions/settings';
+import { getFeatureCosts, getSocialLinks } from '@/app/lib/actions/settings';
 import { createCollaborationContract, getCollaborationContractForProperty, getCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
 import { supabase } from '@/app/lib/supabase/client';
 import LocationMap from '@/app/components/LocationMap';
@@ -785,13 +787,119 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     };
 
     if (success) {
+        const hasSocialChecked = formData.publishWhatsappGroups || formData.publishFacebookGroups || formData.publishFacebookPage || formData.publishInstagram || formData.publishTiktok;
+        
+        const SocialSharePanel = () => {
+            const [socialLinks, setSocialLinks] = useState<Record<string, string[]>>({});
+            const [loadingLinks, setLoadingLinks] = useState(true);
+            const [copied, setCopied] = useState(false);
+
+            useEffect(() => {
+                const load = async () => {
+                    const res = await getSocialLinks();
+                    if (res.links) setSocialLinks(res.links);
+                    setLoadingLinks(false);
+                };
+                load();
+            }, []);
+
+            const propertyUrl = typeof window !== 'undefined' ? `${window.location.origin}/properties/${propertyId}` : '';
+            const listingText = `🏠 ${formData.title}\n💰 ${formData.price} ${formData.currency}\n📍 ${formData.city}${formData.area ? ', ' + formData.area : ''}\n🛏️ ${formData.rooms} rooms • ${formData.usableArea} mp\n\n🔗 ${propertyUrl}`;
+
+            const handleCopyText = async () => {
+                try {
+                    await navigator.clipboard.writeText(listingText);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2500);
+                } catch { /* fallback */ }
+            };
+
+            const checkedChannels = [
+                formData.publishWhatsappGroups && { key: 'whatsapp_groups', label: 'WhatsApp Groups', color: 'emerald' },
+                formData.publishFacebookGroups && { key: 'facebook_groups', label: 'Facebook Groups', color: 'blue' },
+                formData.publishFacebookPage && { key: 'facebook_page', label: 'Facebook Page', color: 'sky' },
+                formData.publishInstagram && { key: 'instagram', label: 'Instagram Page', color: 'pink' },
+                formData.publishTiktok && { key: 'tiktok', label: 'TikTok Page', color: 'slate' },
+            ].filter(Boolean) as { key: string; label: string; color: string }[];
+
+            if (loadingLinks) {
+                return (
+                    <div className="flex items-center justify-center py-6 gap-2 text-slate-500">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Loading sharing links...
+                    </div>
+                );
+            }
+
+            return (
+                <div className="mt-6 text-left space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Share2 className="w-5 h-5 text-pink-500" />
+                        <h3 className="text-lg font-bold text-white">Distribute to Selected Social Media</h3>
+                    </div>
+
+                    {/* Copy Listing Text */}
+                    <button
+                        onClick={handleCopyText}
+                        className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all border ${
+                            copied
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:border-slate-600'
+                        }`}
+                    >
+                        {copied ? (
+                            <><CheckCircle2 className="w-4 h-4" /> Listing Message Copied!</>
+                        ) : (
+                            <><Copy className="w-4 h-4" /> Copy Listing Message</>
+                        )}
+                    </button>
+
+                    {/* Channel-specific links */}
+                    {checkedChannels.map(ch => {
+                        const channelLinks = socialLinks[ch.key] || [];
+                        return (
+                            <div key={ch.key} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                <h4 className="text-sm font-bold text-slate-300 mb-2">{ch.label}</h4>
+                                {channelLinks.length === 0 ? (
+                                    <p className="text-xs text-slate-500 italic">No links configured by admin yet.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {channelLinks.map((url, i) => {
+                                            const isWhatsApp = ch.key === 'whatsapp_groups';
+                                            const shareUrl = isWhatsApp
+                                                ? `https://api.whatsapp.com/send?text=${encodeURIComponent(listingText)}`
+                                                : url;
+                                            return (
+                                                <a
+                                                    key={i}
+                                                    href={shareUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-2 bg-slate-900 p-2.5 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors group"
+                                                >
+                                                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-pink-400 transition-colors shrink-0" />
+                                                    <span className="text-xs text-slate-400 group-hover:text-slate-200 truncate flex-1 font-mono transition-colors">{url}</span>
+                                                    <span className="text-[10px] bg-pink-500/10 text-pink-400 px-2 py-0.5 rounded-full font-bold shrink-0 border border-pink-500/20">
+                                                        {isWhatsApp ? 'Share' : 'Open'}
+                                                    </span>
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        };
+
         return (
             <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
                 {/* Background Blobs */}
                 <div className="absolute top-0 -left-20 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl opacity-50 pointer-events-none" />
                 <div className="absolute bottom-0 -right-20 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
-                <div className="max-w-md w-full bg-slate-900/50 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 text-center shadow-2xl relative z-10">
+                <div className={`${hasSocialChecked ? 'max-w-2xl' : 'max-w-md'} w-full bg-slate-900/50 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 text-center shadow-2xl relative z-10`}>
                     <div className="w-24 h-24 bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
                         <CheckCircle2 className="w-12 h-12 text-emerald-400" />
                     </div>
@@ -799,18 +907,23 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     <p className="text-slate-400 mb-8 leading-relaxed">
                         Your property has been successfully listed and is now pending review.
                     </p>
-                    <button
-                        onClick={() => router.push(initialData?.owner_id || propertyId ? '/dashboard/agent' : '/dashboard/owner')}
-                        className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg shadow-violet-600/25 border border-violet-500/20"
-                    >
-                        Return to Dashboard
-                    </button>
-                    <button
-                        onClick={() => router.push(initialData?.owner_id || propertyId ? '/dashboard/agent/listings' : '/dashboard/owner/properties')}
-                        className="w-full mt-3 bg-slate-800 text-white py-4 rounded-xl font-bold hover:bg-slate-700 transition-all border border-slate-700 hover:border-slate-600 shadow-lg shadow-black/20"
-                    >
-                        Return to My Listings
-                    </button>
+
+                    {hasSocialChecked && <SocialSharePanel />}
+
+                    <div className={hasSocialChecked ? 'mt-6' : ''}>
+                        <button
+                            onClick={() => router.push(initialData?.owner_id || propertyId ? '/dashboard/agent' : '/dashboard/owner')}
+                            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg shadow-violet-600/25 border border-violet-500/20"
+                        >
+                            Return to Dashboard
+                        </button>
+                        <button
+                            onClick={() => router.push(initialData?.owner_id || propertyId ? '/dashboard/agent/listings' : '/dashboard/owner/properties')}
+                            className="w-full mt-3 bg-slate-800 text-white py-4 rounded-xl font-bold hover:bg-slate-700 transition-all border border-slate-700 hover:border-slate-600 shadow-lg shadow-black/20"
+                        >
+                            Return to My Listings
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -2167,16 +2280,16 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 </div>
 
                                 {/* All Social Media Platforms and Groups */}
-                                <div className={`p-5 rounded-xl border transition-all col-span-1 md:col-span-2 ${getActivationStatus('social_media') === 'active' && (formData.publishWhatsappGroups || formData.publishFacebookGroups || formData.publishFacebookPage || formData.publishInstagram || formData.publishTiktok) ? 'bg-pink-500/5 border-pink-500/30' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
+                                <div className={`p-5 rounded-xl border transition-all col-span-1 md:col-span-2 ${(formData.publishWhatsappGroups || formData.publishFacebookGroups || formData.publishFacebookPage || formData.publishInstagram || formData.publishTiktok) ? 'bg-pink-500/5 border-pink-500/30' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
                                     <div className="flex items-center justify-between gap-2 mb-3">
                                         <div className="flex items-center gap-2">
                                             <Share2 className="w-5 h-5 text-pink-500 animate-pulse" />
-                                            <h4 className={`font-bold ${getActivationStatus('social_media') === 'active' ? 'text-pink-400' : 'text-slate-300'}`}>Publish on All Social Media Platforms and Groups</h4>
+                                            <h4 className="font-bold text-pink-400">Publish on All Social Media Platforms and Groups</h4>
                                         </div>
                                     </div>
                                     <p className="text-sm text-slate-500 mb-4">Auto-post property listing directly to social networks and chat groups.</p>
                                     
-                                    {getActivationStatus('social_media') === 'active' ? (
+                                    {(
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-slate-800/50">
                                             {/* WhatsApp Groups */}
                                             <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors">
@@ -2273,14 +2386,6 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 </div>
                                             </div>
                                         </div>
-                                    ) : getActivationStatus('social_media') === 'pending' ? (
-                                        <button disabled className="w-full py-2 bg-slate-800 text-slate-400 rounded-lg text-sm font-medium border border-slate-700 flex justify-center items-center gap-2 cursor-not-allowed">
-                                            <Check className="w-4 h-4" /> Request Sent for Activation
-                                        </button>
-                                    ) : (
-                                        <button type="button" onClick={(e) => { e.preventDefault(); handleRequestActivation('social_media'); }} disabled={requestingActivation === 'social_media'} className="w-full py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-sm font-medium shadow-lg transition-colors flex justify-center items-center gap-2">
-                                            {requestingActivation === 'social_media' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Request Account Activation'}
-                                        </button>
                                     )}
                                 </div>
 
