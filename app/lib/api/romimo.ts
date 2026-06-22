@@ -7,8 +7,7 @@ let cachedToken: string | null = null;
 let tokenExpiresAt: number = 0;
 
 /**
- * Maps Imobum property category to Romimo category ID (placeholder mapping).
- * TODO: Replace with actual category mapping from Romimo once provided.
+ * Maps Imobum property category to Romimo category ID using the official Romimo Categories endpoint resource.
  */
 function mapToRomimoCategory(property: Property): number {
     const type = property.type;
