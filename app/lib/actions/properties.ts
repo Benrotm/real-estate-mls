@@ -102,6 +102,7 @@ export async function createProperty(formData: FormData) {
             publish_romimo: formData.get('publish_romimo') === 'true',
             publish_homezz: formData.get('publish_homezz') === 'true',
             publish_imobiliarepret: formData.get('publish_imobiliarepret') === 'true',
+            promoted: formData.get('promoted') === 'true',
             published_at: (formData.get('status') as 'active' | 'draft') === 'active' ? new Date().toISOString() : null,
 
             status: (formData.get('status') as 'active' | 'draft') || 'active'
@@ -117,6 +118,7 @@ export async function createProperty(formData: FormData) {
             if (costsRes.costs && costsRes.costs[key] !== undefined) {
                 return costsRes.costs[key];
             }
+            if (key === 'promote_romimo') return 5;
             return 2;
         };
 
@@ -131,6 +133,10 @@ export async function createProperty(formData: FormData) {
         if (propertyData.publish_romimo) {
             portalCostSum += getPortalCost('publish_romimo');
             enabledPortals.push('Romimo/Publi24');
+        }
+        if (propertyData.publish_romimo && propertyData.promoted) {
+            portalCostSum += getPortalCost('promote_romimo');
+            enabledPortals.push('Romimo Promovare (Promo Points)');
         }
         if (propertyData.publish_homezz) {
             portalCostSum += getPortalCost('publish_homezz');
@@ -599,7 +605,7 @@ export async function updateProperty(id: string, formData: FormData) {
 
     const { data: property } = await supabase
         .from('properties')
-        .select('owner_id, status, publish_imobiliare, publish_storia, publish_romimo, publish_homezz, publish_imobiliarepret')
+        .select('owner_id, status, publish_imobiliare, publish_storia, publish_romimo, publish_homezz, publish_imobiliarepret, promoted')
         .eq('id', id)
         .single();
 
@@ -689,6 +695,7 @@ export async function updateProperty(id: string, formData: FormData) {
             publish_romimo: formData.get('publish_romimo') === 'true',
             publish_homezz: formData.get('publish_homezz') === 'true',
             publish_imobiliarepret: formData.get('publish_imobiliarepret') === 'true',
+            promoted: formData.get('promoted') === 'true',
 
             // updated_at is handled by DB trigger usually, but we can set it if needed
             updated_at: new Date().toISOString(),
@@ -712,6 +719,7 @@ export async function updateProperty(id: string, formData: FormData) {
             if (costsRes.costs && costsRes.costs[key] !== undefined) {
                 return costsRes.costs[key];
             }
+            if (key === 'promote_romimo') return 5;
             return 2;
         };
 
@@ -726,6 +734,10 @@ export async function updateProperty(id: string, formData: FormData) {
         if (propertyData.publish_romimo && !property?.publish_romimo) {
             portalCostSum += getPortalCost('publish_romimo');
             enabledPortals.push('Romimo/Publi24');
+        }
+        if (propertyData.publish_romimo && propertyData.promoted && !(property?.publish_romimo && property?.promoted)) {
+            portalCostSum += getPortalCost('promote_romimo');
+            enabledPortals.push('Romimo Promovare (Promo Points)');
         }
         if (propertyData.publish_homezz && !property?.publish_homezz) {
             portalCostSum += getPortalCost('publish_homezz');

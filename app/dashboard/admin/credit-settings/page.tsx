@@ -317,6 +317,19 @@ export default function CreditSettingsPage() {
                             </div>
                         </div>
                         <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
+                            <span className="font-semibold">Promovare Romimo / Publi24 (Promo Points)</span>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['promote_romimo'] !== undefined ? costs['promote_romimo'] : 5}
+                                    onChange={(e) => handleChange('promote_romimo', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800">
                             <span className="font-semibold">Export HomeZZ / LaJumate</span>
                             <div className="flex items-center gap-2">
                                 <input 

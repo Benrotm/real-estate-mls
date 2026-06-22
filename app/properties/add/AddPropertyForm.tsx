@@ -88,6 +88,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         publish_imobiliare: 2,
         publish_storia: 2,
         publish_romimo: 2,
+        promote_romimo: 5,
         publish_homezz: 2,
         publish_imobiliarepret: 2,
         price_contribution_reward: 10,
@@ -101,6 +102,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     publish_imobiliare: res.costs.publish_imobiliare ?? 2,
                     publish_storia: res.costs.publish_storia ?? 2,
                     publish_romimo: res.costs.publish_romimo ?? 2,
+                    promote_romimo: res.costs.promote_romimo ?? 5,
                     publish_homezz: res.costs.publish_homezz ?? 2,
                     publish_imobiliarepret: res.costs.publish_imobiliarepret ?? 2,
                     price_contribution_reward: res.costs.price_contribution_reward ?? 10,
@@ -244,6 +246,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         publishImobiliare: initialData?.publish_imobiliare || false,
         publishStoria: initialData?.publish_storia || false,
         publishRomimo: initialData?.publish_romimo || false,
+        promoteRomimo: initialData?.promoted || false,
         publishHomezz: initialData?.publish_homezz || false,
         publishImobiliarepret: initialData?.publish_imobiliarepret || false,
         contractCountry: initialData?.contract_country || 'România',
@@ -638,6 +641,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         formDataToSend.append('publish_imobiliare', formData.publishImobiliare ? 'true' : 'false');
         formDataToSend.append('publish_storia', formData.publishStoria ? 'true' : 'false');
         formDataToSend.append('publish_romimo', formData.publishRomimo ? 'true' : 'false');
+        formDataToSend.append('promoted', formData.promoteRomimo ? 'true' : 'false');
         formDataToSend.append('publish_homezz', formData.publishHomezz ? 'true' : 'false');
         formDataToSend.append('publish_imobiliarepret', formData.publishImobiliarepret ? 'true' : 'false');
 
@@ -2010,10 +2014,29 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     <p className="text-sm text-slate-500 mb-4">Direct integration with Romimo API.</p>
                                     
                                     {getActivationStatus('romimo') === 'active' ? (
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input type="checkbox" checked={formData.publishRomimo} onChange={(e) => setFormData({ ...formData, publishRomimo: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500" />
-                                            <span className="text-sm font-medium text-slate-300">Enable Auto-Posting</span>
-                                        </label>
+                                        <div className="space-y-3">
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input type="checkbox" checked={formData.publishRomimo} onChange={(e) => setFormData({ ...formData, publishRomimo: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500" />
+                                                <span className="text-sm font-medium text-slate-300">Enable Auto-Posting</span>
+                                            </label>
+                                            
+                                            {formData.publishRomimo && (
+                                                <div className="pl-7 pt-1">
+                                                    <label className="flex items-center justify-between gap-3 cursor-pointer group">
+                                                        <div className="flex items-center gap-3">
+                                                            <input type="checkbox" checked={formData.promoteRomimo} onChange={(e) => setFormData({ ...formData, promoteRomimo: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-yellow-500 focus:ring-yellow-500 focus:ring-offset-slate-900 focus:ring-offset-2" />
+                                                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-300 transition-colors">Promote Listing (Use Romimo Promo Points)</span>
+                                                        </div>
+                                                        {(!initialData?.promoted) && portalCosts.promote_romimo > 0 && (
+                                                            <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold text-[9px] flex items-center gap-1 border border-yellow-500/20 font-mono shrink-0">
+                                                                <Coins className="w-2 h-2 text-yellow-500" />
+                                                                +{portalCosts.promote_romimo} CR
+                                                            </span>
+                                                        )}
+                                                    </label>
+                                                </div>
+                                            )}
+                                        </div>
                                     ) : getActivationStatus('romimo') === 'pending' ? (
                                         <button disabled className="w-full py-2 bg-slate-800 text-slate-400 rounded-lg text-sm font-medium border border-slate-700 flex justify-center items-center gap-2 cursor-not-allowed">
                                             <Check className="w-4 h-4" /> Request Sent for Activation
