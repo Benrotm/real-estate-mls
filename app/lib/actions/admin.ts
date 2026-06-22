@@ -223,6 +223,11 @@ export async function updatePropertyAdmin(propertyId: string, formData: FormData
             publish_romimo: formData.get('publish_romimo') === 'true',
             publish_homezz: formData.get('publish_homezz') === 'true',
             publish_imobiliarepret: formData.get('publish_imobiliarepret') === 'true',
+            publish_whatsapp_groups: formData.get('publish_whatsapp_groups') === 'true',
+            publish_facebook_groups: formData.get('publish_facebook_groups') === 'true',
+            publish_facebook_page: formData.get('publish_facebook_page') === 'true',
+            publish_instagram: formData.get('publish_instagram') === 'true',
+            publish_tiktok: formData.get('publish_tiktok') === 'true',
 
             features: features,
             updated_at: new Date().toISOString()

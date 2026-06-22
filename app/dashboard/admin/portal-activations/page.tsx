@@ -11,6 +11,17 @@ export default function PortalActivationsPage() {
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
 
+    const getFriendlyPortalName = (name: string) => {
+        const mapping: Record<string, string> = {
+            romimo: 'Romimo / Publi24',
+            storia: 'Storia / OLX',
+            imobiliare: 'Imobiliare.ro',
+            homezz: 'HomeZZ / LaJumate',
+            social_media: 'Social Media Platforms'
+        };
+        return mapping[name.toLowerCase()] || name;
+    };
+
     useEffect(() => {
         fetchActivations();
     }, []);
@@ -78,8 +89,8 @@ export default function PortalActivationsPage() {
                                         {req.profiles?.phone && <div className="text-slate-500 text-xs mt-0.5">{req.profiles.phone}</div>}
                                     </td>
                                     <td className="p-4">
-                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 capitalize">
-                                            {req.portal_name}
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400">
+                                            {getFriendlyPortalName(req.portal_name)}
                                         </span>
                                     </td>
                                     <td className="p-4 text-slate-400">
@@ -137,8 +148,8 @@ export default function PortalActivationsPage() {
                                             {req.profiles?.phone && <div className="text-slate-500 text-xs mt-0.5">{req.profiles.phone}</div>}
                                         </td>
                                         <td className="p-4">
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 capitalize">
-                                                {req.portal_name}
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400">
+                                                {getFriendlyPortalName(req.portal_name)}
                                             </span>
                                         </td>
                                         <td className="p-4 text-slate-400">

@@ -103,6 +103,11 @@ export async function createProperty(formData: FormData) {
             publish_homezz: formData.get('publish_homezz') === 'true',
             publish_imobiliarepret: formData.get('publish_imobiliarepret') === 'true',
             promoted: formData.get('promoted') === 'true',
+            publish_whatsapp_groups: formData.get('publish_whatsapp_groups') === 'true',
+            publish_facebook_groups: formData.get('publish_facebook_groups') === 'true',
+            publish_facebook_page: formData.get('publish_facebook_page') === 'true',
+            publish_instagram: formData.get('publish_instagram') === 'true',
+            publish_tiktok: formData.get('publish_tiktok') === 'true',
             published_at: (formData.get('status') as 'active' | 'draft') === 'active' ? new Date().toISOString() : null,
 
             status: (formData.get('status') as 'active' | 'draft') || 'active'
@@ -145,6 +150,26 @@ export async function createProperty(formData: FormData) {
         if (propertyData.publish_imobiliarepret) {
             portalCostSum += getPortalCost('publish_imobiliarepret');
             enabledPortals.push('ImobiliarePret.ro');
+        }
+        if (propertyData.publish_whatsapp_groups) {
+            portalCostSum += getPortalCost('publish_whatsapp_groups');
+            enabledPortals.push('Social: WhatsApp Groups');
+        }
+        if (propertyData.publish_facebook_groups) {
+            portalCostSum += getPortalCost('publish_facebook_groups');
+            enabledPortals.push('Social: Facebook Groups');
+        }
+        if (propertyData.publish_facebook_page) {
+            portalCostSum += getPortalCost('publish_facebook_page');
+            enabledPortals.push('Social: Facebook Page');
+        }
+        if (propertyData.publish_instagram) {
+            portalCostSum += getPortalCost('publish_instagram');
+            enabledPortals.push('Social: Instagram Page');
+        }
+        if (propertyData.publish_tiktok) {
+            portalCostSum += getPortalCost('publish_tiktok');
+            enabledPortals.push('Social: TikTok Page');
         }
 
         const { deductUserCredits } = await import('./credits');
@@ -605,7 +630,7 @@ export async function updateProperty(id: string, formData: FormData) {
 
     const { data: property } = await supabase
         .from('properties')
-        .select('owner_id, status, publish_imobiliare, publish_storia, publish_romimo, publish_homezz, publish_imobiliarepret, promoted')
+        .select('owner_id, status, publish_imobiliare, publish_storia, publish_romimo, publish_homezz, publish_imobiliarepret, promoted, publish_whatsapp_groups, publish_facebook_groups, publish_facebook_page, publish_instagram, publish_tiktok')
         .eq('id', id)
         .single();
 
@@ -696,6 +721,11 @@ export async function updateProperty(id: string, formData: FormData) {
             publish_homezz: formData.get('publish_homezz') === 'true',
             publish_imobiliarepret: formData.get('publish_imobiliarepret') === 'true',
             promoted: formData.get('promoted') === 'true',
+            publish_whatsapp_groups: formData.get('publish_whatsapp_groups') === 'true',
+            publish_facebook_groups: formData.get('publish_facebook_groups') === 'true',
+            publish_facebook_page: formData.get('publish_facebook_page') === 'true',
+            publish_instagram: formData.get('publish_instagram') === 'true',
+            publish_tiktok: formData.get('publish_tiktok') === 'true',
 
             // updated_at is handled by DB trigger usually, but we can set it if needed
             updated_at: new Date().toISOString(),
@@ -746,6 +776,26 @@ export async function updateProperty(id: string, formData: FormData) {
         if (propertyData.publish_imobiliarepret && !property?.publish_imobiliarepret) {
             portalCostSum += getPortalCost('publish_imobiliarepret');
             enabledPortals.push('ImobiliarePret.ro');
+        }
+        if (propertyData.publish_whatsapp_groups && !property?.publish_whatsapp_groups) {
+            portalCostSum += getPortalCost('publish_whatsapp_groups');
+            enabledPortals.push('Social: WhatsApp Groups');
+        }
+        if (propertyData.publish_facebook_groups && !property?.publish_facebook_groups) {
+            portalCostSum += getPortalCost('publish_facebook_groups');
+            enabledPortals.push('Social: Facebook Groups');
+        }
+        if (propertyData.publish_facebook_page && !property?.publish_facebook_page) {
+            portalCostSum += getPortalCost('publish_facebook_page');
+            enabledPortals.push('Social: Facebook Page');
+        }
+        if (propertyData.publish_instagram && !property?.publish_instagram) {
+            portalCostSum += getPortalCost('publish_instagram');
+            enabledPortals.push('Social: Instagram Page');
+        }
+        if (propertyData.publish_tiktok && !property?.publish_tiktok) {
+            portalCostSum += getPortalCost('publish_tiktok');
+            enabledPortals.push('Social: TikTok Page');
         }
 
         const { deductUserCredits } = await import('./credits');

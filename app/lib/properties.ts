@@ -66,6 +66,11 @@ export interface Property {
     publish_romimo?: boolean;
     publish_homezz?: boolean;
     publish_imobiliarepret?: boolean;
+    publish_whatsapp_groups?: boolean;
+    publish_facebook_groups?: boolean;
+    publish_facebook_page?: boolean;
+    publish_instagram?: boolean;
+    publish_tiktok?: boolean;
 
     // Confidential Contract Fields
     contract_country?: string;

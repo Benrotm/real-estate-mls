@@ -29,7 +29,10 @@ import {
     Calendar,
     Move,
     Coins,
-    Info
+    Info,
+    Share2,
+    Instagram,
+    Facebook
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
 import { getFeatureCosts } from '@/app/lib/actions/settings';
@@ -64,6 +67,18 @@ import PropertyValuationSection from '@/app/components/valuation/PropertyValuati
 import EventClient from '@/app/components/events/EventClient';
 import ReportSoldModal from '@/app/components/properties/ReportSoldModal';
 
+const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.456L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.451 5.403.002 9.803-4.394 9.806-9.799.002-2.618-1.016-5.079-2.87-6.934C16.356 2.016 13.896 1 11.278 1 5.875 1 1.475 5.397 1.472 10.802c-.001 1.517.398 2.998 1.157 4.312L1.642 20.3l5.005-1.146zm11.758-5.324c-.314-.158-1.859-.918-2.148-1.023-.29-.105-.5-.158-.71.158-.21.314-.813 1.023-.996 1.233-.183.21-.366.236-.68.079-.314-.158-1.328-.49-2.529-1.561-.933-.833-1.564-1.862-1.747-2.178-.183-.315-.02-.485.137-.642.142-.141.315-.367.472-.551.157-.184.21-.315.315-.525.105-.21.053-.394-.026-.551-.079-.158-.71-1.712-.973-2.348-.255-.615-.515-.532-.71-.542-.183-.01-.393-.011-.603-.011s-.552.079-.84.394c-.288.315-1.101 1.077-1.101 2.626 0 1.549 1.128 3.045 1.285 3.255.158.21 2.221 3.391 5.38 4.757.753.325 1.341.52 1.8.664.757.241 1.446.207 1.99.126.607-.091 1.859-.761 2.122-1.458.263-.697.263-1.294.184-1.42-.079-.126-.29-.21-.604-.368z"/>
+    </svg>
+);
+
+const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.86-.74-3.99-1.72-.08-.07-.17-.17-.25-.25v6.5c-.02 2.11-.74 4.24-2.23 5.73-1.49 1.49-3.63 2.21-5.74 2.2-2.11.02-4.24-.71-5.73-2.2-1.49-1.49-2.21-3.62-2.2-5.73-.02-2.11.71-4.24 2.2-5.73 1.49-1.49 3.62-2.21 5.73-2.2 1.15-.02 2.3.26 3.32.81V0zm-3.32 11.51c-.88-.01-1.78.3-2.42.94-.64.64-.95 1.53-.94 2.42-.01.88.3 1.78.94 2.42.64.64 1.53.95 2.42.94.88.01 1.78-.3 2.42-.94.64-.64 1.53.95 2.42.94.88.01 1.78-.3 2.42-.94.64-.64 1.53-1.53 1.52-2.42V8.12c-.89.56-1.92.88-2.98.92-.12.01-.24.01-.36.01v2.48z"/>
+    </svg>
+);
+
 export default function AddPropertyForm({ initialData, canUseVirtualTours = true }: { initialData?: Partial<Property>, canUseVirtualTours?: boolean }) {
     const router = useRouter();
     const [step, setStep] = useState(1);
@@ -91,6 +106,11 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         promote_romimo: 5,
         publish_homezz: 2,
         publish_imobiliarepret: 2,
+        publish_whatsapp_groups: 2,
+        publish_facebook_groups: 2,
+        publish_facebook_page: 2,
+        publish_instagram: 2,
+        publish_tiktok: 2,
         price_contribution_reward: 10,
         add_listing_reward: 5
     });
@@ -105,6 +125,11 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     promote_romimo: res.costs.promote_romimo ?? 5,
                     publish_homezz: res.costs.publish_homezz ?? 2,
                     publish_imobiliarepret: res.costs.publish_imobiliarepret ?? 2,
+                    publish_whatsapp_groups: res.costs.publish_whatsapp_groups ?? 2,
+                    publish_facebook_groups: res.costs.publish_facebook_groups ?? 2,
+                    publish_facebook_page: res.costs.publish_facebook_page ?? 2,
+                    publish_instagram: res.costs.publish_instagram ?? 2,
+                    publish_tiktok: res.costs.publish_tiktok ?? 2,
                     price_contribution_reward: res.costs.price_contribution_reward ?? 10,
                     add_listing_reward: res.costs.add_listing_reward ?? 5
                 });
@@ -249,6 +274,11 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         promoteRomimo: initialData?.promoted || false,
         publishHomezz: initialData?.publish_homezz || false,
         publishImobiliarepret: initialData?.publish_imobiliarepret || false,
+        publishWhatsappGroups: initialData?.publish_whatsapp_groups || false,
+        publishFacebookGroups: initialData?.publish_facebook_groups || false,
+        publishFacebookPage: initialData?.publish_facebook_page || false,
+        publishInstagram: initialData?.publish_instagram || false,
+        publishTiktok: initialData?.publish_tiktok || false,
         contractCountry: initialData?.contract_country || 'România',
         contractCity: initialData?.contract_city || '',
         contractStreet: initialData?.contract_street || '',
@@ -644,6 +674,11 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         formDataToSend.append('promoted', formData.promoteRomimo ? 'true' : 'false');
         formDataToSend.append('publish_homezz', formData.publishHomezz ? 'true' : 'false');
         formDataToSend.append('publish_imobiliarepret', formData.publishImobiliarepret ? 'true' : 'false');
+        formDataToSend.append('publish_whatsapp_groups', formData.publishWhatsappGroups ? 'true' : 'false');
+        formDataToSend.append('publish_facebook_groups', formData.publishFacebookGroups ? 'true' : 'false');
+        formDataToSend.append('publish_facebook_page', formData.publishFacebookPage ? 'true' : 'false');
+        formDataToSend.append('publish_instagram', formData.publishInstagram ? 'true' : 'false');
+        formDataToSend.append('publish_tiktok', formData.publishTiktok ? 'true' : 'false');
 
         // Images
         formDataToSend.append('images', JSON.stringify(formData.images));
@@ -2113,7 +2148,6 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         </button>
                                     )}
                                 </div>
-
                                 {/* ImobiliarePret.ro (No activation required) */}
                                 <div className={`p-5 rounded-xl border transition-all ${formData.publishImobiliarepret ? 'bg-emerald-500/10 border-emerald-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
                                     <div className="flex items-center justify-between gap-2 mb-3">
@@ -2130,6 +2164,124 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         <input type="checkbox" checked={formData.publishImobiliarepret} onChange={(e) => setFormData({ ...formData, publishImobiliarepret: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500" />
                                         <span className="text-sm font-medium text-slate-300">Enable Auto-Posting</span>
                                     </label>
+                                </div>
+
+                                {/* All Social Media Platforms and Groups */}
+                                <div className={`p-5 rounded-xl border transition-all col-span-1 md:col-span-2 ${getActivationStatus('social_media') === 'active' && (formData.publishWhatsappGroups || formData.publishFacebookGroups || formData.publishFacebookPage || formData.publishInstagram || formData.publishTiktok) ? 'bg-pink-500/5 border-pink-500/30' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}>
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <Share2 className="w-5 h-5 text-pink-500 animate-pulse" />
+                                            <h4 className={`font-bold ${getActivationStatus('social_media') === 'active' ? 'text-pink-400' : 'text-slate-300'}`}>Publish on All Social Media Platforms and Groups</h4>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-slate-500 mb-4">Auto-post property listing directly to social networks and chat groups.</p>
+                                    
+                                    {getActivationStatus('social_media') === 'active' ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-slate-800/50">
+                                            {/* WhatsApp Groups */}
+                                            <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+                                                <label className="flex items-center gap-3 cursor-pointer select-none w-full">
+                                                    <div className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded">
+                                                        <WhatsAppIcon className="w-4.5 h-4.5" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-semibold text-slate-300">WhatsApp Groups</span>
+                                                        <span className="text-[10px] text-slate-500">Auto-push to client groups</span>
+                                                    </div>
+                                                </label>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {(!initialData?.publish_whatsapp_groups) && portalCosts.publish_whatsapp_groups > 0 && (
+                                                        <span className="text-[10px] text-yellow-500 font-mono font-bold">{portalCosts.publish_whatsapp_groups} CR</span>
+                                                    )}
+                                                    <input type="checkbox" checked={formData.publishWhatsappGroups} onChange={(e) => setFormData({ ...formData, publishWhatsappGroups: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-pink-500 focus:ring-pink-500" />
+                                                </div>
+                                            </div>
+
+                                            {/* Facebook Groups */}
+                                            <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+                                                <label className="flex items-center gap-3 cursor-pointer select-none w-full">
+                                                    <div className="p-1.5 bg-blue-600/10 text-blue-500 rounded">
+                                                        <Facebook className="w-4.5 h-4.5" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-semibold text-slate-300">Facebook Groups</span>
+                                                        <span className="text-[10px] text-slate-500">Post in real estate groups</span>
+                                                    </div>
+                                                </label>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {(!initialData?.publish_facebook_groups) && portalCosts.publish_facebook_groups > 0 && (
+                                                        <span className="text-[10px] text-yellow-500 font-mono font-bold">{portalCosts.publish_facebook_groups} CR</span>
+                                                    )}
+                                                    <input type="checkbox" checked={formData.publishFacebookGroups} onChange={(e) => setFormData({ ...formData, publishFacebookGroups: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-pink-500 focus:ring-pink-500" />
+                                                </div>
+                                            </div>
+
+                                            {/* Facebook Page */}
+                                            <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+                                                <label className="flex items-center gap-3 cursor-pointer select-none w-full">
+                                                    <div className="p-1.5 bg-blue-500/10 text-blue-400 rounded">
+                                                        <Facebook className="w-4.5 h-4.5" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-semibold text-slate-300">Facebook Page</span>
+                                                        <span className="text-[10px] text-slate-500">Publish on agency page</span>
+                                                    </div>
+                                                </label>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {(!initialData?.publish_facebook_page) && portalCosts.publish_facebook_page > 0 && (
+                                                        <span className="text-[10px] text-yellow-500 font-mono font-bold">{portalCosts.publish_facebook_page} CR</span>
+                                                    )}
+                                                    <input type="checkbox" checked={formData.publishFacebookPage} onChange={(e) => setFormData({ ...formData, publishFacebookPage: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-pink-500 focus:ring-pink-500" />
+                                                </div>
+                                            </div>
+
+                                            {/* Instagram Page */}
+                                            <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+                                                <label className="flex items-center gap-3 cursor-pointer select-none w-full">
+                                                    <div className="p-1.5 bg-pink-500/10 text-pink-500 rounded">
+                                                        <Instagram className="w-4.5 h-4.5" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-semibold text-slate-300">Instagram Page</span>
+                                                        <span className="text-[10px] text-slate-500">Create image post/feed</span>
+                                                    </div>
+                                                </label>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {(!initialData?.publish_instagram) && portalCosts.publish_instagram > 0 && (
+                                                        <span className="text-[10px] text-yellow-500 font-mono font-bold">{portalCosts.publish_instagram} CR</span>
+                                                    )}
+                                                    <input type="checkbox" checked={formData.publishInstagram} onChange={(e) => setFormData({ ...formData, publishInstagram: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-pink-500 focus:ring-pink-500" />
+                                                </div>
+                                            </div>
+
+                                            {/* TikTok Page */}
+                                            <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+                                                <label className="flex items-center gap-3 cursor-pointer select-none w-full">
+                                                    <div className="p-1.5 bg-slate-950/20 text-slate-200 rounded border border-slate-800 flex items-center justify-center">
+                                                        <TikTokIcon className="w-4 h-4" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-semibold text-slate-300">TikTok Page</span>
+                                                        <span className="text-[10px] text-slate-500">Generate property video</span>
+                                                    </div>
+                                                </label>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {(!initialData?.publish_tiktok) && portalCosts.publish_tiktok > 0 && (
+                                                        <span className="text-[10px] text-yellow-500 font-mono font-bold">{portalCosts.publish_tiktok} CR</span>
+                                                    )}
+                                                    <input type="checkbox" checked={formData.publishTiktok} onChange={(e) => setFormData({ ...formData, publishTiktok: e.target.checked })} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-pink-500 focus:ring-pink-500" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : getActivationStatus('social_media') === 'pending' ? (
+                                        <button disabled className="w-full py-2 bg-slate-800 text-slate-400 rounded-lg text-sm font-medium border border-slate-700 flex justify-center items-center gap-2 cursor-not-allowed">
+                                            <Check className="w-4 h-4" /> Request Sent for Activation
+                                        </button>
+                                    ) : (
+                                        <button type="button" onClick={(e) => { e.preventDefault(); handleRequestActivation('social_media'); }} disabled={requestingActivation === 'social_media'} className="w-full py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-sm font-medium shadow-lg transition-colors flex justify-center items-center gap-2">
+                                            {requestingActivation === 'social_media' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Request Account Activation'}
+                                        </button>
+                                    )}
                                 </div>
 
                             </div>
