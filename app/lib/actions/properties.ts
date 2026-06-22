@@ -231,6 +231,29 @@ export async function createProperty(formData: FormData) {
             return { error: error.message };
         }
 
+        // Link pending virtual tour transactions if created successfully
+        if (data && data.id) {
+            const supabaseAdmin = createAdminClient();
+            const { data: txns } = await supabaseAdmin
+                .from('credit_transactions')
+                .select('*')
+                .eq('user_id', user.id)
+                .contains('metadata', { feature_key: 'virtual_tour' })
+                .order('created_at', { ascending: false });
+
+            const pendingTxn = txns?.find(t => !t.metadata?.property_id);
+            if (pendingTxn) {
+                const updatedMetadata = {
+                    ...pendingTxn.metadata,
+                    property_id: data.id
+                };
+                await supabaseAdmin
+                    .from('credit_transactions')
+                    .update({ metadata: updatedMetadata })
+                    .eq('id', pendingTxn.id);
+            }
+        }
+
         // Reward user for adding listing if active
         if (data && data.status === 'active') {
             const rewardAmount = costsRes.costs?.['add_listing_reward'] !== undefined ? costsRes.costs['add_listing_reward'] : 5;

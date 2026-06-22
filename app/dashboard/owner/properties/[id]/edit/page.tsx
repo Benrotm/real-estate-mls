@@ -2,6 +2,8 @@ import { getPropertyById } from '@/app/lib/actions/properties';
 import AddPropertyForm from '@/app/properties/add/AddPropertyForm';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/server';
+import { hasFeature } from '@/app/lib/auth/features';
+import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 
 export default async function EditPropertyPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -23,10 +25,12 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
         redirect('/dashboard/owner/properties');
     }
 
+    const canUseVirtualTours = await hasFeature(SYSTEM_FEATURES.VIRTUAL_TOUR);
+
     return (
         <div className="max-w-4xl mx-auto py-8">
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Edit Property</h1>
-            <AddPropertyForm initialData={property} />
+            <AddPropertyForm initialData={property} canUseVirtualTours={canUseVirtualTours} />
         </div>
     );
 }

@@ -795,5 +795,117 @@ export async function upgradeToAgencyAccount() {
     };
 }
 
+export async function checkVirtualTourUnlock(propertyId?: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { unlocked: false, loggedIn: false };
 
+    // 1. Check if user is owner/admin
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
 
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin' || profile?.role === 'superadmin';
+
+    // If propertyId is provided, check if user is the owner
+    if (propertyId) {
+        const { data: property } = await supabase
+            .from('properties')
+            .select('owner_id, virtual_tour_url')
+            .eq('id', propertyId)
+            .single();
+
+        const isOwner = property?.owner_id === user.id;
+        if (isOwner || isAdmin) {
+            return { unlocked: true, loggedIn: true, bypass: true };
+        }
+
+        // If there's already a virtual tour url, it means it's unlocked/active
+        if (property?.virtual_tour_url) {
+            return { unlocked: true, loggedIn: true };
+        }
+    }
+
+    // Check if a transaction exists
+    // If propertyId is provided, we check for a transaction linked to that propertyId
+    // If propertyId is not provided, we check for a transaction of feature_key 'virtual_tour' that has property_id: null
+    let query = supabase
+        .from('credit_transactions')
+        .select('id, metadata')
+        .eq('user_id', user.id)
+        .contains('metadata', { feature_key: 'virtual_tour' });
+
+    if (propertyId) {
+        query = query.contains('metadata', { property_id: propertyId });
+    }
+
+    const { data: txns, error } = await query;
+
+    if (error) {
+        console.error('Error checking virtual tour unlock:', error);
+        return { unlocked: false, loggedIn: true, error: error.message };
+    }
+
+    if (propertyId) {
+        return { unlocked: txns && txns.length > 0, loggedIn: true };
+    } else {
+        // For new properties, we look for any transaction of virtual_tour that doesn't have property_id in metadata
+        const pendingTxn = txns?.find((t: any) => !t.metadata?.property_id);
+        return { unlocked: !!pendingTxn, loggedIn: true };
+    }
+}
+
+export async function unlockVirtualTour(propertyId?: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Unauthorized' };
+
+    // Fetch cost
+    const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (settingsData?.setting_value as Record<string, number>) || {};
+    const cost = costsMap['virtual_tour'] !== undefined ? costsMap['virtual_tour'] : 1;
+
+    // Check if already unlocked (bypass or previous txn)
+    const unlockCheck = await checkVirtualTourUnlock(propertyId);
+    if (unlockCheck.unlocked) {
+        return { success: true, cost: 0, message: 'Already unlocked' };
+    }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile) return { error: 'Profile not found' };
+
+    const remainingCredits = profile.credits || 0;
+    if (remainingCredits < cost) {
+        return { error: 'Fonduri insuficiente', insufficient: true, cost };
+    }
+
+    // Deduct credits
+    const description = propertyId 
+        ? `Deblocare Virtual Tour`
+        : `Deblocare Virtual Tour (Anunţ Nou)`;
+
+    const metadata: Record<string, any> = {
+        feature_key: 'virtual_tour',
+        property_id: propertyId || null
+    };
+
+    const res = await deductUserCredits(cost, description, metadata);
+
+    if (res.error) {
+        return { error: res.error, insufficient: res.insufficient, cost };
+    }
+
+    return { success: true, cost, remaining: res.remaining };
+}

@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { createProperty, updateProperty } from '@/app/lib/actions/properties';
 import { getFeatureCosts, getSocialLinks } from '@/app/lib/actions/settings';
+import { checkVirtualTourUnlock, unlockVirtualTour } from '@/app/lib/actions/credits';
 import { getAdminSettings } from '@/app/lib/actions/admin-settings';
 import { createCollaborationContract, getCollaborationContractForProperty, getCollaborationContract } from '@/app/lib/actions/collaboration-contracts';
 import { supabase } from '@/app/lib/supabase/client';
@@ -122,6 +123,13 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
     const [hoveredPhotoIndex, setHoveredPhotoIndex] = useState<number | null>(null);
 
+    // Virtual Tour Unlocking States
+    const [isVirtualTourUnlocked, setIsVirtualTourUnlocked] = useState(canUseVirtualTours || !!initialData?.virtual_tour_url);
+    const [virtualTourCost, setVirtualTourCost] = useState<number>(1);
+    const [loadingTourCost, setLoadingTourCost] = useState<boolean>(true);
+    const [unlockTourError, setUnlockTourError] = useState<string | null>(null);
+    const [isUnlockingTour, setIsUnlockingTour] = useState<boolean>(false);
+
     const [portalCosts, setPortalCosts] = useState<Record<string, number>>({
         publish_imobiliare: 2,
         publish_storia: 2,
@@ -156,9 +164,28 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     price_contribution_reward: res.costs.price_contribution_reward ?? 10,
                     add_listing_reward: res.costs.add_listing_reward ?? 5
                 });
+                if (res.costs.virtual_tour !== undefined) {
+                    setVirtualTourCost(res.costs.virtual_tour);
+                }
             }
+            setLoadingTourCost(false);
+        }).catch(err => {
+            console.error("Error loading costs:", err);
+            setLoadingTourCost(false);
         });
     }, []);
+
+    useEffect(() => {
+        if (!canUseVirtualTours) {
+            checkVirtualTourUnlock(initialData?.id).then(res => {
+                if (res.unlocked) {
+                    setIsVirtualTourUnlocked(true);
+                }
+            }).catch(err => {
+                console.error("Error checking virtual tour unlock:", err);
+            });
+        }
+    }, [canUseVirtualTours, initialData?.id]);
 
     useEffect(() => {
         // Load user watermark settings from Local Storage
@@ -538,6 +565,43 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const getActivationStatus = (portalName: string) => {
         const act = portalActivations.find((a) => a.portal_name === portalName);
         return act?.status || 'none';
+    };
+
+    const handleUnlockVirtualTour = async () => {
+        if (!confirm(`Deblocare Virtual Tour: Acest lucru va consuma ${virtualTourCost} credite. Confirmați?`)) {
+            return;
+        }
+
+        setUnlockTourError(null);
+        setIsUnlockingTour(true);
+
+        try {
+            const res = await unlockVirtualTour(initialData?.id);
+            if (res.success) {
+                toast.success("Virtual Tour deblocat cu succes!");
+                setIsVirtualTourUnlocked(true);
+                // Deduct from agentProfile credits if profile exists
+                if (agentProfile) {
+                    setAgentProfile((prev: any) => ({
+                        ...prev,
+                        credits: res.remaining !== undefined ? res.remaining : ((prev.credits || 0) - res.cost)
+                    }));
+                }
+            } else {
+                setUnlockTourError(res.error || "A apărut o eroare la deblocare.");
+                if (res.insufficient) {
+                    toast.error("Fonduri insuficiente.");
+                } else {
+                    toast.error(res.error || "Eroare la deblocare.");
+                }
+            }
+        } catch (err: any) {
+            console.error("Error unlocking virtual tour:", err);
+            setUnlockTourError("Eroare la deblocarea Virtual Tour.");
+            toast.error("Eroare de rețea sau server.");
+        } finally {
+            setIsUnlockingTour(false);
+        }
     };
 
     useEffect(() => {
@@ -1607,19 +1671,48 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         <div className="relative">
                                             <label className="block text-sm font-medium mb-2 text-slate-300 flex items-center gap-2">
                                                 Virtual Tour
-                                                {!canUseVirtualTours && <Lock className="w-3 h-3 text-amber-500" />}
+                                                {!isVirtualTourUnlocked && <Lock className="w-3 h-3 text-amber-500" />}
                                             </label>
 
-                                            {!canUseVirtualTours ? (
+                                            {!isVirtualTourUnlocked ? (
                                                 <div
-                                                    onClick={() => setShowUpgradeModal(true)}
-                                                    className="border border-slate-800 bg-slate-900/50 rounded-xl p-6 text-center cursor-pointer hover:bg-slate-800 transition-colors group"
+                                                    className="border border-slate-800 bg-slate-900/50 rounded-xl p-6 text-center border-dashed"
                                                 >
-                                                    <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                                                    <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
                                                         <Lock className="w-5 h-5 text-slate-400" />
                                                     </div>
                                                     <h4 className="text-white font-bold mb-1">Feature Locked</h4>
-                                                    <p className="text-sm text-slate-400">Upgrade your plan to add Virtual Tours</p>
+                                                    <p className="text-sm text-slate-400 mb-4">
+                                                        Upgrade your plan to add Virtual Tours, or unlock it for this listing with credits.
+                                                    </p>
+                                                    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleUnlockVirtualTour}
+                                                            disabled={isUnlockingTour || loadingTourCost}
+                                                            className="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors disabled:opacity-50 text-xs shadow-lg shadow-yellow-900/20"
+                                                        >
+                                                            {isUnlockingTour ? (
+                                                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            ) : (
+                                                               <Coins className="w-3.5 h-3.5" />
+                                                            )}
+                                                            {loadingTourCost ? 'Loading cost...' : `Deblochează cu ${virtualTourCost} ${virtualTourCost === 1 ? 'credit' : 'credite'}`}
+                                                        </button>
+                                                        
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowUpgradeModal(true)}
+                                                            className="text-slate-400 hover:text-white px-4 py-2 rounded-lg font-bold border border-slate-700 hover:bg-slate-800/50 transition-all text-xs"
+                                                        >
+                                                            Upgrade to PRO
+                                                        </button>
+                                                    </div>
+                                                    {agentProfile && (
+                                                        <p className="text-slate-500 text-xs mt-3">
+                                                            Balanță cont: <span className="font-semibold text-yellow-500">{agentProfile.credits || 0} credite</span>
+                                                        </p>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
