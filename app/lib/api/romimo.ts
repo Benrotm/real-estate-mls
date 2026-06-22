@@ -10,18 +10,62 @@ let tokenExpiresAt: number = 0;
  * Maps Imobum property category to Romimo category ID (placeholder mapping).
  * TODO: Replace with actual category mapping from Romimo once provided.
  */
-function mapToRomimoCategory(type: string, listingType: string): number {
-    // Romimo category placeholders based on document (312, 337, etc.)
-    if (listingType === 'For Sale') {
-        if (type === 'Apartment') return 337;
-        if (type === 'House') return 338;
-        if (type === 'Land') return 339;
-        return 312; // default
+function mapToRomimoCategory(property: Property): number {
+    const type = property.type;
+    const listingType = property.listing_type;
+    const rooms = property.rooms ? Number(property.rooms) : null;
+
+    const isSale = listingType === 'For Sale';
+
+    if (isSale) {
+        switch (type) {
+            case 'Apartment':
+                if (rooms === 1) return 337; // apartamente 1 camera
+                if (rooms === 2) return 338; // apartamente 2 camere
+                if (rooms === 3) return 339; // apartamente 3 camere
+                if (rooms === 4) return 340; // apartamente 4 camere
+                if (rooms === 5) return 341; // apartamente 5 camere
+                if (rooms && rooms >= 6) return 342; // apartamente 6 camere
+                return 338; // default to 2 rooms
+            case 'House':
+                return 347; // case vile
+            case 'Land':
+                return 354; // teren intravilan
+            case 'Commercial':
+                return 361; // spatiu comercial
+            case 'Industrial':
+                return 358; // hala industriala
+            case 'Business':
+                return 361; // spatiu comercial
+            case 'Other':
+            default:
+                return 432; // alte proprietati
+        }
     } else {
-        // For Rent
-        if (type === 'Apartment') return 340;
-        if (type === 'House') return 341;
-        return 312; // default
+        // For Rent / Hotel Regime
+        switch (type) {
+            case 'Apartment':
+                if (rooms === 1) return 312; // apartamente 1 camera
+                if (rooms === 2) return 313; // apartamente 2 camere
+                if (rooms === 3) return 314; // apartamente 3 camere
+                if (rooms === 4) return 315; // apartamente 4 camere
+                if (rooms === 5) return 316; // apartamente 5 camere
+                if (rooms && rooms >= 6) return 317; // apartamente 6 camere
+                return 313; // default to 2 rooms
+            case 'House':
+                return 44; // case vile
+            case 'Land':
+                return 329; // teren intravilan
+            case 'Commercial':
+                return 336; // spatiu comercial
+            case 'Industrial':
+                return 333; // hala industriala
+            case 'Business':
+                return 336; // spatiu comercial
+            case 'Other':
+            default:
+                return 313; // fallback to apartamente 2 camere
+        }
     }
 }
 
@@ -97,7 +141,7 @@ export async function upsertRomimoArticle(property: Property, userEmail: string)
             active: property.status === 'active',
             promoted: property.promoted || false,
             externalid: property.id,
-            category: mapToRomimoCategory(property.type, property.listing_type),
+            category: mapToRomimoCategory(property),
             price: property.price || 0,
             currency: property.currency || 'EUR',
             title: property.title || 'Property',
