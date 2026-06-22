@@ -303,7 +303,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                 
                 // Fetch romimo stats
                 try {
-                    const statsRes = await fetch('/api/export/romimo/user?email=' + encodeURIComponent(user.email || ''));
+                    const statsRes = await fetch('/api/export/romimo/user?email=' + encodeURIComponent(data?.email || user.email || ''));
                     if (statsRes.ok) {
                         const json = await statsRes.json();
                         setRomimoStats(json.data);

@@ -215,10 +215,14 @@ export async function createProperty(formData: FormData) {
         }
 
         // Trigger Romimo API Sync
-        if (data && data.publish_romimo && data.status === 'active' && user.email) {
-            import('@/app/lib/api/romimo').then(({ upsertRomimoArticle }) => {
-                upsertRomimoArticle(data, user.email!).catch(console.error);
-            });
+        if (data && data.publish_romimo && data.status === 'active') {
+            const profile = await getUserProfile();
+            const emailToUse = profile?.email || user.email;
+            if (emailToUse) {
+                import('@/app/lib/api/romimo').then(({ upsertRomimoArticle }) => {
+                    upsertRomimoArticle(data, emailToUse).catch(console.error);
+                });
+            }
         }
 
 
@@ -780,12 +784,14 @@ export async function updateProperty(id: string, formData: FormData) {
         }
 
         // Trigger Romimo API Sync
-        if (data && user.email) {
+        const profile = await getUserProfile();
+        const emailToUse = profile?.email || user.email;
+        if (data && emailToUse) {
             import('@/app/lib/api/romimo').then(({ upsertRomimoArticle, deleteRomimoArticle }) => {
                 if (data.publish_romimo && data.status === 'active') {
-                    upsertRomimoArticle(data, user.email!).catch(console.error);
+                    upsertRomimoArticle(data, emailToUse).catch(console.error);
                 } else if ((!data.publish_romimo || data.status !== 'active') && property?.publish_romimo && property?.status === 'active') {
-                    deleteRomimoArticle(user.email!, data.id).catch(console.error);
+                    deleteRomimoArticle(emailToUse, data.id).catch(console.error);
                 }
             });
         }
