@@ -254,6 +254,28 @@ export async function getRomimoUserPackage(email: string) {
     if (!token) return { error: 'Failed to obtain Romimo token' };
 
     try {
+        // Try getting CompanyPackage first to find sub-agents
+        const companyResponse = await fetch(`${ROMIMO_API_BASE}/User/CompanyPackage?Email=${encodeURIComponent(email)}`, {
+            method: 'GET',
+            headers: {
+                'x-api-version': '2',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (companyResponse.ok) {
+            const companyData = await companyResponse.json();
+            if (Array.isArray(companyData)) {
+                // Find agent by email (case-insensitive)
+                const targetEmail = email.toLowerCase().trim();
+                const agentPkg = companyData.find(agent => agent.email && agent.email.toLowerCase().trim() === targetEmail);
+                if (agentPkg) {
+                    return { success: true, data: agentPkg };
+                }
+            }
+        }
+
+        // Fallback to normal User/Package
         const response = await fetch(`${ROMIMO_API_BASE}/User/Package?Email=${encodeURIComponent(email)}`, {
             method: 'GET',
             headers: {
