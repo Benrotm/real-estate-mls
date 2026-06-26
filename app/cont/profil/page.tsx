@@ -26,7 +26,9 @@ import {
     ArrowLeft,
     TrendingUp,
     Gift,
-    Award
+    Award,
+    Key,
+    Globe
 } from 'lucide-react';
 import { getCurrentProfile, updateUserProfile } from '@/app/lib/actions/user';
 import { getReferralStats, checkAndProcessReferral } from '@/app/lib/actions/referrals';
@@ -34,6 +36,8 @@ import { getUserCreditTransactions } from '@/app/lib/actions/credits';
 import AvatarUpload from '@/app/components/AvatarUpload';
 import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 import ShareModal from '@/app/components/ShareModal';
+import toast from 'react-hot-toast';
+import { getStoriaStatus, getStoriaAuthUrl, disconnectStoriaAccount } from '@/app/lib/actions/storia';
 
 export default function ProfilPage() {
     const router = useRouter();
@@ -48,6 +52,10 @@ export default function ProfilPage() {
     const [phone, setPhone] = useState('');
     const [updateStatus, setUpdateStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
+
+    // Storia integration state
+    const [storiaStatus, setStoriaStatus] = useState<any>(null);
+    const [isConnectingStoria, setIsConnectingStoria] = useState(false);
 
     // Referral state
     const [referralLink, setReferralLink] = useState('');
@@ -80,6 +88,14 @@ export default function ProfilPage() {
                 setProfile(profileRes.profile);
                 setFullName(profileRes.profile.full_name || '');
                 setPhone(profileRes.profile.phone || '');
+                
+                // Fetch Storia connection status
+                try {
+                    const status = await getStoriaStatus(profileRes.profile.id);
+                    setStoriaStatus(status);
+                } catch (err) {
+                    console.error('Error fetching Storia status:', err);
+                }
             } else if (profileRes && 'error' in profileRes) {
                 console.error('Error fetching profile:', profileRes.error);
                 router.push('/auth/login');
@@ -107,7 +123,54 @@ export default function ProfilPage() {
 
     useEffect(() => {
         loadData();
+
+        // Handle OAuth callback parameters redirecting from Storia/OLX
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('storia_connected') === 'true') {
+                toast.success('Contul Storia / OLX a fost conectat cu succes!');
+                router.replace('/cont/profil');
+            } else if (params.get('storia_error')) {
+                const error = params.get('storia_error');
+                toast.error(`Eroare conexiune Storia/OLX: ${error}`);
+                router.replace('/cont/profil');
+            }
+        }
     }, []);
+
+    const handleConnectStoria = async () => {
+        setIsConnectingStoria(true);
+        try {
+            const res = await getStoriaAuthUrl();
+            if (res && 'url' in res && res.url) {
+                window.location.href = res.url;
+            } else {
+                toast.error(res?.error || 'Eroare la generarea URL-ului de conexiune.');
+                setIsConnectingStoria(false);
+            }
+        } catch (err: any) {
+            toast.error(`Eroare: ${err.message}`);
+            setIsConnectingStoria(false);
+        }
+    };
+
+    const handleDisconnectStoria = async () => {
+        if (!confirm('Sigur dorești să deconectezi contul Storia / OLX?')) return;
+        try {
+            const res = await disconnectStoriaAccount();
+            if (res.success) {
+                toast.success('Contul Storia / OLX a fost deconectat!');
+                if (profile) {
+                    const status = await getStoriaStatus(profile.id);
+                    setStoriaStatus(status);
+                }
+            } else {
+                toast.error(res.error || 'Eroare la deconectare cont.');
+            }
+        } catch (err: any) {
+            toast.error(`Eroare deconectare: ${err.message}`);
+        }
+    };
 
     const handleSaveProfile = (e: React.FormEvent) => {
         e.preventDefault();
@@ -377,6 +440,60 @@ export default function ProfilPage() {
                                 )}
                             </div>
                         </form>
+
+                        {/* Portal Integrations */}
+                        {storiaStatus && storiaStatus.active && (
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl">
+                                <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center gap-2">
+                                    <Globe className="w-4 h-4 text-cyan-400" />
+                                    Integrări Portale
+                                </h3>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-slate-950 border border-slate-850 rounded-xl">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400">
+                                                <Globe className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-sm text-white">Storia / OLX</h4>
+                                                <p className="text-xs text-slate-400">
+                                                    {storiaStatus.connected ? 'Cont conectat prin OAuth 2.0' : 'Cont neconectat'}
+                                                </p>
+                                                {storiaStatus.connected && storiaStatus.expiresAt && (
+                                                    <p className="text-[10px] text-slate-500 mt-1">
+                                                        Expiră la: {new Date(storiaStatus.expiresAt).toLocaleString('ro-RO')}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            {storiaStatus.connected ? (
+                                                <button
+                                                    onClick={handleDisconnectStoria}
+                                                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-xs font-semibold transition-colors"
+                                                >
+                                                    Deconectează
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={handleConnectStoria}
+                                                    disabled={isConnectingStoria}
+                                                    className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5"
+                                                >
+                                                    {isConnectingStoria ? (
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                    ) : (
+                                                        <Key className="w-3.5 h-3.5" />
+                                                    )}
+                                                    Conectează
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Column: Referral System & Credit Transactions */}

@@ -71,6 +71,7 @@ export interface Property {
     publish_facebook_page?: boolean;
     publish_instagram?: boolean;
     publish_tiktok?: boolean;
+    storia_id?: string;
 
     // Confidential Contract Fields
     contract_country?: string;
