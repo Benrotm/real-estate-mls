@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { LeadData } from '@/app/lib/types';
 import { upsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
-import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight, CheckCircle, Clock, List, Activity } from 'lucide-react';
+import { fetchPropertyByFriendlyId } from '@/app/lib/actions/properties';
+import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight, CheckCircle, Clock, List, Activity, Plus } from 'lucide-react';
 import ShareMatchesModal from '@/app/components/dashboard/ShareMatchesModal';
 import LeadProfileDetails from '@/app/components/dashboard/LeadProfileDetails';
 import Link from 'next/link';
@@ -21,6 +22,8 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const [activeTab, setActiveTab] = useState<'curate' | 'saved' | 'sent' | 'interested' | 'not_interested' | 'visit_scheduled' | 'negotiation'>('curate');
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
+    const [manualAddId, setManualAddId] = useState('');
+    const [isAddingManual, setIsAddingManual] = useState(false);
 
     useEffect(() => {
         if (activeTab === 'curate' && aiSuggestions.length === 0 && !isLoadingAI) {
@@ -41,6 +44,35 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
             console.error('Failed to load AI suggestions:', error);
         } finally {
             setIsLoadingAI(false);
+        }
+    };
+
+    const handleAddManual = async () => {
+        if (!manualAddId.trim()) return;
+        setIsAddingManual(true);
+        try {
+            const res = await fetchPropertyByFriendlyId(manualAddId);
+            if (res.error || !res.data) {
+                alert(res.error || 'Property not found');
+                return;
+            }
+            const prop = res.data;
+            const existingIds = matches.map(m => m.property_id || m.property?.id);
+            if (existingIds.includes(prop.id)) {
+                alert('Property is already in one of the matches tabs.');
+                return;
+            }
+            if (aiSuggestions.find(s => s.id === prop.id)) {
+                alert('Property is already in AI suggestions.');
+                return;
+            }
+            setAiSuggestions(prev => [prop, ...prev]);
+            setManualAddId('');
+        } catch (err) {
+            console.error(err);
+            alert('Failed to add property.');
+        } finally {
+            setIsAddingManual(false);
         }
     };
 
@@ -279,13 +311,32 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
             <div className="mt-4">
                 {activeTab === 'curate' && (
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                                 <Zap className="w-5 h-5 text-orange-500 fill-current" /> New AI Suggestions
                             </h2>
-                            <button onClick={loadAISuggestions} disabled={isLoadingAI} className="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-lg border shadow-sm">
-                                <RefreshCw className={`w-4 h-4 ${isLoadingAI ? 'animate-spin' : ''}`} />
-                            </button>
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1 w-full sm:w-64">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Add by ID (e.g. P12345)"
+                                        className="bg-transparent border-none focus:ring-0 text-sm px-2 w-full outline-none"
+                                        value={manualAddId}
+                                        onChange={(e) => setManualAddId(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddManual()}
+                                    />
+                                    <button 
+                                        onClick={handleAddManual}
+                                        disabled={isAddingManual || !manualAddId.trim()}
+                                        className="p-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-md disabled:opacity-50 transition-colors"
+                                    >
+                                        {isAddingManual ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                <button onClick={loadAISuggestions} disabled={isLoadingAI} className="p-2.5 text-slate-400 hover:text-slate-600 bg-white rounded-lg border shadow-sm transition-colors">
+                                    <RefreshCw className={`w-4 h-4 ${isLoadingAI ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
                         </div>
                         {isLoadingAI ? (
                             <div className="py-12 flex justify-center"><div className="w-8 h-8 border-4 border-orange-600/20 border-t-orange-600 rounded-full animate-spin"></div></div>

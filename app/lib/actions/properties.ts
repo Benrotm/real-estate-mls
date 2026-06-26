@@ -10,6 +10,23 @@ import { generatePropertyFingerprint } from '../utils/fingerprint';
 import { getAdminSettings } from './admin-settings';
 import { enrichPropertyFromDescription, geocodeProperty } from './enrichment';
 
+export async function fetchPropertyByFriendlyId(idOrFriendlyId: string) {
+    const supabase = await createClient();
+    let query = supabase.from('properties').select('*, owner:profiles!properties_owner_id_fkey(id, full_name, email, phone, avatar_url)');
+    
+    // Check if it looks like a friendly ID (e.g. P12345 or #P12345)
+    const cleanId = idOrFriendlyId.replace('#', '').trim();
+    if (cleanId.startsWith('P') || cleanId.startsWith('p')) {
+        query = query.eq('friendly_id', cleanId);
+    } else {
+        query = query.eq('id', cleanId);
+    }
+
+    const { data, error } = await query.single();
+    if (error || !data) return { error: 'Property not found' };
+    return { data };
+}
+
 export async function createProperty(formData: FormData) {
     const supabase = await createClient();
 
@@ -277,6 +294,13 @@ export async function createProperty(formData: FormData) {
                     upsertRomimoArticle(data, emailToUse).catch(console.error);
                 });
             }
+        }
+
+        // Trigger Storia API Sync
+        if (data && data.publish_storia && data.status === 'active') {
+            import('@/app/lib/api/storia').then(({ upsertStoriaAd }) => {
+                upsertStoriaAd(data, user.id).catch(console.error);
+            });
         }
 
 
@@ -877,6 +901,17 @@ export async function updateProperty(id: string, formData: FormData) {
                     upsertRomimoArticle(data, emailToUse).catch(console.error);
                 } else if ((!data.publish_romimo || data.status !== 'active') && property?.publish_romimo && property?.status === 'active') {
                     deleteRomimoArticle(emailToUse, data.id).catch(console.error);
+                }
+            });
+        }
+
+        // Trigger Storia API Sync
+        if (data) {
+            import('@/app/lib/api/storia').then(({ upsertStoriaAd, deleteStoriaAd }) => {
+                if (data.publish_storia && data.status === 'active') {
+                    upsertStoriaAd(data, user.id).catch(console.error);
+                } else if ((!data.publish_storia || data.status !== 'active') && property?.publish_storia) {
+                    deleteStoriaAd(data.id, user.id).catch(console.error);
                 }
             });
         }
