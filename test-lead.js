@@ -25,7 +25,7 @@ const puppeteer = require('puppeteer');
 
     try {
         console.log('Navigating to lead page...');
-        await page.goto('http://localhost:3000/dashboard/agent/leads/c338c4b3-c3f5-46c7-9ab7-66073323c53c', { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.goto('https://www.imobum.com/dashboard/agent/market', { waitUntil: 'domcontentloaded', timeout: 30000 });
         console.log('Page loaded successfully.');
     } catch (e) {
         console.log('Execution error:', e);

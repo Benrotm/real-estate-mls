@@ -45,7 +45,7 @@ export default function MarketInsightsMap({ properties, onFilterComplete, onProp
 
     // Geocode center city if provided
     useEffect(() => {
-        if (!isLoaded || !centerCity || !window.google || !window.google.maps) return;
+        if (!isLoaded || !centerCity || typeof window === 'undefined' || !window.google?.maps?.Geocoder) return;
         const geocoder = new window.google.maps.Geocoder();
         geocoder.geocode({ address: `${centerCity}, Romania` }, (results, status) => {
             if (status === 'OK' && results && results[0]) {
@@ -65,7 +65,7 @@ export default function MarketInsightsMap({ properties, onFilterComplete, onProp
         setMap(mapInstance);
 
         // Auto-fit bounds if we have markers and no explicit drawn overlay yet
-        if (validMarkers.length > 0 && mapInstance && !drawnOverlay && !centerCity) {
+        if (validMarkers.length > 0 && mapInstance && !drawnOverlay && !centerCity && typeof window !== 'undefined' && window.google?.maps?.LatLngBounds) {
             // We can do this optionally, or just rely on the center
             const bounds = new window.google.maps.LatLngBounds();
             validMarkers.forEach(v => {

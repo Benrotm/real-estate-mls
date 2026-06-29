@@ -41,7 +41,7 @@ export default function PropertiesAreaMap({ properties, onFilterComplete, onProp
 
     // Try to geocode the center city to jump the map to the right place initially
     useEffect(() => {
-        if (!isLoaded || !centerCity || !window.google || !window.google.maps) return;
+        if (!isLoaded || !centerCity || typeof window === 'undefined' || !window.google?.maps?.Geocoder) return;
         const geocoder = new window.google.maps.Geocoder();
         geocoder.geocode({ address: `${centerCity}, Romania` }, (results, status) => {
             if (status === 'OK' && results && results[0]) {

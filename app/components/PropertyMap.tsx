@@ -46,7 +46,7 @@ export default function PropertyMap({ center = defaultCenter, zoom = 10, markers
     }, []);
 
     useEffect(() => {
-        if (!isLoaded || !map || !propertyAddress || !window.google || !window.google.maps) return;
+        if (!isLoaded || !map || !propertyAddress || typeof window === 'undefined' || !window.google?.maps?.Geocoder) return;
 
         const geocoder = new window.google.maps.Geocoder();
         geocoder.geocode({ address: propertyAddress }, (results, status) => {
