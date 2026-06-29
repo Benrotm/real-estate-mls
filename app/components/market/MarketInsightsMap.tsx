@@ -45,10 +45,9 @@ export default function MarketInsightsMap({ properties, onFilterComplete, onProp
 
     // Geocode center city if provided
     useEffect(() => {
-        if (!centerCity || !window.google) return;
-
+        if (!isLoaded || !centerCity || !window.google || !window.google.maps) return;
         const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode({ address: centerCity }, (results, status) => {
+        geocoder.geocode({ address: `${centerCity}, Romania` }, (results, status) => {
             if (status === 'OK' && results && results[0]) {
                 setCenter({
                     lat: results[0].geometry.location.lat(),
@@ -60,7 +59,7 @@ export default function MarketInsightsMap({ properties, onFilterComplete, onProp
                 }
             }
         });
-    }, [centerCity, map]);
+    }, [isLoaded, centerCity, map]);
 
     const onLoad = useCallback(function callback(mapInstance: google.maps.Map) {
         setMap(mapInstance);

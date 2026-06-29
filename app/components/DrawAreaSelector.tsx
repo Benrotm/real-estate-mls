@@ -26,7 +26,7 @@ export default function DrawAreaSelector({ city, value, onChange, onClose }: Dra
     
     // Auto-center map on city
     useEffect(() => {
-        if (!city || !window.google) return;
+        if (!isLoaded || !city || !window.google || !window.google.maps) return;
         const geocoder = new window.google.maps.Geocoder();
         geocoder.geocode({ address: `${city}, Romania` }, (results, status) => {
             if (status === 'OK' && results && results[0]) {
@@ -38,7 +38,7 @@ export default function DrawAreaSelector({ city, value, onChange, onClose }: Dra
                 }
             }
         });
-    }, [city, map]);
+    }, [isLoaded, city, map]);
 
     const onPolygonComplete = useCallback((polygon: google.maps.Polygon) => {
         const path = polygon.getPath();

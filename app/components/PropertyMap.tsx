@@ -43,7 +43,10 @@ export default function PropertyMap({ center = defaultCenter, zoom = 10, markers
     // Geocode from address if we have one — this auto-refreshes the map pin
     const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
         setMap(mapInstance);
-        if (!propertyAddress || !window.google) return;
+    }, []);
+
+    useEffect(() => {
+        if (!isLoaded || !map || !propertyAddress || !window.google || !window.google.maps) return;
 
         const geocoder = new window.google.maps.Geocoder();
         geocoder.geocode({ address: propertyAddress }, (results, status) => {
@@ -56,12 +59,12 @@ export default function PropertyMap({ center = defaultCenter, zoom = 10, markers
                     lat: loc.lat(),
                     lng: loc.lng()
                 })));
-                mapInstance.panTo(newCenter);
-                mapInstance.setZoom(19);
-                mapInstance.setTilt(45);
+                map.panTo(newCenter);
+                map.setZoom(19);
+                map.setTilt(45);
             }
         });
-    }, [propertyAddress, markers]);
+    }, [isLoaded, propertyAddress, map, markers]);
 
     const isSatellite = mapTypeId === 'satellite' || mapTypeId === 'hybrid';
     const activeMapTypeId = isSatellite ? (showLabels ? 'hybrid' : 'satellite') : mapTypeId;
