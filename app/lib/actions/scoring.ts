@@ -6,6 +6,8 @@ import { LeadData } from '@/app/lib/types';
 import { Property } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
 
+import { pointInPolygon } from '@/app/lib/utils/polygon';
+
 export interface ScoringRule {
     id: string;
     category: string;
@@ -310,18 +312,36 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
         score += getWeight('match_city');
     }
 
-    // 4. Area Match (Intersection of arrays)
-    if (isActive('match_area') && lead.preference_location_area) {
-        const leadAreas = lead.preference_location_area.toLowerCase().split(',').map(a => a.trim()).filter(Boolean);
-        const propArea = property.location_area?.toLowerCase().trim();
-        
+    // 4. Area Match (Polygon based or fallback to text)
+    if (isActive('match_area')) {
         let areaMatched = false;
-        if (propArea && leadAreas.length > 0) {
-            areaMatched = leadAreas.some(area => propArea.includes(area) || area.includes(propArea));
+        let hasAreaFilter = false;
+
+        // Try polygon match first
+        if (lead.preference_location_polygon && lead.preference_location_polygon.length > 2) {
+            hasAreaFilter = true;
+            if (property.latitude && property.longitude) {
+                areaMatched = pointInPolygon(
+                    { lat: property.latitude, lng: property.longitude }, 
+                    lead.preference_location_polygon
+                );
+            }
+        } 
+        // Fallback to text match
+        else if (lead.preference_location_area) {
+            hasAreaFilter = true;
+            const leadAreas = lead.preference_location_area.toLowerCase().split(',').map(a => a.trim()).filter(Boolean);
+            const propArea = property.location_area?.toLowerCase().trim();
+            
+            if (propArea && leadAreas.length > 0) {
+                areaMatched = leadAreas.some(area => propArea.includes(area) || area.includes(propArea));
+            }
         }
-        
-        if (!areaMatched) return 0; // Strict mismatch
-        score += getWeight('match_area');
+
+        if (hasAreaFilter) {
+            if (!areaMatched) return 0; // Strict mismatch
+            score += getWeight('match_area');
+        }
     }
 
     // 5. Budget Check

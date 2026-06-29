@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, RotateCw, RotateCcw, Maximize, Minimize } from 'lucide-react';
 
@@ -29,6 +29,9 @@ const defaultCenter = {
 
 export default function PropertyMap({ center = defaultCenter, zoom = 10, markers = [], height = '400px', propertyAddress }: PropertyMapProps) {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+    const { isLoaded } = useLoadScript({
+        googleMapsApiKey: apiKey
+    });
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [geocodedCenter, setGeocodedCenter] = useState(center);
     const [geocodedMarkers, setGeocodedMarkers] = useState(markers);
@@ -85,9 +88,16 @@ export default function PropertyMap({ center = defaultCenter, zoom = 10, markers
     const rotateLeft = () => map && map.setHeading((map.getHeading() || 0) - 90);
     const rotateRight = () => map && map.setHeading((map.getHeading() || 0) + 90);
 
+    if (!apiKey) {
+        return <div className="p-4 bg-red-50 text-red-600 rounded-xl">Google Maps SDK Error. Map cannot load.</div>;
+    }
+
+    if (!isLoaded) {
+        return <div className="p-4 bg-slate-50 text-slate-500 rounded-xl flex items-center justify-center min-h-[400px]">Loading Map...</div>;
+    }
+
     return (
         <div ref={containerRef} style={{ position: 'relative', height: isFullscreen ? '100vh' : height, width: '100%', borderRadius: isFullscreen ? '0' : '1rem', overflow: 'hidden' }}>
-            <LoadScript googleMapsApiKey={apiKey}>
                 <GoogleMap
                     mapContainerStyle={containerStyle}
                     center={geocodedCenter}
@@ -118,7 +128,6 @@ export default function PropertyMap({ center = defaultCenter, zoom = 10, markers
                         />
                     ))}
                 </GoogleMap>
-            </LoadScript>
 
             {/* Custom Top Left Controls (Map Types & Labels) */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 w-[300px]">

@@ -15,6 +15,7 @@ import {
 } from '@/app/lib/properties';
 import { createLead, updateLead } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
+import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 
 const FEATURE_CATEGORIES = {
     'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
@@ -109,6 +110,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('contact');
+    const [showAreaMap, setShowAreaMap] = useState(false);
     const [formData, setFormData] = useState<LeadData>({
         ...DEFAULT_FORM_DATA,
         ...initialData
@@ -336,10 +338,33 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                     <input type="text" name="preference_location_city" value={formData.preference_location_city || ''} onChange={handleChange} className={inputClass} placeholder="e.g. New York" />
                                 </div>
                                 <div>
-                                    <label className={labelClass}>Area / Neighborhood</label>
-                                    <input type="text" name="preference_location_area" value={formData.preference_location_area || ''} onChange={handleChange} className={inputClass} placeholder="e.g. Downtown" />
+                                    <label className={labelClass}>Area of Interest</label>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowAreaMap(true)}
+                                        className="w-full flex items-center justify-between px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
+                                    >
+                                        <span className="text-sm font-medium text-slate-700">
+                                            🗺️ {formData.preference_location_polygon?.length ? 'Edit Area on Map' : 'Draw Area on Map'}
+                                        </span>
+                                        {formData.preference_location_polygon?.length ? (
+                                            <span className="text-xs bg-violet-100 text-violet-700 font-bold px-2 py-0.5 rounded-full">Area Selected</span>
+                                        ) : (
+                                            <span className="text-xs bg-slate-200 text-slate-600 font-bold px-2 py-0.5 rounded-full">No Area</span>
+                                        )}
+                                    </button>
                                 </div>
                             </div>
+
+                            {/* Modal with DrawAreaSelector */}
+                            {showAreaMap && (
+                                <DrawAreaSelector
+                                    city={formData.preference_location_city}
+                                    value={formData.preference_location_polygon}
+                                    onChange={(polygon) => setFormData({...formData, preference_location_polygon: polygon || undefined})}
+                                    onClose={() => setShowAreaMap(false)}
+                                />
+                            )}
 
                             {/* Property Details Grid */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">

@@ -62,6 +62,7 @@ export interface LeadData {
     employer?: string;
     living_situation?: string;
     current_city?: string;
+    preference_location_polygon?: { lat: number; lng: number }[];
     is_smoker?: boolean;
     has_pets?: boolean;
     pets_details?: string;

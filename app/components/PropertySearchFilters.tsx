@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES, INTERIOR_CONDITIONS, FURNISHING_TYPES, FEATURE_CATEGORIES, CATEGORY_COLORS } from '@/app/lib/properties';
 import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote } from 'lucide-react';
 import { saveSearch } from '@/app/lib/actions/savedSearches';
@@ -13,6 +14,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
     // Collapsible sections state
     const [showMoreDetails, setShowMoreDetails] = useState(false);
     const [showAmenities, setShowAmenities] = useState(false);
+    const [showAreaMap, setShowAreaMap] = useState(false);
 
     // Initialize state from URL params
     const initialFeatures = searchParams.getAll('features');
@@ -24,6 +26,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
         location_county: searchParams.get('location_county') || '',
         location_city: searchParams.get('location_city') || '',
         location_area: searchParams.get('location_area') || '',
+        location_polygon: searchParams.get('location_polygon') ? JSON.parse(decodeURIComponent(searchParams.get('location_polygon')!)) : null,
         minPrice: searchParams.get('minPrice') || '',
         maxPrice: searchParams.get('maxPrice') || '',
         rooms: searchParams.get('rooms') || '',
@@ -64,6 +67,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
             location_county: searchParams.get('location_county') || '',
             location_city: searchParams.get('location_city') || '',
             location_area: searchParams.get('location_area') || '',
+            location_polygon: searchParams.get('location_polygon') ? JSON.parse(decodeURIComponent(searchParams.get('location_polygon')!)) : null,
             minPrice: searchParams.get('minPrice') || '',
             maxPrice: searchParams.get('maxPrice') || '',
             rooms: searchParams.get('rooms') || '',
@@ -104,19 +108,46 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
 
     const applyFilters = () => {
         const params = new URLSearchParams();
-        Object.entries(filters).forEach(([key, value]) => {
-            if (key === 'features' && Array.isArray(value)) {
-                value.forEach(f => params.append('features', f));
-            } else if (value) {
-                params.set(key, String(value));
-            }
-        });
+        if (filters.keywords) params.set('keywords', filters.keywords);
+        if (filters.listing_type) params.set('listing_type', filters.listing_type);
+        if (filters.type) params.set('type', filters.type);
+        if (filters.location_county) params.set('location_county', filters.location_county);
+        if (filters.location_city) params.set('location_city', filters.location_city);
+        if (filters.location_area) params.set('location_area', filters.location_area);
+        if (filters.location_polygon && Array.isArray(filters.location_polygon) && filters.location_polygon.length > 0) {
+            params.set('location_polygon', encodeURIComponent(JSON.stringify(filters.location_polygon)));
+        } else {
+            params.delete('location_polygon');
+        }
+        if (filters.minPrice) params.set('minPrice', filters.minPrice);
+        if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
+        if (filters.rooms) params.set('rooms', filters.rooms);
+        if (filters.area) params.set('area', filters.area);
+        if (filters.bathrooms) params.set('bathrooms', filters.bathrooms);
+        if (filters.year_built) params.set('year_built', filters.year_built);
+        if (filters.floor) params.set('floor', filters.floor);
+        if (filters.partitioning) params.set('partitioning', filters.partitioning);
+        if (filters.comfort) params.set('comfort', filters.comfort);
+        if (filters.building_type) params.set('building_type', filters.building_type);
+        if (filters.interior_condition) params.set('interior_condition', filters.interior_condition);
+        if (filters.furnishing) params.set('furnishing', filters.furnishing);
+        if (filters.has_video) params.set('has_video', 'true');
+        if (filters.has_virtual_tour) params.set('has_virtual_tour', 'true');
+        if (filters.commission_0) params.set('commission_0', 'true');
+        if (filters.exclusive) params.set('exclusive', 'true');
+        if (filters.luxury) params.set('luxury', 'true');
+        if (filters.hotel_regime) params.set('hotel_regime', 'true');
+        if (filters.foreclosure) params.set('foreclosure', 'true');
+        
+        filters.features.forEach(f => params.append('features', f));
+        
         router.push(`${basePath}?${params.toString()}`);
     };
 
     const clearFilters = () => {
         setFilters({
             keywords: '', listing_type: '', type: '', location_county: '', location_city: '', location_area: '',
+            location_polygon: null,
             minPrice: '', maxPrice: '', rooms: '', area: '', bathrooms: '',
             year_built: '', floor: '', partitioning: '', comfort: '',
             building_type: '', interior_condition: '', furnishing: '',
@@ -414,15 +445,27 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
                                         value={filters.location_county}
                                         onChange={(e) => handleChange('location_county', e.target.value)}
                                     />
-                                    <input
-                                        type="text"
-                                        placeholder="Sector/Area"
-                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400 focus:ring-teal-500 focus:border-teal-500"
-                                        value={filters.location_area}
-                                        onChange={(e) => handleChange('location_area', e.target.value)}
-                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowAreaMap(true)}
+                                        className="w-full flex items-center justify-between px-3 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors text-sm"
+                                    >
+                                        <span className="text-slate-700">
+                                            📍 {filters.location_polygon ? 'Edit Area on Map' : 'Select on Map'}
+                                        </span>
+                                    </button>
                                 </div>
                             </div>
+
+                            {/* Modal with DrawAreaSelector */}
+                            {showAreaMap && (
+                                <DrawAreaSelector
+                                    city={filters.location_city || 'Timisoara'}
+                                    value={filters.location_polygon}
+                                    onChange={(polygon) => handleChange('location_polygon', polygon)}
+                                    onClose={() => setShowAreaMap(false)}
+                                />
+                            )}
 
                             {/* Furnishing */}
                             <div className="space-y-1">

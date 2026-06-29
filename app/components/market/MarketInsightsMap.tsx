@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { GoogleMap, LoadScript, Marker, InfoWindow, DrawingManager } from '@react-google-maps/api';
+import { GoogleMap, useLoadScript, Marker, InfoWindow, DrawingManager } from '@react-google-maps/api';
 import Image from 'next/image';
 import { Bed, Ruler, TrendingUp, TrendingDown, X } from 'lucide-react';
 import { Plus, Minus, RotateCw, RotateCcw, Maximize, Minimize, MousePointer2 } from 'lucide-react';
@@ -25,6 +25,10 @@ const defaultCenter = {
 
 export default function MarketInsightsMap({ properties, onFilterComplete, onPropertySelect, centerCity }: MarketInsightsMapProps) {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+    const { isLoaded } = useLoadScript({
+        googleMapsApiKey: apiKey,
+        libraries: ['drawing', 'geometry'] as ("drawing" | "geometry")[],
+    });
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [center, setCenter] = useState(defaultCenter);
     const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
@@ -187,6 +191,14 @@ export default function MarketInsightsMap({ properties, onFilterComplete, onProp
     const rotateLeft = () => map && map.setHeading((map.getHeading() || 0) - 90);
     const rotateRight = () => map && map.setHeading((map.getHeading() || 0) + 90);
 
+    if (!apiKey) {
+        return <div className="p-4 bg-red-50 text-red-600 rounded-xl">Google Maps SDK Error. Map cannot load.</div>;
+    }
+
+    if (!isLoaded) {
+        return <div className="p-4 bg-slate-50 text-slate-500 rounded-xl flex items-center justify-center min-h-[400px]">Loading Map...</div>;
+    }
+
     return (
         <div ref={containerRef} className={`relative w-full ${isFullscreen ? 'h-[100vh]' : 'h-[600px]'} ${isFullscreen ? 'rounded-none' : 'rounded-2xl'} bg-slate-100 overflow-hidden shadow-inner border border-slate-200`}>
             {drawnOverlay && (
@@ -201,11 +213,7 @@ export default function MarketInsightsMap({ properties, onFilterComplete, onProp
                 </div>
             )}
 
-            <LoadScript
-                googleMapsApiKey={apiKey}
-                libraries={['drawing', 'geometry']}
-            >
-                <GoogleMap
+            <GoogleMap
                     mapContainerStyle={containerStyle}
                     center={center}
                     zoom={12}
@@ -324,7 +332,6 @@ export default function MarketInsightsMap({ properties, onFilterComplete, onProp
                         </InfoWindow>
                     )}
                 </GoogleMap>
-            </LoadScript>
 
             {/* Custom Top Left Controls (Map Types & Labels) */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 w-fit">

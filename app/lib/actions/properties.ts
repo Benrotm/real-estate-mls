@@ -4,6 +4,7 @@ import { createClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { Property, Property as PropertyType } from '@/app/lib/properties';
 import { calculatePropertyScore } from './scoring';
+import { pointInPolygon } from '@/app/lib/utils/polygon';
 import { revalidatePath } from 'next/cache';
 import { getUserProfile, getActiveUsageStats } from '../auth';
 import { generatePropertyFingerprint } from '../utils/fingerprint';
@@ -330,13 +331,27 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
 
     // Apply filters
     if (filters) {
-        // Map Area Filter
+        // Map Area Filter (Drawn IDs)
         if (filters.drawn_ids) {
             if (filters.drawn_ids === 'none') {
                 query = query.in('id', ['00000000-0000-0000-0000-000000000000']);
             } else {
                 const idsArray = filters.drawn_ids.split(',');
                 query = query.in('id', idsArray);
+            }
+        }
+
+        // Polygon based location filtering
+        if (filters.location_polygon && Array.isArray(filters.location_polygon) && filters.location_polygon.length > 2) {
+            // Fetch all property coords to filter them
+            const { data: allProps } = await supabase.from('properties').select('id, latitude, longitude').eq('status', 'active');
+            if (allProps) {
+                const matchingIds = allProps.filter(p => p.latitude && p.longitude && pointInPolygon({lat: p.latitude, lng: p.longitude}, filters.location_polygon)).map(p => p.id);
+                if (matchingIds.length > 0) {
+                    query = query.in('id', matchingIds);
+                } else {
+                    query = query.in('id', ['00000000-0000-0000-0000-000000000000']);
+                }
             }
         }
 
@@ -503,12 +518,26 @@ export async function getMapProperties(filters?: any): Promise<PropertyType[]> {
             images,
             status,
             created_at,
-            owner:profiles(full_name)
+            owner:profiles!properties_owner_id_fkey(full_name)
         `)
         .eq('status', 'active');
 
-    // Apply exact same filters as getProperties
+    // Apply filters
     if (filters) {
+        // Polygon based location filtering
+        if (filters.location_polygon && Array.isArray(filters.location_polygon) && filters.location_polygon.length > 2) {
+            // Fetch all property coords to filter them
+            const { data: allProps } = await supabase.from('properties').select('id, latitude, longitude').eq('status', 'active');
+            if (allProps) {
+                const matchingIds = allProps.filter(p => p.latitude && p.longitude && pointInPolygon({lat: p.latitude, lng: p.longitude}, filters.location_polygon)).map(p => p.id);
+                if (matchingIds.length > 0) {
+                    query = query.in('id', matchingIds);
+                } else {
+                    query = query.in('id', ['00000000-0000-0000-0000-000000000000']);
+                }
+            }
+        }
+
         if (filters.listing_type) query = query.eq('listing_type', filters.listing_type);
         if (filters.type) query = query.eq('type', filters.type);
         if (filters.minPrice) query = query.gte('price', filters.minPrice);
