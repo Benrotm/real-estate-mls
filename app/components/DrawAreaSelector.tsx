@@ -94,8 +94,8 @@ export default function DrawAreaSelector({ city, value, onChange, onClose }: Dra
                                 options={{
                                     drawingControl: true,
                                     drawingControlOptions: {
-                                        position: window.google?.maps.ControlPosition.TOP_CENTER,
-                                        drawingModes: [window.google?.maps.drawing.OverlayType.POLYGON]
+                                        position: typeof window !== 'undefined' && window.google ? window.google.maps.ControlPosition.TOP_CENTER : 2,
+                                        drawingModes: typeof window !== 'undefined' && window.google ? [window.google.maps.drawing.OverlayType.POLYGON] : []
                                     },
                                     polygonOptions: {
                                         fillColor: '#8B5CF6',
