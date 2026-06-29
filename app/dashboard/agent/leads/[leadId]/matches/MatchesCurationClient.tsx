@@ -190,7 +190,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         {(status === 'sent' || status === 'interested') && (
                             <>
                                 <button onClick={() => handleUpdateStatus(property.id, 'visit_scheduled')} className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <Calendar className="w-3.5 h-3.5" /> Visit
+                                    <Calendar className="w-3.5 h-3.5" /> Schedule Visit
                                 </button>
                                 <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                     <Handshake className="w-3.5 h-3.5" /> Negot.
@@ -302,9 +302,9 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                 
                 <button 
                     onClick={() => setIsShareModalOpen(true)}
-                    className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-black flex items-center gap-2 transition-all shadow-md shadow-slate-900/20 whitespace-nowrap"
+                    className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-normal flex items-center gap-2 transition-all shadow-md shadow-slate-900/20 whitespace-nowrap"
                 >
-                    <Share2 className="w-4 h-4" /> Share With Lead
+                    <Share2 className="w-4 h-4" /> Manage & Share
                 </button>
             </div>
 

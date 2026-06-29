@@ -47,7 +47,7 @@ export default function ShareMatchesModal({ isOpen, onClose, lead }: Props) {
                         </div>
                         <div>
                             <h3 className="text-lg font-black text-slate-900">Share Matches</h3>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">With {lead.name}</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">With Lead ID: {lead.id.slice(0, 8)}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
