@@ -209,7 +209,7 @@ export default function PropertiesAreaMap({ properties, onFilterComplete, onProp
                             key={property.id}
                             position={{ lat: Number(property.latitude), lng: Number(property.longitude) }}
                             onClick={() => setSelectedProperty(property)}
-                            icon={window.google ? {
+                            icon={typeof window !== 'undefined' && window.google?.maps?.Size ? {
                                 url: '/premium-pin.png',
                                 scaledSize: new window.google.maps.Size(40, 40)
                             } : undefined}

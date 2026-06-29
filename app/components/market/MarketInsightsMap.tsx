@@ -263,7 +263,7 @@ export default function MarketInsightsMap({ properties, onFilterComplete, onProp
                             position={{ lat: item.properties.latitude, lng: item.properties.longitude }}
                             onClick={() => setSelectedProperty(item)}
                             title={item.properties.title}
-                            icon={window.google ? {
+                            icon={typeof window !== 'undefined' && window.google?.maps?.Size ? {
                                 url: '/premium-pin.png',
                                 scaledSize: new window.google.maps.Size(40, 40)
                             } : undefined}
