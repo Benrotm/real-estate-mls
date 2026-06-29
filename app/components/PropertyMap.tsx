@@ -1,8 +1,9 @@
 'use client';
 
-import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, RotateCw, RotateCcw, Maximize, Minimize } from 'lucide-react';
+import { useGoogleMaps } from '@/app/lib/hooks/useGoogleMaps';
 
 interface PropertyMapProps {
     center?: { lat: number; lng: number };
@@ -29,9 +30,7 @@ const defaultCenter = {
 
 export default function PropertyMap({ center = defaultCenter, zoom = 10, markers = [], height = '400px', propertyAddress }: PropertyMapProps) {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-    const { isLoaded } = useLoadScript({
-        googleMapsApiKey: apiKey
-    });
+    const { isLoaded } = useGoogleMaps();
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [geocodedCenter, setGeocodedCenter] = useState(center);
     const [geocodedMarkers, setGeocodedMarkers] = useState(markers);

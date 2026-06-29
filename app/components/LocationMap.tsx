@@ -1,10 +1,9 @@
 'use client';
 
-import { GoogleMap, Marker, useLoadScript } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
-
-const LIBRARIES: ("places")[] = ["places"];
+import { useGoogleMaps } from '@/app/lib/hooks/useGoogleMaps';
 
 interface LocationMapProps {
     lat: number;
@@ -19,10 +18,7 @@ const containerStyle = {
 };
 
 export default function LocationMap({ lat, lng, onLocationSelect }: LocationMapProps) {
-    const { isLoaded } = useLoadScript({
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries: LIBRARIES,
-    });
+    const { isLoaded } = useGoogleMaps();
 
     const center = useMemo(() => ({ lat, lng }), [lat, lng]);
 

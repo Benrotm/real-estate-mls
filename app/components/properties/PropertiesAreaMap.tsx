@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { GoogleMap, useLoadScript, Marker, InfoWindow, DrawingManager } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow, DrawingManager } from '@react-google-maps/api';
 import Image from 'next/image';
+import { useGoogleMaps } from '@/app/lib/hooks/useGoogleMaps';
 import { Bed, Ruler, Navigation, MapPin } from 'lucide-react';
 import { Plus, Minus, RotateCw, RotateCcw, Maximize, Minimize, MousePointer2 } from 'lucide-react';
 import { Property } from '@/app/lib/properties';
@@ -21,10 +22,7 @@ const defaultCenter = {
 
 export default function PropertiesAreaMap({ properties, onFilterComplete, onPropertySelect, centerCity }: PropertiesAreaMapProps) {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-    const { isLoaded } = useLoadScript({
-        googleMapsApiKey: apiKey,
-        libraries: ['drawing', 'geometry'] as ("drawing" | "geometry")[],
-    });
+    const { isLoaded } = useGoogleMaps();
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [center, setCenter] = useState(defaultCenter);
     const [selectedProperty, setSelectedProperty] = useState<Partial<Property> | null>(null);

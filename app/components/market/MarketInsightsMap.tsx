@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { GoogleMap, useLoadScript, Marker, InfoWindow, DrawingManager } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow, DrawingManager } from '@react-google-maps/api';
 import Image from 'next/image';
+import { useGoogleMaps } from '@/app/lib/hooks/useGoogleMaps';
 import { Bed, Ruler, TrendingUp, TrendingDown, X } from 'lucide-react';
 import { Plus, Minus, RotateCw, RotateCcw, Maximize, Minimize, MousePointer2 } from 'lucide-react';
 
@@ -25,10 +26,7 @@ const defaultCenter = {
 
 export default function MarketInsightsMap({ properties, onFilterComplete, onPropertySelect, centerCity }: MarketInsightsMapProps) {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-    const { isLoaded } = useLoadScript({
-        googleMapsApiKey: apiKey,
-        libraries: ['drawing', 'geometry'] as ("drawing" | "geometry")[],
-    });
+    const { isLoaded } = useGoogleMaps();
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [center, setCenter] = useState(defaultCenter);
     const [selectedProperty, setSelectedProperty] = useState<any | null>(null);

@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useLoadScript, Autocomplete } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
 import { MapPin, Loader2 } from 'lucide-react';
-
-const LIBRARIES: ("places")[] = ["places"];
+import { useGoogleMaps } from '@/app/lib/hooks/useGoogleMaps';
 
 interface AddressAutocompleteProps {
     onAddressSelect: (address: {
@@ -20,10 +19,7 @@ interface AddressAutocompleteProps {
 }
 
 export default function AddressAutocomplete({ onAddressSelect, currentAddress, className }: AddressAutocompleteProps) {
-    const { isLoaded } = useLoadScript({
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries: LIBRARIES,
-    });
+    const { isLoaded } = useGoogleMaps();
 
     const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { GoogleMap, useLoadScript, DrawingManager, Polygon } from '@react-google-maps/api';
+import { GoogleMap, DrawingManager, Polygon } from '@react-google-maps/api';
+import { useGoogleMaps } from '@/app/lib/hooks/useGoogleMaps';
 import { X, Check } from 'lucide-react';
 
 interface DrawAreaSelectorProps {
@@ -15,10 +16,7 @@ const defaultCenter = { lat: 45.7489, lng: 21.2087 }; // Timisoara
 
 export default function DrawAreaSelector({ city, value, onChange, onClose }: DrawAreaSelectorProps) {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-    const { isLoaded } = useLoadScript({
-        googleMapsApiKey: apiKey,
-        libraries: ['drawing', 'geometry'] as ("drawing" | "geometry")[],
-    });
+    const { isLoaded } = useGoogleMaps();
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [center, setCenter] = useState(defaultCenter);
