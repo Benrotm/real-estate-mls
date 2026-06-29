@@ -118,13 +118,7 @@ export default function PropertiesAreaMap({ properties, onFilterComplete, onProp
         }
     };
 
-    if (!apiKey) {
-        return <div className="p-4 bg-red-50 text-red-600 rounded-xl">Google Maps SDK Error. Map cannot load.</div>;
-    }
 
-    if (!isLoaded) {
-        return <div className="p-4 bg-slate-50 text-slate-500 rounded-xl flex items-center justify-center min-h-[400px]">Loading Map...</div>;
-    }
 
     const isSatellite = mapTypeId === 'satellite' || mapTypeId === 'hybrid';
     const activeMapTypeId = isSatellite ? (showLabels ? 'hybrid' : 'satellite') : mapTypeId;
@@ -144,6 +138,14 @@ export default function PropertiesAreaMap({ properties, onFilterComplete, onProp
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
+
+    if (!apiKey) {
+        return <div className="p-4 bg-red-50 text-red-600 rounded-xl">Google Maps SDK Error. Map cannot load.</div>;
+    }
+
+    if (!isLoaded) {
+        return <div className="p-4 bg-slate-50 text-slate-500 rounded-xl flex items-center justify-center min-h-[400px]">Loading Map...</div>;
+    }
 
     const zoomIn = () => map && map.setZoom((map.getZoom() || 13) + 1);
     const zoomOut = () => map && map.setZoom((map.getZoom() || 13) - 1);
