@@ -26,7 +26,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
         location_county: searchParams.get('location_county') || '',
         location_city: searchParams.get('location_city') || '',
         location_area: searchParams.get('location_area') || '',
-        location_polygon: searchParams.get('location_polygon') ? JSON.parse(decodeURIComponent(searchParams.get('location_polygon')!)) : null,
+        location_polygon: searchParams.get('location_polygon') ? JSON.parse(searchParams.get('location_polygon')!) : null,
         minPrice: searchParams.get('minPrice') || '',
         maxPrice: searchParams.get('maxPrice') || '',
         rooms: searchParams.get('rooms') || '',
@@ -67,7 +67,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
             location_county: searchParams.get('location_county') || '',
             location_city: searchParams.get('location_city') || '',
             location_area: searchParams.get('location_area') || '',
-            location_polygon: searchParams.get('location_polygon') ? JSON.parse(decodeURIComponent(searchParams.get('location_polygon')!)) : null,
+            location_polygon: searchParams.get('location_polygon') ? JSON.parse(searchParams.get('location_polygon')!) : null,
             minPrice: searchParams.get('minPrice') || '',
             maxPrice: searchParams.get('maxPrice') || '',
             rooms: searchParams.get('rooms') || '',
@@ -115,7 +115,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
         if (filters.location_city) params.set('location_city', filters.location_city);
         if (filters.location_area) params.set('location_area', filters.location_area);
         if (filters.location_polygon && Array.isArray(filters.location_polygon) && filters.location_polygon.length > 0) {
-            params.set('location_polygon', encodeURIComponent(JSON.stringify(filters.location_polygon)));
+            params.set('location_polygon', JSON.stringify(filters.location_polygon));
         } else {
             params.delete('location_polygon');
         }

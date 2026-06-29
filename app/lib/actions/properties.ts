@@ -342,11 +342,16 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         }
 
         // Polygon based location filtering
-        if (filters.location_polygon && Array.isArray(filters.location_polygon) && filters.location_polygon.length > 2) {
+        let locationPolygon = filters.location_polygon;
+        if (typeof locationPolygon === 'string') {
+            try { locationPolygon = JSON.parse(locationPolygon); } catch (e) { locationPolygon = null; }
+        }
+
+        if (locationPolygon && Array.isArray(locationPolygon) && locationPolygon.length > 2) {
             // Fetch all property coords to filter them
             const { data: allProps } = await supabase.from('properties').select('id, latitude, longitude').eq('status', 'active');
             if (allProps) {
-                const matchingIds = allProps.filter(p => p.latitude && p.longitude && pointInPolygon({lat: p.latitude, lng: p.longitude}, filters.location_polygon)).map(p => p.id);
+                const matchingIds = allProps.filter(p => p.latitude && p.longitude && pointInPolygon({lat: p.latitude, lng: p.longitude}, locationPolygon)).map(p => p.id);
                 if (matchingIds.length > 0) {
                     query = query.in('id', matchingIds);
                 } else {
@@ -525,11 +530,16 @@ export async function getMapProperties(filters?: any): Promise<PropertyType[]> {
     // Apply filters
     if (filters) {
         // Polygon based location filtering
-        if (filters.location_polygon && Array.isArray(filters.location_polygon) && filters.location_polygon.length > 2) {
+        let locationPolygon = filters.location_polygon;
+        if (typeof locationPolygon === 'string') {
+            try { locationPolygon = JSON.parse(locationPolygon); } catch (e) { locationPolygon = null; }
+        }
+
+        if (locationPolygon && Array.isArray(locationPolygon) && locationPolygon.length > 2) {
             // Fetch all property coords to filter them
             const { data: allProps } = await supabase.from('properties').select('id, latitude, longitude').eq('status', 'active');
             if (allProps) {
-                const matchingIds = allProps.filter(p => p.latitude && p.longitude && pointInPolygon({lat: p.latitude, lng: p.longitude}, filters.location_polygon)).map(p => p.id);
+                const matchingIds = allProps.filter(p => p.latitude && p.longitude && pointInPolygon({lat: p.latitude, lng: p.longitude}, locationPolygon)).map(p => p.id);
                 if (matchingIds.length > 0) {
                     query = query.in('id', matchingIds);
                 } else {
