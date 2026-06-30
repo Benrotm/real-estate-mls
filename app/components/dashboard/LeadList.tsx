@@ -48,6 +48,7 @@ interface LeadListProps {
     userCredits?: number;
     leadUnlockCost?: number;
     hasLeadsAccess?: boolean;
+    isAdmin?: boolean;
 }
 
 export default function LeadList({ 
@@ -58,7 +59,8 @@ export default function LeadList({
     teamMemberIds = [],
     userCredits = 0,
     leadUnlockCost = 5,
-    hasLeadsAccess = true
+    hasLeadsAccess = true,
+    isAdmin = false,
 }: LeadListProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -174,7 +176,7 @@ export default function LeadList({
             if (ownershipFilter === 'my' && lead.agent_id !== currentUserId) return false;
             if (ownershipFilter === 'partner' && lead.agent_id === currentUserId) return false;
 
-            const isOwner = lead.agent_id === currentUserId;
+            const isOwner = lead.agent_id === currentUserId || isAdmin;
             const displayName = isOwner ? (lead.name || '') : 'Partner Lead';
 
             const matchesSearch =
@@ -468,7 +470,7 @@ export default function LeadList({
                                                         {lead.isLocked ? (
                                                             <Lock className="w-4 h-4 text-slate-400" />
                                                         ) : (
-                                                            (lead.agent_id === currentUserId ? (lead.name || '?') : 'P').charAt(0).toUpperCase()
+                                                            ((lead.agent_id === currentUserId || isAdmin) ? (lead.name || '?') : 'P').charAt(0).toUpperCase()
                                                         )}
                                                     </div>
                                                     <div>
@@ -476,7 +478,7 @@ export default function LeadList({
                                                             <span className="font-bold text-slate-500 flex items-center gap-1">
                                                                 {lead.name || 'Client Interest'}
                                                             </span>
-                                                        ) : lead.agent_id === currentUserId ? (
+                                                        ) : (lead.agent_id === currentUserId || isAdmin) ? (
                                                             allowEdit ? (
                                                                 <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
                                                                     {lead.name || 'Unnamed Lead'}
@@ -499,7 +501,7 @@ export default function LeadList({
                                                         ) : (
                                                             <span className="font-bold text-slate-500 italic">Partner Lead</span>
                                                         )}
-                                                        <div className="text-xs text-slate-500">{lead.agent_id === currentUserId ? (lead.source || 'Unknown Source') : teamMemberIds.includes(lead.agent_id) ? 'Team Member Lead' : 'Shared Lead'}</div>
+                                                        <div className="text-xs text-slate-500">{(lead.agent_id === currentUserId || isAdmin) ? (lead.source || 'Unknown Source') : teamMemberIds.includes(lead.agent_id) ? 'Team Member Lead' : 'Shared Lead'}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -536,7 +538,7 @@ export default function LeadList({
                                                         <Lock className="w-3.5 h-3.5" />
                                                         <span className="text-xs font-bold font-mono">🔒 Locked</span>
                                                     </div>
-                                                ) : lead.agent_id === currentUserId ? (
+                                                ) : (lead.agent_id === currentUserId || isAdmin) ? (
                                                     <div className="flex flex-col gap-2 items-start">
                                                         {lead.email && (
                                                             <div className="flex items-center gap-2 group/link">
@@ -582,7 +584,7 @@ export default function LeadList({
                                                         >
                                                             <Wallet className="w-3.5 h-3.5" /> Deblochează ({leadUnlockCost} CR)
                                                         </button>
-                                                    ) : lead.agent_id === currentUserId ? (
+                                                    ) : (lead.agent_id === currentUserId || isAdmin) ? (
                                                         allowEdit ? (
                                                             <>
                                                                 <button

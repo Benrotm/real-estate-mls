@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES, INTERIOR_CONDITIONS, FURNISHING_TYPES, FEATURE_CATEGORIES, CATEGORY_COLORS } from '@/app/lib/properties';
-import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote, Phone } from 'lucide-react';
 import { saveSearch } from '@/app/lib/actions/savedSearches';
 
-export default function PropertySearchFilters({ basePath = '/properties' }: { basePath?: string }) {
+export default function PropertySearchFilters({ basePath = '/properties', isAdmin = false }: { basePath?: string; isAdmin?: boolean }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -46,6 +46,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
         luxury: searchParams.get('luxury') === 'true',
         hotel_regime: searchParams.get('hotel_regime') === 'true',
         foreclosure: searchParams.get('foreclosure') === 'true',
+        owner_phone: searchParams.get('owner_phone') || '',
         features: initialFeatures
     });
 
@@ -87,6 +88,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
             luxury: searchParams.get('luxury') === 'true',
             hotel_regime: searchParams.get('hotel_regime') === 'true',
             foreclosure: searchParams.get('foreclosure') === 'true',
+            owner_phone: searchParams.get('owner_phone') || '',
             features: searchParams.getAll('features')
         });
     }, [searchParams]);
@@ -138,6 +140,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
         if (filters.luxury) params.set('luxury', 'true');
         if (filters.hotel_regime) params.set('hotel_regime', 'true');
         if (filters.foreclosure) params.set('foreclosure', 'true');
+        if (filters.owner_phone) params.set('owner_phone', filters.owner_phone);
         
         filters.features.forEach(f => params.append('features', f));
         
@@ -153,6 +156,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
             building_type: '', interior_condition: '', furnishing: '',
             has_video: false, has_virtual_tour: false, commission_0: false,
             exclusive: false, luxury: false, hotel_regime: false, foreclosure: false,
+            owner_phone: '',
             features: []
         });
         setShowAmenities(false);
@@ -249,7 +253,7 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
                     <div className="flex flex-col lg:flex-row gap-4 items-end">
 
                         {/* Grid of Main Inputs */}
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                        <div className={`flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${isAdmin ? '5' : '4'} gap-4 w-full`}>
 
                             {/* 1. Search Bar */}
                             <div className="space-y-1 md:col-span-2 lg:col-span-1">
@@ -336,6 +340,22 @@ export default function PropertySearchFilters({ basePath = '/properties' }: { ba
                                     />
                                 </div>
                             </div>
+
+                            {/* 5. Owner Phone (Admin Only) */}
+                            {isAdmin && (
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                        <Phone className="w-3 h-3 text-purple-500" /> Owner Phone
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Search Owner Phone..."
+                                        className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        value={filters.owner_phone}
+                                        onChange={(e) => handleChange('owner_phone', e.target.value)}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Actions Group */}

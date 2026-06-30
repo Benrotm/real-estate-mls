@@ -81,6 +81,7 @@ export async function fetchAllPropertiesAdmin(params?: { page?: number; perPage?
         if (filters.location_county) query = query.ilike('location_county', `%${filters.location_county}%`);
         if (filters.location_city) query = query.ilike('location_city', `%${filters.location_city}%`);
         if (filters.location_area) query = query.ilike('location_area', `%${filters.location_area}%`);
+        if (filters.owner_phone) query = query.ilike('owner_phone', `%${filters.owner_phone}%`);
         if (filters.rooms) query = query.gte('rooms', filters.rooms);
         if (filters.bathrooms) query = query.gte('bathrooms', filters.bathrooms);
         if (filters.area) query = query.gte('area_usable', filters.area);

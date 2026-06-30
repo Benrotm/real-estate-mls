@@ -57,7 +57,7 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
 
             <div className="mb-8">
                 <Suspense fallback={<div className="p-4 bg-white rounded-xl shadow-sm border border-slate-200">Loading filters...</div>}>
-                    <PropertySearchFilters basePath="/dashboard/admin/properties" />
+                    <PropertySearchFilters basePath="/dashboard/admin/properties" isAdmin={true} />
                 </Suspense>
             </div>
 
@@ -125,6 +125,11 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                                             <div className="font-medium text-slate-900">
                                                 {property.owner?.full_name || 'Unknown Owner'}
                                             </div>
+                                            {property.owner_phone && (
+                                                <div className="text-xs text-slate-500 font-mono mt-0.5">
+                                                    {property.owner_phone}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </td>
