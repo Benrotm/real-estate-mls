@@ -313,7 +313,7 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
         }
     }
 
-    // 4. Area Match (Polygon based or fallback to text)
+    // 4. Area Match (Polygon based or fallback to text) (Optional)
     if (isActive('match_area')) {
         let areaMatched = false;
         let hasAreaFilter = false;
@@ -339,8 +339,7 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
             }
         }
 
-        if (hasAreaFilter) {
-            if (!areaMatched) return 0; // Strict mismatch
+        if (hasAreaFilter && areaMatched) {
             score += getWeight('match_area');
         }
     }

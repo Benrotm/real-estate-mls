@@ -38,7 +38,6 @@ export default async function MatchScoringPage() {
                         <ul className="list-disc pl-5 space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
                             <li><strong>Transaction Type:</strong> A buyer looking for "For Sale" will score 0 on "For Rent" properties.</li>
                             <li><strong>Property Type:</strong> A lead wanting an "Apartment" will score 0 on "House" listings.</li>
-                            <li><strong>Neighborhood / Area:</strong> The property must physically fall inside the lead's drawn map polygon, OR its area text must match one of the lead's preferred areas.</li>
                             <li><strong>Budget:</strong> If the property price exceeds the Lead's Max Budget + the configured Margin % (e.g., 100k budget + 10% margin = 110k absolute limit), it scores 0. Same applies for Min Budget.</li>
                             <li><strong>Rooms:</strong> For residential properties, if the property has fewer rooms than the Lead's minimum preference, it scores 0. (Non-residential properties are exempt).</li>
                         </ul>
@@ -53,7 +52,7 @@ export default async function MatchScoringPage() {
                             Bonus Preferences (The "Point-Stacking" Rules)
                         </h3>
                         <p className="mb-3">
-                            All other criteria (City, Surface, Floor, Year Built, Bathrooms, Comfort, Furnishing, Features) are treated as bonuses. They <strong>never</strong> disqualify a property or drop the score to 0. 
+                            All other criteria (Area/Neighborhood, City, Surface, Floor, Year Built, Bathrooms, Comfort, Furnishing, Features) are treated as bonuses. They <strong>never</strong> disqualify a property or drop the score to 0. 
                         </p>
                         <ul className="list-disc pl-5 space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
                             <li>If the property matches the preference, it earns the assigned points.</li>
