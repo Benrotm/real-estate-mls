@@ -103,6 +103,11 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                                                 <div className="font-bold text-slate-900 truncate max-w-xs" title={property.title}>
                                                     {property.title}
                                                 </div>
+                                                {property.friendly_id && (
+                                                    <span className="shrink-0 bg-slate-100 text-slate-700 text-[10px] font-black px-1.5 py-0.5 rounded border border-slate-200 uppercase font-mono tracking-tight">
+                                                        {property.friendly_id}
+                                                    </span>
+                                                )}
                                                 {property.features?.includes('Open to Collaboration') && (
                                                     <span className="shrink-0 bg-indigo-100 text-indigo-700 text-[10px] font-black px-1.5 py-0.5 rounded border border-indigo-200 uppercase tracking-tight">
                                                         Collab
