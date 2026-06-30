@@ -137,9 +137,9 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
         const isUpdating = updatingIds.includes(property.id);
         
         return (
-            <div key={property.id} className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
-                <div className="aspect-video relative bg-slate-100">
-                    <img src={property.images?.[0] || '/placeholder-property.jpg'} alt={property.title} className="w-full h-full object-cover" />
+            <div key={property.id} className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col h-full ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className="aspect-[4/3] relative bg-slate-100 w-full">
+                    <img src={property.images?.[0] || '/placeholder-property.jpg'} alt={property.title} className="absolute inset-0 w-full h-full object-cover" />
                     {status && (
                         <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border shadow-sm ${getStatusColor(status)} backdrop-blur-sm bg-opacity-90`}>
                             {getStatusIcon(status)}
