@@ -316,11 +316,11 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                                 <Zap className="w-5 h-5 text-orange-500 fill-current" /> New AI Suggestions
                             </h2>
                             <div className="flex items-center gap-3 w-full sm:w-auto">
-                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1 w-full sm:w-64">
+                                <div className="flex items-center gap-2 bg-white border border-slate-300 hover:border-slate-400 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/10 rounded-lg p-1.5 w-full sm:w-64 transition-all">
                                     <input 
                                         type="text" 
                                         placeholder="Add by ID (e.g. P12345)"
-                                        className="bg-transparent border-none focus:ring-0 text-sm px-2 w-full outline-none"
+                                        className="bg-transparent border-none focus:ring-0 text-sm px-2 w-full outline-none text-slate-900 font-semibold placeholder:text-slate-400"
                                         value={manualAddId}
                                         onChange={(e) => setManualAddId(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddManual()}
