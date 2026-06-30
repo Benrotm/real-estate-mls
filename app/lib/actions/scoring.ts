@@ -489,30 +489,44 @@ export async function findMatchingProperties(leadId: string) {
 
     if (leadError || !lead) return [];
 
-    // 2. Fetch Active Properties (filtered by basic transaction/type for performance)
-    let query = supabase
-        .from('properties')
-        .select('*, owner:profiles!properties_owner_id_fkey(id, full_name, email, phone, avatar_url)')
-        .eq('status', 'active')
-        .limit(10000); // Increase from default 1000 to prevent missing properties
+    // 2. Fetch Active Properties (filtered by basic transaction/type for performance) with Pagination
+    let allProperties: Property[] = [];
+    let from = 0;
+    let to = 999;
+    
+    while (true) {
+        let query = supabase
+            .from('properties')
+            .select('*, owner:profiles!properties_owner_id_fkey(id, full_name, email, phone, avatar_url)')
+            .eq('status', 'active')
+            .range(from, to);
 
-    if (lead.preference_listing_type) {
-        query = query.eq('listing_type', lead.preference_listing_type);
+        if (lead.preference_listing_type) {
+            query = query.eq('listing_type', lead.preference_listing_type);
+        }
+        if (lead.preference_type) {
+            query = query.eq('type', lead.preference_type);
+        }
+
+        const { data, error } = await query;
+        if (error) break;
+        if (!data || data.length === 0) break;
+        
+        allProperties = [...allProperties, ...data as Property[]];
+        if (data.length < 1000) break; // Finished early
+        
+        from += 1000;
+        to += 1000;
     }
-    if (lead.preference_type) {
-        query = query.eq('type', lead.preference_type);
-    }
 
-    const { data: properties, error: propError } = await query;
-
-    if (propError || !properties) return [];
+    if (allProperties.length === 0) return [];
 
     // 3. Fetch Match Rules
     const rules = await fetchScoringRules('match');
 
     // 4. Calculate scores and sort
-    const matches = await Promise.all(properties.map(async (p) => {
-        const score = await calculateMatchScore(lead as LeadData, p as Property, rules);
+    const matches = await Promise.all(allProperties.map(async (p) => {
+        const score = await calculateMatchScore(lead as LeadData, p, rules);
         return { ...p, match_score: score };
     }));
 
@@ -534,30 +548,44 @@ export async function findMatchingLeads(propertyId: string) {
 
     if (propError || !property) return [];
 
-    // 2. Fetch All Leads with Agent info (filtered for performance)
-    let query = supabase
-        .from('leads')
-        .select('*, agent:profiles!leads_agent_id_fkey(id, full_name, email, phone, avatar_url)')
-        .order('created_at', { ascending: false })
-        .limit(10000); // Increase from default 1000 to prevent missing leads
+    // 2. Fetch All Leads with Agent info (filtered for performance) with Pagination
+    let allLeads: LeadData[] = [];
+    let from = 0;
+    let to = 999;
+    
+    while (true) {
+        let query = supabase
+            .from('leads')
+            .select('*, agent:profiles!leads_agent_id_fkey(id, full_name, email, phone, avatar_url)')
+            .order('created_at', { ascending: false })
+            .range(from, to);
 
-    if (property.listing_type) {
-        query = query.eq('preference_listing_type', property.listing_type);
+        if (property.listing_type) {
+            query = query.eq('preference_listing_type', property.listing_type);
+        }
+        if (property.type) {
+            query = query.eq('preference_type', property.type);
+        }
+
+        const { data, error } = await query;
+        if (error) break;
+        if (!data || data.length === 0) break;
+        
+        allLeads = [...allLeads, ...data as LeadData[]];
+        if (data.length < 1000) break;
+        
+        from += 1000;
+        to += 1000;
     }
-    if (property.type) {
-        query = query.eq('preference_type', property.type);
-    }
 
-    const { data: leads, error: leadError } = await query;
-
-    if (leadError || !leads) return [];
+    if (allLeads.length === 0) return [];
 
     // 3. Fetch Match Rules
     const rules = await fetchScoringRules('match');
 
     // 4. Calculate scores and sort
-    const matches = await Promise.all(leads.map(async (l) => {
-        const score = await calculateMatchScore(l as LeadData, property as Property, rules);
+    const matches = await Promise.all(allLeads.map(async (l) => {
+        const score = await calculateMatchScore(l, property as Property, rules);
         return { ...l, match_score: score };
     }));
 
