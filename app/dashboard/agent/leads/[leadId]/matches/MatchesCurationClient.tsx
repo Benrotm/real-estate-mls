@@ -179,8 +179,8 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         )}
                         {status === 'saved' && (
                             <>
-                                <button onClick={() => handleUpdateStatus(property.id, 'sent')} className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <Send className="w-3.5 h-3.5" /> Mark Sent
+                                <button onClick={() => handleUpdateStatus(property.id, 'interested')} className="px-3 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                    <ThumbsUp className="w-3.5 h-3.5" /> Interested
                                 </button>
                                 <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                     <XCircle className="w-3.5 h-3.5" /> Dismiss
@@ -233,8 +233,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
         );
     };
 
-    const savedMatches = matches.filter(m => m.status === 'saved');
-    const sentMatches = matches.filter(m => m.status === 'sent');
+    const savedMatches = matches.filter(m => m.status === 'saved' || m.status === 'sent');
     const interestedMatches = matches.filter(m => m.status === 'interested');
     const notInterestedMatches = matches.filter(m => m.status === 'not_interested');
     const visitedMatches = matches.filter(m => m.status === 'visit_scheduled');
@@ -278,25 +277,22 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
             <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div className="flex flex-wrap bg-slate-100 p-1 rounded-lg gap-1">
                     <button onClick={() => setActiveTab('curate')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'curate' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
-                        Curate AI ({aiSuggestions.length})
+                        Matched by AI ({aiSuggestions.length})
                     </button>
                     <button onClick={() => setActiveTab('saved')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'saved' ? 'bg-white shadow text-orange-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         Saved ({savedMatches.length})
                     </button>
-                    <button onClick={() => setActiveTab('sent')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'sent' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                        Sent ({sentMatches.length})
-                    </button>
                     <button onClick={() => setActiveTab('interested')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'interested' ? 'bg-white shadow text-green-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         Interested ({interestedMatches.length})
-                    </button>
-                    <button onClick={() => setActiveTab('not_interested')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'not_interested' ? 'bg-white shadow text-slate-600' : 'text-slate-500 hover:text-slate-700'}`}>
-                        Skipped ({notInterestedMatches.length})
                     </button>
                     <button onClick={() => setActiveTab('visit_scheduled')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'visit_scheduled' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         Visit ({visitedMatches.length})
                     </button>
                     <button onClick={() => setActiveTab('negotiation')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'negotiation' ? 'bg-white shadow text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         Negot. ({negotiationMatches.length})
+                    </button>
+                    <button onClick={() => setActiveTab('not_interested')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'not_interested' ? 'bg-white shadow text-slate-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                        Skipped ({notInterestedMatches.length})
                     </button>
                 </div>
                 
@@ -369,22 +365,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                     </div>
                 )}
 
-                {activeTab === 'sent' && (
-                    <div className="space-y-6">
-                        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                            <Send className="w-5 h-5 text-blue-600" /> Sent Properties
-                        </h2>
-                        {sentMatches.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {sentMatches.map(m => renderPropertyCard(m.property, m.status))}
-                            </div>
-                        ) : (
-                            <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No properties marked as sent yet.</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+
 
                 {activeTab === 'interested' && (
                     <div className="space-y-6">
@@ -403,22 +384,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                     </div>
                 )}
 
-                {activeTab === 'not_interested' && (
-                    <div className="space-y-6">
-                        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                            <ThumbsDown className="w-5 h-5 text-slate-600" /> Skipped
-                        </h2>
-                        {notInterestedMatches.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {notInterestedMatches.map(m => renderPropertyCard(m.property, m.status))}
-                            </div>
-                        ) : (
-                            <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No skipped properties yet.</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+
 
                 {activeTab === 'visit_scheduled' && (
                     <div className="space-y-6">
@@ -449,6 +415,23 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
                                 <p className="text-slate-500 font-bold">No properties in negotiation yet.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'not_interested' && (
+                    <div className="space-y-6">
+                        <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <ThumbsDown className="w-5 h-5 text-slate-600" /> Skipped
+                        </h2>
+                        {notInterestedMatches.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {notInterestedMatches.map(m => renderPropertyCard(m.property, m.status))}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
+                                <p className="text-slate-500 font-bold">No skipped properties yet.</p>
                             </div>
                         )}
                     </div>
