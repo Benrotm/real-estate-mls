@@ -489,12 +489,21 @@ export async function findMatchingProperties(leadId: string) {
 
     if (leadError || !lead) return [];
 
-    // 2. Fetch Active Properties (filtered by basic transaction/type for performance if needed)
-    // For now we fetch all active properties and score them
-    const { data: properties, error: propError } = await supabase
+    // 2. Fetch Active Properties (filtered by basic transaction/type for performance)
+    let query = supabase
         .from('properties')
         .select('*, owner:profiles!properties_owner_id_fkey(id, full_name, email, phone, avatar_url)')
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .limit(10000); // Increase from default 1000 to prevent missing properties
+
+    if (lead.preference_listing_type) {
+        query = query.eq('listing_type', lead.preference_listing_type);
+    }
+    if (lead.preference_type) {
+        query = query.eq('type', lead.preference_type);
+    }
+
+    const { data: properties, error: propError } = await query;
 
     if (propError || !properties) return [];
 
@@ -525,11 +534,21 @@ export async function findMatchingLeads(propertyId: string) {
 
     if (propError || !property) return [];
 
-    // 2. Fetch All Leads with Agent info
-    const { data: leads, error: leadError } = await supabase
+    // 2. Fetch All Leads with Agent info (filtered for performance)
+    let query = supabase
         .from('leads')
         .select('*, agent:profiles!leads_agent_id_fkey(id, full_name, email, phone, avatar_url)')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(10000); // Increase from default 1000 to prevent missing leads
+
+    if (property.listing_type) {
+        query = query.eq('preference_listing_type', property.listing_type);
+    }
+    if (property.type) {
+        query = query.eq('preference_type', property.type);
+    }
+
+    const { data: leads, error: leadError } = await query;
 
     if (leadError || !leads) return [];
 
