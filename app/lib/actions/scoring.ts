@@ -306,10 +306,11 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
         score += getWeight('match_type');
     }
 
-    // 3. City Match
+    // 3. City Match (Optional)
     if (isActive('match_city') && lead.preference_location_city) {
-        if (lead.preference_location_city.toLowerCase() !== property.location_city?.toLowerCase()) return 0;
-        score += getWeight('match_city');
+        if (lead.preference_location_city.toLowerCase() === property.location_city?.toLowerCase()) {
+            score += getWeight('match_city');
+        }
     }
 
     // 4. Area Match (Polygon based or fallback to text)
@@ -371,29 +372,29 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
         }
     }
 
-    // 6. Surface Check
+    // 6. Surface Check (Optional)
     if (isActive('match_surface')) {
         const config = getConfig('match_surface');
         const minMargin = config.surface_margin_min_percent !== undefined ? config.surface_margin_min_percent : 0;
         const maxMargin = config.surface_margin_max_percent !== undefined ? config.surface_margin_max_percent : 0;
 
-        let surfaceMatched = false;
-        let skipSurface = true;
+        let surfaceMatched = true;
+        let hasSurfaceFilter = false;
 
         if (lead.preference_surface_min && property.area_usable) {
-            skipSurface = false;
+            hasSurfaceFilter = true;
             const minAllowed = lead.preference_surface_min * (1 - minMargin / 100);
-            if (property.area_usable < minAllowed) return 0;
-            surfaceMatched = true;
+            if (property.area_usable < minAllowed) surfaceMatched = false;
         }
         if (lead.preference_surface_max && property.area_usable) {
-            skipSurface = false;
+            hasSurfaceFilter = true;
             const maxAllowed = lead.preference_surface_max * (1 + maxMargin / 100);
-            if (property.area_usable > maxAllowed) return 0;
-            surfaceMatched = true;
+            if (property.area_usable > maxAllowed) surfaceMatched = false;
         }
 
-        if (surfaceMatched || skipSurface) {
+        if (hasSurfaceFilter && surfaceMatched) {
+             score += getWeight('match_surface');
+        } else if (!hasSurfaceFilter) {
              score += getWeight('match_surface');
         }
     }
