@@ -76,7 +76,7 @@ export async function fetchAllPropertiesAdmin(params?: { page?: number; perPage?
     if (filters) {
         if (filters.keywords) {
             const ks = `%${filters.keywords}%`;
-            query = query.or(`title.ilike.${ks},location_city.ilike.${ks},friendly_id.ilike.${ks}`);
+            query = query.or(`title.ilike.${ks},location_city.ilike.${ks},friendly_id.ilike.${ks},description.ilike.${ks}`);
         }
         if (filters.listing_type) query = query.eq('listing_type', filters.listing_type);
         if (filters.type) query = query.eq('type', filters.type);
