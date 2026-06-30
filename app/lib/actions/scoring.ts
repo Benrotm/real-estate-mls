@@ -313,34 +313,45 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
         }
     }
 
-    // 4. Area Match (Polygon based or fallback to text) (Optional)
+    // 4. Area Match (Polygon based strict, text based optional)
     if (isActive('match_area')) {
-        let areaMatched = false;
-        let hasAreaFilter = false;
+        let polygonMatched = false;
+        let hasPolygonFilter = false;
 
-        // Try polygon match first
+        let textAreaMatched = false;
+        let hasTextAreaFilter = false;
+
+        // Try polygon match first (STRICT)
         if (lead.preference_location_polygon && lead.preference_location_polygon.length > 2) {
-            hasAreaFilter = true;
+            hasPolygonFilter = true;
             if (property.latitude && property.longitude) {
-                areaMatched = pointInPolygon(
+                polygonMatched = pointInPolygon(
                     { lat: property.latitude, lng: property.longitude }, 
                     lead.preference_location_polygon
                 );
             }
         } 
-        // Fallback to text match
-        else if (lead.preference_location_area) {
-            hasAreaFilter = true;
+        
+        // Text match (OPTIONAL BONUS)
+        if (lead.preference_location_area) {
+            hasTextAreaFilter = true;
             const leadAreas = lead.preference_location_area.toLowerCase().split(',').map(a => a.trim()).filter(Boolean);
             const propArea = property.location_area?.toLowerCase().trim();
             
             if (propArea && leadAreas.length > 0) {
-                areaMatched = leadAreas.some(area => propArea.includes(area) || area.includes(propArea));
+                textAreaMatched = leadAreas.some(area => propArea.includes(area) || area.includes(propArea));
             }
         }
 
-        if (hasAreaFilter && areaMatched) {
+        if (hasPolygonFilter) {
+            // Polygon is STRICT
+            if (!polygonMatched) return 0;
             score += getWeight('match_area');
+        } else if (hasTextAreaFilter) {
+            // Text area is OPTIONAL
+            if (textAreaMatched) {
+                score += getWeight('match_area');
+            }
         }
     }
 
