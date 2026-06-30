@@ -17,22 +17,26 @@ import ContactPartnerModal from '../ContactPartnerModal';
 import LeadProfileDetails from './LeadProfileDetails';
 import LeadAIMatching from './LeadAIMatching';
 
-const STATUS_COLORS = {
+export const STATUS_COLORS = {
     new: 'bg-blue-100 text-blue-700 border-blue-200',
     contacted: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    properties_selection: 'bg-pink-100 text-pink-700 border-pink-200',
     viewing: 'bg-purple-100 text-purple-700 border-purple-200',
     negotiation: 'bg-orange-100 text-orange-700 border-orange-200',
     closed: 'bg-green-100 text-green-700 border-green-200',
     lost: 'bg-slate-100 text-slate-500 border-slate-200',
+    not_interested: 'bg-red-100 text-red-700 border-red-200',
 } as const;
 
-const STATUS_LABELS = {
+export const STATUS_LABELS = {
     new: 'New Lead',
     contacted: 'Contacted',
+    properties_selection: 'Properties Selection',
     viewing: 'Viewing Scheduled',
     negotiation: 'Negotiation',
     closed: 'Closed / Won',
     lost: 'Lost',
+    not_interested: 'Not Interested',
 };
 
 interface LeadListProps {
@@ -242,7 +246,7 @@ export default function LeadList({
         }
     };
 
-    const statuses = ['all', 'new', 'contacted', 'viewing', 'negotiation', 'closed', 'lost'];
+    const statuses = ['all', 'new', 'contacted', 'properties_selection', 'viewing', 'negotiation', 'closed', 'lost', 'not_interested'];
 
     return (
         <div className="space-y-6">

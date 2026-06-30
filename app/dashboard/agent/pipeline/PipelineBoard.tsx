@@ -31,10 +31,12 @@ interface PipelineBoardProps {
 const STAGES = [
     { id: 'new', title: 'New Leads', color: 'bg-blue-500' },
     { id: 'contacted', title: 'Contacted', color: 'bg-yellow-500' },
+    { id: 'properties_selection', title: 'Properties Selection', color: 'bg-pink-500' },
     { id: 'viewing', title: 'Viewing', color: 'bg-purple-500' },
     { id: 'negotiation', title: 'Negotiation', color: 'bg-orange-500' },
     { id: 'closed', title: 'Closed', color: 'bg-green-500' },
     { id: 'lost', title: 'Lost', color: 'bg-slate-500' },
+    { id: 'not_interested', title: 'Not Interested', color: 'bg-red-500' },
 ];
 
 export default function PipelineBoard({ initialLeads }: PipelineBoardProps) {

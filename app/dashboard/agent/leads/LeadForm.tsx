@@ -35,6 +35,17 @@ const CATEGORY_COLORS: Record<string, { bg: string, border: string, shadow: stri
     'Listing Tags': { bg: 'bg-indigo-600', border: 'border-indigo-500', shadow: 'shadow-indigo-600/20', text: 'text-indigo-400', dot: 'bg-indigo-500' }
 };
 
+const STATUS_SELECT_COLORS = {
+    new: 'bg-blue-50 text-blue-700 border-blue-300 focus:border-blue-500 focus:ring-blue-500/10',
+    contacted: 'bg-yellow-50/70 text-yellow-700 border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500/10',
+    properties_selection: 'bg-pink-50 text-pink-700 border-pink-300 focus:border-pink-500 focus:ring-pink-500/10',
+    viewing: 'bg-purple-50 text-purple-700 border-purple-300 focus:border-purple-500 focus:ring-purple-500/10',
+    negotiation: 'bg-orange-50 text-orange-700 border-orange-300 focus:border-orange-500 focus:ring-orange-500/10',
+    closed: 'bg-green-50 text-green-700 border-green-300 focus:border-green-500 focus:ring-green-500/10',
+    lost: 'bg-zinc-100 text-zinc-600 border-zinc-300 focus:border-zinc-500 focus:ring-zinc-500/10',
+    not_interested: 'bg-red-50 text-red-700 border-red-300 focus:border-red-500 focus:ring-red-500/10',
+} as const;
+
 interface LeadFormProps {
     initialData?: LeadData;
     isEditing?: boolean;
@@ -246,13 +257,22 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             <div>
                                 <label className={labelClass}>Status</label>
                                 <div className="relative">
-                                    <select name="status" value={formData.status} onChange={handleChange} className={selectClass}>
-                                        <option value="new">New Lead</option>
-                                        <option value="contacted">Contacted</option>
-                                        <option value="viewing">Viewing Scheduled</option>
-                                        <option value="negotiation">Negotiation</option>
-                                        <option value="closed">Closed / Won</option>
-                                        <option value="lost">Lost</option>
+                                    <select
+                                        name="status"
+                                        value={formData.status}
+                                        onChange={handleChange}
+                                        className={`w-full px-4 py-3 border rounded-xl focus:bg-white focus:ring-4 transition-all font-semibold cursor-pointer ${
+                                            STATUS_SELECT_COLORS[(formData.status || 'new') as keyof typeof STATUS_SELECT_COLORS] || 'bg-slate-50 text-slate-900 border-slate-300'
+                                        }`}
+                                    >
+                                        <option value="new" className="bg-white text-blue-700 font-medium">New Lead</option>
+                                        <option value="contacted" className="bg-white text-yellow-700 font-medium">Contacted</option>
+                                        <option value="properties_selection" className="bg-white text-pink-700 font-medium">Properties Selection</option>
+                                        <option value="viewing" className="bg-white text-purple-700 font-medium">Viewing Scheduled</option>
+                                        <option value="negotiation" className="bg-white text-orange-700 font-medium">Negotiation</option>
+                                        <option value="closed" className="bg-white text-green-700 font-medium">Closed / Won</option>
+                                        <option value="lost" className="bg-white text-slate-700 font-medium">Lost</option>
+                                        <option value="not_interested" className="bg-white text-red-700 font-medium">Not Interested</option>
                                     </select>
                                 </div>
                             </div>

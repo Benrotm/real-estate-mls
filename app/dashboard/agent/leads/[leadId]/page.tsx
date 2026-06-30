@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
 import LeadActivityPanel from './LeadActivityPanel';
 import LeadContactActions from './LeadContactActions';
 import LeadAIMatching from '@/app/components/dashboard/LeadAIMatching';
+import { STATUS_COLORS, STATUS_LABELS } from '@/app/components/dashboard/LeadList';
 
 export default async function LeadDetailsPage({ params }: { params: Promise<{ leadId: string }> }) {
     const { leadId } = await params;
@@ -50,8 +51,8 @@ export default async function LeadDetailsPage({ params }: { params: Promise<{ le
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                             {lead.name}
-                            <span className={`px-2.5 py-1 text-xs font-bold rounded-full border bg-slate-100 text-slate-600 border-slate-200 capitalize`}>
-                                {lead.status}
+                            <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${STATUS_COLORS[lead.status as keyof typeof STATUS_COLORS] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                {STATUS_LABELS[lead.status as keyof typeof STATUS_LABELS] || lead.status}
                             </span>
                         </h1>
                         <p className="text-slate-500 text-sm">
