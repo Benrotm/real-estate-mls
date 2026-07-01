@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { LeadData } from '@/app/lib/types';
-import { upsertMatchStatus } from '@/app/lib/actions/matches';
+import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
 import { fetchPropertyByFriendlyId } from '@/app/lib/actions/properties';
 import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight, CheckCircle, Clock, List, Activity, Plus } from 'lucide-react';
@@ -23,6 +23,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
     const [manualAddId, setManualAddId] = useState('');
+    const [isSavingAll, setIsSavingAll] = useState(false);
     const [isAddingManual, setIsAddingManual] = useState(false);
 
     useEffect(() => {
@@ -73,6 +74,37 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
             alert('Failed to add property.');
         } finally {
             setIsAddingManual(false);
+        }
+    };
+
+    const handleSaveAll = async () => {
+        if (!lead.id || aiSuggestions.length === 0) return;
+        if (!confirm(`Are you sure you want to save all ${aiSuggestions.length} suggestions?`)) return;
+
+        setIsSavingAll(true);
+        const propertyIds = aiSuggestions.map(s => s.id);
+        try {
+            const res = await bulkUpsertMatchStatus(lead.id, propertyIds, 'saved');
+            if (res.error) throw new Error(res.error);
+
+            // Update local matches state
+            const newMatches = aiSuggestions.map((prop, idx) => ({
+                id: res.data ? res.data[idx]?.id : `temp-${prop.id}`,
+                property_id: prop.id,
+                status: 'saved',
+                property: prop,
+                created_at: new Date().toISOString()
+            }));
+
+            setMatches(prev => [...newMatches, ...prev]);
+
+            // Clear AI suggestions
+            setAiSuggestions([]);
+        } catch (error) {
+            console.error('Failed to save all suggestions:', error);
+            alert('Error saving all suggestions');
+        } finally {
+            setIsSavingAll(false);
         }
     };
 
@@ -329,7 +361,17 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                                         {isAddingManual ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                                     </button>
                                 </div>
-                                <button onClick={loadAISuggestions} disabled={isLoadingAI} className="p-2.5 text-slate-400 hover:text-slate-600 bg-white rounded-lg border shadow-sm transition-colors">
+                                {aiSuggestions.length > 0 && (
+                                    <button 
+                                        onClick={handleSaveAll} 
+                                        disabled={isSavingAll || isLoadingAI} 
+                                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shadow-orange-600/10 disabled:opacity-50 shrink-0"
+                                    >
+                                        {isSavingAll ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Bookmark className="w-3.5 h-3.5" />}
+                                        Save All ({aiSuggestions.length})
+                                    </button>
+                                )}
+                                <button onClick={loadAISuggestions} disabled={isLoadingAI} className="p-2.5 text-slate-400 hover:text-slate-600 bg-white rounded-lg border shadow-sm transition-colors shrink-0">
                                     <RefreshCw className={`w-4 h-4 ${isLoadingAI ? 'animate-spin' : ''}`} />
                                 </button>
                             </div>

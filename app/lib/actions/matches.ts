@@ -40,6 +40,37 @@ export async function upsertMatchStatus(leadId: string, propertyId: string, stat
     return { success: true, data };
 }
 
+export async function bulkUpsertMatchStatus(leadId: string, propertyIds: string[], status: string) {
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: 'Unauthorized' };
+    }
+
+    const payloads = propertyIds.map(propertyId => ({
+        lead_id: leadId,
+        property_id: propertyId,
+        status: status,
+        updated_at: new Date().toISOString()
+    }));
+
+    const { data, error } = await supabase
+        .from('lead_property_matches')
+        .upsert(payloads, { onConflict: 'lead_id,property_id' })
+        .select();
+
+    if (error) {
+        console.error('Error bulk upserting match status:', error);
+        return { error: error.message };
+    }
+
+    revalidatePath(`/dashboard/agent/leads/${leadId}`);
+    revalidatePath(`/dashboard/agent/leads/${leadId}/matches`);
+
+    return { success: true, data };
+}
+
 export async function getLeadMatches(leadId: string) {
     const supabase = await createClient();
 
