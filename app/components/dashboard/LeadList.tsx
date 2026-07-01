@@ -141,7 +141,9 @@ export default function LeadList({
         occupation: '',
         source: '',
         payment_method: 'all',
-        interest_rating: 'all'
+        interest_rating: 'all',
+        agent_name: '',
+        lead_phone: ''
     });
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -164,7 +166,9 @@ export default function LeadList({
             occupation: '',
             source: '',
             payment_method: 'all',
-            interest_rating: 'all'
+            interest_rating: 'all',
+            agent_name: '',
+            lead_phone: ''
         });
         setSearchTerm('');
         setActiveStatus('all');
@@ -203,11 +207,13 @@ export default function LeadList({
             const matchesSource = !filters.source || (isOwner && lead.source?.toLowerCase().includes(filters.source.toLowerCase()));
             const matchesPayment = filters.payment_method === 'all' || (isOwner && lead.payment_method === filters.payment_method);
             const matchesInterest = filters.interest_rating === 'all' || (isOwner && lead.agent_interest_rating === filters.interest_rating);
+            const matchesAgentName = !filters.agent_name || (lead.agent?.full_name?.toLowerCase().includes(filters.agent_name.toLowerCase()) || lead.agent?.email?.toLowerCase().includes(filters.agent_name.toLowerCase()));
+            const matchesLeadPhone = !filters.lead_phone || (isOwner && lead.phone?.includes(filters.lead_phone));
 
             return matchesSearch && matchesStatus && matchesType && matchesListingType && matchesCity &&
                 matchesArea && matchesBudgetMin && matchesBudgetMax && matchesRooms && matchesSurface &&
                 matchesUrgency && matchesBuyingReason && matchesOccupation && matchesSource &&
-                matchesPayment && matchesInterest;
+                matchesPayment && matchesInterest && matchesAgentName && matchesLeadPhone;
         });
 
         // Sorting
@@ -426,6 +432,18 @@ export default function LeadList({
                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Occupation</label>
                             <input type="text" name="occupation" value={filters.occupation} onChange={handleFilterChange} placeholder="Filter by job..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
                         </div>
+                        {isAdmin && (
+                            <>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Agent / User Name</label>
+                                    <input type="text" name="agent_name" value={filters.agent_name} onChange={handleFilterChange} placeholder="Filter by Agent..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Lead Phone Number</label>
+                                    <input type="text" name="lead_phone" value={filters.lead_phone} onChange={handleFilterChange} placeholder="Filter by Lead Phone..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                                </div>
+                            </>
+                        )}
                         <div className="flex items-end gap-2">
                             <div className="flex-1">
                                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Source</label>
@@ -449,10 +467,12 @@ export default function LeadList({
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200">
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Lead Name</th>
+                                {isAdmin && <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Agent/User Info</th>}
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Score</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Preferences</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact Info</th>
+                                {isAdmin && <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Added</th>}
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -505,6 +525,19 @@ export default function LeadList({
                                                     </div>
                                                 </div>
                                             </td>
+                                            {isAdmin && (
+                                                <td className="px-6 py-4 text-sm text-slate-700">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs shrink-0">
+                                                            {lead.agent?.full_name?.charAt(0) || 'A'}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-slate-900 leading-tight">{lead.agent?.full_name || 'System'}</div>
+                                                            <div className="text-xs text-slate-500">{lead.agent?.email || 'N/A'}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            )}
                                             <td className="px-6 py-4">
                                                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_COLORS[(lead.status || 'new') as keyof typeof STATUS_COLORS] || 'text-gray-600 bg-gray-100'}`}>
                                                     {STATUS_LABELS[(lead.status || 'new') as keyof typeof STATUS_LABELS] || lead.status}
@@ -574,6 +607,11 @@ export default function LeadList({
                                                     </div>
                                                 )}
                                             </td>
+                                            {isAdmin && (
+                                                <td className="px-6 py-4 text-sm text-slate-600 font-medium whitespace-nowrap">
+                                                    {lead.created_at ? new Date(lead.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
+                                                </td>
+                                            )}
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     {lead.isLocked ? (
@@ -645,7 +683,7 @@ export default function LeadList({
                                         {/* Expanded Lead Card */}
                                         {expandedLeadId === lead.id && (
                                             <tr className="bg-slate-50/50">
-                                                <td colSpan={6} className="px-6 py-6 ring-1 ring-inset ring-slate-200/50">
+                                                <td colSpan={isAdmin ? 8 : 6} className="px-6 py-6 ring-1 ring-inset ring-slate-200/50">
                                                     {lead.isLocked ? (
                                                         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-lg mx-auto text-center space-y-6 border-t-4 border-t-yellow-500 animate-in fade-in slide-in-from-top-4 duration-300">
                                                             <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto border border-yellow-200">
@@ -727,7 +765,7 @@ export default function LeadList({
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={isAdmin ? 8 : 6} className="px-6 py-12 text-center text-slate-400">
                                         <div className="flex flex-col items-center gap-2">
                                             <Search className="w-8 h-8 opacity-20" />
                                             <span className="text-sm">
