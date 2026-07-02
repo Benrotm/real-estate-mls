@@ -716,25 +716,36 @@ export default async function PropertyDetailPage({
                                 </div>
                             </div>
 
-                            {/* Bedrooms */}
+                            {/* Usable Area */}
                             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center shrink-0 text-orange-600">
-                                    <Bed className="w-6 h-6" />
+                                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0 text-emerald-600">
+                                    <Ruler className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <div className="font-extrabold text-xl text-slate-900">{property.bedrooms || '-'}</div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Bedrooms</div>
+                                    <div className="font-extrabold text-xl text-slate-900">
+                                        {property.area_usable ? `${property.area_usable} sqm` : '-'}
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Usable Area</div>
                                 </div>
                             </div>
 
-                            {/* Bathrooms */}
+                            {/* Floor */}
                             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 text-blue-600">
-                                    <Bath className="w-6 h-6" />
+                                <div className="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center shrink-0 text-violet-600">
+                                    <Layers className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <div className="font-extrabold text-xl text-slate-900">{property.bathrooms || '-'}</div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Bathrooms</div>
+                                    <div className="font-extrabold text-xl text-slate-900">
+                                        {(property.floor !== null && property.floor !== undefined)
+                                            ? ((property.total_floors !== null && property.total_floors !== undefined)
+                                                ? `${property.floor}/${property.total_floors}`
+                                                : `${property.floor}`)
+                                            : ((property.total_floors !== null && property.total_floors !== undefined)
+                                                ? `-/ ${property.total_floors}`
+                                                : '-')
+                                        }
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Floor</div>
                                 </div>
                             </div>
                         </div>
