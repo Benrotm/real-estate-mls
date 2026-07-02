@@ -1073,7 +1073,10 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     };
 
     const checkKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') e.preventDefault();
+        const target = e.target as HTMLElement;
+        if (e.key === 'Enter' && target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+        }
     };
 
     if (success) {
@@ -1322,8 +1325,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 </div>
 
                                 {/* Description */}
-                                <div className="flex flex-col sm:flex-row gap-4">
-                                    <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0 sm:pt-2">Description</label>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-medium text-slate-300">Description</label>
                                     <textarea
                                         name="description"
                                         required
@@ -1331,15 +1334,15 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         value={formData.description}
                                         onChange={handleChange}
                                         placeholder="Tell us more about the property..."
-                                        className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all resize-y min-h-[120px] text-white placeholder-slate-600 hover:border-slate-600"
+                                        className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all resize-y min-h-[120px] text-white placeholder-slate-600 hover:border-slate-600"
                                     />
                                 </div>
 
                                 {/* Property Type & Listing Type */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Property Type</label>
-                                        <div className="relative">
+                                    <div className="flex items-center gap-4">
+                                        <label className="w-28 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Property Type</label>
+                                        <div className="relative flex-1">
                                             <select
                                                 name="propertyType"
                                                 value={formData.propertyType}
@@ -1353,9 +1356,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Listing Type</label>
-                                        <div className="relative">
+                                    <div className="flex items-center gap-4">
+                                        <label className="w-28 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Listing Type</label>
+                                        <div className="relative flex-1">
                                             <select
                                                 name="listingType"
                                                 value={formData.listingType}
@@ -1373,9 +1376,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
                                 {/* Price & Currency */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Price</label>
-                                        <div className="relative">
+                                    <div className="flex items-center gap-4">
+                                        <label className="w-28 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Price</label>
+                                        <div className="relative flex-1">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-violet-400 font-bold">
                                                 <DollarSign className="w-5 h-5" />
                                             </div>
@@ -1390,9 +1393,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Currency</label>
-                                        <div className="relative">
+                                    <div className="flex items-center gap-4">
+                                        <label className="w-28 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Currency</label>
+                                        <div className="relative flex-1">
                                             <select
                                                 name="currency"
                                                 value={formData.currency}
@@ -1411,51 +1414,53 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
                                 {/* Rooms, Usable Area, Floor & Total Floors */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Rooms</label>
+                                    <div className="flex items-center gap-3">
+                                        <label className="w-20 text-sm font-medium text-slate-300 shrink-0 text-right pr-1">Rooms</label>
                                         <input
                                             type="number"
                                             name="rooms"
                                             value={formData.rooms}
                                             onChange={handleChange}
-                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Usable Area (sq ft)</label>
-                                        <input
-                                            type="number"
-                                            name="usableArea"
-                                            value={formData.usableArea}
-                                            onChange={handleChange}
-                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
-                                        />
+                                    <div className="flex items-center gap-3">
+                                        <label className="w-20 text-sm font-medium text-slate-300 shrink-0 text-right pr-1 leading-tight">Usable Area</label>
+                                        <div className="relative flex-1">
+                                            <input
+                                                type="number"
+                                                name="usableArea"
+                                                placeholder="sq ft"
+                                                value={formData.usableArea}
+                                                onChange={handleChange}
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Floor</label>
+                                    <div className="flex items-center gap-3">
+                                        <label className="w-20 text-sm font-medium text-slate-300 shrink-0 text-right pr-1">Floor</label>
                                         <input
                                             type="number"
                                             name="floor"
                                             placeholder="e.g., 5"
                                             value={formData.floor}
                                             onChange={handleChange}
-                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Total Floors</label>
+                                    <div className="flex items-center gap-3">
+                                        <label className="w-20 text-sm font-medium text-slate-300 shrink-0 text-right pr-1 leading-tight">Total Floors</label>
                                         <input
                                             type="number"
                                             name="totalFloors"
                                             placeholder="e.g., 10"
                                             value={formData.totalFloors}
                                             onChange={handleChange}
-                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                         />
                                     </div>
                                 </div>
                             </div>
-
 
                             {/* Location Section */}
                             <div className="pt-8 border-t border-slate-800">
@@ -1470,31 +1475,24 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 </div>
 
                                 <div className="space-y-6">
-                                    {/* Street Address and Area / Neighbourhood */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-32 text-sm font-medium text-slate-300 shrink-0">Street Address</label>
-                                            <div className="flex-1">
-                                                <AddressAutocomplete
-                                                    currentAddress={formData.address}
-                                                    className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
-                                                    onAddressSelect={(address) => {
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            address: address.formattedAddress,
-                                                            city: address.city || prev.city,
-                                                            state: address.county || prev.state,
-                                                            latitude: address.lat,
-                                                            longitude: address.lng
-                                                        }));
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Area / Neighbourhood</label>
-                                            <input type="text" name="area" placeholder="e.g., Fratelia, Complex" value={formData.area} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                    {/* Street Address */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                        <label className="sm:w-32 text-sm font-medium text-slate-300 shrink-0">Street Address</label>
+                                        <div className="flex-1">
+                                            <AddressAutocomplete
+                                                currentAddress={formData.address}
+                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                onAddressSelect={(address) => {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        address: address.formattedAddress,
+                                                        city: address.city || prev.city,
+                                                        state: address.county || prev.state,
+                                                        latitude: address.lat,
+                                                        longitude: address.lng
+                                                    }));
+                                                }}
+                                            />
                                         </div>
                                     </div>
 
@@ -1533,17 +1531,17 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 <div className="space-y-6">
                                     {/* Bedrooms, Bathrooms, Year Built */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2 text-slate-300">Bedrooms</label>
-                                            <input type="number" name="beds" value={formData.beds} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <div className="flex items-center gap-3">
+                                            <label className="w-20 text-sm font-medium text-slate-300 shrink-0 text-right pr-1">Bedrooms</label>
+                                            <input type="number" name="beds" value={formData.beds} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2 text-slate-300">Bathrooms</label>
-                                            <input type="number" name="baths" value={formData.baths} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <div className="flex items-center gap-3">
+                                            <label className="w-20 text-sm font-medium text-slate-300 shrink-0 text-right pr-1">Bathrooms</label>
+                                            <input type="number" name="baths" value={formData.baths} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2 text-slate-300">Year Built</label>
-                                            <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <div className="flex items-center gap-3">
+                                            <label className="w-20 text-sm font-medium text-slate-300 shrink-0 text-right pr-1">Year Built</label>
+                                            <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
                                     </div>
 
@@ -1567,7 +1565,74 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                         </div>
                                     </div>
 
-                                    {/* Open to Collaboration Checkbox */}
+                                    {/* Partitioning & Comfort */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                        <div className="flex items-center gap-4">
+                                            <label className="w-24 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Partitioning</label>
+                                            <div className="relative flex-1">
+                                                <select name="partitioning" value={formData.partitioning} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                                    <option value="" className="bg-slate-900">Select...</option>
+                                                    {PARTITIONING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <label className="w-24 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Comfort</label>
+                                            <div className="relative flex-1">
+                                                <select name="comfort" value={formData.comfort} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                                    <option value="" className="bg-slate-900">Select...</option>
+                                                    {COMFORT_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Building Type, Interior, Furnishing */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Building Type</label>
+                                            <div className="relative">
+                                                <select name="buildingType" value={formData.buildingType} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                                    <option value="" className="bg-slate-900">Select..</option>
+                                                    {BUILDING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Interior Condition</label>
+                                            <div className="relative">
+                                                <select name="interiorCondition" value={formData.interiorCondition} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                                    <option value="" className="bg-slate-900">Select..</option>
+                                                    {INTERIOR_CONDITIONS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Furnishing</label>
+                                            <div className="relative">
+                                                <select name="furnishing" value={formData.furnishing} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
+                                                    {FURNISHING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Open to Collaboration Checkbox (Moved to the end) */}
                                     <div className="pt-2">
                                         <label className="flex items-center gap-3 p-4 bg-slate-900/50 border border-slate-700/80 rounded-xl cursor-pointer hover:bg-slate-800/80 transition-all group">
                                             <input
@@ -1581,73 +1646,6 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 <span className="text-xs text-slate-500">Enable this if you are open to working with other agents</span>
                                             </div>
                                         </label>
-                                    </div>
-                                </div>
-
-                                {/* Partitioning & Comfort */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Partitioning</label>
-                                        <div className="relative">
-                                            <select name="partitioning" value={formData.partitioning} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
-                                                <option value="" className="bg-slate-900">Select...</option>
-                                                {PARTITIONING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Comfort</label>
-                                        <div className="relative">
-                                            <select name="comfort" value={formData.comfort} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
-                                                <option value="" className="bg-slate-900">Select...</option>
-                                                {COMFORT_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Building Type, Interior, Furnishing */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Building Type</label>
-                                        <div className="relative">
-                                            <select name="buildingType" value={formData.buildingType} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
-                                                <option value="" className="bg-slate-900">Select..</option>
-                                                {BUILDING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Interior Condition</label>
-                                        <div className="relative">
-                                            <select name="interiorCondition" value={formData.interiorCondition} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
-                                                <option value="" className="bg-slate-900">Select..</option>
-                                                {INTERIOR_CONDITIONS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-slate-300">Furnishing</label>
-                                        <div className="relative">
-                                            <select name="furnishing" value={formData.furnishing} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
-                                                {FURNISHING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
