@@ -759,8 +759,7 @@ export default async function PropertyDetailPage({
                                 { label: 'Building', value: property.building_type, icon: Home, color: 'blue' },
                                 { label: 'Condition', value: property.interior_condition, icon: ShieldCheck, color: 'emerald' },
                                 { label: 'Furnishing', value: property.furnishing, icon: Armchair, color: 'orange' },
-                                { label: 'Year Built', value: property.year_built, icon: Calendar, color: 'cyan' },
-                                { label: 'Floors', value: (property.floor !== null && property.total_floors !== null) ? `${property.floor}/${property.total_floors}` : (property.floor !== null ? property.floor : (property.total_floors || null)), icon: Layers, color: 'violet' }
+                                { label: 'Year Built', value: property.year_built, icon: Calendar, color: 'cyan' }
                             ].map((item, i) => {
                                 if (item.value === null || item.value === undefined || item.value === '') return null;
 
@@ -795,9 +794,8 @@ export default async function PropertyDetailPage({
                             <Maximize2 className="w-6 h-6 text-indigo-600" />
                             <h3 className="text-xl font-bold text-slate-900 tracking-tight">Areas & Measurements</h3>
                         </div>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {[
-                                { label: 'Usable Area', value: property.area_usable, unit: 'sqm', icon: Ruler, color: 'indigo' },
                                 { label: 'Terrace/Balcony', value: property.area_terrace, unit: 'sqm', icon: Sun, color: 'orange' },
                                 { label: 'Garden', value: property.area_garden, unit: 'sqm', icon: Trees, color: 'emerald' },
                                 { label: 'Box/Storage', value: property.area_box, unit: 'sqm', icon: Box, color: 'blue' }
