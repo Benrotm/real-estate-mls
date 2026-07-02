@@ -184,6 +184,32 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                     <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-3">
                         <MapPin className="w-3 h-3" /> {property.location_city} {property.location_area && `• ${property.location_area}`}
                     </div>
+
+                    {/* Property Specs (Rooms, Usable Area, Floor) */}
+                    <div className="grid grid-cols-3 gap-1 mb-3">
+                        <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Rooms</span>
+                            <span className="text-xs font-extrabold text-slate-900 mt-1">{property.rooms || '-'}</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Area</span>
+                            <span className="text-xs font-extrabold text-slate-900 mt-1">{property.area_usable ? `${property.area_usable} m²` : '-'}</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Floor</span>
+                            <span className="text-xs font-extrabold text-slate-900 mt-1">
+                                {property.floor !== null && property.floor !== undefined
+                                    ? ((property.total_floors !== null && property.total_floors !== undefined)
+                                        ? `${property.floor}/${property.total_floors}`
+                                        : `${property.floor}`)
+                                    : ((property.total_floors !== null && property.total_floors !== undefined)
+                                        ? `-/ ${property.total_floors}`
+                                        : '-')
+                                }
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="flex items-center justify-between mt-auto mb-4 border-t border-slate-100 pt-3">
                         <div className="text-lg font-black text-orange-600 leading-none">
                             {property.price?.toLocaleString()} {property.currency}
