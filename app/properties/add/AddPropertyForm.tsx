@@ -1337,9 +1337,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
                                 {/* Property Type & Listing Type */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Property Type</label>
-                                        <div className="relative flex-1">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Property Type</label>
+                                        <div className="relative">
                                             <select
                                                 name="propertyType"
                                                 value={formData.propertyType}
@@ -1353,9 +1353,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Listing Type</label>
-                                        <div className="relative flex-1">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Listing Type</label>
+                                        <div className="relative">
                                             <select
                                                 name="listingType"
                                                 value={formData.listingType}
@@ -1373,9 +1373,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
                                 {/* Price & Currency */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Price</label>
-                                        <div className="relative flex-1">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Price</label>
+                                        <div className="relative">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-violet-400 font-bold">
                                                 <DollarSign className="w-5 h-5" />
                                             </div>
@@ -1390,9 +1390,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             />
                                         </div>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Currency</label>
-                                        <div className="relative flex-1">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Currency</label>
+                                        <div className="relative">
                                             <select
                                                 name="currency"
                                                 value={formData.currency}
@@ -1409,52 +1409,48 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     </div>
                                 </div>
 
-                                {/* Rooms & Usable Area (sq ft) */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Rooms</label>
+                                {/* Rooms, Usable Area, Floor & Total Floors */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Rooms</label>
                                         <input
                                             type="number"
                                             name="rooms"
                                             value={formData.rooms}
                                             onChange={handleChange}
-                                            className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                         />
                                     </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Usable Area (sq ft)</label>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Usable Area (sq ft)</label>
                                         <input
                                             type="number"
                                             name="usableArea"
                                             value={formData.usableArea}
                                             onChange={handleChange}
-                                            className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                         />
                                     </div>
-                                </div>
-
-                                {/* Floor & Total Floors */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Floor</label>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Floor</label>
                                         <input
                                             type="number"
                                             name="floor"
                                             placeholder="e.g., 5"
                                             value={formData.floor}
                                             onChange={handleChange}
-                                            className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                         />
                                     </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Total Floors</label>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Total Floors</label>
                                         <input
                                             type="number"
                                             name="totalFloors"
                                             placeholder="e.g., 10"
                                             value={formData.totalFloors}
                                             onChange={handleChange}
-                                            className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                            className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
                                         />
                                     </div>
                                 </div>
@@ -1474,43 +1470,32 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 </div>
 
                                 <div className="space-y-6">
-                                    {/* Street Address */}
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Street Address</label>
-                                        <div className="flex-1">
-                                            <AddressAutocomplete
-                                                currentAddress={formData.address}
-                                                className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
-                                                onAddressSelect={(address) => {
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        address: address.formattedAddress,
-                                                        city: address.city || prev.city,
-                                                        state: address.county || prev.state,
-                                                        latitude: address.lat,
-                                                        longitude: address.lng
-                                                    }));
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* City & State */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Street Address and Area / Neighbourhood */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">City</label>
-                                            <input type="text" name="city" required value={formData.city} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                            <label className="sm:w-32 text-sm font-medium text-slate-300 shrink-0">Street Address</label>
+                                            <div className="flex-1">
+                                                <AddressAutocomplete
+                                                    currentAddress={formData.address}
+                                                    className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600"
+                                                    onAddressSelect={(address) => {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            address: address.formattedAddress,
+                                                            city: address.city || prev.city,
+                                                            state: address.county || prev.state,
+                                                            latitude: address.lat,
+                                                            longitude: address.lng
+                                                        }));
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">State</label>
-                                            <input type="text" name="state" required value={formData.state} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
-                                        </div>
-                                    </div>
 
-                                    {/* Area / Neighbourhood */}
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Area / Neighbourhood</label>
-                                        <input type="text" name="area" placeholder="e.g., Fratelia, Complex" value={formData.area} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Area / Neighbourhood</label>
+                                            <input type="text" name="area" placeholder="e.g., Fratelia, Complex" value={formData.area} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        </div>
                                     </div>
 
                                     {/* Google Map Widget */}
@@ -1547,42 +1532,38 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
                                 <div className="space-y-6">
                                     {/* Bedrooms, Bathrooms, Year Built */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Bedrooms</label>
-                                            <input type="number" name="beds" value={formData.beds} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Bedrooms</label>
+                                            <input type="number" name="beds" value={formData.beds} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Bathrooms</label>
-                                            <input type="number" name="baths" value={formData.baths} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Bathrooms</label>
+                                            <input type="number" name="baths" value={formData.baths} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Year Built</label>
-                                            <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
-                                        </div>
-                                    </div>
-
-                                    {/* Built Area, Terrace Area */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Built Area (sq ft)</label>
-                                            <input type="number" name="builtArea" value={formData.builtArea} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Terrace (sq ft)</label>
-                                            <input type="number" name="terraceArea" value={formData.terraceArea} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Year Built</label>
+                                            <input type="number" name="yearBuilt" value={formData.yearBuilt} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
                                     </div>
 
-                                    {/* Garden Area, Box Area */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Garden (sq ft)</label>
-                                            <input type="number" name="gardenArea" value={formData.gardenArea} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                    {/* Built Area, Terrace Area, Garden Area, Storage Box */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Built Area (sq ft)</label>
+                                            <input type="number" name="builtArea" value={formData.builtArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Box (sq ft)</label>
-                                            <input type="number" name="boxArea" value={formData.boxArea} onChange={handleChange} className="flex-1 bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Terrace (sq ft)</label>
+                                            <input type="number" name="terraceArea" value={formData.terraceArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Garden (sq ft)</label>
+                                            <input type="number" name="gardenArea" value={formData.gardenArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-slate-300">Storage Box</label>
+                                            <input type="number" name="boxArea" value={formData.boxArea} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none transition-all text-white placeholder-slate-600 hover:border-slate-600" />
                                         </div>
                                     </div>
 
@@ -1605,9 +1586,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
                                 {/* Partitioning & Comfort */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Partitioning</label>
-                                        <div className="relative flex-1">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Partitioning</label>
+                                        <div className="relative">
                                             <select name="partitioning" value={formData.partitioning} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 <option value="" className="bg-slate-900">Select...</option>
                                                 {PARTITIONING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
@@ -1617,9 +1598,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Comfort</label>
-                                        <div className="relative flex-1">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Comfort</label>
+                                        <div className="relative">
                                             <select name="comfort" value={formData.comfort} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 <option value="" className="bg-slate-900">Select...</option>
                                                 {COMFORT_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
@@ -1632,10 +1613,10 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 </div>
 
                                 {/* Building Type, Interior, Furnishing */}
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Building Type</label>
-                                        <div className="relative flex-1">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Building Type</label>
+                                        <div className="relative">
                                             <select name="buildingType" value={formData.buildingType} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 <option value="" className="bg-slate-900">Select..</option>
                                                 {BUILDING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
@@ -1645,9 +1626,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Interior Condition</label>
-                                        <div className="relative flex-1">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Interior Condition</label>
+                                        <div className="relative">
                                             <select name="interiorCondition" value={formData.interiorCondition} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 <option value="" className="bg-slate-900">Select..</option>
                                                 {INTERIOR_CONDITIONS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
@@ -1657,9 +1638,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Furnishing</label>
-                                        <div className="relative flex-1">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-slate-300">Furnishing</label>
+                                        <div className="relative">
                                             <select name="furnishing" value={formData.furnishing} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                 {FURNISHING_TYPES.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
