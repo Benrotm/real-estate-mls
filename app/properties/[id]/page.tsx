@@ -751,7 +751,6 @@ export default async function PropertyDetailPage({
                         </div>
 
                         {/* 4. Key Details Grid */}
-                        {/* 4. Key Details Grid */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
                             {[
                                 { label: 'Partitioning', value: property.partitioning, icon: LayoutGrid, color: 'indigo' },
@@ -759,7 +758,10 @@ export default async function PropertyDetailPage({
                                 { label: 'Building', value: property.building_type, icon: Home, color: 'blue' },
                                 { label: 'Condition', value: property.interior_condition, icon: ShieldCheck, color: 'emerald' },
                                 { label: 'Furnishing', value: property.furnishing, icon: Armchair, color: 'orange' },
-                                { label: 'Year Built', value: property.year_built, icon: Calendar, color: 'cyan' }
+                                { label: 'Year Built', value: property.year_built, icon: Calendar, color: 'cyan' },
+                                { label: 'Terrace/Balcony', value: property.area_terrace ? `${property.area_terrace} sqm` : null, icon: Sun, color: 'orange' },
+                                { label: 'Garden', value: property.area_garden ? `${property.area_garden} sqm` : null, icon: Trees, color: 'emerald' },
+                                { label: 'Box/Storage', value: property.area_box ? `${property.area_box} sqm` : null, icon: Box, color: 'blue' }
                             ].map((item, i) => {
                                 if (item.value === null || item.value === undefined || item.value === '') return null;
 
@@ -783,41 +785,6 @@ export default async function PropertyDetailPage({
                                         <div className="min-w-0">
                                             <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">{item.label}</div>
                                             <div className={`font-bold text-sm truncate ${theme.text}`} title={String(item.value)}>{item.value}</div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* 5. Areas & Measurements */}
-                        <div className="flex items-center gap-2 mb-4">
-                            <Maximize2 className="w-6 h-6 text-indigo-600" />
-                            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Areas & Measurements</h3>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {[
-                                { label: 'Terrace/Balcony', value: property.area_terrace, unit: 'sqm', icon: Sun, color: 'orange' },
-                                { label: 'Garden', value: property.area_garden, unit: 'sqm', icon: Trees, color: 'emerald' },
-                                { label: 'Box/Storage', value: property.area_box, unit: 'sqm', icon: Box, color: 'blue' }
-                            ].map((item, i) => {
-                                const themes: Record<string, { bg: string, text: string, iconBg: string, iconColor: string, border: string }> = {
-                                    indigo: { bg: 'bg-indigo-50/50', text: 'text-indigo-900', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', border: 'border-indigo-100' },
-                                    orange: { bg: 'bg-orange-50/50', text: 'text-orange-900', iconBg: 'bg-orange-100', iconColor: 'text-orange-600', border: 'border-orange-100' },
-                                    emerald: { bg: 'bg-emerald-50/50', text: 'text-emerald-900', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', border: 'border-emerald-100' },
-                                    blue: { bg: 'bg-blue-50/50', text: 'text-blue-900', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', border: 'border-blue-100' }
-                                };
-                                const theme = themes[item.color];
-
-                                return (
-                                    <div key={i} className={`group border ${theme.border} rounded-2xl p-4 shadow-sm flex items-center gap-3 ${theme.bg} transition-all duration-300 hover:shadow-md`}>
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${theme.iconBg} ${theme.iconColor} transition-transform duration-300 group-hover:scale-110`}>
-                                            <item.icon className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">{item.label}</div>
-                                            <div className={`font-bold text-sm ${theme.text}`}>
-                                                {item.value ? `${item.value} ${item.unit}` : 'N/A'}
-                                            </div>
                                         </div>
                                     </div>
                                 );
