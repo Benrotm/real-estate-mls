@@ -18,6 +18,7 @@ export async function enrichPropertyFromDescription(description: string, current
         else if (text.includes('nedecomandat')) enriched.partitioning = 'Nedecomandat';
         else if (text.includes('circular')) enriched.partitioning = 'Circular';
         else if (text.includes('vagon')) enriched.partitioning = 'Vagon';
+        else if (text.includes('open space') || text.includes('openspace') || text.includes('open-space')) enriched.partitioning = 'Open Space';
     }
 
     // 2. Comfort (Lux, 1, 2, 3)

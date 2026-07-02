@@ -107,7 +107,7 @@ export interface Property {
 export const PROPERTY_TYPES = ['Apartment', 'House', 'Commercial', 'Industrial', 'Land', 'Business', 'Other'] as const;
 export const TRANSACTION_TYPES = ['For Sale', 'For Rent', 'Hotel Regime'] as const;
 export const CURRENCIES = ['EUR', 'USD', 'RON'] as const;
-export const PARTITIONING_TYPES = ['Decomandat', 'Semidecomandat', 'Nedecomandat', 'Circular', 'Vagon'] as const;
+export const PARTITIONING_TYPES = ['Decomandat', 'Semidecomandat', 'Nedecomandat', 'Circular', 'Vagon', 'Open Space'] as const;
 export const COMFORT_TYPES = ['Lux', '1', '2', '3'] as const;
 
 export const BUILDING_TYPES = ['Apartment Block', 'Individual House', 'Duplex', 'Villa', 'Office Building', 'Mixed Use'] as const;

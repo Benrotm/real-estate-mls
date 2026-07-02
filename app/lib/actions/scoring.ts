@@ -170,6 +170,7 @@ export async function calculatePropertyScore(property: Partial<Property>): Promi
     if (property.partitioning === 'Nedecomandat') score += getWeight('part_nedecomandat');
     if (property.partitioning === 'Circular') score += getWeight('part_circular');
     if (property.partitioning === 'Vagon') score += getWeight('part_vagon');
+    if (property.partitioning === 'Open Space') score += getWeight('part_open_space');
 
     // Comfort
     if (property.comfort === 'Lux') score += getWeight('comfort_lux');
