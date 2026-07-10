@@ -19,8 +19,15 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
         notFound();
     }
 
+    // Fetch user profile to check can_edit_all_properties
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('can_edit_all_properties')
+        .eq('id', user.id)
+        .single();
+
     // Ownership Check
-    if (property.owner_id !== user.id) {
+    if (property.owner_id !== user.id && !profile?.can_edit_all_properties) {
         // Redirect to dashboard if trying to edit someone else's property
         redirect('/dashboard/owner/properties');
     }

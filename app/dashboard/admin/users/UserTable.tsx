@@ -2,6 +2,8 @@
 
 import { Users, Shield, Database, LayoutGrid, Mail, Phone, Star, Search, Filter, X, Coins } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { toggleUserEditAllProperties } from '@/app/lib/admin';
 import UserActions from './UserActions';
 
 interface UserTableProps {
@@ -9,9 +11,23 @@ interface UserTableProps {
 }
 
 export default function UserTable({ users }: UserTableProps) {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const [planFilter, setPlanFilter] = useState('all');
+    const [togglingId, setTogglingId] = useState<string | null>(null);
+
+    const handleToggleEditAll = async (userId: string, currentVal: boolean) => {
+        setTogglingId(userId);
+        try {
+            await toggleUserEditAllProperties(userId, !currentVal);
+            router.refresh();
+        } catch (e: any) {
+            alert('Failed to update privilege: ' + e.message);
+        } finally {
+            setTogglingId(null);
+        }
+    };
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'N/A';
@@ -129,6 +145,7 @@ export default function UserTable({ users }: UserTableProps) {
                                 <th className="p-4 font-bold">Plan</th>
                                 <th className="p-4 font-bold">Listings</th>
                                 <th className="p-4 font-bold">Credits</th>
+                                <th className="p-4 font-bold">Edit All Props</th>
                                 <th className="p-4 font-bold text-right">Actions</th>
                             </tr>
                         </thead>
@@ -256,6 +273,26 @@ export default function UserTable({ users }: UserTableProps) {
                                                     {user.credits || 0}
                                                 </span>
                                             </div>
+                                        </td>
+                                        <td className="p-4">
+                                            {user.role === 'super_admin' || user.role === 'admin' ? (
+                                                <span className="text-slate-500 text-xs font-semibold">Always Enabled</span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleToggleEditAll(user.id, !!user.can_edit_all_properties)}
+                                                    disabled={togglingId === user.id}
+                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                        user.can_edit_all_properties ? 'bg-blue-600' : 'bg-slate-800'
+                                                    } ${togglingId === user.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    title={user.can_edit_all_properties ? "Revoke property edit access" : "Grant access to edit all properties"}
+                                                >
+                                                    <span
+                                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                            user.can_edit_all_properties ? 'translate-x-5' : 'translate-x-0'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            )}
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end">

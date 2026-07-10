@@ -587,3 +587,17 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
         return { success: false, error: e.message || 'Unknown Server Error' };
     }
 }
+
+export async function toggleUserEditAllProperties(userId: string, enable: boolean) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ can_edit_all_properties: enable })
+        .eq('id', userId);
+
+    if (error) throw new Error(error.message);
+    revalidatePath('/dashboard/admin/users');
+}
+

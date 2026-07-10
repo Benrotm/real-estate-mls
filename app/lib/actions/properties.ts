@@ -708,11 +708,11 @@ export async function updateProperty(id: string, formData: FormData) {
     // Verify ownership or admin status
     const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, can_edit_all_properties')
         .eq('id', user.id)
         .single();
 
-    const isAdmin = profile?.role === 'super_admin';
+    const isAdmin = profile?.role === 'super_admin' || profile?.can_edit_all_properties;
 
     const { data: property } = await supabase
         .from('properties')
@@ -977,14 +977,22 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
         return { error: 'Unauthorized' };
     }
 
-    // Verify ownership
+    // Verify ownership or edit privilege
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, can_edit_all_properties')
+        .eq('id', user.id)
+        .single();
+
+    const isPrivileged = profile?.role === 'super_admin' || profile?.can_edit_all_properties;
+
     const { data: property } = await supabase
         .from('properties')
         .select('owner_id')
         .eq('id', id)
         .single();
 
-    if (!property || property.owner_id !== user.id) {
+    if (!property || (property.owner_id !== user.id && !isPrivileged)) {
         return { error: 'Unauthorized' };
     }
 
@@ -1183,11 +1191,11 @@ export async function deleteProperty(id: string) {
     // Verify ownership or admin status
     const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, can_edit_all_properties')
         .eq('id', user.id)
         .single();
 
-    const isAdmin = profile?.role === 'super_admin';
+    const isAdmin = profile?.role === 'super_admin' || profile?.can_edit_all_properties;
 
     const { data: property } = await supabase
         .from('properties')

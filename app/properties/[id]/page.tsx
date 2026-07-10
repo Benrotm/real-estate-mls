@@ -299,7 +299,7 @@ export default async function PropertyDetailPage({
         if (user) {
             const { data: currentUserProfile } = await supabase
                 .from('profiles')
-                .select('role, plan_tier, credits')
+                .select('role, plan_tier, credits, can_edit_all_properties')
                 .eq('id', user.id)
                 .single();
 
@@ -312,7 +312,12 @@ export default async function PropertyDetailPage({
                 hasAccess = true;
                 canViewContact = true;
             } else {
-                if (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'superadmin') {
+                if (
+                    currentUserProfile?.role === 'admin' ||
+                    currentUserProfile?.role === 'superadmin' ||
+                    currentUserProfile?.role === 'super_admin' ||
+                    currentUserProfile?.can_edit_all_properties
+                ) {
                     hasAccess = true;
                     canViewContact = true;
                 }
