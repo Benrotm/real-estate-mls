@@ -3,9 +3,9 @@ import InviteLeadForm from './InviteLeadForm';
 import { Metadata } from 'next';
 
 interface Props {
-    params: {
+    params: Promise<{
         agentId: string;
-    };
+    }>;
 }
 
 export const metadata: Metadata = {
@@ -13,8 +13,8 @@ export const metadata: Metadata = {
     description: 'Completează preferințele tale de căutare pentru a găsi proprietatea potrivită.',
 };
 
-export default function InvitePage({ params }: Props) {
-    const { agentId } = params;
+export default async function InvitePage({ params }: Props) {
+    const { agentId } = await params;
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
