@@ -110,7 +110,7 @@ export default function InviteLeadForm({ agentId }: Props) {
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Buy / Rent Toggle */}
             <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                     I want to
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -133,7 +133,7 @@ export default function InviteLeadForm({ agentId }: Props) {
 
             {/* Property Type Selection Chips */}
             <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                     Property Type
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -152,7 +152,7 @@ export default function InviteLeadForm({ agentId }: Props) {
 
             {/* Rooms Selector */}
             <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                     Number of Rooms
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -171,7 +171,7 @@ export default function InviteLeadForm({ agentId }: Props) {
 
             {/* Budget */}
             <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                     Budget Maxim (EUR) <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -188,7 +188,7 @@ export default function InviteLeadForm({ agentId }: Props) {
             <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                        <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                             City
                         </label>
                         <input
@@ -199,8 +199,8 @@ export default function InviteLeadForm({ agentId }: Props) {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                            Map Area
+                        <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                            Select Area on Map
                         </label>
                         <button
                             type="button"
@@ -208,7 +208,7 @@ export default function InviteLeadForm({ agentId }: Props) {
                             className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 border rounded-xl text-xs font-black transition-all active:scale-95 ${polygon?.length ? 'border-violet-500 bg-violet-50 text-violet-700 font-extrabold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}
                         >
                             <MapPin className="w-4 h-4" />
-                            {polygon?.length ? 'Edit Map Area' : 'Draw Area'}
+                            {polygon?.length ? 'Edit Area' : 'Select Area'}
                         </button>
                     </div>
                 </div>
@@ -231,7 +231,7 @@ export default function InviteLeadForm({ agentId }: Props) {
 
             {/* Name or Nickname */}
             <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                     Name or Nickname <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -246,7 +246,7 @@ export default function InviteLeadForm({ agentId }: Props) {
 
             {/* Phone Number */}
             <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-1">
                     Phone Number <span className="text-rose-500">*</span>
                 </label>
                 <span className="text-slate-400 font-medium text-[10px] md:text-xs block mb-2">
