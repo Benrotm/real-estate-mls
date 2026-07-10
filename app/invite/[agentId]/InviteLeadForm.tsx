@@ -1,0 +1,405 @@
+'use client';
+
+import React, { useState } from 'react';
+import { createLeadPublic } from '@/app/lib/actions/leads';
+import { LeadData } from '@/app/lib/types';
+import DrawAreaSelector from '@/app/components/DrawAreaSelector';
+import { 
+    ChevronDown, 
+    ChevronUp, 
+    CheckCircle, 
+    Plus, 
+    Minus, 
+    MapPin, 
+    Loader2 
+} from 'lucide-react';
+
+interface Props {
+    agentId: string;
+}
+
+export default function InviteLeadForm({ agentId }: Props) {
+    // Form State
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [listingType, setListingType] = useState<'For Sale' | 'For Rent'>('For Sale');
+    const [propertyType, setPropertyType] = useState<'Apartment' | 'House' | 'Land' | 'Commercial'>('Apartment');
+    const [rooms, setRooms] = useState(2);
+    const [budget, setBudget] = useState('');
+    const [city, setCity] = useState('Timișoara');
+    const [polygon, setPolygon] = useState<{ lat: number; lng: number }[] | undefined>(undefined);
+
+    // Accordion State
+    const [showMoreDetails, setShowMoreDetails] = useState(false);
+
+    // Optional Fields State
+    const [surfaceMin, setSurfaceMin] = useState('');
+    const [urgency, setUrgency] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [buyingReason, setBuyingReason] = useState('');
+    const [occupation, setOccupation] = useState('');
+    const [email, setEmail] = useState('');
+    const [notes, setNotes] = useState('');
+
+    // Interface State
+    const [showMap, setShowMap] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    const handleRoomsChange = (amount: number) => {
+        setRooms(prev => Math.max(1, prev + amount));
+    };
+
+    const validateForm = () => {
+        const newErrors: { [key: string]: string } = {};
+        if (!name.trim()) newErrors.name = 'Name or nickname is required';
+        if (!phone.trim()) newErrors.phone = 'Phone number is required';
+        if (!budget.trim() || isNaN(Number(budget)) || Number(budget) <= 0) {
+            newErrors.budget = 'A valid budget is required';
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!validateForm()) return;
+
+        setIsSubmitting(true);
+
+        const leadPayload: LeadData = {
+            name: name.trim(),
+            phone: phone.trim(),
+            email: email.trim() || undefined,
+            status: 'new',
+            preference_listing_type: listingType,
+            preference_type: propertyType,
+            preference_rooms_min: rooms,
+            preference_rooms_max: rooms + 1, // Reasonable range default
+            budget_max: Number(budget),
+            currency: 'EUR',
+            preference_location_city: city.trim(),
+            preference_location_polygon: polygon,
+            preference_surface_min: surfaceMin ? Number(surfaceMin) : undefined,
+            move_urgency: urgency || undefined,
+            payment_method: paymentMethod || undefined,
+            buying_reason: buyingReason || undefined,
+            occupation: occupation.trim() || undefined,
+            notes: notes.trim() || undefined
+        };
+
+        try {
+            const res = await createLeadPublic(agentId, leadPayload);
+            if (res.success) {
+                setIsSuccess(true);
+            } else {
+                alert(res.error || 'Failed to submit form.');
+            }
+        } catch (err) {
+            console.error('Error submitting public lead', err);
+            alert('An unexpected error occurred. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (isSuccess) {
+        return (
+            <div className="text-center py-12 px-4 space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                <div className="flex justify-center">
+                    <div className="p-4 bg-green-50 rounded-full animate-bounce">
+                        <CheckCircle className="w-16 h-16 text-green-600" />
+                    </div>
+                </div>
+                <h2 className="text-2xl font-black text-slate-800">Preferences Submitted!</h2>
+                <p className="text-slate-500 font-medium max-w-sm mx-auto leading-relaxed text-sm">
+                    Thank you! We will analyze matching properties and send you a customized list shortly.
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name/Nickname */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                    Name or Nickname <span className="text-rose-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. John Doe"
+                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.name ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
+                />
+                {errors.name && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.name}</p>}
+            </div>
+
+            {/* Phone Number */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                    Phone Number <span className="text-rose-500">*</span>
+                </label>
+                <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +40 722 000 000"
+                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.phone ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
+                />
+                {errors.phone && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.phone}</p>}
+            </div>
+
+            {/* Buy / Rent Toggle */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                    I want to
+                </label>
+                <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-xl">
+                    <button
+                        type="button"
+                        onClick={() => setListingType('For Sale')}
+                        className={`py-2 rounded-lg text-xs font-black transition-all ${listingType === 'For Sale' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Buy
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setListingType('For Rent')}
+                        className={`py-2 rounded-lg text-xs font-black transition-all ${listingType === 'For Rent' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Rent
+                    </button>
+                </div>
+            </div>
+
+            {/* Property Type Selection Chips */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                    Property Type
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {(['Apartment', 'House', 'Land', 'Commercial'] as const).map(type => (
+                        <button
+                            key={type}
+                            type="button"
+                            onClick={() => setPropertyType(type)}
+                            className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${propertyType === type ? 'border-orange-500 bg-orange-50/50 text-orange-600 font-extrabold shadow-sm shadow-orange-500/5' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'}`}
+                        >
+                            {type}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Rooms Selector */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                    Number of Rooms
+                </label>
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-2.5 justify-between max-w-[200px]">
+                    <button
+                        type="button"
+                        onClick={() => handleRoomsChange(-1)}
+                        className="p-1.5 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors active:scale-95 disabled:opacity-50"
+                        disabled={rooms <= 1}
+                    >
+                        <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm font-black text-slate-800">{rooms} Rooms</span>
+                    <button
+                        type="button"
+                        onClick={() => handleRoomsChange(1)}
+                        className="p-1.5 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors active:scale-95"
+                    >
+                        <Plus className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Budget */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                    Budget Limit (EUR) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                    type="number"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    placeholder="e.g. 120000"
+                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.budget ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
+                />
+                {errors.budget && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.budget}</p>}
+            </div>
+
+            {/* Area of Interest (Map Draw / City) */}
+            <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                            City
+                        </label>
+                        <input
+                            type="text"
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                            Map Area
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => setShowMap(true)}
+                            className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 border rounded-xl text-xs font-black transition-all active:scale-95 ${polygon?.length ? 'border-violet-500 bg-violet-50 text-violet-700 font-extrabold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}
+                        >
+                            <MapPin className="w-4 h-4" />
+                            {polygon?.length ? 'Edit Map Area' : 'Draw Area'}
+                        </button>
+                    </div>
+                </div>
+                {polygon?.length && (
+                    <div className="text-[10px] text-green-600 font-black flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                        ✓ Specific search boundaries drawn on the map
+                    </div>
+                )}
+            </div>
+
+            {/* Map Selector Modal */}
+            {showMap && (
+                <DrawAreaSelector
+                    city={city}
+                    value={polygon}
+                    onChange={(poly) => setPolygon(poly || undefined)}
+                    onClose={() => setShowMap(false)}
+                />
+            )}
+
+            {/* Optional Details Collapsible Accordion */}
+            <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
+                <button
+                    type="button"
+                    onClick={() => setShowMoreDetails(!showMoreDetails)}
+                    className="w-full px-4 py-3.5 flex items-center justify-between text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100/70 border-b border-slate-100 transition-colors"
+                >
+                    <span>Optional details (Urgency, payment, comments...)</span>
+                    {showMoreDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                
+                {showMoreDetails && (
+                    <div className="p-4 space-y-4 bg-white animate-in slide-in-from-top-4 duration-200">
+                        {/* Min Surface / Moving Urgency */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 mb-1">Min Surface (sqm)</label>
+                                <input
+                                    type="number"
+                                    value={surfaceMin}
+                                    onChange={(e) => setSurfaceMin(e.target.value)}
+                                    placeholder="e.g. 50"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 mb-1">Moving Urgency</label>
+                                <select
+                                    value={urgency}
+                                    onChange={(e) => setUrgency(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500 bg-white"
+                                >
+                                    <option value="">Select urgency</option>
+                                    <option value="Urgent">Urgent (&lt; 1 month)</option>
+                                    <option value="Moderate">Moderate (1-3 months)</option>
+                                    <option value="Low">Low (&gt; 3 months)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Payment Method / Buying Reason */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 mb-1">Payment Method</label>
+                                <select
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500 bg-white"
+                                >
+                                    <option value="">Select method</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Credit">Bank Credit</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 mb-1">Buying Reason</label>
+                                <select
+                                    value={buyingReason}
+                                    onChange={(e) => setBuyingReason(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500 bg-white"
+                                >
+                                    <option value="">Select reason</option>
+                                    <option value="Locuinta Personala">Personal Home</option>
+                                    <option value="Investitie">Investment</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Occupation / Email */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 mb-1">Occupation</label>
+                                <input
+                                    type="text"
+                                    value={occupation}
+                                    onChange={(e) => setOccupation(e.target.value)}
+                                    placeholder="e.g. IT Specialist"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 mb-1">Email Address</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="e.g. client@example.com"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Additional Notes */}
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-1">Additional requirements or notes</label>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Describe parking spaces, floor preferences, balconies..."
+                                rows={3}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500"
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Submit Button */}
+            <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-4 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white rounded-2xl text-sm font-black flex items-center justify-center gap-2 transition-all shadow-md shadow-orange-500/10 active:scale-98 disabled:opacity-50 disabled:pointer-events-none"
+            >
+                {isSubmitting ? (
+                    <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Sending Request...
+                    </>
+                ) : (
+                    'Send Request'
+                )}
+            </button>
+        </form>
+    );
+}

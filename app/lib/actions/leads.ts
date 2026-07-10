@@ -402,3 +402,62 @@ export async function unlockLead(leadId: string) {
     revalidatePath('/dashboard/owner/leads');
     return { success: true };
 }
+
+export async function createLeadPublic(agentId: string, data: LeadData) {
+    const { createAdminClient } = await import('@/app/lib/supabase/admin');
+    const supabase = createAdminClient();
+
+    // Deduplication check: Check for identical lead created in the last 10 seconds
+    const { data: recentLead } = await supabase
+        .from('leads')
+        .select('id, created_at, name')
+        .eq('agent_id', agentId)
+        .eq('name', data.name)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (recentLead) {
+        const timeDiff = new Date().getTime() - new Date(recentLead.created_at).getTime();
+        if (timeDiff < 10000) {
+            console.log('Duplicate public lead detected, returning existing ID.');
+            return { success: true, lead: { id: recentLead.id } };
+        }
+    }
+
+    // Calculate initial score
+    const score = await calculateLeadScore(data);
+
+    // Clean data - remove undefined/null values
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null)
+    );
+
+    const { data: lead, error } = await supabase.from('leads').insert({
+        ...cleanData,
+        score,
+        agent_id: agentId,
+        created_by: agentId,
+        status: 'new',
+        source: 'Shared Link Form',
+        currency: data.currency || 'EUR'
+    })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Create Public Lead Error:', error);
+        return { success: false, error: `Failed to create lead: ${error.message}` };
+    }
+
+    // Handle initial note if present
+    if (lead && data.notes && data.notes.trim()) {
+        await supabase.from('lead_notes').insert({
+            lead_id: lead.id,
+            content: data.notes,
+            created_by: agentId
+        });
+    }
+
+    return { success: true, lead };
+}

@@ -80,6 +80,18 @@ export default function DrawAreaSelector({ city, value, onChange, onClose }: Dra
                 </div>
                 
                 <div className="flex-1 relative">
+                    {!currentPolygon && (
+                        <div className="absolute top-4 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-[450px] bg-slate-900/90 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-800 z-10 flex flex-col gap-1 md:gap-1.5 pointer-events-none">
+                            <p className="font-bold text-orange-400 flex items-center gap-1.5 text-xs">
+                                🗺️ Cum desenezi zona de interes:
+                            </p>
+                            <ol className="list-decimal pl-4 text-[10px] sm:text-xs text-slate-200 font-medium space-y-0.5 sm:space-y-1">
+                                <li>Apasă pe hartă pentru a plasa primul punct (colț).</li>
+                                <li>Continuă să apeși pentru a desena conturul zonei.</li>
+                                <li>Apasă pe primul punct sau fă dublu-click pentru a termina desenul.</li>
+                            </ol>
+                        </div>
+                    )}
                     <GoogleMap
                         mapContainerStyle={{ width: '100%', height: '100%' }}
                         center={center}
@@ -91,6 +103,7 @@ export default function DrawAreaSelector({ city, value, onChange, onClose }: Dra
                             <DrawingManager
                                 onLoad={dm => drawingManagerRef.current = dm}
                                 onPolygonComplete={onPolygonComplete}
+                                drawingMode={typeof window !== 'undefined' && window.google?.maps?.drawing?.OverlayType ? window.google.maps.drawing.OverlayType.POLYGON : 'polygon' as any}
                                 options={{
                                     drawingControl: true,
                                     drawingControlOptions: {
