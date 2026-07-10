@@ -8,8 +8,6 @@ import {
     ChevronDown, 
     ChevronUp, 
     CheckCircle, 
-    Plus, 
-    Minus, 
     MapPin, 
     Loader2 
 } from 'lucide-react';
@@ -35,10 +33,6 @@ export default function InviteLeadForm({ agentId }: Props) {
     // Optional Fields State
     const [surfaceMin, setSurfaceMin] = useState('');
     const [urgency, setUrgency] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('');
-    const [buyingReason, setBuyingReason] = useState('');
-    const [occupation, setOccupation] = useState('');
-    const [email, setEmail] = useState('');
     const [notes, setNotes] = useState('');
 
     // Interface State
@@ -46,10 +40,6 @@ export default function InviteLeadForm({ agentId }: Props) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-    const handleRoomsChange = (amount: number) => {
-        setRooms(prev => Math.max(1, prev + amount));
-    };
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
@@ -71,21 +61,17 @@ export default function InviteLeadForm({ agentId }: Props) {
         const leadPayload: LeadData = {
             name: name.trim(),
             phone: phone.trim(),
-            email: email.trim() || undefined,
             status: 'new',
             preference_listing_type: listingType,
             preference_type: propertyType,
             preference_rooms_min: rooms,
-            preference_rooms_max: rooms + 1, // Reasonable range default
+            preference_rooms_max: rooms === 4 ? undefined : rooms,
             budget_max: Number(budget),
             currency: 'EUR',
             preference_location_city: city.trim(),
             preference_location_polygon: polygon,
             preference_surface_min: surfaceMin ? Number(surfaceMin) : undefined,
             move_urgency: urgency || undefined,
-            payment_method: paymentMethod || undefined,
-            buying_reason: buyingReason || undefined,
-            occupation: occupation.trim() || undefined,
             notes: notes.trim() || undefined
         };
 
@@ -122,53 +108,23 @@ export default function InviteLeadForm({ agentId }: Props) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name/Nickname */}
-            <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                    Name or Nickname <span className="text-rose-500">*</span>
-                </label>
-                <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. John Doe"
-                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.name ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
-                />
-                {errors.name && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.name}</p>}
-            </div>
-
-            {/* Phone Number */}
-            <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                    Phone Number <span className="text-rose-500">*</span>
-                </label>
-                <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. +40 722 000 000"
-                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.phone ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
-                />
-                {errors.phone && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.phone}</p>}
-            </div>
-
             {/* Buy / Rent Toggle */}
             <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
                     I want to
                 </label>
-                <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-xl">
+                <div className="grid grid-cols-2 gap-2">
                     <button
                         type="button"
                         onClick={() => setListingType('For Sale')}
-                        className={`py-2 rounded-lg text-xs font-black transition-all ${listingType === 'For Sale' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${listingType === 'For Sale' ? 'border-orange-500 bg-orange-50/50 text-orange-600 font-extrabold shadow-sm shadow-orange-500/5' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'}`}
                     >
                         Buy
                     </button>
                     <button
                         type="button"
                         onClick={() => setListingType('For Rent')}
-                        className={`py-2 rounded-lg text-xs font-black transition-all ${listingType === 'For Rent' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${listingType === 'For Rent' ? 'border-orange-500 bg-orange-50/50 text-orange-600 font-extrabold shadow-sm shadow-orange-500/5' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'}`}
                     >
                         Rent
                     </button>
@@ -199,30 +155,24 @@ export default function InviteLeadForm({ agentId }: Props) {
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
                     Number of Rooms
                 </label>
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-2.5 justify-between max-w-[200px]">
-                    <button
-                        type="button"
-                        onClick={() => handleRoomsChange(-1)}
-                        className="p-1.5 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors active:scale-95 disabled:opacity-50"
-                        disabled={rooms <= 1}
-                    >
-                        <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="text-sm font-black text-slate-800">{rooms} Rooms</span>
-                    <button
-                        type="button"
-                        onClick={() => handleRoomsChange(1)}
-                        className="p-1.5 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors active:scale-95"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </button>
+                <div className="grid grid-cols-4 gap-2">
+                    {([1, 2, 3, 4] as const).map(num => (
+                        <button
+                            key={num}
+                            type="button"
+                            onClick={() => setRooms(num)}
+                            className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${rooms === num ? 'border-orange-500 bg-orange-50/50 text-orange-600 font-extrabold shadow-sm shadow-orange-500/5' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'}`}
+                        >
+                            {num === 4 ? '4+' : num}
+                        </button>
+                    ))}
                 </div>
             </div>
 
             {/* Budget */}
             <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                    Budget Limit (EUR) <span className="text-rose-500">*</span>
+                    Budget Maxim (EUR) <span className="text-rose-500">*</span>
                 </label>
                 <input
                     type="number"
@@ -279,6 +229,39 @@ export default function InviteLeadForm({ agentId }: Props) {
                 />
             )}
 
+            {/* Name or Nickname */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                    Name or Nickname <span className="text-rose-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. John Doe"
+                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.name ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
+                />
+                {errors.name && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.name}</p>}
+            </div>
+
+            {/* Phone Number */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                    Phone Number <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-slate-400 font-medium text-[10px] md:text-xs block mb-2">
+                    (where the link with matching properties will be sent)
+                </span>
+                <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +40 722 000 000"
+                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.phone ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
+                />
+                {errors.phone && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.phone}</p>}
+            </div>
+
             {/* Optional Details Collapsible Accordion */}
             <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
                 <button
@@ -286,7 +269,7 @@ export default function InviteLeadForm({ agentId }: Props) {
                     onClick={() => setShowMoreDetails(!showMoreDetails)}
                     className="w-full px-4 py-3.5 flex items-center justify-between text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100/70 border-b border-slate-100 transition-colors"
                 >
-                    <span>Optional details (Urgency, payment, comments...)</span>
+                    <span>Optional details (Urgency, surface, comments...)</span>
                     {showMoreDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 
@@ -316,58 +299,6 @@ export default function InviteLeadForm({ agentId }: Props) {
                                     <option value="Moderate">Moderate (1-3 months)</option>
                                     <option value="Low">Low (&gt; 3 months)</option>
                                 </select>
-                            </div>
-                        </div>
-
-                        {/* Payment Method / Buying Reason */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-1">Payment Method</label>
-                                <select
-                                    value={paymentMethod}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500 bg-white"
-                                >
-                                    <option value="">Select method</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Credit">Bank Credit</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-1">Buying Reason</label>
-                                <select
-                                    value={buyingReason}
-                                    onChange={(e) => setBuyingReason(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500 bg-white"
-                                >
-                                    <option value="">Select reason</option>
-                                    <option value="Locuinta Personala">Personal Home</option>
-                                    <option value="Investitie">Investment</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Occupation / Email */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-1">Occupation</label>
-                                <input
-                                    type="text"
-                                    value={occupation}
-                                    onChange={(e) => setOccupation(e.target.value)}
-                                    placeholder="e.g. IT Specialist"
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-1">Email Address</label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="e.g. client@example.com"
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500"
-                                />
                             </div>
                         </div>
 

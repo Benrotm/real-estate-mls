@@ -21,7 +21,7 @@ export default function InvitePage({ params }: Props) {
             <div className="max-w-xl w-full mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
                 {/* Form Header */}
                 <div className="bg-gradient-to-r from-orange-500 to-rose-500 p-8 text-white text-center space-y-3">
-                    <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
+                    <h1 className="text-xl sm:text-2xl font-normal tracking-tight leading-tight">
                         Let me know what property you are looking for so I can find the perfect match!
                     </h1>
                     <div className="w-16 h-1 bg-white/30 mx-auto rounded-full" />
