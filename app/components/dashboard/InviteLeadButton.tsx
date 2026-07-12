@@ -17,7 +17,8 @@ export default function InviteLeadButton({ agentId }: Props) {
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(inviteUrl);
+            const textToCopy = `Spune-mi ce cauți și vei primi un link cu toate proprietățile care se potrivesc: ${inviteUrl}`;
+            await navigator.clipboard.writeText(textToCopy);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
