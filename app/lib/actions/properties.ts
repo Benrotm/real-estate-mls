@@ -87,6 +87,11 @@ export async function createProperty(formData: FormData) {
             social_media_url: formData.get('social_media_url') as string,
             personal_property_id: formData.get('personal_property_id') as string,
 
+            // Rental Restrictions
+            no_smoking_allowed: formData.get('no_smoking_allowed') === 'true',
+            no_pets_allowed: formData.get('no_pets_allowed') === 'true',
+            no_small_kids_allowed: formData.get('no_small_kids_allowed') === 'true',
+
             // Details
             features: features,
 
@@ -772,6 +777,11 @@ export async function updateProperty(id: string, formData: FormData) {
             // New Requests
             social_media_url: formData.get('social_media_url') as string,
             personal_property_id: formData.get('personal_property_id') as string,
+
+            // Rental Restrictions
+            no_smoking_allowed: formData.get('no_smoking_allowed') === 'true',
+            no_pets_allowed: formData.get('no_pets_allowed') === 'true',
+            no_small_kids_allowed: formData.get('no_small_kids_allowed') === 'true',
 
             // Private Fields
             private_notes: formData.get('private_notes') as string,

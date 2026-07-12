@@ -65,6 +65,7 @@ export interface LeadData {
     preference_location_polygon?: { lat: number; lng: number }[];
     is_smoker?: boolean;
     has_pets?: boolean;
+    has_small_kids?: boolean;
     pets_details?: string;
     points_of_interest?: Record<string, string>;
     buying_reason?: string;

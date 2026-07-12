@@ -41,6 +41,7 @@ export default async function MatchScoringPage() {
                             <li><strong>Drawn Map Area:</strong> If the lead has a drawn polygon on the map, the property MUST fall inside it. If it doesn't, it scores 0. (Note: Text-based Area/Neighborhood match is treated as an optional bonus).</li>
                             <li><strong>Budget:</strong> If the property price exceeds the Lead's Max Budget + the configured Margin % (e.g., 100k budget + 10% margin = 110k absolute limit), it scores 0. Same applies for Min Budget.</li>
                             <li><strong>Rooms:</strong> For residential properties, if the property has fewer rooms than the Lead's minimum preference, it scores 0. (Non-residential properties are exempt).</li>
+                            <li><strong>Rental Rules (Small Kids, Pets & Smoking):</strong> For "For Rent" properties, if the property forbids Pets, Small Kids, or Smoking, any Lead with conflicting habits/kids will score 0 immediately when the rule is ACTIVE.</li>
                         </ul>
                         <p className="mt-3 text-xs italic text-slate-500">
                             * Tip: If you notice "inconsistencies" where a seemingly good property scores 0, check if it violated one of the strict rules above (most commonly the Budget Margin or Area Margin). Toggle the rule to INACTIVE if you want the engine to be flexible.

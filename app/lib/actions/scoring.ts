@@ -307,6 +307,40 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
         score += getWeight('match_type');
     }
 
+    // 2.5 Rental Mandatory/Core Criteria Compliance (For Rent Properties)
+    if (property.listing_type === 'For Rent') {
+        // Strict Rule: Small Kids Compliance
+        if (isActive('match_rental_kids')) {
+            const hasKids = lead.has_small_kids === true || (lead.kids_count !== undefined && lead.kids_count > 0);
+            if (property.no_small_kids_allowed && hasKids) {
+                return 0; // Absolute disqualification: property forbids small kids
+            }
+            if (!property.no_small_kids_allowed || !hasKids) {
+                score += getWeight('match_rental_kids');
+            }
+        }
+
+        // Strict Rule: Pets Compliance
+        if (isActive('match_rental_pets')) {
+            if (property.no_pets_allowed && lead.has_pets === true) {
+                return 0; // Absolute disqualification: property forbids pets
+            }
+            if (!property.no_pets_allowed || !lead.has_pets) {
+                score += getWeight('match_rental_pets');
+            }
+        }
+
+        // Strict Rule: Smoking Compliance
+        if (isActive('match_rental_smoking')) {
+            if (property.no_smoking_allowed && lead.is_smoker === true) {
+                return 0; // Absolute disqualification: property forbids smoking inside
+            }
+            if (!property.no_smoking_allowed || !lead.is_smoker) {
+                score += getWeight('match_rental_smoking');
+            }
+        }
+    }
+
     // 3. City Match (Optional)
     if (isActive('match_city') && lead.preference_location_city) {
         if (lead.preference_location_city.toLowerCase() === property.location_city?.toLowerCase()) {

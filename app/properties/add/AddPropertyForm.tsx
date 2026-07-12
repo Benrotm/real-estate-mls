@@ -513,6 +513,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         virtualTourUrl: initialData?.virtual_tour_url || '',
         socialMediaUrl: initialData?.social_media_url || '',
         personalId: initialData?.personal_property_id || '',
+        noSmokingAllowed: initialData?.no_smoking_allowed || false,
+        noPetsAllowed: initialData?.no_pets_allowed || false,
+        noSmallKidsAllowed: initialData?.no_small_kids_allowed || false,
         // Private Fields
         privateNotes: initialData?.private_notes || '',
         documents: (initialData?.documents as string[]) || [], // Documents as array of URLs
@@ -940,6 +943,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
         formDataToSend.append('virtual_tour_url', formData.virtualTourUrl || '');
         formDataToSend.append('social_media_url', formData.socialMediaUrl || '');
         formDataToSend.append('personal_property_id', formData.personalId || '');
+        formDataToSend.append('no_smoking_allowed', formData.noSmokingAllowed ? 'true' : 'false');
+        formDataToSend.append('no_pets_allowed', formData.noPetsAllowed ? 'true' : 'false');
+        formDataToSend.append('no_small_kids_allowed', formData.noSmallKidsAllowed ? 'true' : 'false');
 
         // Private Fields
         formDataToSend.append('private_notes', formData.privateNotes || '');
@@ -1644,6 +1650,45 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 <span className="text-xs text-slate-500">Enable this if you are open to working with other agents</span>
                                             </div>
                                         </label>
+
+                                        {/* Rental Restrictions (Only when For Rent) */}
+                                        {formData.listingType === 'For Rent' && (
+                                            <div className="pt-4 border-t border-slate-800/80 mt-4">
+                                                <h4 className="text-sm font-black uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
+                                                    <span>Rental Restrictions & Rules</span>
+                                                    <span className="text-[10px] font-semibold bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">AI Matching Criteria</span>
+                                                </h4>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                    <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${formData.noSmokingAllowed ? 'bg-amber-500/10 border-amber-500/50 text-amber-200' : 'bg-slate-900/50 border-slate-700/80 text-slate-300 hover:bg-slate-800/80'}`}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="w-4 h-4 rounded border-slate-600 bg-slate-950 text-amber-500 focus:ring-amber-500/30 focus:ring-offset-0"
+                                                            checked={formData.noSmokingAllowed}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, noSmokingAllowed: e.target.checked }))}
+                                                        />
+                                                        <span className="text-xs font-bold">No Smoking Allowed</span>
+                                                    </label>
+                                                    <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${formData.noPetsAllowed ? 'bg-amber-500/10 border-amber-500/50 text-amber-200' : 'bg-slate-900/50 border-slate-700/80 text-slate-300 hover:bg-slate-800/80'}`}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="w-4 h-4 rounded border-slate-600 bg-slate-950 text-amber-500 focus:ring-amber-500/30 focus:ring-offset-0"
+                                                            checked={formData.noPetsAllowed}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, noPetsAllowed: e.target.checked }))}
+                                                        />
+                                                        <span className="text-xs font-bold">No Pets Allowed</span>
+                                                    </label>
+                                                    <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${formData.noSmallKidsAllowed ? 'bg-amber-500/10 border-amber-500/50 text-amber-200' : 'bg-slate-900/50 border-slate-700/80 text-slate-300 hover:bg-slate-800/80'}`}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="w-4 h-4 rounded border-slate-600 bg-slate-950 text-amber-500 focus:ring-amber-500/30 focus:ring-offset-0"
+                                                            checked={formData.noSmallKidsAllowed}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, noSmallKidsAllowed: e.target.checked }))}
+                                                        />
+                                                        <span className="text-xs font-bold">No Small Kids Allowed</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

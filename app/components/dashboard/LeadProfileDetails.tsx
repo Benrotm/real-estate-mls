@@ -25,8 +25,12 @@ export default function LeadProfileDetails({ lead }: { lead: Partial<LeadData> }
                         <div className="text-sm font-bold text-slate-900">{lead.marital_status || 'N/A'}</div>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kids / Pets</label>
-                        <div className="text-sm font-bold text-slate-900">{lead.kids_count || 0} Kids {lead.has_pets ? '• Has Pets' : ''}</div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kids / Pets / Habits</label>
+                        <div className="text-sm font-bold text-slate-900">
+                            {lead.has_small_kids || (lead.kids_count && lead.kids_count > 0) ? 'Small Kids' : 'No Small Kids'}
+                            {lead.has_pets ? ' • Has Pets' : ''}
+                            {lead.is_smoker ? ' • Smoker' : ''}
+                        </div>
                     </div>
                 </div>
 

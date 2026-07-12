@@ -44,6 +44,11 @@ export interface Property {
     personal_property_id?: string;
     friendly_id?: string;
 
+    // Rental Restrictions (For Rent only)
+    no_smoking_allowed?: boolean;
+    no_pets_allowed?: boolean;
+    no_small_kids_allowed?: boolean;
+
     // Private Fields (Owner/Admin only)
     private_notes?: string;
     documents?: string[];

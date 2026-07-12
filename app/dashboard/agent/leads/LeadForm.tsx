@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban, Building2, PieChart, TrendingUp } from 'lucide-react';
+import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban, Baby, Building2, PieChart, TrendingUp } from 'lucide-react';
 import {
     PROPERTY_TYPES,
     TRANSACTION_TYPES,
@@ -106,6 +106,7 @@ const DEFAULT_FORM_DATA: LeadData = {
     current_city: '',
     is_smoker: false,
     has_pets: false,
+    has_small_kids: false,
     pets_details: '',
     social_notes: '',
     points_of_interest: {},
@@ -863,7 +864,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                         </div>
 
                         {/* Lifestyle Habits */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-xl border border-slate-200">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-slate-50 rounded-xl border border-slate-200">
                             <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
                                 <div className="flex items-center gap-3">
                                     <Ban className="w-5 h-5 text-slate-400" />
@@ -884,9 +885,19 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                 </div>
                                 <input type="checkbox" name="has_pets" checked={formData.has_pets || false} onChange={handleChange} className="w-5 h-5 text-orange-600 rounded border-slate-300 focus:ring-orange-500" />
                             </div>
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <Baby className="w-5 h-5 text-slate-400" />
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-700">Has small Kids</p>
+                                        <p className="text-xs text-slate-500">Toddlers or young kids?</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" name="has_small_kids" checked={formData.has_small_kids || false} onChange={handleChange} className="w-5 h-5 text-orange-600 rounded border-slate-300 focus:ring-orange-500" />
+                            </div>
 
                             {formData.has_pets && (
-                                <div className="md:col-span-2 animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
+                                <div className="md:col-span-3 animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
                                     <label className={labelClass}>Pet Details (What kind, how many?)</label>
                                     <input type="text" name="pets_details" value={formData.pets_details || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 2 Golden Retrievers" />
                                 </div>
