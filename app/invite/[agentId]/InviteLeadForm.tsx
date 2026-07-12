@@ -33,6 +33,8 @@ export default function InviteLeadForm({ agentId }: Props) {
     // Optional Fields State
     const [surfaceMin, setSurfaceMin] = useState('');
     const [urgency, setUrgency] = useState('');
+    const [hasSmallKids, setHasSmallKids] = useState(false);
+    const [hasPets, setHasPets] = useState(false);
     const [notes, setNotes] = useState('');
 
     // Interface State
@@ -72,6 +74,9 @@ export default function InviteLeadForm({ agentId }: Props) {
             preference_location_polygon: polygon,
             preference_surface_min: surfaceMin ? Number(surfaceMin) : undefined,
             move_urgency: urgency || undefined,
+            has_small_kids: hasSmallKids,
+            has_pets: hasPets,
+            social_notes: notes.trim() || undefined,
             notes: notes.trim() || undefined
         };
 
@@ -300,6 +305,35 @@ export default function InviteLeadForm({ agentId }: Props) {
                                     <option value="Low">Low (&gt; 3 months)</option>
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Checkboxes cards for kids & pets */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all ${hasSmallKids ? 'border-orange-500 bg-orange-50/30' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={hasSmallKids}
+                                    onChange={(e) => setHasSmallKids(e.target.checked)}
+                                    className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer"
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-black text-slate-800">I have small kids</span>
+                                    <span className="text-[10px] text-slate-400 font-medium">Toddlers or young kids</span>
+                                </div>
+                            </label>
+
+                            <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all ${hasPets ? 'border-orange-500 bg-orange-50/30' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={hasPets}
+                                    onChange={(e) => setHasPets(e.target.checked)}
+                                    className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer"
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-black text-slate-800">I have a friendly Pet</span>
+                                    <span className="text-[10px] text-slate-400 font-medium">Dogs, cats, or others</span>
+                                </div>
+                            </label>
                         </div>
 
                         {/* Additional Notes */}
