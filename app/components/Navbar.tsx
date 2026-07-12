@@ -22,6 +22,10 @@ export default function Navbar({ user }: NavbarProps) {
   const isSuperAdmin = userRole === 'super_admin';
   const pathname = usePathname();
   const router = useRouter();
+
+  if (pathname && pathname.startsWith('/invite/')) {
+    return null;
+  }
   const [agencyCost, setAgencyCost] = useState<number>(500);
   const [loadingCost, setLoadingCost] = useState<boolean>(true);
   const [isPending, startTransition] = useTransition();

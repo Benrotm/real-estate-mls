@@ -1,6 +1,14 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+    const pathname = usePathname();
+
+    if (pathname && pathname.startsWith('/invite/')) {
+        return null;
+    }
     return (
         <footer className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-t border-slate-800 mt-auto relative overflow-hidden">
             {/* Background Decor matched from Hero */}

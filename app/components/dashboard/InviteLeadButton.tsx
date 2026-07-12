@@ -29,8 +29,8 @@ export default function InviteLeadButton({ agentId }: Props) {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'Imobum - Trimite cerere proprietate',
-                    text: 'Te rog să completezi preferințele tale de căutare folosind acest link:',
+                    title: 'Imobum - Cerere Proprietate',
+                    text: 'Spune-mi ce cauți și vei primi un link cu toate proprietățile care se potrivesc:',
                     url: inviteUrl,
                 });
             } catch (err) {
@@ -38,7 +38,7 @@ export default function InviteLeadButton({ agentId }: Props) {
             }
         } else {
             // Fallback: Open WhatsApp directly
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('Te rog să completezi preferințele tale de căutare folosind acest link: ' + inviteUrl)}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('Spune-mi ce cauți și vei primi un link cu toate proprietățile care se potrivesc: ' + inviteUrl)}`, '_blank');
         }
     };
 

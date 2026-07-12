@@ -10,14 +10,14 @@ interface Props {
 
 export const metadata: Metadata = {
     title: 'Trimite Cerere Proprietate | Imobum',
-    description: 'Completează preferințele tale de căutare pentru a găsi proprietatea potrivită.',
+    description: 'Spune-mi ce cauți și vei primi un link cu toate proprietățile care se potrivesc.',
 };
 
 export default async function InvitePage({ params }: Props) {
     const { agentId } = await params;
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 -mt-16">
             <div className="max-w-xl w-full mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
                 {/* Form Header */}
                 <div className="bg-gradient-to-r from-orange-500 to-rose-500 p-8 text-white text-center space-y-3">
