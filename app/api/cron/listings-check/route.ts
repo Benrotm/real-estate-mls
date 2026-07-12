@@ -27,9 +27,10 @@ export async function GET(request: Request) {
     const listingRenewalCost = typeof costs.listing_renewal === 'number' ? costs.listing_renewal : 2;
 
     // 2. Fetch all active properties
+    // 2. Fetch all active properties
     const { data: properties, error: propertiesError } = await supabase
         .from('properties')
-        .select('id, user_id, title, published_at, created_at, status')
+        .select('id, user_id, title, published_at, created_at, status, listing_type')
         .eq('status', 'active');
 
     if (propertiesError) {
@@ -51,7 +52,42 @@ export async function GET(request: Request) {
 
     for (const prop of expiredListings) {
         try {
-            // Fetch owner's profile for current credits
+            const isForRent = String(prop.listing_type || '').toLowerCase() === 'for rent';
+
+            if (isForRent) {
+                // For Rent properties should NOT be renewed automatically.
+                // After 30 days they become Unpublished ('draft').
+                const { error: updatePropError } = await supabase
+                    .from('properties')
+                    .update({ status: 'draft' })
+                    .eq('id', prop.id);
+
+                if (updatePropError) {
+                    skipped.push({ id: prop.id, error: `Failed to unpublish For Rent property: ${updatePropError.message}` });
+                    continue;
+                }
+
+                // Insert notification to inform the owner
+                const { error: notifyError } = await supabase
+                    .from('notifications')
+                    .insert({
+                        user_id: prop.user_id,
+                        type: 'system',
+                        title: `Anunțul tău de închiriere a expirat: ${prop.title}`,
+                        content: `Anunțul tău de închiriere "${prop.title}" a expirat după 30 de zile și a fost retras automat din listare conform regulilor pentru proprietățile de închiriat (fără prelungire automată).`,
+                        link: `/dashboard/owner/properties/${prop.id}/edit`,
+                        is_read: false
+                    });
+
+                if (notifyError) {
+                    console.error(`Error creating notification for property ${prop.id}:`, notifyError);
+                }
+
+                expired.push({ id: prop.id, title: prop.title, user_id: prop.user_id });
+                continue;
+            }
+
+            // Fetch owner's profile for current credits (for properties other than For Rent)
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('credits')

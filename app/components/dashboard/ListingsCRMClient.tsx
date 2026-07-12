@@ -810,8 +810,16 @@ function PropertyCRMCard({ property, currentUserId }: { property: PropertyWithOf
                                         badgeColor = 'bg-amber-500';
                                     }
                                     
+                                    const isForRent = String(property.listing_type || '').toLowerCase() === 'for rent';
+                                    const tooltipTitle = isForRent
+                                        ? 'Anunțurile de închiriere expiră după 30 de zile și devin Unpublished automat (fără prelungire automată)'
+                                        : 'Anunțul se prelungește automat la expirarea celor 30 de zile (dacă ai suficiente credite)';
+
                                     return (
-                                        <span className={`${badgeColor} ${pulseClass} text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0`}>
+                                        <span 
+                                            title={tooltipTitle}
+                                            className={`${badgeColor} ${pulseClass} text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 cursor-help`}
+                                        >
                                             {remainingDays} {remainingDays === 1 ? 'Zi Rămasă' : 'Zile Rămase'}
                                         </span>
                                     );
