@@ -831,7 +831,7 @@ export async function updateProperty(id: string, formData: FormData) {
             publish_tiktok: formData.get('publish_tiktok') === 'true',
 
             updated_at: new Date().toISOString(),
-            status: property?.status === 'active' ? 'active' : ((formData.get('status') as 'active' | 'draft') || 'active')
+            status: (formData.get('status') as 'active' | 'draft') || property?.status || 'active'
         };
 
         // Check if listing is transitioning to active to update published_at

@@ -880,15 +880,14 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const handleSaveDraft = async (e?: React.MouseEvent, silent = false) => {
         if (e) e.preventDefault();
         setSavingDraft(true);
-        const targetStatus = initialData?.status === 'active' ? 'active' : 'draft';
-        await handleSubmit(e as any, targetStatus, true);
+        await handleSubmit(e as any, 'draft', true);
         setSavingDraft(false);
     };
 
     const nextStep = async () => {
         if (step < 5) {
-            const targetStatus = initialData?.status === 'active' ? 'active' : 'draft';
-            await handleSaveDraft(undefined, true);
+            const autoSaveStatus = initialData?.status === 'active' ? 'active' : 'draft';
+            await handleSubmit(undefined as any, autoSaveStatus, true);
             setStep(step + 1);
         }
     };
