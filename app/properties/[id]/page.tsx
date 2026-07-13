@@ -5,7 +5,7 @@ import { checkUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features
 export const dynamic = 'force-dynamic';
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
 import Link from 'next/link';
-import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video, Sparkles, ArrowRight, LayoutGrid, Activity, Armchair, Layers, ShieldCheck, Edit3, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Bed, Bath, Ruler, Calendar, MapPin, Check, Lock, Award, Home, Maximize2, Box, Trees, Sun, Facebook, Instagram, Linkedin, Twitter, Youtube, ExternalLink, FileText, Star, Video, Sparkles, ArrowRight, LayoutGrid, Activity, Armchair, Layers, ShieldCheck, Edit3, RefreshCw, Ban } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import PropertyMap from '../../components/PropertyMap';
 
@@ -806,6 +806,44 @@ export default async function PropertyDetailPage({
                             </p>
                         </div>
                     </div>
+
+                    {/* Rental Restrictions & Rules (AI Matching Criteria) */}
+                    {property.listing_type === 'For Rent' && (property.no_smoking_allowed || property.no_pets_allowed || property.no_small_kids_allowed) && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-2xl font-bold text-slate-900">Rental Restrictions & Rules</h2>
+                                <span className="bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                    AI Matching Criteria
+                                </span>
+                            </div>
+                            <div className="border border-slate-200 rounded-2xl p-6 bg-white shadow-sm flex flex-wrap gap-4">
+                                {property.no_smoking_allowed && (
+                                    <div className="flex items-center gap-3 bg-rose-50/80 border border-rose-200 text-rose-800 font-semibold px-4 py-3 rounded-xl shadow-sm">
+                                        <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600">
+                                            <Ban className="w-4 h-4" />
+                                        </div>
+                                        <span>No Smoking Allowed</span>
+                                    </div>
+                                )}
+                                {property.no_pets_allowed && (
+                                    <div className="flex items-center gap-3 bg-amber-50/80 border border-amber-200 text-amber-800 font-semibold px-4 py-3 rounded-xl shadow-sm">
+                                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                            <Ban className="w-4 h-4" />
+                                        </div>
+                                        <span>No Pets Allowed</span>
+                                    </div>
+                                )}
+                                {property.no_small_kids_allowed && (
+                                    <div className="flex items-center gap-3 bg-purple-50/80 border border-purple-200 text-purple-800 font-semibold px-4 py-3 rounded-xl shadow-sm">
+                                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600">
+                                            <Ban className="w-4 h-4" />
+                                        </div>
+                                        <span>No Small Kids Allowed</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Open House Events */}
                     {propertyEvents && propertyEvents.length > 0 && (
