@@ -1208,6 +1208,15 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     {hasSocialChecked && <SocialSharePanel />}
 
                     <div className={hasSocialChecked ? 'mt-6' : ''}>
+                        {(propertyId || initialData?.id) && (
+                            <button
+                                onClick={() => router.push(`/properties/${propertyId || initialData?.id}`)}
+                                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 rounded-xl font-bold hover:from-emerald-500 hover:to-teal-500 transition-all shadow-lg shadow-emerald-600/25 border border-emerald-500/20 mb-3 flex items-center justify-center gap-2"
+                            >
+                                <span>Go to Property Listing Page</span>
+                                <ExternalLink className="w-4 h-4" />
+                            </button>
+                        )}
                         <button
                             onClick={() => router.push(initialData?.owner_id || propertyId ? '/dashboard/agent' : '/dashboard/owner')}
                             className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg shadow-violet-600/25 border border-violet-500/20"
