@@ -472,7 +472,6 @@ export default function LeadList({
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Score</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Preferences</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact Info</th>
-                                {isAdmin && <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Added</th>}
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -521,7 +520,10 @@ export default function LeadList({
                                                         ) : (
                                                             <span className="font-bold text-slate-500 italic">Partner Lead</span>
                                                         )}
-                                                        <div className="text-xs text-slate-500">{(lead.agent_id === currentUserId || isAdmin) ? (lead.source || 'Unknown Source') : teamMemberIds.includes(lead.agent_id) ? 'Team Member Lead' : 'Shared Lead'}</div>
+                                                        <div className="text-xs text-slate-500">
+                                                            {(lead.agent_id === currentUserId || isAdmin) ? (lead.source || 'Unknown Source') : teamMemberIds.includes(lead.agent_id) ? 'Team Member Lead' : 'Shared Lead'}
+                                                            {lead.created_at && ` • ${new Date(lead.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${new Date(lead.created_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}`}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -557,7 +559,10 @@ export default function LeadList({
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="font-medium text-slate-900 truncate max-w-[150px]">{lead.preference_type || 'Any Property'}</div>
+                                                <div className="font-medium text-slate-900 truncate max-w-[170px]">
+                                                    {lead.preference_type || 'Any Property'}
+                                                    {lead.preference_rooms_min ? ` • ${lead.preference_rooms_min}${lead.preference_rooms_min === 4 ? '+' : ''} Rooms` : ''}
+                                                </div>
                                                 <div className="text-sm text-slate-500">
                                                     {lead.budget_max ? `Budget: ${Number(lead.budget_max).toLocaleString()} ${lead.currency || 'EUR'}` : 'No Budget Set'}
                                                 </div>
@@ -607,11 +612,6 @@ export default function LeadList({
                                                     </div>
                                                 )}
                                             </td>
-                                            {isAdmin && (
-                                                <td className="px-6 py-4 text-sm text-slate-600 font-medium whitespace-nowrap">
-                                                    {lead.created_at ? new Date(lead.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
-                                                </td>
-                                            )}
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     {lead.isLocked ? (
@@ -683,7 +683,7 @@ export default function LeadList({
                                         {/* Expanded Lead Card */}
                                         {expandedLeadId === lead.id && (
                                             <tr className="bg-slate-50/50">
-                                                <td colSpan={isAdmin ? 8 : 6} className="px-6 py-6 ring-1 ring-inset ring-slate-200/50">
+                                                <td colSpan={isAdmin ? 7 : 6} className="px-6 py-6 ring-1 ring-inset ring-slate-200/50">
                                                     {lead.isLocked ? (
                                                         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-lg mx-auto text-center space-y-6 border-t-4 border-t-yellow-500 animate-in fade-in slide-in-from-top-4 duration-300">
                                                             <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto border border-yellow-200">
@@ -765,7 +765,7 @@ export default function LeadList({
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={isAdmin ? 8 : 6} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={isAdmin ? 7 : 6} className="px-6 py-12 text-center text-slate-400">
                                         <div className="flex flex-col items-center gap-2">
                                             <Search className="w-8 h-8 opacity-20" />
                                             <span className="text-sm">
