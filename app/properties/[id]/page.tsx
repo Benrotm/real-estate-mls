@@ -230,7 +230,10 @@ export default async function PropertyDetailPage({
                     private_notes: dbProperty.private_notes || undefined,
                     documents: dbProperty.documents || [],
                     owner_name: (dbProperty as any).owner_name || undefined,
-                    owner_phone: (dbProperty as any).owner_phone || undefined
+                    owner_phone: (dbProperty as any).owner_phone || undefined,
+                    no_smoking_allowed: !!dbProperty.no_smoking_allowed,
+                    no_pets_allowed: !!dbProperty.no_pets_allowed,
+                    no_small_kids_allowed: !!dbProperty.no_small_kids_allowed
                 };
             }
         }
@@ -808,7 +811,7 @@ export default async function PropertyDetailPage({
                     </div>
 
                     {/* Rental Restrictions & Rules (AI Matching Criteria) */}
-                    {property.listing_type === 'For Rent' && (property.no_smoking_allowed || property.no_pets_allowed || property.no_small_kids_allowed) && (
+                    {Boolean(property.no_smoking_allowed || property.no_pets_allowed || property.no_small_kids_allowed) && (
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <h2 className="text-2xl font-bold text-slate-900">Rental Restrictions & Rules</h2>
