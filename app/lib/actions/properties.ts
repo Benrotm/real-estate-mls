@@ -368,13 +368,20 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         if (filters.listing_type) query = query.eq('listing_type', filters.listing_type);
         if (filters.type) query = query.eq('type', filters.type);
 
-        if (filters.minPrice) query = query.gte('price', filters.minPrice);
-        if (filters.maxPrice) query = query.lte('price', filters.maxPrice);
+        if (filters.minPrice !== undefined && filters.minPrice !== '') {
+            const minP = Number(filters.minPrice);
+            if (!isNaN(minP)) query = query.gte('price', minP);
+        }
+        if (filters.maxPrice !== undefined && filters.maxPrice !== '') {
+            const maxP = Number(filters.maxPrice);
+            if (!isNaN(maxP)) query = query.lte('price', maxP);
+        }
 
-        // Keywords (Search across Title, City, and Ref ID)
+        // Keywords (Search across Title, City, Area, Address, Friendly ID, and Personal/Internal ID)
         if (filters.keywords) {
-            const ks = `%${filters.keywords}%`;
-            query = query.or(`title.ilike.${ks},location_city.ilike.${ks},friendly_id.ilike.${ks}`);
+            const cleanKw = String(filters.keywords).replace(/^#/, '').trim();
+            const ks = `%${cleanKw}%`;
+            query = query.or(`title.ilike.${ks},location_city.ilike.${ks},location_area.ilike.${ks},address.ilike.${ks},friendly_id.ilike.${ks},personal_property_id.ilike.${ks}`);
         }
 
         // Location
@@ -823,9 +830,8 @@ export async function updateProperty(id: string, formData: FormData) {
             publish_instagram: formData.get('publish_instagram') === 'true',
             publish_tiktok: formData.get('publish_tiktok') === 'true',
 
-            // updated_at is handled by DB trigger usually, but we can set it if needed
             updated_at: new Date().toISOString(),
-            status: (formData.get('status') as 'active' | 'draft') || 'active'
+            status: property?.status === 'active' ? 'active' : ((formData.get('status') as 'active' | 'draft') || 'active')
         };
 
         // Check if listing is transitioning to active to update published_at

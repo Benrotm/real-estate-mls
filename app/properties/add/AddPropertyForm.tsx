@@ -880,15 +880,14 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     const handleSaveDraft = async (e?: React.MouseEvent, silent = false) => {
         if (e) e.preventDefault();
         setSavingDraft(true);
-        await handleSubmit(e as any, 'draft', true);
+        const targetStatus = initialData?.status === 'active' ? 'active' : 'draft';
+        await handleSubmit(e as any, targetStatus, true);
         setSavingDraft(false);
     };
 
     const nextStep = async () => {
         if (step < 5) {
-            // Auto-save draft logic if needed, currently manual only or we can trigger it
-            // For better UX, let's just move next. 
-            // The user requested "logic to save the property by default when pressing the NEXT STEP".
+            const targetStatus = initialData?.status === 'active' ? 'active' : 'draft';
             await handleSaveDraft(undefined, true);
             setStep(step + 1);
         }

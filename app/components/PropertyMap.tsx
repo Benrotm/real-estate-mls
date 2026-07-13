@@ -46,6 +46,14 @@ export default function PropertyMap({ center = defaultCenter, zoom = 10, markers
     }, []);
 
     useEffect(() => {
+        // If center is already a specific non-default location, use it directly without overriding via geocoder
+        const hasSpecificCoords = center && (Math.abs(center.lat - 44.4268) > 0.001 || Math.abs(center.lng - 26.1025) > 0.001);
+        if (hasSpecificCoords) {
+            setGeocodedCenter(center);
+            setGeocodedMarkers(markers);
+            return;
+        }
+
         if (!isLoaded || !map || !propertyAddress || typeof window === 'undefined' || !window.google?.maps?.Geocoder) return;
 
         const geocoder = new window.google.maps.Geocoder();
@@ -64,7 +72,7 @@ export default function PropertyMap({ center = defaultCenter, zoom = 10, markers
                 map.setTilt(45);
             }
         });
-    }, [isLoaded, propertyAddress, map, markers]);
+    }, [isLoaded, propertyAddress, map, center, markers]);
 
     const isSatellite = mapTypeId === 'satellite' || mapTypeId === 'hybrid';
     const activeMapTypeId = isSatellite ? (showLabels ? 'hybrid' : 'satellite') : mapTypeId;
