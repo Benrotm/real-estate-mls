@@ -138,64 +138,95 @@ function MatchPropertyCard({ property, status, updatingIds, getStatusColor, getS
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                    {(!status || status === 'dismissed') && (
-                        <>
-                            <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="px-3 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                <div className="pt-2">
+                    {!status && (
+                        <div className="grid grid-cols-3 gap-1.5">
+                            <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="px-2 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition-colors" title="Save for client review">
+                                <Bookmark className="w-3.5 h-3.5 shrink-0" /> Save
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'to_verify')} className="px-2 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition-colors" title="Save for agent verification (hidden from client)">
+                                <Eye className="w-3.5 h-3.5 shrink-0" /> Verify
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-2 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition-colors" title="Dismiss suggestion">
+                                <XCircle className="w-3.5 h-3.5 shrink-0" /> Dismiss
+                            </button>
+                        </div>
+                    )}
+                    {status === 'to_verify' && (
+                        <div className="grid grid-cols-2 gap-2">
+                            <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="px-3 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors" title="Move to Saved (visible to client)">
                                 <Bookmark className="w-3.5 h-3.5" /> Save
                             </button>
-                            <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                            <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors" title="Dismiss property">
                                 <XCircle className="w-3.5 h-3.5" /> Dismiss
                             </button>
-                        </>
+                        </div>
+                    )}
+                    {status === 'dismissed' && (
+                        <div className="grid grid-cols-2 gap-2">
+                            <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="px-3 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <RefreshCw className="w-3.5 h-3.5" /> Re-Save
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'to_verify')} className="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <Eye className="w-3.5 h-3.5" /> To Verify
+                            </button>
+                        </div>
                     )}
                     {status === 'saved' && (
-                        <>
-                            <button onClick={() => handleUpdateStatus(property.id, 'interested')} className="px-3 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                <ThumbsUp className="w-3.5 h-3.5" /> Interested
+                        <div className="grid grid-cols-3 gap-1.5">
+                            <button onClick={() => handleUpdateStatus(property.id, 'interested')} className="px-2 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition-colors">
+                                <ThumbsUp className="w-3.5 h-3.5 shrink-0" /> Interested
                             </button>
-                            <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                <XCircle className="w-3.5 h-3.5" /> Dismiss
+                            <button onClick={() => handleUpdateStatus(property.id, 'to_verify')} className="px-2 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition-colors" title="Move to To Verify">
+                                <Eye className="w-3.5 h-3.5 shrink-0" /> Verify
                             </button>
-                        </>
+                            <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-2 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition-colors">
+                                <XCircle className="w-3.5 h-3.5 shrink-0" /> Dismiss
+                            </button>
+                        </div>
                     )}
                     {(status === 'sent' || status === 'interested') && (
-                        <>
+                        <div className="grid grid-cols-2 gap-2">
                             <button onClick={() => handleUpdateStatus(property.id, 'visit_scheduled')} className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                 <Calendar className="w-3.5 h-3.5" /> Schedule Visit
                             </button>
                             <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                 <Handshake className="w-3.5 h-3.5" /> Negot.
                             </button>
-                        </>
+                        </div>
                     )}
                     {status === 'visit_scheduled' && (
-                        <>
+                        <div className="grid grid-cols-2 gap-2">
                             <button onClick={() => handleUpdateStatus(property.id, 'not_interested')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                 <ThumbsDown className="w-3.5 h-3.5" /> Skipped
                             </button>
                             <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                 <Handshake className="w-3.5 h-3.5" /> Negot.
                             </button>
-                        </>
+                        </div>
                     )}
                     {status === 'negotiation' && (
-                        <>
+                        <div className="grid grid-cols-2 gap-2">
                             <button onClick={() => handleUpdateStatus(property.id, 'not_interested')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                 <ThumbsDown className="w-3.5 h-3.5" /> Skipped
                             </button>
                             <button onClick={() => handleUpdateStatus(property.id, 'sold')} className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                                 <CheckCircle className="w-3.5 h-3.5" /> Sold
                             </button>
-                        </>
+                        </div>
                     )}
                     {status === 'not_interested' && (
-                        <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="col-span-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                            <RefreshCw className="w-3.5 h-3.5" /> Re-Save
-                        </button>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <RefreshCw className="w-3.5 h-3.5" /> Re-Save
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'to_verify')} className="px-3 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <Eye className="w-3.5 h-3.5" /> Verify
+                            </button>
+                        </div>
                     )}
                     {status === 'sold' && (
-                        <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="col-span-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                        <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
                             <RefreshCw className="w-3.5 h-3.5" /> Revert to Negotiation
                         </button>
                     )}
@@ -209,7 +240,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const [matches, setMatches] = useState<any[]>(initialMatches);
     const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
     const [isLoadingAI, setIsLoadingAI] = useState(false);
-    const [activeTab, setActiveTab] = useState<'curate' | 'saved' | 'sent' | 'interested' | 'not_interested' | 'visit_scheduled' | 'negotiation'>('curate');
+    const [activeTab, setActiveTab] = useState<'curate' | 'to_verify' | 'saved' | 'sent' | 'interested' | 'not_interested' | 'visit_scheduled' | 'negotiation'>('curate');
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
     const [manualAddId, setManualAddId] = useState('');
@@ -330,6 +361,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'saved': return <Bookmark className="w-4 h-4 text-orange-600" />;
+            case 'to_verify': return <Eye className="w-4 h-4 text-cyan-600" />;
             case 'sent': return <Send className="w-4 h-4 text-blue-600" />;
             case 'interested': return <ThumbsUp className="w-4 h-4 text-green-600" />;
             case 'not_interested': return <ThumbsDown className="w-4 h-4 text-red-600" />;
@@ -344,6 +376,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'saved': return 'bg-orange-50 text-orange-700 border-orange-200';
+            case 'to_verify': return 'bg-cyan-50 text-cyan-700 border-cyan-200';
             case 'sent': return 'bg-blue-50 text-blue-700 border-blue-200';
             case 'interested': return 'bg-green-50 text-green-700 border-green-200';
             case 'not_interested': return 'bg-red-50 text-red-700 border-red-200';
@@ -368,6 +401,7 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     );
 
     const savedMatches = matches.filter(m => m.status === 'saved' || m.status === 'sent');
+    const toVerifyMatches = matches.filter(m => m.status === 'to_verify');
     const interestedMatches = matches.filter(m => m.status === 'interested');
     const notInterestedMatches = matches.filter(m => m.status === 'not_interested');
     const visitedMatches = matches.filter(m => m.status === 'visit_scheduled');
@@ -412,6 +446,9 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                 <div className="flex flex-wrap bg-slate-100 p-1 rounded-lg gap-1">
                     <button onClick={() => setActiveTab('curate')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'curate' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
                         Matched by AI ({aiSuggestions.length})
+                    </button>
+                    <button onClick={() => setActiveTab('to_verify')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'to_verify' ? 'bg-white shadow text-cyan-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                        To Verify ({toVerifyMatches.length})
                     </button>
                     <button onClick={() => setActiveTab('saved')} className={`px-4 py-2 rounded-md text-sm font-black uppercase transition-all ${activeTab === 'saved' ? 'bg-white shadow text-orange-600' : 'text-slate-500 hover:text-slate-700'}`}>
                         Saved ({savedMatches.length})
@@ -487,6 +524,30 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
                                 <p className="text-slate-500 font-bold">No new AI suggestions to curate at the moment.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'to_verify' && (
+                    <div className="space-y-6">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                    <Eye className="w-5 h-5 text-cyan-600" /> To Verify Properties
+                                </h2>
+                                <p className="text-xs font-bold text-slate-500 mt-1">
+                                    Properties in this category are for agent verification only and are not shared with the client.
+                                </p>
+                            </div>
+                        </div>
+                        {toVerifyMatches.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {toVerifyMatches.map(m => renderPropertyCard(m.property, m.status))}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
+                                <p className="text-slate-500 font-bold">No properties marked &quot;To Verify&quot;.</p>
                             </div>
                         )}
                     </div>
