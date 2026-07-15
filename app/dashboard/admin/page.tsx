@@ -84,7 +84,7 @@ export default async function AdminDashboard() {
                                         <Shield className="w-6 h-6" />
                                     </div>
                                 </div>
-                                <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">Permissions Matrix</h3>
+                                <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">User Permission Matrix</h3>
                                 <p className="text-sm text-slate-500 mt-1">Full view of system capabilities mapped to plans & roles, plus user role manager.</p>
                             </Link>
                         </div>

@@ -207,11 +207,11 @@ export default function PermissionsClient({ plans, features, users, currentUser 
                     <div>
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-indigo-400">
-                                <Shield className="w-8 h-8" />
+                                <Users className="w-8 h-8" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-extrabold tracking-tight">Access Control & Role Matrix</h1>
-                                <p className="text-slate-400 text-sm mt-1">Super Admin Security configuration. Manage permissions & assign roles.</p>
+                                <h1 className="text-3xl font-extrabold tracking-tight">User Permission Matrix</h1>
+                                <p className="text-slate-400 text-sm mt-1">Configurare securitate Super Admin. Gestionare permisiuni și asociere roluri.</p>
                             </div>
                         </div>
                     </div>

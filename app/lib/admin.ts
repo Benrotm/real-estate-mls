@@ -588,9 +588,12 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
         await supabase.from('profiles').update({ agency_id: null }).eq('agency_id', userId);
         await supabase.from('profiles').update({ referred_by: null }).eq('referred_by', userId);
         
+        // Delete profile from profiles table to clean up database records
+        await supabase.from('profiles').delete().eq('id', userId);
+        
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
-        if (error) {
+        if (error && error.message !== 'User not found') {
             return { success: false, error: error.message };
         }
 
