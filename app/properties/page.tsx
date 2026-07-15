@@ -13,7 +13,7 @@ import { getUserProfile } from '@/app/lib/auth';
 import { getAdminSettings } from '@/app/lib/actions/admin-settings';
 import { createClient } from '@/app/lib/supabase/server';
 import Link from 'next/link';
-import { ShieldAlert, Key, Search, BarChart3, Building2, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, Key, Search, BarChart3, Building2, CheckCircle2, Home, Warehouse, Map, Landmark, Briefcase, HelpCircle } from 'lucide-react';
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
     const filters = await searchParams;
@@ -41,6 +41,16 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
             'Industrial': { sale: 0, rent: 0, total: 0 },
             'Business': { sale: 0, rent: 0, total: 0 },
             'Other': { sale: 0, rent: 0, total: 0 }
+        };
+
+        const ICON_MAP = {
+            'Apartment': Building2,
+            'House': Home,
+            'Commercial': Landmark,
+            'Industrial': Warehouse,
+            'Land': Map,
+            'Business': Briefcase,
+            'Other': HelpCircle
         };
 
         let saleTotal = 0;
@@ -89,76 +99,118 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                         </div>
                     </div>
 
-                    {/* Premium Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Current Search Results Indicator */}
-                        <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between min-h-[300px] lg:min-h-0 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl" />
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full border border-blue-500/20">Căutare Activă</span>
+                    {/* Global Stats Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Active Search Results */}
+                        <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between relative overflow-hidden min-h-[160px]">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl" />
+                            <div className="flex items-center justify-between text-slate-400">
+                                <span className="text-[9px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">Căutare Curentă</span>
                                 <Search className="w-4 h-4 text-blue-400" />
                             </div>
-                            <div className="my-6">
-                                <div className="text-5xl font-black tracking-tight text-white glow-blue leading-none">{totalCount}</div>
-                                <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-wide">Proprietăți identificate</p>
-                            </div>
-                            <div className="text-[11px] leading-relaxed text-slate-300 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
-                                Criteriile tale de căutare au returnat <strong>{totalCount}</strong> rezultate active în platformă. Înregistrează-te pentru a accesa adresele exacte și a lua legătura cu agenții.
+                            <div>
+                                <div className="text-4xl font-black tracking-tight text-white mt-4">{totalCount}</div>
+                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wide">Proprietăți identificate conform filtrelor</p>
                             </div>
                         </div>
 
-                        {/* Detailed Inventory Matrix Card */}
-                        <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 lg:col-span-2 space-y-5">
-                            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Distribuție pe Categorii & Tranzacții</h3>
-                                <div className="flex gap-4 text-[10px] font-bold">
-                                    <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" /> De Vânzare ({saleTotal})</span>
-                                    <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-500" /> De Închiriat ({rentTotal})</span>
-                                </div>
+                        {/* Global Sales */}
+                        <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between relative overflow-hidden min-h-[160px]">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl" />
+                            <div className="flex items-center justify-between text-slate-400">
+                                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">De Vânzare</span>
+                                <Building2 className="w-4 h-4 text-emerald-400" />
                             </div>
-                            
-                            <div className="divide-y divide-slate-800/60 space-y-4 pt-1">
-                                {Object.entries(matrix).map(([type, stats]) => {
-                                    const salePercent = stats.total > 0 ? (stats.sale / stats.total) * 100 : 0;
-                                    const rentPercent = stats.total > 0 ? (stats.rent / stats.total) * 100 : 0;
-                                    
-                                    return (
-                                        <div key={type} className="pt-4 first:pt-0 flex flex-col space-y-2">
-                                            <div className="flex justify-between items-center text-xs">
-                                                <span className="font-extrabold text-slate-200">{type}</span>
-                                                <span className="text-slate-400 text-[11px] font-bold">
-                                                    Total: <strong className="text-white font-mono">{stats.total}</strong> ({stats.sale} vânzare • {stats.rent} chirie)
-                                                </span>
-                                            </div>
-                                            
-                                            {/* Split progress bar */}
-                                            <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex border border-slate-950">
-                                                {stats.total > 0 ? (
-                                                    <>
-                                                        {stats.sale > 0 && (
-                                                            <div 
-                                                                className="bg-gradient-to-r from-blue-600 to-blue-400 h-full transition-all" 
-                                                                style={{ width: `${salePercent}%` }}
-                                                                title={`${stats.sale} de vânzare (${salePercent.toFixed(0)}%)`}
-                                                            />
-                                                        )}
-                                                        {stats.rent > 0 && (
-                                                            <div 
-                                                                className="bg-gradient-to-r from-purple-600 to-purple-400 h-full transition-all" 
-                                                                style={{ width: `${rentPercent}%` }}
-                                                                title={`${stats.rent} de închiriat (${rentPercent.toFixed(0)}%)`}
-                                                            />
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    <div className="w-full h-full bg-slate-850" />
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                            <div>
+                                <div className="text-4xl font-black tracking-tight text-white mt-4">{saleTotal}</div>
+                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wide">Total listări active de vânzare</p>
                             </div>
                         </div>
+
+                        {/* Global Rents */}
+                        <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between relative overflow-hidden min-h-[160px]">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl" />
+                            <div className="flex items-center justify-between text-slate-400">
+                                <span className="text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20">De Închiriat</span>
+                                <Key className="w-4 h-4 text-purple-400" />
+                            </div>
+                            <div>
+                                <div className="text-4xl font-black tracking-tight text-white mt-4">{rentTotal}</div>
+                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wide">Total listări active de închiriat</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Section title for detailed matrix cards */}
+                    <div className="pt-4 pb-2 border-b border-slate-200">
+                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Distribuție pe Categorii de Proprietăți</h3>
+                        <p className="text-[11px] font-bold text-slate-400 mt-0.5">Fiecare categorie de proprietate prezintă un card dedicat cu starea curentă a pieței imobiliare</p>
+                    </div>
+
+                    {/* Category Matrix Grid (separate card for every type) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {Object.entries(matrix).map(([type, stats]) => {
+                            const Icon = ICON_MAP[type as keyof typeof ICON_MAP] || HelpCircle;
+                            const salePercent = stats.total > 0 ? (stats.sale / stats.total) * 100 : 0;
+                            const rentPercent = stats.total > 0 ? (stats.rent / stats.total) * 100 : 0;
+
+                            return (
+                                <div key={type} className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden group min-h-[220px]">
+                                    {/* Glowing hover accent */}
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    
+                                    <div>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-300 border border-slate-700/60 group-hover:border-indigo-500/50 group-hover:text-indigo-400 transition-all duration-300">
+                                                <Icon className="w-5 h-5" />
+                                            </div>
+                                            <span className="text-[11px] font-black bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-850 font-mono">
+                                                {stats.total} Listări
+                                            </span>
+                                        </div>
+                                        
+                                        <h4 className="text-md font-extrabold text-white mb-4 group-hover:text-indigo-300 transition-colors duration-300">{type}</h4>
+                                        
+                                        <div className="space-y-2.5 text-xs">
+                                            <div className="flex justify-between items-center text-slate-400 text-[11px] font-bold">
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Vânzare</span>
+                                                <span className="text-white font-mono">{stats.sale}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-slate-400 text-[11px] font-bold">
+                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> Chirie</span>
+                                                <span className="text-white font-mono">{stats.rent}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-5 pt-3 border-t border-slate-800/80">
+                                        {/* Split progress bar */}
+                                        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex border border-slate-950">
+                                            {stats.total > 0 ? (
+                                                <>
+                                                    {stats.sale > 0 && (
+                                                        <div 
+                                                            className="bg-gradient-to-r from-blue-600 to-blue-400 h-full transition-all" 
+                                                            style={{ width: `${salePercent}%` }}
+                                                            title={`${stats.sale} de vânzare (${salePercent.toFixed(0)}%)`}
+                                                        />
+                                                    )}
+                                                    {stats.rent > 0 && (
+                                                        <div 
+                                                            className="bg-gradient-to-r from-purple-600 to-purple-400 h-full transition-all" 
+                                                            style={{ width: `${rentPercent}%` }}
+                                                            title={`${stats.rent} de închiriat (${rentPercent.toFixed(0)}%)`}
+                                                        />
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div className="w-full h-full bg-slate-850" />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
                     {/* Onboarding Incentive Banner at the bottom */}
