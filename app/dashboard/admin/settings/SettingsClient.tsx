@@ -230,8 +230,71 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
                 </div>
             </div>
 
+            {/* Catalog & Registration Security Settings */}
+            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl overflow-hidden shadow-2xl mt-8">
+                <div className="p-8 border-b border-slate-800">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                        <Globe className="w-6 h-6 text-indigo-400" />
+                        Catalog Access & User Registration
+                    </h2>
+                    <p className="text-slate-400 mt-2 text-sm">
+                        Configure public access permission constraints for the listings catalog and manual user registration pipelines.
+                    </p>
+                </div>
+
+                <div className="p-8 space-y-8">
+                    {/* Setting: Properties Page Public */}
+                    <div className="flex items-start justify-between gap-6 group">
+                        <div className="flex-1">
+                            <label className="text-lg font-bold text-white cursor-pointer group-hover:text-indigo-300 transition-colors">
+                                Public Properties Catalog
+                            </label>
+                            <p className="text-slate-400 text-sm mt-1 leading-relaxed">
+                                When enabled, guests and visitors can browse listings normally. When disabled, the properties page displays a dashboard with stats and a request/incentive to register or log in.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => handleToggle('properties_page_public')}
+                            disabled={isSaving}
+                            className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${settings?.properties_page_public ? 'bg-indigo-500' : 'bg-slate-700'
+                                }`}
+                        >
+                            <span
+                                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.properties_page_public ? 'translate-x-7' : 'translate-x-0'
+                                    }`}
+                            />
+                        </button>
+                    </div>
+
+                    <div className="h-px bg-slate-800 w-full" />
+
+                    {/* Setting: Open User Registration */}
+                    <div className="flex items-start justify-between gap-6 group">
+                        <div className="flex-1">
+                            <label className="text-lg font-bold text-white cursor-pointer group-hover:text-indigo-300 transition-colors">
+                                Open User Registration
+                            </label>
+                            <p className="text-slate-400 text-sm mt-1 leading-relaxed">
+                                When enabled, anyone can register and login immediately. When disabled, new user registrations are initially locked/pending approval and must be accepted by an administrator.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => handleToggle('registration_open')}
+                            disabled={isSaving}
+                            className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${settings?.registration_open ? 'bg-indigo-500' : 'bg-slate-700'
+                                }`}
+                        >
+                            <span
+                                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.registration_open ? 'translate-x-7' : 'translate-x-0'
+                                    }`}
+                            />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {/* Residential Proxy Settings */}
-            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl overflow-hidden shadow-2xl mt-8">
                 <div className="p-8 border-b border-slate-800 flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold text-white flex items-center gap-3">

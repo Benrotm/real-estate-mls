@@ -40,7 +40,8 @@ const configs = [
 const MIGRATIONS = [
     'supabase/migrations/20260615180000_fix_matches_rls.sql',
     'supabase/migrations/20260710000000_add_can_edit_all_properties.sql',
-    'supabase/migrations/20260715000000_add_can_view_all_leads.sql'
+    'supabase/migrations/20260715000000_add_can_view_all_leads.sql',
+    'supabase/migrations/20260716000000_add_user_property_restrictions.sql'
 ];
 
 async function run() {

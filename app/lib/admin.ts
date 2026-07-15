@@ -630,3 +630,39 @@ export async function toggleUserViewAllLeads(userId: string, enable: boolean) {
     revalidatePath('/dashboard/admin/users');
 }
 
+export async function toggleUserApproval(userId: string, isApproved: boolean) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ is_approved: isApproved })
+        .eq('id', userId);
+
+    if (error) throw new Error(error.message);
+    revalidatePath('/dashboard/admin/users');
+}
+
+export async function saveUserPropertyRestrictions(
+    userId: string,
+    allowedTypes: string[],
+    allowedTransactions: string[],
+    allowedCities: string[]
+) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('user_property_restrictions')
+        .upsert({
+            user_id: userId,
+            allowed_types: allowedTypes,
+            allowed_transactions: allowedTransactions,
+            allowed_cities: allowedCities,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+    if (error) throw new Error(error.message);
+}
+
+

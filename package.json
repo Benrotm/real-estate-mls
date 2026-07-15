@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "npx tsx scripts/migrate.ts"
+    "seed": "tsx scripts/migrate.ts",
+    "run-migration": "tsx scripts/run_migration.ts"
   },
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "^2.1.16",

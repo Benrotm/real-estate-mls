@@ -83,6 +83,8 @@ export interface GlobalWatermarkConfig {
 export interface AdminSettings {
     require_ownership_verification: boolean;
     enable_anti_duplicate_intelligence: boolean;
+    properties_page_public?: boolean;
+    registration_open?: boolean;
     immoflux_integration?: ImmofluxConfig;
     fluxmls_integration?: ImmofluxConfig;
     sold_immoflux_integration?: SoldImmofluxConfig;
@@ -94,6 +96,8 @@ export interface AdminSettings {
 const DEFAULT_SETTINGS: AdminSettings = {
     require_ownership_verification: true,
     enable_anti_duplicate_intelligence: true,
+    properties_page_public: true,
+    registration_open: true,
     olx_integration: {
         is_active: false,
         category_url: "https://www.olx.ro/imobiliare/apartamente-garsoniere-de-vanzare/timisoara/",
@@ -249,14 +253,23 @@ export async function createScrapeJob(config: { url: string; delay_ms: number; p
 
 export async function updateAdminSetting(key: string, value: boolean) {
     try {
+        let description = '';
+        if (key === 'require_ownership_verification') {
+            description = 'Require owners to verify via SMS or Email when importing a listing';
+        } else if (key === 'enable_anti_duplicate_intelligence') {
+            description = 'Enable address and feature hashing to prevent duplicate imports';
+        } else if (key === 'properties_page_public') {
+            description = 'Toggle if properties catalog and detail views are public or registered users only';
+        } else if (key === 'registration_open') {
+            description = 'Toggle if registration is open to everyone or requires admin approval before login';
+        }
+
         const { error } = await supabase
             .from('admin_settings')
             .upsert({
                 key,
                 value: value.toString(),
-                description: key === 'require_ownership_verification'
-                    ? 'Require owners to verify via SMS or Email when importing a listing'
-                    : 'Enable address and feature hashing to prevent duplicate imports'
+                description
             }, { onConflict: 'key' });
 
         if (error) {

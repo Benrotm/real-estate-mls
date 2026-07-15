@@ -10,6 +10,10 @@ export default async function DashboardHome() {
         redirect('/auth/login');
     }
 
+    if (profile && profile.is_approved === false && profile.role !== 'super_admin' && profile.role !== 'admin') {
+        redirect('/awaiting-approval');
+    }
+
     // Automatic redirection based on role
     if (profile.role === 'owner') redirect('/dashboard/owner');
     if (profile.role === 'agent') redirect('/dashboard/agent');

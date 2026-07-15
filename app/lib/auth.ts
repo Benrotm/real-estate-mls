@@ -27,6 +27,7 @@ export interface UserProfile {
     company_representative?: string;
     gdpr_consent?: boolean;
     gdpr_consent_date?: string;
+    is_approved?: boolean;
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {

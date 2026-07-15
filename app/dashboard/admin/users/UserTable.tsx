@@ -3,7 +3,7 @@
 import { Users, Shield, Database, LayoutGrid, Mail, Phone, Star, Search, Filter, X, Coins } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { toggleUserEditAllProperties, toggleUserViewAllLeads } from '@/app/lib/admin';
+import { toggleUserEditAllProperties, toggleUserViewAllLeads, toggleUserApproval } from '@/app/lib/admin';
 import UserActions from './UserActions';
 
 interface UserTableProps {
@@ -17,6 +17,19 @@ export default function UserTable({ users }: UserTableProps) {
     const [planFilter, setPlanFilter] = useState('all');
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [togglingLeadsId, setTogglingLeadsId] = useState<string | null>(null);
+    const [togglingApprovalId, setTogglingApprovalId] = useState<string | null>(null);
+
+    const handleToggleApproval = async (userId: string, currentVal: boolean) => {
+        setTogglingApprovalId(userId);
+        try {
+            await toggleUserApproval(userId, !currentVal);
+            router.refresh();
+        } catch (e: any) {
+            alert('Failed to update approval status: ' + e.message);
+        } finally {
+            setTogglingApprovalId(null);
+        }
+    };
 
     const handleToggleEditAll = async (userId: string, currentVal: boolean) => {
         setTogglingId(userId);
@@ -158,6 +171,7 @@ export default function UserTable({ users }: UserTableProps) {
                                 <th className="p-4 font-bold">Plan</th>
                                 <th className="p-4 font-bold">Listings</th>
                                 <th className="p-4 font-bold">Credits</th>
+                                <th className="p-4 font-bold">Status</th>
                                 <th className="p-4 font-bold">Edit All Props</th>
                                 <th className="p-4 font-bold">View All Leads</th>
                                 <th className="p-4 font-bold text-right">Actions</th>
@@ -287,6 +301,26 @@ export default function UserTable({ users }: UserTableProps) {
                                                     {user.credits || 0}
                                                 </span>
                                             </div>
+                                        </td>
+                                        <td className="p-4 text-[11px]">
+                                            {user.role === 'super_admin' || user.role === 'admin' ? (
+                                                <span className="text-slate-500 font-semibold uppercase tracking-wider">Always Approved</span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleToggleApproval(user.id, user.is_approved !== false)}
+                                                    disabled={togglingApprovalId === user.id}
+                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                        user.is_approved !== false ? 'bg-green-600' : 'bg-slate-800'
+                                                    } ${togglingApprovalId === user.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    title={user.is_approved !== false ? "Suspend/disapprove user registration" : "Approve user registration"}
+                                                >
+                                                    <span
+                                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                            user.is_approved !== false ? 'translate-x-5' : 'translate-x-0'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            )}
                                         </td>
                                         <td className="p-4">
                                             {user.role === 'super_admin' || user.role === 'admin' ? (

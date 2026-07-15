@@ -20,7 +20,7 @@ import {
     Settings,
     Layers
 } from 'lucide-react';
-import { updatePlanFeature, updateUserRoleAndPlan, syncPlanFeatures } from '@/app/lib/admin';
+import { updatePlanFeature, updateUserRoleAndPlan, syncPlanFeatures, saveUserPropertyRestrictions } from '@/app/lib/admin';
 
 // Feature key descriptions and user-friendly labels
 const FEATURE_INFO: Record<string, { label: string; desc: string }> = {
@@ -61,11 +61,13 @@ interface PermissionsClientProps {
     features: any[];
     users: any[];
     currentUser: any;
+    cities: string[];
+    initialRestrictions: any[];
 }
 
-export default function PermissionsClient({ plans, features, users, currentUser }: PermissionsClientProps) {
+export default function PermissionsClient({ plans, features, users, currentUser, cities, initialRestrictions }: PermissionsClientProps) {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'matrix' | 'users'>('matrix');
+    const [activeTab, setActiveTab] = useState<'matrix' | 'users' | 'restrictions'>('matrix');
     
     // Matrix States
     const [localFeatures, setLocalFeatures] = useState(features);
@@ -78,6 +80,94 @@ export default function PermissionsClient({ plans, features, users, currentUser 
     const [updatingUsers, setUpdatingUsers] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [usersPerPage, setUsersPerPage] = useState(10);
+
+    const PROPERTY_TYPES = ['Apartment', 'House', 'Commercial', 'Industrial', 'Land', 'Business', 'Other'] as const;
+    const TRANSACTION_TYPES = ['For Sale', 'For Rent', 'Hotel Regime'] as const;
+
+    // Restrictions Matrix state
+    const [restrictionsList, setRestrictionsList] = useState<any[]>(initialRestrictions);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    const [allowedTypes, setAllowedTypes] = useState<string[]>([]);
+    const [allowedTransactions, setAllowedTransactions] = useState<string[]>([]);
+    const [allowedCities, setAllowedCities] = useState<string[]>([]);
+    const [isSavingRestrictions, setIsSavingRestrictions] = useState(false);
+    const [restrictionsSearch, setRestrictionsSearch] = useState('');
+    const [restrictionsSaveStatus, setRestrictionsSaveStatus] = useState<{ text: string; type: 'success' | 'error' | '' }>({ text: '', type: '' });
+
+    // Filter users list to exclude admins
+    const nonAdminUsers = useMemo(() => {
+        return users.filter(u => u.role !== 'admin' && u.role !== 'super_admin');
+    }, [users]);
+
+    const filteredNonAdminUsers = useMemo(() => {
+        return nonAdminUsers.filter(u => 
+            u.full_name?.toLowerCase().includes(restrictionsSearch.toLowerCase()) ||
+            u.email?.toLowerCase().includes(restrictionsSearch.toLowerCase())
+        );
+    }, [nonAdminUsers, restrictionsSearch]);
+
+    // Handle selecting a user
+    const handleSelectUser = (userId: string) => {
+        setSelectedUserId(userId);
+        setRestrictionsSaveStatus({ text: '', type: '' });
+        
+        const userRest = restrictionsList.find(r => r.user_id === userId);
+        if (userRest) {
+            setAllowedTypes(userRest.allowed_types || []);
+            setAllowedTransactions(userRest.allowed_transactions || []);
+            setAllowedCities(userRest.allowed_cities || []);
+        } else {
+            setAllowedTypes([]);
+            setAllowedTransactions([]);
+            setAllowedCities([]);
+        }
+    };
+
+    // Handle toggling allowed item
+    const toggleAllowedItem = (item: string, type: 'property' | 'transaction' | 'city') => {
+        if (type === 'property') {
+            setAllowedTypes(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
+        } else if (type === 'transaction') {
+            setAllowedTransactions(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
+        } else {
+            setAllowedCities(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]);
+        }
+    };
+
+    // Save restrictions
+    const handleSaveRestrictions = async () => {
+        if (!selectedUserId) return;
+        setIsSavingRestrictions(true);
+        setRestrictionsSaveStatus({ text: '', type: '' });
+
+        try {
+            await saveUserPropertyRestrictions(selectedUserId, allowedTypes, allowedTransactions, allowedCities);
+            
+            // Update local state list
+            const updated = [...restrictionsList];
+            const idx = updated.findIndex(r => r.user_id === selectedUserId);
+            const entry = {
+                user_id: selectedUserId,
+                allowed_types: allowedTypes,
+                allowed_transactions: allowedTransactions,
+                allowed_cities: allowedCities,
+                updated_at: new Date().toISOString()
+            };
+
+            if (idx >= 0) {
+                updated[idx] = entry;
+            } else {
+                updated.push(entry);
+            }
+            setRestrictionsList(updated);
+            setRestrictionsSaveStatus({ text: 'Opțiunile de filtrare au fost salvate cu succes!', type: 'success' });
+            setTimeout(() => setRestrictionsSaveStatus({ text: '', type: '' }), 4000);
+        } catch (err: any) {
+            setRestrictionsSaveStatus({ text: 'Eroare la salvare: ' + err.message, type: 'error' });
+        } finally {
+            setIsSavingRestrictions(false);
+        }
+    };
 
     // Build plan columns dynamically based on DB data
     const planColumns = useMemo(() => {
@@ -259,6 +349,17 @@ export default function PermissionsClient({ plans, features, users, currentUser 
                     >
                         <Users className="w-4 h-4" />
                         Management Roluri Utilizatori
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('restrictions')}
+                        className={`flex items-center gap-2 px-6 py-3 border-b-2 font-bold text-sm transition-all ${
+                            activeTab === 'restrictions' 
+                            ? 'border-indigo-500 text-indigo-400' 
+                            : 'border-transparent text-slate-400 hover:text-slate-200'
+                        }`}
+                    >
+                        <Shield className="w-4 h-4" />
+                        Matrice Filtrare Acces Proprietăți
                     </button>
                 </div>
 
@@ -588,6 +689,185 @@ export default function PermissionsClient({ plans, features, users, currentUser 
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'restrictions' && (
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
+                        <div className="flex flex-col lg:flex-row gap-8">
+                            {/* Left Side: Searchable User List */}
+                            <div className="w-full lg:w-1/3 border-r border-slate-800 pr-0 lg:pr-8 flex flex-col space-y-4">
+                                <h3 className="text-md font-bold text-white mb-2">Utilizatori</h3>
+                                <div className="relative group w-full">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                                        <Search size={16} />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Caută utilizator..."
+                                        value={restrictionsSearch}
+                                        onChange={(e) => setRestrictionsSearch(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:border-indigo-500 outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="overflow-y-auto max-h-[500px] border border-slate-850 rounded-xl divide-y divide-slate-855 bg-slate-950/40">
+                                    {filteredNonAdminUsers.length === 0 ? (
+                                        <div className="p-8 text-center text-slate-500 text-xs">
+                                            Niciun utilizator găsit.
+                                        </div>
+                                    ) : (
+                                        filteredNonAdminUsers.map((u) => {
+                                            const isSelected = selectedUserId === u.id;
+                                            const hasActiveFilter = restrictionsList.some(r => r.user_id === u.id && 
+                                                ((r.allowed_types && r.allowed_types.length > 0) || 
+                                                 (r.allowed_transactions && r.allowed_transactions.length > 0) || 
+                                                 (r.allowed_cities && r.allowed_cities.length > 0))
+                                            );
+                                            return (
+                                                <button
+                                                    key={u.id}
+                                                    type="button"
+                                                    onClick={() => handleSelectUser(u.id)}
+                                                    className={`w-full text-left p-3 text-sm flex items-center justify-between transition-colors ${
+                                                        isSelected ? 'bg-indigo-600/10 text-indigo-400 font-bold' : 'hover:bg-slate-800/40 text-slate-300'
+                                                    }`}
+                                                >
+                                                    <div className="truncate pr-2">
+                                                        <div className="truncate font-semibold text-white">{u.full_name || 'Nume Necunoscut'}</div>
+                                                        <div className="text-[10px] text-slate-500 truncate mt-0.5">{u.email}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        <span className="text-[9px] uppercase font-bold tracking-tighter px-1.5 py-0.5 rounded bg-slate-850 text-slate-400">
+                                                            {u.role}
+                                                        </span>
+                                                        {hasActiveFilter && (
+                                                            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" title="Are filtre active" />
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Right Side: Matrix Checklist Panel */}
+                            <div className="w-full lg:w-2/3 flex flex-col space-y-6">
+                                {selectedUserId ? (
+                                    (() => {
+                                        const selUser = users.find(u => u.id === selectedUserId);
+                                        return (
+                                            <>
+                                                <div className="border-b border-slate-800 pb-4">
+                                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                                        <UserCheck className="w-5 h-5 text-indigo-400" />
+                                                        Filtre Acces Proprietăți: <span className="text-indigo-400">{selUser?.full_name || 'Nume Necunoscut'}</span>
+                                                    </h3>
+                                                    <p className="text-slate-400 text-xs mt-1">
+                                                        Selectează categoriile de proprietăți pe care le poate accesa acest utilizator. Lăsând o secțiune goală (nicio opțiune selectată), utilizatorul are acces implicit la toate opțiunile din acea categorie.
+                                                    </p>
+                                                </div>
+
+                                                {restrictionsSaveStatus.text && (
+                                                    <div className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-2 border ${
+                                                        restrictionsSaveStatus.type === 'success' 
+                                                        ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                                                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                    }`}>
+                                                        <Info className="w-4 h-4 shrink-0" />
+                                                        {restrictionsSaveStatus.text}
+                                                    </div>
+                                                )}
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                    {/* Property Types */}
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-1.5">Tipuri Proprietate</h4>
+                                                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                                            {PROPERTY_TYPES.map(type => (
+                                                                <label key={type} className="flex items-center gap-2.5 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={allowedTypes.includes(type)}
+                                                                        onChange={() => toggleAllowedItem(type, 'property')}
+                                                                        className="rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 w-4 h-4"
+                                                                    />
+                                                                    <span>{type}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Transaction Types */}
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-1.5">Tipuri Tranzacție</h4>
+                                                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                                            {TRANSACTION_TYPES.map(tx => (
+                                                                <label key={tx} className="flex items-center gap-2.5 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={allowedTransactions.includes(tx)}
+                                                                        onChange={() => toggleAllowedItem(tx, 'transaction')}
+                                                                        className="rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 w-4 h-4"
+                                                                    />
+                                                                    <span>{tx}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Cities */}
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-1.5">Orașe Permise</h4>
+                                                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                                            {cities.length === 0 ? (
+                                                                <div className="text-slate-500 text-xs italic">Niciun oraș în baza de date.</div>
+                                                            ) : (
+                                                                cities.map(city => (
+                                                                    <label key={city} className="flex items-center gap-2.5 text-xs text-slate-300 hover:text-white cursor-pointer select-none">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={allowedCities.includes(city)}
+                                                                            onChange={() => toggleAllowedItem(city, 'city')}
+                                                                            className="rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 w-4 h-4"
+                                                                        />
+                                                                        <span>{city}</span>
+                                                                    </label>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="border-t border-slate-800 pt-6 flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSaveRestrictions}
+                                                        disabled={isSavingRestrictions}
+                                                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/50 text-white rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg transition-colors cursor-pointer"
+                                                    >
+                                                        {isSavingRestrictions ? (
+                                                            <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                                                        ) : (
+                                                            <Check className="w-4 h-4 text-white" />
+                                                        )}
+                                                        Salvează Restricții
+                                                    </button>
+                                                </div>
+                                            </>
+                                        );
+                                    })()
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-950/40 rounded-2xl border border-dashed border-slate-800 min-h-[350px]">
+                                        <Users className="w-12 h-12 text-slate-700 mb-4 opacity-40" />
+                                        <h4 className="text-white font-bold text-sm mb-1">Niciun utilizator selectat</h4>
+                                        <p className="text-xs text-slate-500 max-w-xs">
+                                            Alege un utilizator din lista din stânga pentru a-i configura restricțiile specifice de vizualizare a proprietăților.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

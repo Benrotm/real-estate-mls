@@ -1,6 +1,9 @@
 import { MOCK_PROPERTIES, Property } from "@/app/lib/properties";
 import type { Metadata } from 'next';
 import { checkUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
+import { getUserProfile } from '@/app/lib/auth';
+import { getAdminSettings } from '@/app/lib/actions/admin-settings';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 import PropertyCarousel from '../../components/properties/PropertyCarousel';
@@ -140,6 +143,15 @@ export default async function PropertyDetailPage({
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const isUuid = uuidRegex.test(id);
 
+    // Fetch user profile and settings
+    const profile = await getUserProfile();
+    const adminSettings = await getAdminSettings();
+
+    // If properties page is private and user is not logged in, redirect to login
+    if (adminSettings.properties_page_public === false && !profile) {
+        redirect(`/auth/login?redirect=/properties/${id}`);
+    }
+
     const supabase = await createClient();
     let property: Property | undefined;
     let ownerProfile = null;
@@ -235,6 +247,27 @@ export default async function PropertyDetailPage({
                     no_pets_allowed: !!dbProperty.no_pets_allowed,
                     no_small_kids_allowed: !!dbProperty.no_small_kids_allowed
                 };
+            }
+        }
+
+        // Verify user property access restrictions (exclude admins)
+        if (property && profile && profile.role !== 'admin' && profile.role !== 'super_admin') {
+            const { data: userRest } = await supabase
+                .from('user_property_restrictions')
+                .select('*')
+                .eq('user_id', profile.id)
+                .single();
+
+            if (userRest) {
+                const { allowed_types, allowed_transactions, allowed_cities } = userRest;
+
+                const isTypeAllowed = !allowed_types || allowed_types.length === 0 || allowed_types.includes(property.type);
+                const isTxAllowed = !allowed_transactions || allowed_transactions.length === 0 || allowed_transactions.includes(property.listing_type);
+                const isCityAllowed = !allowed_cities || allowed_cities.length === 0 || allowed_cities.includes(property.location_city);
+
+                if (!isTypeAllowed || !isTxAllowed || !isCityAllowed) {
+                    redirect('/dashboard?error=not_authorized');
+                }
             }
         }
 

@@ -334,6 +334,29 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         `, { count: 'exact' })
         .eq('status', 'active');
 
+    // Apply user property access restrictions (exclude admins)
+    const profile = await getUserProfile();
+    if (profile && profile.role !== 'admin' && profile.role !== 'super_admin') {
+        const { data: userRest } = await supabase
+            .from('user_property_restrictions')
+            .select('*')
+            .eq('user_id', profile.id)
+            .single();
+
+        if (userRest) {
+            const { allowed_types, allowed_transactions, allowed_cities } = userRest;
+            if (allowed_types && allowed_types.length > 0) {
+                query = query.in('type', allowed_types);
+            }
+            if (allowed_transactions && allowed_transactions.length > 0) {
+                query = query.in('listing_type', allowed_transactions);
+            }
+            if (allowed_cities && allowed_cities.length > 0) {
+                query = query.in('location_city', allowed_cities);
+            }
+        }
+    }
+
     // Apply filters
     if (filters) {
         // Map Area Filter (Drawn IDs)
