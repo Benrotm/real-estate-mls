@@ -26,11 +26,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
     if (adminSettings.properties_page_public === false && !profile) {
         const supabase = await createClient();
 
-        // Query active properties (type & listing_type only) to build in-memory cross matrix counts
-        const { data: activeProps } = await supabase
-            .from('properties')
-            .select('type, listing_type')
-            .eq('status', 'active');
+        // Call the database RPC function to retrieve the complete inventory aggregate statistics
+        const { data: statsData } = await supabase.rpc('get_property_matrix_stats');
 
         // Define matrix mapping
         const matrix: Record<string, { sale: number; rent: number; total: number }> = {
@@ -56,17 +53,18 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
         let saleTotal = 0;
         let rentTotal = 0;
 
-        activeProps?.forEach((p: any) => {
-            const t = p.type;
-            const tx = p.listing_type;
+        statsData?.forEach((row: any) => {
+            const t = row.type;
+            const tx = row.listing_type;
+            const count = parseInt(row.count || '0', 10);
 
-            if (tx === 'For Sale') saleTotal++;
-            else if (tx === 'For Rent') rentTotal++;
+            if (tx === 'For Sale') saleTotal += count;
+            else if (tx === 'For Rent') rentTotal += count;
 
             const key = matrix[t] ? t : 'Other';
-            if (tx === 'For Sale') matrix[key].sale++;
-            else if (tx === 'For Rent') matrix[key].rent++;
-            matrix[key].total++;
+            if (tx === 'For Sale') matrix[key].sale += count;
+            else if (tx === 'For Rent') matrix[key].rent += count;
+            matrix[key].total += count;
         });
 
         return (
@@ -88,7 +86,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                     {/* Stats Dashboard Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 pb-4 mb-4">
                         <div>
-                            <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
                                 <BarChart3 className="w-5 h-5 text-indigo-600" />
                                 MLS Market Insights & Inventory Overview
                             </h2>
@@ -102,47 +100,47 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                     {/* Global Stats Overview */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Active Search Results */}
-                        <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between relative overflow-hidden min-h-[160px]">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl" />
-                            <div className="flex items-center justify-between text-slate-400">
-                                <span className="text-[9px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">Căutare Curentă</span>
-                                <Search className="w-4 h-4 text-blue-400" />
+                        <div className="bg-gradient-to-br from-blue-600 to-cyan-500 text-white rounded-3xl p-6 shadow-xl shadow-blue-500/10 flex flex-col justify-between relative overflow-hidden min-h-[160px] border border-blue-500/20">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+                            <div className="flex items-center justify-between text-white/80">
+                                <span className="text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/20">Căutare Curentă</span>
+                                <Search className="w-4 h-4" />
                             </div>
                             <div>
-                                <div className="text-4xl font-black tracking-tight text-white mt-4">{totalCount}</div>
-                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wide">Proprietăți identificate conform filtrelor</p>
+                                <div className="text-5xl font-black tracking-tight text-white mt-4 font-mono leading-none">{totalCount}</div>
+                                <p className="text-[10px] font-extrabold text-white/80 mt-2 uppercase tracking-wider">Proprietăți identificate conform filtrelor</p>
                             </div>
                         </div>
 
                         {/* Global Sales */}
-                        <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between relative overflow-hidden min-h-[160px]">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl" />
-                            <div className="flex items-center justify-between text-slate-400">
-                                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">De Vânzare</span>
-                                <Building2 className="w-4 h-4 text-emerald-400" />
+                        <div className="bg-gradient-to-br from-emerald-600 to-teal-500 text-white rounded-3xl p-6 shadow-xl shadow-emerald-500/10 flex flex-col justify-between relative overflow-hidden min-h-[160px] border border-emerald-500/20">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+                            <div className="flex items-center justify-between text-white/80">
+                                <span className="text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/20">De Vânzare</span>
+                                <Building2 className="w-4 h-4" />
                             </div>
                             <div>
-                                <div className="text-4xl font-black tracking-tight text-white mt-4">{saleTotal}</div>
-                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wide">Total listări active de vânzare</p>
+                                <div className="text-5xl font-black tracking-tight text-white mt-4 font-mono leading-none">{saleTotal}</div>
+                                <p className="text-[10px] font-extrabold text-white/80 mt-2 uppercase tracking-wider">Total listări active de vânzare</p>
                             </div>
                         </div>
 
                         {/* Global Rents */}
-                        <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between relative overflow-hidden min-h-[160px]">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl" />
-                            <div className="flex items-center justify-between text-slate-400">
-                                <span className="text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20">De Închiriat</span>
-                                <Key className="w-4 h-4 text-purple-400" />
+                        <div className="bg-gradient-to-br from-purple-600 to-indigo-500 text-white rounded-3xl p-6 shadow-xl shadow-purple-500/10 flex flex-col justify-between relative overflow-hidden min-h-[160px] border border-purple-500/20">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+                            <div className="flex items-center justify-between text-white/80">
+                                <span className="text-[10px] font-black uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/20">De Închiriat</span>
+                                <Key className="w-4 h-4" />
                             </div>
                             <div>
-                                <div className="text-4xl font-black tracking-tight text-white mt-4">{rentTotal}</div>
-                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wide">Total listări active de închiriat</p>
+                                <div className="text-5xl font-black tracking-tight text-white mt-4 font-mono leading-none">{rentTotal}</div>
+                                <p className="text-[10px] font-extrabold text-white/80 mt-2 uppercase tracking-wider">Total listări active de închiriat</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Section title for detailed matrix cards */}
-                    <div className="pt-4 pb-2 border-b border-slate-200">
+                    <div className="pt-6 pb-2 border-b border-slate-200">
                         <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Distribuție pe Categorii de Proprietăți</h3>
                         <p className="text-[11px] font-bold text-slate-400 mt-0.5">Fiecare categorie de proprietate prezintă un card dedicat cu starea curentă a pieței imobiliare</p>
                     </div>
@@ -155,56 +153,62 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                             const rentPercent = stats.total > 0 ? (stats.rent / stats.total) * 100 : 0;
 
                             return (
-                                <div key={type} className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative overflow-hidden group min-h-[220px]">
-                                    {/* Glowing hover accent */}
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                <div key={type} className="bg-white text-slate-800 rounded-3xl p-6 shadow-md hover:shadow-xl hover:border-indigo-500/50 hover:-translate-y-1.5 transition-all duration-300 border border-slate-200/80 flex flex-col justify-between relative overflow-hidden group min-h-[240px]">
+                                    {/* Glowing top line on hover */}
+                                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                     
                                     <div>
                                         <div className="flex items-center justify-between mb-4">
-                                            <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-300 border border-slate-700/60 group-hover:border-indigo-500/50 group-hover:text-indigo-400 transition-all duration-300">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-all duration-300">
                                                 <Icon className="w-5 h-5" />
                                             </div>
-                                            <span className="text-[11px] font-black bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-850 font-mono">
+                                            <span className="text-[12px] font-extrabold bg-slate-100 text-slate-700 px-3.5 py-1.5 rounded-full border border-slate-200/60 font-mono shadow-sm group-hover:bg-indigo-50 group-hover:text-indigo-600 group-hover:border-indigo-100 transition-all duration-300">
                                                 {stats.total} Listări
                                             </span>
                                         </div>
                                         
-                                        <h4 className="text-md font-extrabold text-white mb-4 group-hover:text-indigo-300 transition-colors duration-300">{type}</h4>
+                                        <h4 className="text-lg font-black text-slate-800 mb-4 group-hover:text-indigo-600 transition-colors duration-300">{type}</h4>
                                         
-                                        <div className="space-y-2.5 text-xs">
-                                            <div className="flex justify-between items-center text-slate-400 text-[11px] font-bold">
-                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Vânzare</span>
-                                                <span className="text-white font-mono">{stats.sale}</span>
+                                        <div className="space-y-2 text-xs">
+                                            <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                                                <span className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/30" />
+                                                    De Vânzare
+                                                </span>
+                                                <span className="text-slate-900 font-black text-sm font-mono">{stats.sale}</span>
                                             </div>
-                                            <div className="flex justify-between items-center text-slate-400 text-[11px] font-bold">
-                                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> Chirie</span>
-                                                <span className="text-white font-mono">{stats.rent}</span>
+                                            <div className="flex justify-between items-center py-1.5">
+                                                <span className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/30" />
+                                                    De Închiriat
+                                                </span>
+                                                <span className="text-slate-900 font-black text-sm font-mono">{stats.rent}</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-5 pt-3 border-t border-slate-800/80">
+                                    <div className="mt-5 pt-3 border-t border-slate-100">
                                         {/* Split progress bar */}
-                                        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex border border-slate-950">
+                                        <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden flex border border-slate-200/50 shadow-inner p-[2px]">
                                             {stats.total > 0 ? (
                                                 <>
                                                     {stats.sale > 0 && (
                                                         <div 
-                                                            className="bg-gradient-to-r from-blue-600 to-blue-400 h-full transition-all" 
+                                                            className="bg-gradient-to-r from-blue-600 to-blue-400 h-full rounded-l-full transition-all" 
                                                             style={{ width: `${salePercent}%` }}
                                                             title={`${stats.sale} de vânzare (${salePercent.toFixed(0)}%)`}
                                                         />
                                                     )}
                                                     {stats.rent > 0 && (
                                                         <div 
-                                                            className="bg-gradient-to-r from-purple-600 to-purple-400 h-full transition-all" 
+                                                            className="bg-gradient-to-r from-purple-600 to-purple-400 h-full rounded-r-full transition-all" 
                                                             style={{ width: `${rentPercent}%` }}
                                                             title={`${stats.rent} de închiriat (${rentPercent.toFixed(0)}%)`}
                                                         />
                                                     )}
                                                 </>
                                             ) : (
-                                                <div className="w-full h-full bg-slate-850" />
+                                                <div className="w-full h-full bg-slate-100 rounded-full" />
                                             )}
                                         </div>
                                     </div>
