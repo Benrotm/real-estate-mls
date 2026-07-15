@@ -194,7 +194,7 @@ export default function PermissionsClient({ plans, features, users, currentUser 
     const paginatedUsers = useMemo(() => {
         const startIndex = (currentPage - 1) * usersPerPage;
         return filteredUsers.slice(startIndex, startIndex + usersPerPage);
-    }, [filteredUsers, currentPage]);
+    }, [filteredUsers, currentPage, usersPerPage]);
 
     const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
