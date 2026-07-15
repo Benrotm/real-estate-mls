@@ -77,7 +77,7 @@ export default function PermissionsClient({ plans, features, users, currentUser 
     const [roleFilter, setRoleFilter] = useState('all');
     const [updatingUsers, setUpdatingUsers] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const usersPerPage = 10;
+    const [usersPerPage, setUsersPerPage] = useState(10);
 
     // Build plan columns dynamically based on DB data
     const planColumns = useMemo(() => {
@@ -432,6 +432,18 @@ export default function PermissionsClient({ plans, features, users, currentUser 
                                         <option value="developer">Developer</option>
                                         <option value="admin">Admin</option>
                                         <option value="super_admin">Super Admin</option>
+                                    </select>
+                                </div>
+
+                                <div className="relative flex-1 md:w-36">
+                                    <select
+                                        value={usersPerPage}
+                                        onChange={(e) => { setUsersPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-white focus:border-indigo-500 outline-none transition-all cursor-pointer text-sm"
+                                    >
+                                        <option value={10}>10 / pagină</option>
+                                        <option value={50}>50 / pagină</option>
+                                        <option value={100}>100 / pagină</option>
                                     </select>
                                 </div>
                             </div>
