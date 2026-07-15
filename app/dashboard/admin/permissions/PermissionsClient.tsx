@@ -562,26 +562,26 @@ export default function PermissionsClient({ plans, features, users, currentUser 
                             </div>
 
                             {/* Pagination Controls */}
-                            {totalPages > 1 && (
+                            {filteredUsers.length > 0 && (
                                 <div className="p-4 border-t border-slate-850 flex justify-between items-center bg-slate-950 text-sm">
                                     <div className="text-slate-400 text-xs">
-                                        Se afișează utilizatorii <span className="text-white font-bold">{Math.min((currentPage - 1) * usersPerPage + 1, filteredUsers.length)}</span> - <span className="text-white font-bold">{Math.min(currentPage * usersPerPage, filteredUsers.length)}</span> din <span className="text-white font-bold">{filteredUsers.length}</span>
+                                        Se afișează utilizatorii <span className="text-white font-bold">{filteredUsers.length === 0 ? 0 : (currentPage - 1) * usersPerPage + 1}</span> - <span className="text-white font-bold">{Math.min(currentPage * usersPerPage, filteredUsers.length)}</span> din <span className="text-white font-bold">{filteredUsers.length}</span>
                                     </div>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                             disabled={currentPage === 1}
-                                            className="px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs disabled:opacity-40"
+                                            className="px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                             Înapoi
                                         </button>
                                         <span className="px-3 py-1 flex items-center text-xs font-semibold text-slate-400">
-                                            Pagina {currentPage} din {totalPages}
+                                            Pagina {currentPage} din {Math.max(1, totalPages)}
                                         </span>
                                         <button
                                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                            disabled={currentPage === totalPages}
-                                            className="px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs disabled:opacity-40"
+                                            disabled={currentPage === totalPages || totalPages <= 1}
+                                            className="px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
                                             Înainte
                                         </button>
