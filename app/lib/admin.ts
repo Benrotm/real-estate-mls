@@ -216,6 +216,19 @@ async function verifyAdmin() {
     }
 
     if (!user) throw new Error('Unauthorized');
+
+    // Verify role in DB
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile || (profile.role !== 'super_admin' && profile.role !== 'admin')) {
+        console.error(`[AdminAccess] Access Denied for user ${user.id}. Role: ${profile?.role || 'None'}`);
+        throw new Error('Forbidden: Admin access required');
+    }
+
     return { user };
 }
 

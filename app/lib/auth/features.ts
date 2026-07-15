@@ -57,8 +57,8 @@ export async function hasFeature(featureKey: string): Promise<boolean> {
 
     if (!profile) return false;
 
-    // Super Admin override (optional, but good for debugging/management)
-    if (profile.role === 'super_admin') return true;
+    // Super Admin & Admin override (optional, but good for debugging/management)
+    if (profile.role === 'super_admin' || profile.role === 'admin') return true;
 
     // 2. Check if the feature is included in their plan
     const planNames = getEquivalentPlanNames(profile.role, profile.plan_tier || 'free');
@@ -90,8 +90,8 @@ export async function checkUserFeatureAccess(userId: string, featureKey: string)
 
     if (!profile) return false;
 
-    // Super Admin override
-    if (profile.role === 'super_admin') return true;
+    // Super Admin & Admin override
+    if (profile.role === 'super_admin' || profile.role === 'admin') return true;
 
     // 2. Check if the feature is included in their plan
     const planNames = getEquivalentPlanNames(profile.role, profile.plan_tier || 'free');
@@ -120,7 +120,7 @@ export async function getUserFeatures(): Promise<string[]> {
 
     if (!profile) return [];
 
-    if (profile.role === 'super_admin') {
+    if (profile.role === 'super_admin' || profile.role === 'admin') {
         return Object.values(SYSTEM_FEATURES);
     }
 
@@ -165,7 +165,7 @@ export async function bulkCheckUserFeatureAccess(userIds: string[], featureKey: 
     const result: Record<string, boolean> = {};
 
     profiles.forEach(profile => {
-        if (profile.role === 'super_admin') {
+        if (profile.role === 'super_admin' || profile.role === 'admin') {
             result[profile.id] = true;
             return;
         }

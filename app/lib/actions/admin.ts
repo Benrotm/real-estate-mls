@@ -15,9 +15,9 @@ async function checkAdmin() {
         .eq('id', user.id)
         .single();
 
-    if (!profile || profile.role !== 'super_admin') {
+    if (!profile || (profile.role !== 'super_admin' && profile.role !== 'admin')) {
         console.error(`[AdminAccess] Access Denied for user ${user.id}. Role: ${profile?.role || 'None'}`);
-        throw new Error('Forbidden: Super Admin Access Required');
+        throw new Error('Forbidden: Admin Access Required');
     }
     return { supabase, user };
 }
