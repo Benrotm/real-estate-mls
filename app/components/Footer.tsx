@@ -24,31 +24,30 @@ export default function Footer() {
                             Imobum
                         </Link>
                         <p className="mt-4 text-sm text-slate-400">
-                            Premium real estate marketplace connecting buyers, sellers, and agents with cutting-edge technology.
+                            Premium Real Estate HUB and MLS marketplace - connecting buyers, sellers, and agents with cutting-edge technology and AI.
                         </p>
                     </div>
 
-                    <div>
-                        <h3 className="text-sm font-bold tracking-wider uppercase mb-4 text-white">Discover</h3>
-                        <ul className="space-y-3">
+                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-2 md:gap-0">
+                        <h3 className="text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Discover</h3>
+                        <ul className="flex flex-row flex-wrap gap-x-4 gap-y-1 md:flex-col md:gap-y-3 pl-2 md:pl-0">
                             <li><Link href="/properties" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Properties</Link></li>
-                            <li><Link href="/agents" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Find an Agent</Link></li>
                             <li><Link href="/valuation" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Property Valuation</Link></li>
                         </ul>
                     </div>
 
-                    <div>
-                        <h3 className="text-sm font-bold tracking-wider uppercase mb-4 text-white">Company</h3>
-                        <ul className="space-y-3">
+                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-2 md:gap-0">
+                        <h3 className="text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Company</h3>
+                        <ul className="flex flex-row flex-wrap gap-x-4 gap-y-1 md:flex-col md:gap-y-3 pl-2 md:pl-0">
                             <li><Link href="/about" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">About Us</Link></li>
                             <li><Link href="/careers" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Careers</Link></li>
                             <li><Link href="/contact" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Contact</Link></li>
                         </ul>
                     </div>
 
-                    <div>
-                        <h3 className="text-sm font-bold tracking-wider uppercase mb-4 text-white">Legal</h3>
-                        <ul className="space-y-3">
+                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-2 md:gap-0">
+                        <h3 className="text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Legal</h3>
+                        <ul className="flex flex-row flex-wrap gap-x-4 gap-y-1 md:flex-col md:gap-y-3 pl-2 md:pl-0">
                             <li><Link href="/privacy" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Privacy Policy</Link></li>
                             <li><Link href="/terms" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Terms of Service</Link></li>
                         </ul>
