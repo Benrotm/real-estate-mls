@@ -27,6 +27,15 @@ export default async function LeadsPage() {
         redirect('/login');
     }
 
+    // Fetch user profile to check can_view_all_leads privilege
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('can_view_all_leads')
+        .eq('id', user.id)
+        .single();
+
+    const canViewAllLeads = profile?.can_view_all_leads || false;
+
     const leads = await fetchLeads();
     
     // Get user team members to distinguish between team leads and partner leads
@@ -58,8 +67,12 @@ export default async function LeadsPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900">Leads & CRM</h1>
-                            <p className="text-slate-500 text-sm">Manage your client relationships and pipeline.</p>
+                            <h1 className="text-2xl font-bold text-slate-900">
+                                {canViewAllLeads ? 'All Leads Management (Admin)' : 'Leads & CRM'}
+                            </h1>
+                            <p className="text-slate-500 text-sm">
+                                {canViewAllLeads ? 'Super Admin view of all system leads.' : 'Manage your client relationships and pipeline.'}
+                            </p>
                         </div>
                         <div className="flex items-center gap-3">
                             <button className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
@@ -174,7 +187,8 @@ export default async function LeadsPage() {
                     leads={leads}
                     basePath="/dashboard/agent/leads"
                     currentUserId={user?.id}
-                    teamMemberIds={teamMembers || [user?.id]}
+                    teamMemberIds={canViewAllLeads ? [] : (teamMembers || [user?.id])}
+                    canViewAllLeads={canViewAllLeads}
                 />
             </div>
         </div>

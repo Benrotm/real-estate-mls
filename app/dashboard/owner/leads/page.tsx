@@ -17,7 +17,14 @@ export default async function OwnerLeadsPage() {
         return redirect('/login');
     }
 
-    const hasLeadsAccess = await hasFeature(SYSTEM_FEATURES.LEADS_ACCESS);
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('can_view_all_leads')
+        .eq('id', user.id)
+        .single();
+
+    const canViewAllLeads = profile?.can_view_all_leads || false;
+    const hasLeadsAccess = (await hasFeature(SYSTEM_FEATURES.LEADS_ACCESS)) || canViewAllLeads;
 
     // Fetch leads. Owners can view all raw leads on their properties but contact info will be masked.
     const rawLeads = await fetchLeads();
@@ -74,8 +81,12 @@ export default async function OwnerLeadsPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900">Leads & CRM</h1>
-                            <p className="text-slate-500 text-sm">Potential buyers and tenants for your properties.</p>
+                            <h1 className="text-2xl font-bold text-slate-900">
+                                {canViewAllLeads ? 'All Leads Management (Admin)' : 'Leads & CRM'}
+                            </h1>
+                            <p className="text-slate-500 text-sm">
+                                {canViewAllLeads ? 'Super Admin view of all system leads.' : 'Potential buyers and tenants for your properties.'}
+                            </p>
                         </div>
                         <div className="flex items-center gap-3">
                             {!hasLeadsAccess && (
@@ -123,6 +134,7 @@ export default async function OwnerLeadsPage() {
                     userCredits={userCredits}
                     leadUnlockCost={leadUnlockCost}
                     currentUserId={user.id}
+                    canViewAllLeads={canViewAllLeads}
                 />
             </div>
         </div>

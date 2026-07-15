@@ -49,6 +49,7 @@ interface LeadListProps {
     leadUnlockCost?: number;
     hasLeadsAccess?: boolean;
     isAdmin?: boolean;
+    canViewAllLeads?: boolean;
 }
 
 export default function LeadList({ 
@@ -61,6 +62,7 @@ export default function LeadList({
     leadUnlockCost = 5,
     hasLeadsAccess = true,
     isAdmin = false,
+    canViewAllLeads = false,
 }: LeadListProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -180,7 +182,7 @@ export default function LeadList({
             if (ownershipFilter === 'my' && lead.agent_id !== currentUserId) return false;
             if (ownershipFilter === 'partner' && lead.agent_id === currentUserId) return false;
 
-            const isOwner = lead.agent_id === currentUserId || isAdmin;
+            const isOwner = lead.agent_id === currentUserId || isAdmin || canViewAllLeads;
             const displayName = isOwner ? (lead.name || '') : 'Partner Lead';
 
             const matchesSearch =
@@ -237,7 +239,7 @@ export default function LeadList({
 
             return sortOrder === 'desc' ? -comparison : comparison;
         });
-    }, [leads, searchTerm, activeStatus, filters, sortBy, sortOrder, ownershipFilter, currentUserId]);
+    }, [leads, searchTerm, activeStatus, filters, sortBy, sortOrder, ownershipFilter, currentUserId, canViewAllLeads]);
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this lead? This action cannot be undone.')) return;
@@ -432,7 +434,7 @@ export default function LeadList({
                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Occupation</label>
                             <input type="text" name="occupation" value={filters.occupation} onChange={handleFilterChange} placeholder="Filter by job..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
                         </div>
-                        {isAdmin && (
+                        {(isAdmin || canViewAllLeads) && (
                             <>
                                 <div>
                                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Agent / User Name</label>
@@ -467,7 +469,7 @@ export default function LeadList({
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200">
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Lead Name</th>
-                                {isAdmin && <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Agent/User Info</th>}
+                                {(isAdmin || canViewAllLeads) && <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Agent/User Info</th>}
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Score</th>
                                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Preferences</th>
@@ -489,7 +491,7 @@ export default function LeadList({
                                                         {lead.isLocked ? (
                                                             <Lock className="w-4 h-4 text-slate-400" />
                                                         ) : (
-                                                            ((lead.agent_id === currentUserId || isAdmin) ? (lead.name || '?') : 'P').charAt(0).toUpperCase()
+                                                            ((lead.agent_id === currentUserId || isAdmin || canViewAllLeads) ? (lead.name || '?') : 'P').charAt(0).toUpperCase()
                                                         )}
                                                     </div>
                                                     <div>
@@ -497,7 +499,7 @@ export default function LeadList({
                                                             <span className="font-bold text-slate-500 flex items-center gap-1">
                                                                 {lead.name || 'Client Interest'}
                                                             </span>
-                                                        ) : (lead.agent_id === currentUserId || isAdmin) ? (
+                                                        ) : (lead.agent_id === currentUserId || isAdmin || canViewAllLeads) ? (
                                                             allowEdit ? (
                                                                 <Link href={`${basePath}/${lead.id}`} className="font-bold text-slate-900 hover:text-orange-600 transition-colors">
                                                                     {lead.name || 'Unnamed Lead'}
@@ -521,13 +523,13 @@ export default function LeadList({
                                                             <span className="font-bold text-slate-500 italic">Partner Lead</span>
                                                         )}
                                                         <div className="text-xs text-slate-500">
-                                                            {(lead.agent_id === currentUserId || isAdmin) ? (lead.source || 'Unknown Source') : teamMemberIds.includes(lead.agent_id) ? 'Team Member Lead' : 'Shared Lead'}
+                                                            {(lead.agent_id === currentUserId || isAdmin || canViewAllLeads) ? (lead.source || 'Unknown Source') : teamMemberIds.includes(lead.agent_id) ? 'Team Member Lead' : 'Shared Lead'}
                                                             {lead.created_at && ` • ${new Date(lead.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${new Date(lead.created_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}`}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            {isAdmin && (
+                                            {(isAdmin || canViewAllLeads) && (
                                                 <td className="px-6 py-4 text-sm text-slate-700">
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs shrink-0">
@@ -576,7 +578,7 @@ export default function LeadList({
                                                         <Lock className="w-3.5 h-3.5" />
                                                         <span className="text-xs font-bold font-mono">🔒 Locked</span>
                                                     </div>
-                                                ) : (lead.agent_id === currentUserId || isAdmin) ? (
+                                                ) : (lead.agent_id === currentUserId || isAdmin || canViewAllLeads) ? (
                                                     <div className="flex flex-col gap-2 items-start">
                                                         {lead.email && (
                                                             <div className="flex items-center gap-2 group/link">
@@ -622,7 +624,7 @@ export default function LeadList({
                                                         >
                                                             <Wallet className="w-3.5 h-3.5" /> Deblochează ({leadUnlockCost} CR)
                                                         </button>
-                                                    ) : (lead.agent_id === currentUserId || isAdmin) ? (
+                                                    ) : (lead.agent_id === currentUserId || isAdmin || canViewAllLeads) ? (
                                                         allowEdit ? (
                                                             <>
                                                                 <button
@@ -683,7 +685,7 @@ export default function LeadList({
                                         {/* Expanded Lead Card */}
                                         {expandedLeadId === lead.id && (
                                             <tr className="bg-slate-50/50">
-                                                <td colSpan={isAdmin ? 7 : 6} className="px-6 py-6 ring-1 ring-inset ring-slate-200/50">
+                                                <td colSpan={isAdmin || canViewAllLeads ? 7 : 6} className="px-6 py-6 ring-1 ring-inset ring-slate-200/50">
                                                     {lead.isLocked ? (
                                                         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-lg mx-auto text-center space-y-6 border-t-4 border-t-yellow-500 animate-in fade-in slide-in-from-top-4 duration-300">
                                                             <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto border border-yellow-200">
@@ -765,7 +767,7 @@ export default function LeadList({
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={isAdmin ? 7 : 6} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={isAdmin || canViewAllLeads ? 7 : 6} className="px-6 py-12 text-center text-slate-400">
                                         <div className="flex flex-col items-center gap-2">
                                             <Search className="w-8 h-8 opacity-20" />
                                             <span className="text-sm">

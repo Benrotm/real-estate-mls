@@ -617,3 +617,16 @@ export async function toggleUserEditAllProperties(userId: string, enable: boolea
     revalidatePath('/dashboard/admin/users');
 }
 
+export async function toggleUserViewAllLeads(userId: string, enable: boolean) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ can_view_all_leads: enable })
+        .eq('id', userId);
+
+    if (error) throw new Error(error.message);
+    revalidatePath('/dashboard/admin/users');
+}
+
