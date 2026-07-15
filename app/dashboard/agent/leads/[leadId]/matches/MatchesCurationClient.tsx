@@ -5,14 +5,204 @@ import { LeadData } from '@/app/lib/types';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
 import { fetchPropertyByFriendlyId } from '@/app/lib/actions/properties';
-import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight, CheckCircle, Clock, List, Activity, Plus } from 'lucide-react';
+import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight, CheckCircle, Clock, List, Activity, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import ShareMatchesModal from '@/app/components/dashboard/ShareMatchesModal';
 import LeadProfileDetails from '@/app/components/dashboard/LeadProfileDetails';
 import Link from 'next/link';
+import { decodeHtmlEntities } from '@/app/lib/utils/string';
 
 interface Props {
     lead: LeadData;
     initialMatches: any[];
+}
+
+function MatchPropertyCard({ property, status, updatingIds, getStatusColor, getStatusIcon, handleUpdateStatus }: {
+    property: any;
+    status?: string;
+    updatingIds: string[];
+    getStatusColor: (status: string) => string;
+    getStatusIcon: (status: string) => React.ReactNode;
+    handleUpdateStatus: (id: string, status: string) => void;
+}) {
+    const [imageIndex, setImageIndex] = useState(0);
+    const isUpdating = updatingIds.includes(property.id);
+    const images: string[] = property.images && Array.isArray(property.images) && property.images.length > 0
+        ? property.images
+        : ['/placeholder-property.jpg'];
+
+    const handlePrevImage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+
+    const handleNextImage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setImageIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const rawDesc = property.description || '';
+    const cleanDesc = decodeHtmlEntities(rawDesc)
+        .replace(/<br\s*[\/]?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+
+    return (
+        <div className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col h-full ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
+            {/* Fixed height image container with scrolling buttons */}
+            <div className="h-48 w-full relative bg-slate-100 overflow-hidden shrink-0 group">
+                <img src={images[imageIndex] || '/placeholder-property.jpg'} alt={property.title} className="absolute inset-0 w-full h-full object-cover transition-opacity duration-200" />
+                
+                {status && (
+                    <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border shadow-sm ${getStatusColor(status)} backdrop-blur-sm bg-opacity-90 z-10`}>
+                        {getStatusIcon(status)}
+                        {status.replace('_', ' ')}
+                    </div>
+                )}
+
+                {images.length > 1 && (
+                    <>
+                        <button
+                            onClick={handlePrevImage}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center opacity-80 hover:opacity-100 transition-all z-10 shadow-md"
+                            title="Previous image"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={handleNextImage}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center opacity-80 hover:opacity-100 transition-all z-10 shadow-md"
+                            title="Next image"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-slate-900/70 text-white text-[10px] font-bold z-10 backdrop-blur-sm">
+                            {imageIndex + 1} / {images.length}
+                        </div>
+                    </>
+                )}
+            </div>
+
+            <div className="p-4 flex-1 flex flex-col">
+                <h4 className="font-black text-sm text-slate-900 line-clamp-2 mb-2 leading-tight">{property.title}</h4>
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-3">
+                    <MapPin className="w-3 h-3" /> {property.location_city} {property.location_area && `• ${property.location_area}`}
+                </div>
+
+                {/* Property Specs (Rooms, Usable Area, Floor) */}
+                <div className="grid grid-cols-3 gap-1 mb-3">
+                    <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Rooms</span>
+                        <span className="text-xs font-extrabold text-slate-900 mt-1">{property.rooms || '-'}</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Area</span>
+                        <span className="text-xs font-extrabold text-slate-900 mt-1">{property.area_usable ? `${property.area_usable} m²` : '-'}</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Floor</span>
+                        <span className="text-xs font-extrabold text-slate-900 mt-1">
+                            {property.floor !== null && property.floor !== undefined
+                                ? ((property.total_floors !== null && property.total_floors !== undefined)
+                                    ? `${property.floor}/${property.total_floors}`
+                                    : `${property.floor}`)
+                                : ((property.total_floors !== null && property.total_floors !== undefined)
+                                    ? `-/ ${property.total_floors}`
+                                    : '-')
+                            }
+                        </span>
+                    </div>
+                </div>
+
+                {/* Fixed size scrollable section for description */}
+                <div className="h-20 overflow-y-auto pr-1 mb-3 text-xs text-slate-600 font-medium leading-relaxed bg-slate-50/70 p-2.5 rounded-lg border border-slate-100">
+                    {cleanDesc ? (
+                        <p className="whitespace-pre-line">{cleanDesc}</p>
+                    ) : (
+                        <p className="text-slate-400 italic">No description available.</p>
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between mt-auto mb-4 border-t border-slate-100 pt-3">
+                    <div className="text-lg font-black text-orange-600 leading-none">
+                        {property.price?.toLocaleString()} {property.currency}
+                    </div>
+                    <Link
+                        href={`/properties/${property.id}`}
+                        target="_blank"
+                        className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                        title="View Full Details"
+                    >
+                        <ArrowUpRight className="w-4 h-4" />
+                    </Link>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                    {(!status || status === 'dismissed') && (
+                        <>
+                            <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="px-3 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <Bookmark className="w-3.5 h-3.5" /> Save
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <XCircle className="w-3.5 h-3.5" /> Dismiss
+                            </button>
+                        </>
+                    )}
+                    {status === 'saved' && (
+                        <>
+                            <button onClick={() => handleUpdateStatus(property.id, 'interested')} className="px-3 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <ThumbsUp className="w-3.5 h-3.5" /> Interested
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <XCircle className="w-3.5 h-3.5" /> Dismiss
+                            </button>
+                        </>
+                    )}
+                    {(status === 'sent' || status === 'interested') && (
+                        <>
+                            <button onClick={() => handleUpdateStatus(property.id, 'visit_scheduled')} className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <Calendar className="w-3.5 h-3.5" /> Schedule Visit
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <Handshake className="w-3.5 h-3.5" /> Negot.
+                            </button>
+                        </>
+                    )}
+                    {status === 'visit_scheduled' && (
+                        <>
+                            <button onClick={() => handleUpdateStatus(property.id, 'not_interested')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <ThumbsDown className="w-3.5 h-3.5" /> Skipped
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <Handshake className="w-3.5 h-3.5" /> Negot.
+                            </button>
+                        </>
+                    )}
+                    {status === 'negotiation' && (
+                        <>
+                            <button onClick={() => handleUpdateStatus(property.id, 'not_interested')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <ThumbsDown className="w-3.5 h-3.5" /> Skipped
+                            </button>
+                            <button onClick={() => handleUpdateStatus(property.id, 'sold')} className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                                <CheckCircle className="w-3.5 h-3.5" /> Sold
+                            </button>
+                        </>
+                    )}
+                    {status === 'not_interested' && (
+                        <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="col-span-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                            <RefreshCw className="w-3.5 h-3.5" /> Re-Save
+                        </button>
+                    )}
+                    {status === 'sold' && (
+                        <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="col-span-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
+                            <RefreshCw className="w-3.5 h-3.5" /> Revert to Negotiation
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default function MatchesCurationClient({ lead, initialMatches }: Props) {
@@ -165,131 +355,17 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
         }
     };
 
-    const renderPropertyCard = (property: any, status?: string) => {
-        const isUpdating = updatingIds.includes(property.id);
-        
-        return (
-            <div key={property.id} className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col h-full ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
-                <div className="aspect-[4/3] relative bg-slate-100 w-full">
-                    <img src={property.images?.[0] || '/placeholder-property.jpg'} alt={property.title} className="absolute inset-0 w-full h-full object-cover" />
-                    {status && (
-                        <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border shadow-sm ${getStatusColor(status)} backdrop-blur-sm bg-opacity-90`}>
-                            {getStatusIcon(status)}
-                            {status.replace('_', ' ')}
-                        </div>
-                    )}
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                    <h4 className="font-black text-sm text-slate-900 line-clamp-2 mb-2 leading-tight">{property.title}</h4>
-                    <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-3">
-                        <MapPin className="w-3 h-3" /> {property.location_city} {property.location_area && `• ${property.location_area}`}
-                    </div>
-
-                    {/* Property Specs (Rooms, Usable Area, Floor) */}
-                    <div className="grid grid-cols-3 gap-1 mb-3">
-                        <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Rooms</span>
-                            <span className="text-xs font-extrabold text-slate-900 mt-1">{property.rooms || '-'}</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Area</span>
-                            <span className="text-xs font-extrabold text-slate-900 mt-1">{property.area_usable ? `${property.area_usable} m²` : '-'}</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/50 border border-slate-100 rounded-lg text-slate-700">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Floor</span>
-                            <span className="text-xs font-extrabold text-slate-900 mt-1">
-                                {property.floor !== null && property.floor !== undefined
-                                    ? ((property.total_floors !== null && property.total_floors !== undefined)
-                                        ? `${property.floor}/${property.total_floors}`
-                                        : `${property.floor}`)
-                                    : ((property.total_floors !== null && property.total_floors !== undefined)
-                                        ? `-/ ${property.total_floors}`
-                                        : '-')
-                                }
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-auto mb-4 border-t border-slate-100 pt-3">
-                        <div className="text-lg font-black text-orange-600 leading-none">
-                            {property.price?.toLocaleString()} {property.currency}
-                        </div>
-                        <Link
-                            href={`/properties/${property.id}`}
-                            target="_blank"
-                            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors border border-slate-200"
-                            title="View Full Details"
-                        >
-                            <ArrowUpRight className="w-4 h-4" />
-                        </Link>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 pt-2">
-                        {(!status || status === 'dismissed') && (
-                            <>
-                                <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="px-3 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <Bookmark className="w-3.5 h-3.5" /> Save
-                                </button>
-                                <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <XCircle className="w-3.5 h-3.5" /> Dismiss
-                                </button>
-                            </>
-                        )}
-                        {status === 'saved' && (
-                            <>
-                                <button onClick={() => handleUpdateStatus(property.id, 'interested')} className="px-3 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <ThumbsUp className="w-3.5 h-3.5" /> Interested
-                                </button>
-                                <button onClick={() => handleUpdateStatus(property.id, 'dismissed')} className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <XCircle className="w-3.5 h-3.5" /> Dismiss
-                                </button>
-                            </>
-                        )}
-                        {(status === 'sent' || status === 'interested') && (
-                            <>
-                                <button onClick={() => handleUpdateStatus(property.id, 'visit_scheduled')} className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <Calendar className="w-3.5 h-3.5" /> Schedule Visit
-                                </button>
-                                <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <Handshake className="w-3.5 h-3.5" /> Negot.
-                                </button>
-                            </>
-                        )}
-                        {status === 'visit_scheduled' && (
-                            <>
-                                <button onClick={() => handleUpdateStatus(property.id, 'not_interested')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <ThumbsDown className="w-3.5 h-3.5" /> Skipped
-                                </button>
-                                <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <Handshake className="w-3.5 h-3.5" /> Negot.
-                                </button>
-                            </>
-                        )}
-                        {status === 'negotiation' && (
-                            <>
-                                <button onClick={() => handleUpdateStatus(property.id, 'not_interested')} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <ThumbsDown className="w-3.5 h-3.5" /> Skipped
-                                </button>
-                                <button onClick={() => handleUpdateStatus(property.id, 'sold')} className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                    <CheckCircle className="w-3.5 h-3.5" /> Sold
-                                </button>
-                            </>
-                        )}
-                        {status === 'not_interested' && (
-                            <button onClick={() => handleUpdateStatus(property.id, 'saved')} className="col-span-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                <RefreshCw className="w-3.5 h-3.5" /> Re-Save
-                            </button>
-                        )}
-                        {status === 'sold' && (
-                            <button onClick={() => handleUpdateStatus(property.id, 'negotiation')} className="col-span-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-colors">
-                                <RefreshCw className="w-3.5 h-3.5" /> Revert to Negotiation
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-        );
-    };
+    const renderPropertyCard = (property: any, status?: string) => (
+        <MatchPropertyCard
+            key={property.id}
+            property={property}
+            status={status}
+            updatingIds={updatingIds}
+            getStatusColor={getStatusColor}
+            getStatusIcon={getStatusIcon}
+            handleUpdateStatus={handleUpdateStatus}
+        />
+    );
 
     const savedMatches = matches.filter(m => m.status === 'saved' || m.status === 'sent');
     const interestedMatches = matches.filter(m => m.status === 'interested');

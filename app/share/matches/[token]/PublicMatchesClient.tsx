@@ -2,9 +2,236 @@
 
 import React, { useState } from 'react';
 import { updatePublicMatchStatus } from '@/app/lib/actions/matches';
-import { Building2, ThumbsUp, ThumbsDown, CheckCircle, ArrowUpRight, MapPin, Clock, List, Activity, Calendar, Handshake } from 'lucide-react';
+import { Building2, ThumbsUp, ThumbsDown, CheckCircle, ArrowUpRight, MapPin, Clock, List, Activity, Calendar, Handshake, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import LeadProfileDetails from '@/app/components/dashboard/LeadProfileDetails';
+import { decodeHtmlEntities } from '@/app/lib/utils/string';
+
+interface Props {
+    token: string;
+    lead: any;
+    initialMatches: any[];
+}
+
+function PublicMatchPropertyCard({ match, updatingIds, handleUpdateStatus }: {
+    match: any;
+    updatingIds: string[];
+    handleUpdateStatus: (matchId: string, status: any) => void;
+}) {
+    const property = match.property;
+    const [imageIndex, setImageIndex] = useState(0);
+    const isUpdating = updatingIds.includes(match.id);
+    const isInterested = match.status === 'interested';
+    const isNotInterested = match.status === 'not_interested';
+    const isVisitScheduled = match.status === 'visit_scheduled';
+    const isNegotiation = match.status === 'negotiation';
+    const isSold = match.status === 'sold';
+
+    const images: string[] = property.images && Array.isArray(property.images) && property.images.length > 0
+        ? property.images
+        : ['/placeholder-property.jpg'];
+
+    const handlePrevImage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+
+    const handleNextImage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setImageIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const rawDesc = property.description || '';
+    const cleanDesc = decodeHtmlEntities(rawDesc)
+        .replace(/<br\s*[\/]?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+
+    return (
+        <div className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-slate-200 flex flex-col h-full ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
+            {/* Fixed height image container so all cards match Picture 4 exactly */}
+            <div className="h-48 w-full bg-slate-100 relative overflow-hidden shrink-0 group">
+                <img src={images[imageIndex] || '/placeholder-property.jpg'} alt={property.title} className="w-full h-full object-cover transition-opacity duration-200" />
+                
+                {/* Status Overlay */}
+                {(isInterested || isVisitScheduled || isNegotiation || isSold) && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-3 z-10">
+                        <div className="bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 text-green-700 font-black text-xs tracking-widest uppercase">
+                            {isInterested && <><CheckCircle className="w-4 h-4" /> Interested</>}
+                            {isVisitScheduled && <><Calendar className="w-4 h-4" /> Visit Scheduled</>}
+                            {isNegotiation && <><Handshake className="w-4 h-4" /> Negotiation</>}
+                            {isSold && <><CheckCircle className="w-4 h-4" /> Sold</>}
+                        </div>
+                    </div>
+                )}
+                {isNotInterested && (
+                    <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center pointer-events-none p-3 z-10">
+                        <div className="bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 text-slate-700 font-black text-xs tracking-widest uppercase">
+                            <ThumbsDown className="w-4 h-4" /> Skipped
+                        </div>
+                    </div>
+                )}
+
+                {images.length > 1 && (
+                    <>
+                        <button
+                            onClick={handlePrevImage}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center opacity-80 hover:opacity-100 transition-all z-20 shadow-md"
+                            title="Previous image"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={handleNextImage}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center opacity-80 hover:opacity-100 transition-all z-20 shadow-md"
+                            title="Next image"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-slate-900/70 text-white text-[10px] font-bold z-20 backdrop-blur-sm">
+                            {imageIndex + 1} / {images.length}
+                        </div>
+                    </>
+                )}
+            </div>
+
+            <div className="p-4 flex-1 flex flex-col">
+                <div className="flex gap-1.5 mb-2">
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-black uppercase tracking-wider">{property.type || 'Property'}</span>
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-black uppercase tracking-wider">{property.listing_type || 'For Sale'}</span>
+                </div>
+                
+                <h4 className="font-black text-slate-900 text-sm leading-tight mb-2 line-clamp-2">{property.title}</h4>
+                
+                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-3 truncate">
+                    <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{property.location_city} {property.location_area && `• ${property.location_area}`}</span>
+                </div>
+
+                {/* Specs Grid matching user/agent side exactly */}
+                <div className="grid grid-cols-3 gap-1 mb-3">
+                    <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/70 border border-slate-100 rounded-lg text-slate-700">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Rooms</span>
+                        <span className="text-xs font-extrabold text-slate-900 mt-1">{property.rooms || '-'}</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/70 border border-slate-100 rounded-lg text-slate-700">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Area</span>
+                        <span className="text-xs font-extrabold text-slate-900 mt-1">{property.area_usable ? `${property.area_usable} m²` : '-'}</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/70 border border-slate-100 rounded-lg text-slate-700">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Floor</span>
+                        <span className="text-xs font-extrabold text-slate-900 mt-1">
+                            {property.floor !== null && property.floor !== undefined
+                                ? ((property.total_floors !== null && property.total_floors !== undefined)
+                                    ? `${property.floor}/${property.total_floors}`
+                                    : `${property.floor}`)
+                                : ((property.total_floors !== null && property.total_floors !== undefined)
+                                    ? `-/ ${property.total_floors}`
+                                    : '-')
+                            }
+                        </span>
+                    </div>
+                </div>
+
+                {/* Fixed size scrollable section for description */}
+                <div className="h-20 overflow-y-auto pr-1 mb-3 text-xs text-slate-600 font-medium leading-relaxed bg-slate-50/70 p-2.5 rounded-lg border border-slate-100">
+                    {cleanDesc ? (
+                        <p className="whitespace-pre-line">{cleanDesc}</p>
+                    ) : (
+                        <p className="text-slate-400 italic">No description available.</p>
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between mt-auto mb-3 border-t border-slate-100 pt-3">
+                    <div className="text-base font-black text-orange-600 leading-none">
+                        {property.price?.toLocaleString()} {property.currency || 'EUR'}
+                    </div>
+                    <Link
+                        href={`/properties/${property.id}`}
+                        target="_blank"
+                        className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                        title="View Full Details"
+                    >
+                        <ArrowUpRight className="w-4 h-4" />
+                    </Link>
+                </div>
+
+                <div className="pt-1">
+                    {(!isInterested && !isNotInterested && !isVisitScheduled && !isNegotiation && !isSold) ? (
+                        <div className="grid grid-cols-2 gap-2">
+                            <button 
+                                onClick={() => handleUpdateStatus(match.id, 'not_interested')}
+                                className="py-2 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all"
+                            >
+                                <ThumbsDown className="w-3.5 h-3.5" /> Pass
+                            </button>
+                            <button 
+                                onClick={() => handleUpdateStatus(match.id, 'interested')}
+                                className="py-2 px-3 bg-green-600 hover:bg-green-700 shadow-sm text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all"
+                            >
+                                <ThumbsUp className="w-3.5 h-3.5" /> Interested
+                            </button>
+                        </div>
+                    ) : isNegotiation ? (
+                        <div className="flex flex-col gap-1.5">
+                            <button 
+                                onClick={() => handleUpdateStatus(match.id, 'sold')}
+                                className="py-2 bg-emerald-600 hover:bg-emerald-700 shadow-sm text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all"
+                            >
+                                <CheckCircle className="w-3.5 h-3.5" /> Mark as Sold!
+                            </button>
+                            <button 
+                                onClick={() => handleUpdateStatus(match.id, 'not_interested')}
+                                className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                            >
+                                <ThumbsDown className="w-3 h-3" /> Not Interested Anymore
+                            </button>
+                        </div>
+                    ) : isVisitScheduled ? (
+                        <div className="flex flex-col gap-1.5">
+                            <div className="text-center py-1 text-xs font-bold text-slate-500">
+                                Your agent is handling this property.
+                            </div>
+                            <button 
+                                onClick={() => handleUpdateStatus(match.id, 'not_interested')}
+                                className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                            >
+                                <ThumbsDown className="w-3 h-3" /> Not Interested Anymore
+                            </button>
+                        </div>
+                    ) : isSold ? (
+                        <div className="text-center py-1.5 text-xs font-bold text-slate-500">
+                            Congratulations on this property!
+                        </div>
+                    ) : isInterested ? (
+                        <div className="flex flex-col gap-1.5">
+                            <button 
+                                onClick={() => handleUpdateStatus(match.id, 'visit_scheduled')}
+                                className="py-2 bg-purple-600 hover:bg-purple-700 shadow-sm text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all"
+                            >
+                                <Calendar className="w-3.5 h-3.5" /> Schedule Visit
+                            </button>
+                            <button 
+                                onClick={() => handleUpdateStatus(match.id, 'not_interested')}
+                                className="w-full py-1 bg-transparent text-slate-400 hover:text-slate-600 underline text-[11px] font-bold transition-colors"
+                            >
+                                Change my mind (mark as Pass)
+                            </button>
+                        </div>
+                    ) : (
+                        <button 
+                            onClick={() => handleUpdateStatus(match.id, 'interested')}
+                            className="w-full py-1.5 bg-transparent text-slate-400 hover:text-slate-600 underline text-xs font-bold transition-colors"
+                        >
+                            Change my mind (mark as Interested)
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 interface Props {
     token: string;
@@ -168,167 +395,14 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {filteredMatches.map((match) => {
-                            const property = match.property;
-                            const isUpdating = updatingIds.includes(match.id);
-                            const isInterested = match.status === 'interested';
-                            const isNotInterested = match.status === 'not_interested';
-                            const isVisitScheduled = match.status === 'visit_scheduled';
-                            const isNegotiation = match.status === 'negotiation';
-                            const isSold = match.status === 'sold';
-
-                            return (
-                                <div key={match.id} className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-slate-200 flex flex-col h-full ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
-                                    {/* Fixed height image container so all cards match Picture 4 exactly */}
-                                    <div className="h-48 w-full bg-slate-100 relative overflow-hidden shrink-0">
-                                        <img src={property.images?.[0] || '/placeholder-property.jpg'} alt={property.title} className="w-full h-full object-cover" />
-                                        
-                                        {/* Status Overlay */}
-                                        {(isInterested || isVisitScheduled || isNegotiation || isSold) && (
-                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-3">
-                                                <div className="bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 text-green-700 font-black text-xs tracking-widest uppercase">
-                                                    {isInterested && <><CheckCircle className="w-4 h-4" /> Interested</>}
-                                                    {isVisitScheduled && <><Calendar className="w-4 h-4" /> Visit Scheduled</>}
-                                                    {isNegotiation && <><Handshake className="w-4 h-4" /> Negotiation</>}
-                                                    {isSold && <><CheckCircle className="w-4 h-4" /> Sold</>}
-                                                </div>
-                                            </div>
-                                        )}
-                                        {isNotInterested && (
-                                            <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center pointer-events-none p-3">
-                                                <div className="bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 text-slate-700 font-black text-xs tracking-widest uppercase">
-                                                    <ThumbsDown className="w-4 h-4" /> Skipped
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="p-4 flex-1 flex flex-col">
-                                        <div className="flex gap-1.5 mb-2">
-                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-black uppercase tracking-wider">{property.type || 'Property'}</span>
-                                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-black uppercase tracking-wider">{property.listing_type || 'For Sale'}</span>
-                                        </div>
-                                        
-                                        <h4 className="font-black text-slate-900 text-sm leading-tight mb-2 line-clamp-2">{property.title}</h4>
-                                        
-                                        <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-3 truncate">
-                                            <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{property.location_city} {property.location_area && `• ${property.location_area}`}</span>
-                                        </div>
-
-                                        {/* Specs Grid matching user/agent side exactly */}
-                                        <div className="grid grid-cols-3 gap-1 mb-3">
-                                            <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/70 border border-slate-100 rounded-lg text-slate-700">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Rooms</span>
-                                                <span className="text-xs font-extrabold text-slate-900 mt-1">{property.rooms || '-'}</span>
-                                            </div>
-                                            <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/70 border border-slate-100 rounded-lg text-slate-700">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Area</span>
-                                                <span className="text-xs font-extrabold text-slate-900 mt-1">{property.area_usable ? `${property.area_usable} m²` : '-'}</span>
-                                            </div>
-                                            <div className="flex flex-col items-center justify-center py-1.5 bg-slate-50/70 border border-slate-100 rounded-lg text-slate-700">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">Floor</span>
-                                                <span className="text-xs font-extrabold text-slate-900 mt-1">
-                                                    {property.floor !== null && property.floor !== undefined
-                                                        ? ((property.total_floors !== null && property.total_floors !== undefined)
-                                                            ? `${property.floor}/${property.total_floors}`
-                                                            : `${property.floor}`)
-                                                        : ((property.total_floors !== null && property.total_floors !== undefined)
-                                                            ? `-/ ${property.total_floors}`
-                                                            : '-')
-                                                    }
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between mt-auto mb-3 border-t border-slate-100 pt-3">
-                                            <div className="text-base font-black text-orange-600 leading-none">
-                                                {property.price?.toLocaleString()} {property.currency || 'EUR'}
-                                            </div>
-                                            <Link
-                                                href={`/properties/${property.id}`}
-                                                target="_blank"
-                                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors border border-slate-200"
-                                                title="View Full Details"
-                                            >
-                                                <ArrowUpRight className="w-4 h-4" />
-                                            </Link>
-                                        </div>
-
-                                        <div className="pt-1">
-                                            {(!isInterested && !isNotInterested && !isVisitScheduled && !isNegotiation && !isSold) ? (
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(match.id, 'not_interested')}
-                                                        className="py-2 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all"
-                                                    >
-                                                        <ThumbsDown className="w-3.5 h-3.5" /> Pass
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(match.id, 'interested')}
-                                                        className="py-2 px-3 bg-green-600 hover:bg-green-700 shadow-sm text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all"
-                                                    >
-                                                        <ThumbsUp className="w-3.5 h-3.5" /> Interested
-                                                    </button>
-                                                </div>
-                                            ) : isNegotiation ? (
-                                                <div className="flex flex-col gap-1.5">
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(match.id, 'sold')}
-                                                        className="py-2 bg-emerald-600 hover:bg-emerald-700 shadow-sm text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all"
-                                                    >
-                                                        <CheckCircle className="w-3.5 h-3.5" /> Mark as Sold!
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(match.id, 'not_interested')}
-                                                        className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                                                    >
-                                                        <ThumbsDown className="w-3 h-3" /> Not Interested Anymore
-                                                    </button>
-                                                </div>
-                                            ) : isVisitScheduled ? (
-                                                <div className="flex flex-col gap-1.5">
-                                                    <div className="text-center py-1 text-xs font-bold text-slate-500">
-                                                        Your agent is handling this property.
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(match.id, 'not_interested')}
-                                                        className="py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                                                    >
-                                                        <ThumbsDown className="w-3 h-3" /> Not Interested Anymore
-                                                    </button>
-                                                </div>
-                                            ) : isSold ? (
-                                                <div className="text-center py-1.5 text-xs font-bold text-slate-500">
-                                                    Congratulations on this property!
-                                                </div>
-                                            ) : isInterested ? (
-                                                <div className="flex flex-col gap-1.5">
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(match.id, 'visit_scheduled')}
-                                                        className="py-2 bg-purple-600 hover:bg-purple-700 shadow-sm text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all"
-                                                    >
-                                                        <Calendar className="w-3.5 h-3.5" /> Schedule Visit
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(match.id, 'not_interested')}
-                                                        className="w-full py-1 bg-transparent text-slate-400 hover:text-slate-600 underline text-[11px] font-bold transition-colors"
-                                                    >
-                                                        Change my mind (mark as Pass)
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button 
-                                                    onClick={() => handleUpdateStatus(match.id, 'interested')}
-                                                    className="w-full py-1.5 bg-transparent text-slate-400 hover:text-slate-600 underline text-xs font-bold transition-colors"
-                                                >
-                                                    Change my mind (mark as Interested)
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        {filteredMatches.map((match) => (
+                            <PublicMatchPropertyCard
+                                key={match.id}
+                                match={match}
+                                updatingIds={updatingIds}
+                                handleUpdateStatus={handleUpdateStatus}
+                            />
+                        ))}
                     </div>
                 )}
             </main>
