@@ -380,7 +380,7 @@ export default function DashboardClient({
                 )}
 
                 {/* Main page content */}
-                <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+                <main className="flex-1 p-1 md:p-8 overflow-y-auto">
                     {children}
                 </main>
             </div>

@@ -111,3 +111,56 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Mobile Spacing & Layout Optimization (Max-Width: 767px) */
+@media (max-width: 767px) {
+  /* Remove excessive padding from main layout panels to keep only 1mm (4px) */
+  main.flex-grow,
+  main.flex-1 {
+    padding: 4px !important;
+  }
+
+  /* Reset nested double-padding on child page containers and max-w-7xl wrappers */
+  main.flex-grow > div,
+  main.flex-1 > div,
+  main.flex-1 .max-w-7xl,
+  main.flex-grow .max-w-7xl {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+
+  /* Tighten card section containers so they span to the 1mm margins */
+  main.flex-grow section,
+  main.flex-1 section,
+  main.flex-1 .bg-slate-900\/50,
+  main.flex-grow .bg-slate-900\/50 {
+    padding: 12px 8px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  /* Compact grid gaps on mobile pages */
+  main.flex-1 .grid,
+  main.flex-grow .grid {
+    gap: 8px !important;
+  }
+
+  /* Compact header layouts and reduce margins */
+  main.flex-1 header,
+  main.flex-grow header {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 12px !important;
+  }
+
+  /* Table overflow scroll element styling */
+  .overflow-x-auto {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: 6px !important;
+  }
+}
