@@ -17,45 +17,45 @@ export default function Footer() {
                 <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-lime-500 rounded-full blur-3xl" />
             </div>
 
-            <div className="max-w-7xl mx-auto py-6 md:py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-8">
+            <div className="max-w-7xl mx-auto py-2 md:py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-8">
                     <div className="col-span-1 md:col-span-1">
                         <Link href="/" className="font-bold text-xl tracking-tight flex items-center gap-1 text-white">
                             Imobum
                         </Link>
-                        <p className="mt-2 md:mt-4 text-sm text-slate-400">
+                        <p className="mt-1 md:mt-4 text-[12px] md:text-sm text-slate-400">
                             Premium Real Estate HUB and MLS marketplace - connecting buyers, sellers, and agents with cutting-edge technology and AI.
                         </p>
                     </div>
 
-                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-2 md:gap-0">
-                        <h3 className="text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Discover</h3>
-                        <ul className="flex flex-row flex-wrap gap-x-4 gap-y-1 md:flex-col md:gap-y-3 pl-2 md:pl-0">
-                            <li><Link href="/properties" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Properties</Link></li>
-                            <li><Link href="/valuation" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Property Valuation</Link></li>
+                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-x-2 gap-y-0 md:gap-0">
+                        <h3 className="text-xs md:text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Discover</h3>
+                        <ul className="flex flex-row flex-wrap gap-x-2 gap-y-0 md:flex-col md:gap-y-3 pl-1 md:pl-0">
+                            <li><Link href="/properties" className="text-xs md:text-sm text-slate-400 hover:text-cyan-400 transition-colors">Properties</Link></li>
+                            <li><Link href="/valuation" className="text-xs md:text-sm text-slate-400 hover:text-cyan-400 transition-colors">Property Valuation</Link></li>
                         </ul>
                     </div>
 
-                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-2 md:gap-0">
-                        <h3 className="text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Company</h3>
-                        <ul className="flex flex-row flex-wrap gap-x-4 gap-y-1 md:flex-col md:gap-y-3 pl-2 md:pl-0">
-                            <li><Link href="/about" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">About Us</Link></li>
-                            <li><Link href="/careers" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Careers</Link></li>
-                            <li><Link href="/contact" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Contact</Link></li>
+                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-x-2 gap-y-0 md:gap-0">
+                        <h3 className="text-xs md:text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Company</h3>
+                        <ul className="flex flex-row flex-wrap gap-x-2 gap-y-0 md:flex-col md:gap-y-3 pl-1 md:pl-0">
+                            <li><Link href="/about" className="text-xs md:text-sm text-slate-400 hover:text-cyan-400 transition-colors">About Us</Link></li>
+                            <li><Link href="/careers" className="text-xs md:text-sm text-slate-400 hover:text-cyan-400 transition-colors">Careers</Link></li>
+                            <li><Link href="/contact" className="text-xs md:text-sm text-slate-400 hover:text-cyan-400 transition-colors">Contact</Link></li>
                         </ul>
                     </div>
 
-                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-2 md:gap-0">
-                        <h3 className="text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Legal</h3>
-                        <ul className="flex flex-row flex-wrap gap-x-4 gap-y-1 md:flex-col md:gap-y-3 pl-2 md:pl-0">
-                            <li><Link href="/privacy" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Privacy Policy</Link></li>
-                            <li><Link href="/terms" className="text-sm text-slate-400 hover:text-cyan-400 transition-colors">Terms of Service</Link></li>
+                    <div className="flex flex-row md:flex-col items-baseline md:items-start flex-wrap gap-x-2 gap-y-0 md:gap-0">
+                        <h3 className="text-xs md:text-sm font-bold tracking-wider uppercase text-white mb-0 md:mb-4 after:content-[':'] md:after:content-none">Legal</h3>
+                        <ul className="flex flex-row flex-wrap gap-x-2 gap-y-0 md:flex-col md:gap-y-3 pl-1 md:pl-0">
+                            <li><Link href="/privacy" className="text-xs md:text-sm text-slate-400 hover:text-cyan-400 transition-colors">Privacy Policy</Link></li>
+                            <li><Link href="/terms" className="text-xs md:text-sm text-slate-400 hover:text-cyan-400 transition-colors">Terms of Service</Link></li>
                         </ul>
                     </div>
                 </div>
 
-                <div className="mt-6 md:mt-12 border-t border-slate-800 pt-4 md:pt-8">
-                    <p className="text-base text-center text-slate-500">
+                <div className="mt-3 md:mt-12 border-t border-slate-800 pt-2 md:pt-8">
+                    <p className="text-xs md:text-sm text-center text-slate-500">
                         &copy; 2026 Imobum. All rights reserved.
                     </p>
                 </div>
