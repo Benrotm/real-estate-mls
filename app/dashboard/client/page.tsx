@@ -88,7 +88,7 @@ export default async function ClientDashboard() {
 
                 {/* Saved Properties */}
                 <Link
-                    href="/saved"
+                    href="/dashboard/client/favorites"
                     className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-cyan-200 transition-all"
                 >
                     <div className="flex items-center justify-between mb-4">
@@ -105,7 +105,7 @@ export default async function ClientDashboard() {
 
                 {/* Saved Searches */}
                 <Link
-                    href="/saved"
+                    href="/dashboard/client/searches"
                     className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-cyan-200 transition-all"
                 >
                     <div className="flex items-center justify-between mb-4">
