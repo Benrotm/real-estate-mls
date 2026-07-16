@@ -69,7 +69,7 @@ function PublicMatchPropertyCard({ match, updatingIds, handleUpdateStatus }: {
                 {isNotInterested && (
                     <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center pointer-events-none p-3 z-10">
                         <div className="bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 text-slate-700 font-normal text-xs tracking-widest uppercase">
-                            <ThumbsDown className="w-4 h-4" /> Skipped
+                            <ThumbsDown className="w-4 h-4" /> Passed
                         </div>
                     </div>
                 )}
@@ -331,7 +331,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
 
                 <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-200 shadow-sm text-center max-w-2xl mx-auto">
                     <p className="text-slate-600 font-normal text-sm">
-                        Hello, I've hand-picked these properties based on our recent discussions. Please review them and let me know which ones catch your eye by clicking "I'm Interested" or "Pass".
+                        Hello, I've hand-picked these properties based on our recent discussions. Please review them and let me know which ones catch your eye by clicking <span className="text-emerald-600">"I'm Interested"</span> or <span className="text-rose-600">"Pass"</span>.
                     </p>
                 </div>
 
@@ -358,7 +358,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                                     : 'bg-rose-50 text-rose-700 hover:bg-rose-100/80'
                             }`}
                         >
-                            <span>SKIPPED</span>
+                            <span>PASS</span>
                             <span className={`px-2 py-0.5 rounded-md text-[11px] font-normal ${activeTab === 'not_interested' ? 'bg-white/20 text-white' : 'bg-rose-200/60 text-rose-800'}`}>
                                 {matches.filter(m => m.status === 'not_interested').length}
                             </span>
