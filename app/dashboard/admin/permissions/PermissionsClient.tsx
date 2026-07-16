@@ -20,7 +20,7 @@ import {
     Settings,
     Layers
 } from 'lucide-react';
-import { updatePlanFeature, updateUserRoleAndPlan, syncPlanFeatures, saveUserPropertyRestrictions } from '@/app/lib/admin';
+import { updatePlanFeature, updateUserRoleAndPlan, syncPlanFeatures, saveUserPropertyRestrictions, toggleUserApproval } from '@/app/lib/admin';
 
 // Feature key descriptions and user-friendly labels
 const FEATURE_INFO: Record<string, { label: string; desc: string }> = {
@@ -93,6 +93,26 @@ export default function PermissionsClient({ plans, features, users, currentUser,
     const [isSavingRestrictions, setIsSavingRestrictions] = useState(false);
     const [restrictionsSearch, setRestrictionsSearch] = useState('');
     const [restrictionsSaveStatus, setRestrictionsSaveStatus] = useState<{ text: string; type: 'success' | 'error' | '' }>({ text: '', type: '' });
+    const [isApproving, setIsApproving] = useState(false);
+
+    const handleApproveUser = async (userId: string) => {
+        setIsApproving(true);
+        try {
+            await toggleUserApproval(userId, true);
+            router.refresh();
+            setRestrictionsSaveStatus({
+                text: 'Contul utilizatorului a fost aprobat cu succes!',
+                type: 'success'
+            });
+        } catch (e: any) {
+            setRestrictionsSaveStatus({
+                text: 'Eroare la aprobare: ' + e.message,
+                type: 'error'
+            });
+        } finally {
+            setIsApproving(false);
+        }
+    };
 
     // Filter users list to exclude admins
     const nonAdminUsers = useMemo(() => {
@@ -738,6 +758,11 @@ export default function PermissionsClient({ plans, features, users, currentUser,
                                                         <div className="text-[10px] text-slate-500 truncate mt-0.5">{u.email}</div>
                                                     </div>
                                                     <div className="flex items-center gap-1.5 shrink-0">
+                                                        {u.is_approved === false && (
+                                                            <span className="text-[9px] uppercase font-bold tracking-tighter px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                                Pending
+                                                            </span>
+                                                        )}
                                                         <span className="text-[9px] uppercase font-bold tracking-tighter px-1.5 py-0.5 rounded bg-slate-850 text-slate-400">
                                                             {u.role}
                                                         </span>
@@ -777,6 +802,23 @@ export default function PermissionsClient({ plans, features, users, currentUser,
                                                     }`}>
                                                         <Info className="w-4 h-4 shrink-0" />
                                                         {restrictionsSaveStatus.text}
+                                                    </div>
+                                                )}
+
+                                                {selUser?.is_approved === false && (
+                                                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                        <div className="space-y-1">
+                                                            <div className="text-xs font-bold text-amber-500 uppercase tracking-wider">Aprobare Cont Client</div>
+                                                            <div className="text-sm font-bold text-white">Acest cont de {selUser.role} înregistrat nu este încă aprobat.</div>
+                                                            <p className="text-slate-400 text-xs">Aprobă contul pentru a-i acorda acces la interfață.</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleApproveUser(selUser.id)}
+                                                            disabled={isApproving}
+                                                            className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-md shadow-green-600/10 active:scale-95"
+                                                        >
+                                                            <CheckCircle2 className="w-4 h-4" /> Aprobă Contul
+                                                        </button>
                                                     </div>
                                                 )}
 

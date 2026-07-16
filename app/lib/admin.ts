@@ -641,6 +641,7 @@ export async function toggleUserApproval(userId: string, isApproved: boolean) {
 
     if (error) throw new Error(error.message);
     revalidatePath('/dashboard/admin/users');
+    revalidatePath('/dashboard/admin/permissions');
 }
 
 export async function saveUserPropertyRestrictions(
