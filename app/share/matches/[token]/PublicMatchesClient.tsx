@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { updatePublicMatchStatus } from '@/app/lib/actions/matches';
-import { Building2, ThumbsUp, ThumbsDown, CheckCircle, ArrowUpRight, MapPin, Clock, List, Activity, Calendar, Handshake, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Building2, ThumbsUp, ThumbsDown, CheckCircle, ArrowUpRight, MapPin, Clock, List, Activity, Calendar, Handshake, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import LeadProfileDetails from '@/app/components/dashboard/LeadProfileDetails';
 import { decodeHtmlEntities } from '@/app/lib/utils/string';
@@ -243,6 +243,7 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
     const [matches, setMatches] = useState<any[]>(initialMatches);
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
     const [activeTab, setActiveTab] = useState<'all' | 'not_interested' | 'interested' | 'visit_scheduled' | 'negotiation'>('all');
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     const filteredMatches = matches.filter(m => {
         if (activeTab === 'all') return true;
@@ -283,37 +284,49 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
 
             <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 
-                {/* Top Profile Card Header - Premium Gradient */}
-                <div className="mb-8 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-                    <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl font-black border border-white/20">
+                {/* Collapsible Profile Card Header - Half Size Compact */}
+                <div className="mb-6 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden transition-all duration-300">
+                    <div 
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        className="bg-gradient-to-r from-slate-900 to-slate-800 py-3.5 px-4 sm:px-6 text-white flex justify-between items-center cursor-pointer hover:from-slate-800 hover:to-slate-700 transition-colors select-none"
+                    >
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-xl font-black border border-white/20 shrink-0">
                                 {(lead.name || '?').charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+                                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                                    <span>Consumer Profile & Requirements</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-slate-300 text-xs font-medium mt-0.5">
                                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {new Date(lead.updated_at).toLocaleDateString()}</span>
                                     <span className="w-1 h-1 rounded-full bg-slate-500"></span>
                                     <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id.slice(0, 8)}</span>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right">
-                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Lead Score</div>
-                                <div className="flex items-center gap-2">
-                                    <div className={`text-2xl font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
+                        <div className="flex items-center gap-4">
+                            <div className="text-right hidden sm:block">
+                                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Lead Score</div>
+                                <div className="flex items-center justify-end gap-1.5">
+                                    <div className={`text-lg font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
                                         {lead.score || 0}
                                     </div>
-                                    <Activity className={`w-6 h-6 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
+                                    <Activity className={`w-4 h-4 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
                                 </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-lg border border-white/10 text-xs font-bold text-slate-200">
+                                <span>{isProfileOpen ? 'Hide Profile' : 'View Profile'}</span>
+                                {isProfileOpen ? <ChevronUp className="w-4 h-4 text-orange-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-orange-400 shrink-0" />}
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-8">
-                        <LeadProfileDetails lead={lead} />
-                    </div>
+                    {isProfileOpen && (
+                        <div className="p-6 sm:p-8 border-t border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <LeadProfileDetails lead={lead} />
+                        </div>
+                    )}
                 </div>
 
                 <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-200 shadow-sm text-center max-w-2xl mx-auto">
@@ -324,56 +337,71 @@ export default function PublicMatchesClient({ token, lead, initialMatches }: Pro
                 </div>
 
                 {matches.length > 0 && (
-                    <div className="mb-6 flex flex-wrap bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm gap-1 max-w-3xl mx-auto justify-center">
+                    <div className="mb-8 flex flex-wrap bg-white p-2 rounded-2xl border border-slate-200 shadow-sm gap-2 max-w-4xl mx-auto justify-center">
                         <button
                             onClick={() => setActiveTab('all')}
-                            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
                                 activeTab === 'all'
-                                    ? 'bg-slate-900 text-white shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-slate-900 text-white shadow-md scale-105'
+                                    : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80'
                             }`}
                         >
-                            ALL ({matches.length})
+                            <span>ALL</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold ${activeTab === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'}`}>
+                                {matches.length}
+                            </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('not_interested')}
-                            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
                                 activeTab === 'not_interested'
-                                    ? 'bg-slate-900 text-white shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-rose-600 text-white shadow-md scale-105'
+                                    : 'bg-rose-50 text-rose-700 hover:bg-rose-100/80'
                             }`}
                         >
-                            SKIPPED ({matches.filter(m => m.status === 'not_interested').length})
+                            <span>SKIPPED</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold ${activeTab === 'not_interested' ? 'bg-white/20 text-white' : 'bg-rose-200/60 text-rose-800'}`}>
+                                {matches.filter(m => m.status === 'not_interested').length}
+                            </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('interested')}
-                            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
                                 activeTab === 'interested'
-                                    ? 'bg-slate-900 text-white shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-emerald-600 text-white shadow-md scale-105'
+                                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100/80'
                             }`}
                         >
-                            INTERESTED ({matches.filter(m => m.status === 'interested').length})
+                            <span>INTERESTED</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold ${activeTab === 'interested' ? 'bg-white/20 text-white' : 'bg-emerald-200/60 text-emerald-800'}`}>
+                                {matches.filter(m => m.status === 'interested').length}
+                            </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('visit_scheduled')}
-                            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
                                 activeTab === 'visit_scheduled'
-                                    ? 'bg-slate-900 text-white shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-purple-600 text-white shadow-md scale-105'
+                                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100/80'
                             }`}
                         >
-                            VISIT ({matches.filter(m => m.status === 'visit_scheduled').length})
+                            <span>VISIT</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold ${activeTab === 'visit_scheduled' ? 'bg-white/20 text-white' : 'bg-purple-200/60 text-purple-800'}`}>
+                                {matches.filter(m => m.status === 'visit_scheduled').length}
+                            </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('negotiation')}
-                            className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
                                 activeTab === 'negotiation'
-                                    ? 'bg-slate-900 text-white shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-amber-500 text-white shadow-md scale-105'
+                                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100/80'
                             }`}
                         >
-                            NEGOT. ({matches.filter(m => m.status === 'negotiation' || m.status === 'sold').length})
+                            <span>NEGOT.</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold ${activeTab === 'negotiation' ? 'bg-white/20 text-white' : 'bg-amber-200/60 text-amber-800'}`}>
+                                {matches.filter(m => m.status === 'negotiation' || m.status === 'sold').length}
+                            </span>
                         </button>
                     </div>
                 )}
