@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import SavedSearchCard from '@/app/components/dashboard/SavedSearchCard';
 import { createClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 
 export default async function SavedSearchesPage() {
     const supabase = await createClient();
@@ -15,10 +16,11 @@ export default async function SavedSearchesPage() {
 
     const { success, data: searches, error } = await getSavedSearches();
 
-    // Find or auto-create corresponding lead
+    // Find or auto-create corresponding lead using adminClient to bypass client-side RLS limitations
     let leadId = '';
     if (success && user) {
-        let { data: lead } = await supabase
+        const adminClient = createAdminClient();
+        let { data: lead } = await adminClient
             .from('leads')
             .select('id')
             .eq('email', user.email)
@@ -27,13 +29,13 @@ export default async function SavedSearchesPage() {
 
         if (!lead && searches && searches.length > 0) {
             // Auto create lead for existing searches
-            const { data: profile } = await supabase
+            const { data: profile } = await adminClient
                 .from('profiles')
                 .select('full_name, phone')
                 .eq('id', user.id)
                 .single();
 
-            const { data: admins } = await supabase
+            const { data: admins } = await adminClient
                 .from('profiles')
                 .select('id')
                 .in('role', ['admin', 'super_admin'])
@@ -43,7 +45,7 @@ export default async function SavedSearchesPage() {
             const firstSearch = searches[0];
             const queryParams = firstSearch.query_params || {};
 
-            const { data: newLead } = await supabase
+            const { data: newLead } = await adminClient
                 .from('leads')
                 .insert({
                     agent_id: adminId,
