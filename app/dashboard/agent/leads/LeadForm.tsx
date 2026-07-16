@@ -353,13 +353,17 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
 
                             {/* Location */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                 <div>
                                     <label className={labelClass}>City</label>
                                     <input type="text" name="preference_location_city" value={formData.preference_location_city || ''} onChange={handleChange} className={inputClass} placeholder="e.g. New York" />
                                 </div>
                                 <div>
-                                    <label className={labelClass}>Area of Interest</label>
+                                    <label className={labelClass}>Area / Neighbourhood</label>
+                                    <input type="text" name="preference_location_area" value={formData.preference_location_area || ''} onChange={handleChange} className={inputClass} placeholder="e.g. Giroc, Neptun" />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Area of Interest (Map)</label>
                                     <button 
                                         type="button" 
                                         onClick={() => setShowAreaMap(true)}

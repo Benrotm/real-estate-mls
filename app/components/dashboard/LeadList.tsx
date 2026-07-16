@@ -233,8 +233,10 @@ export default function LeadList({
                 };
                 comparison = (urgencyWeight[a.move_urgency || ''] || 0) - (urgencyWeight[b.move_urgency || ''] || 0);
             } else {
-                // Newest (ID or created_at usually works if available, otherwise just use lead.id)
-                comparison = String(a.id).localeCompare(String(b.id));
+                // Newest (created_at date)
+                const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                comparison = dateA - dateB;
             }
 
             return sortOrder === 'desc' ? -comparison : comparison;
