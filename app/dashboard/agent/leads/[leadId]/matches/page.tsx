@@ -25,12 +25,21 @@ export default async function MatchesCurationPage({ params }: { params: Promise<
         notFound();
     }
 
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    const isClient = profile?.role === 'client';
+    const backUrl = isClient ? '/dashboard/client/searches' : `/dashboard/agent/leads/${lead.id}`;
+
     const { matches } = await getLeadMatches(lead.id);
 
     return (
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
             <div className="mb-6 flex items-center gap-4">
-                <Link href={`/dashboard/agent/leads/${lead.id}`} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors">
+                <Link href={backUrl} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors">
                     <ArrowLeft className="w-6 h-6" />
                 </Link>
                 <div>

@@ -3,13 +3,74 @@ import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import SavedSearchCard from '@/app/components/dashboard/SavedSearchCard';
+import { createClient } from '@/app/lib/supabase/server';
 
 export default async function SavedSearchesPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect('/auth/login');
+    }
+
     const { success, data: searches, error } = await getSavedSearches();
 
-    if (!success) {
-        // If not auth, usually middleware handles this, but safe fallback
-        if (error === 'Not authenticated') redirect('/auth/login');
+    // Find or auto-create corresponding lead
+    let leadId = '';
+    if (success && user) {
+        let { data: lead } = await supabase
+            .from('leads')
+            .select('id')
+            .eq('email', user.email)
+            .limit(1)
+            .maybeSingle();
+
+        if (!lead && searches && searches.length > 0) {
+            // Auto create lead for existing searches
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('full_name, phone')
+                .eq('id', user.id)
+                .single();
+
+            const { data: admins } = await supabase
+                .from('profiles')
+                .select('id')
+                .in('role', ['admin', 'super_admin'])
+                .limit(1);
+            const adminId = admins && admins.length > 0 ? admins[0].id : user.id;
+
+            const firstSearch = searches[0];
+            const queryParams = firstSearch.query_params || {};
+
+            const { data: newLead } = await supabase
+                .from('leads')
+                .insert({
+                    agent_id: adminId,
+                    name: profile?.full_name || user.email?.split('@')[0] || 'Client',
+                    email: user.email,
+                    phone: profile?.phone || null,
+                    status: 'new',
+                    source: 'Saved Search',
+                    preference_type: queryParams.type || null,
+                    preference_listing_type: queryParams.listing_type || null,
+                    preference_location_city: queryParams.location_city || null,
+                    preference_location_area: queryParams.location_area || null,
+                    budget_min: queryParams.minPrice ? Number(queryParams.minPrice) : null,
+                    budget_max: queryParams.maxPrice ? Number(queryParams.maxPrice) : null,
+                    preference_rooms_min: queryParams.rooms ? Number(queryParams.rooms) : null,
+                    preference_surface_min: queryParams.area ? Number(queryParams.area) : null,
+                    preference_location_polygon: queryParams.location_polygon || null,
+                    preference_features: queryParams.features || []
+                })
+                .select('id')
+                .single();
+            if (newLead) {
+                leadId = newLead.id;
+            }
+        } else if (lead) {
+            leadId = lead.id;
+        }
     }
 
     return (
@@ -45,6 +106,7 @@ export default async function SavedSearchesPage() {
                         <SavedSearchCard
                             key={search.id}
                             search={search}
+                            leadId={leadId}
                             onDelete={async (id) => {
                                 'use server';
                                 await deleteSavedSearch(id);
