@@ -17,13 +17,13 @@ export default function Footer() {
                 <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-lime-500 rounded-full blur-3xl" />
             </div>
 
-            <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="max-w-7xl mx-auto py-6 md:py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-8">
                     <div className="col-span-1 md:col-span-1">
                         <Link href="/" className="font-bold text-xl tracking-tight flex items-center gap-1 text-white">
                             Imobum
                         </Link>
-                        <p className="mt-4 text-sm text-slate-400">
+                        <p className="mt-2 md:mt-4 text-sm text-slate-400">
                             Premium Real Estate HUB and MLS marketplace - connecting buyers, sellers, and agents with cutting-edge technology and AI.
                         </p>
                     </div>
@@ -54,7 +54,7 @@ export default function Footer() {
                     </div>
                 </div>
 
-                <div className="mt-12 border-t border-slate-800 pt-8">
+                <div className="mt-6 md:mt-12 border-t border-slate-800 pt-4 md:pt-8">
                     <p className="text-base text-center text-slate-500">
                         &copy; 2026 Imobum. All rights reserved.
                     </p>
