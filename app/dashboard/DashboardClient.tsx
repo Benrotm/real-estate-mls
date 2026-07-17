@@ -178,6 +178,10 @@ export default function DashboardClient({
         loadMenuOrderAndVisibility();
     }, []);
 
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
     const roleKey = isAdmin ? 'admin'
         : isAgent ? 'agent'
         : isOwner ? 'owner'
@@ -348,7 +352,7 @@ export default function DashboardClient({
             {/* Mobile Header & Overlay */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Mobile Top Bar */}
-                <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 md:hidden text-white shadow-md z-30 sticky top-0">
+                <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 md:hidden text-white shadow-md z-50 sticky top-0">
                     <div className="flex items-center gap-2">
                         <span className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">D</span>
                         <span className="font-bold text-lg">Dashboard</span>
@@ -370,7 +374,7 @@ export default function DashboardClient({
 
                 {/* Mobile Full Screen Menu Overlay */}
                 {isMobileMenuOpen && (
-                    <div className="fixed inset-0 top-16 z-20 bg-slate-900 md:hidden flex flex-col animate-in fade-in slide-in-from-top-4 duration-200">
+                    <div className="fixed inset-0 top-16 z-40 bg-slate-900 md:hidden flex flex-col animate-in fade-in slide-in-from-top-4 duration-200">
                         <div className="flex-1 overflow-y-auto">
                             <NavContent forceOpen={true} />
                         </div>
