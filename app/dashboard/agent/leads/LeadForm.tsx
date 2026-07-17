@@ -16,6 +16,7 @@ import {
 import { createLead, updateLead } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
+import { ROMANIAN_CITIES, TIMISOARA_AREAS } from '@/app/lib/constants/locations';
 
 const FEATURE_CATEGORIES = {
     'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
@@ -127,6 +128,17 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
         ...DEFAULT_FORM_DATA,
         ...initialData
     });
+
+    const [showCustomCity, setShowCustomCity] = useState(
+        initialData?.preference_location_city 
+            ? !ROMANIAN_CITIES.includes(initialData.preference_location_city) 
+            : false
+    );
+    const [showCustomArea, setShowCustomArea] = useState(
+        initialData?.preference_location_area 
+            ? !TIMISOARA_AREAS.includes(initialData.preference_location_area) 
+            : false
+    );
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -357,11 +369,69 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                                 <div>
                                     <label className={labelClass}>City</label>
-                                    <input type="text" name="preference_location_city" value={formData.preference_location_city || ''} onChange={handleChange} className={inputClass} placeholder="e.g. New York" />
+                                    <div className="space-y-1">
+                                        <select 
+                                            name="preference_location_city" 
+                                            value={showCustomCity ? 'custom_city' : (formData.preference_location_city || '')} 
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === 'custom_city') {
+                                                    setShowCustomCity(true);
+                                                    setFormData(prev => ({ ...prev, preference_location_city: '' }));
+                                                } else {
+                                                    setShowCustomCity(false);
+                                                    setFormData(prev => ({ ...prev, preference_location_city: val }));
+                                                }
+                                            }} 
+                                            className={selectClass}
+                                        >
+                                            <option value="">Select City...</option>
+                                            {ROMANIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                            <option value="custom_city">Other / Alta...</option>
+                                        </select>
+                                        {showCustomCity && (
+                                            <input 
+                                                type="text" 
+                                                value={formData.preference_location_city || ''} 
+                                                onChange={(e) => setFormData(prev => ({ ...prev, preference_location_city: e.target.value }))} 
+                                                className={inputClass} 
+                                                placeholder="Enter custom city..." 
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className={labelClass}>Area / Neighbourhood</label>
-                                    <input type="text" name="preference_location_area" value={formData.preference_location_area || ''} onChange={handleChange} className={inputClass} placeholder="e.g. Giroc, Neptun" />
+                                    <div className="space-y-1">
+                                        <select 
+                                            name="preference_location_area" 
+                                            value={showCustomArea ? 'custom_area' : (formData.preference_location_area || '')} 
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === 'custom_area') {
+                                                    setShowCustomArea(true);
+                                                    setFormData(prev => ({ ...prev, preference_location_area: '' }));
+                                                } else {
+                                                    setShowCustomArea(false);
+                                                    setFormData(prev => ({ ...prev, preference_location_area: val }));
+                                                }
+                                            }} 
+                                            className={selectClass}
+                                        >
+                                            <option value="">Select Area...</option>
+                                            {TIMISOARA_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+                                            <option value="custom_area">Other / Alta...</option>
+                                        </select>
+                                        {showCustomArea && (
+                                            <input 
+                                                type="text" 
+                                                value={formData.preference_location_area || ''} 
+                                                onChange={(e) => setFormData(prev => ({ ...prev, preference_location_area: e.target.value }))} 
+                                                className={inputClass} 
+                                                placeholder="Enter custom area..." 
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className={labelClass}>Area of Interest (Map)</label>

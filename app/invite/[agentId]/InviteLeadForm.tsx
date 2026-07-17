@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { createLeadPublic } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
+import { ROMANIAN_CITIES } from '@/app/lib/constants/locations';
 import { 
     ChevronDown, 
     ChevronUp, 
@@ -25,6 +26,7 @@ export default function InviteLeadForm({ agentId }: Props) {
     const [rooms, setRooms] = useState(2);
     const [budget, setBudget] = useState('');
     const [city, setCity] = useState('Timișoara');
+    const [showCustomCity, setShowCustomCity] = useState(false);
     const [polygon, setPolygon] = useState<{ lat: number; lng: number }[] | undefined>(undefined);
 
     // Accordion State
@@ -196,12 +198,35 @@ export default function InviteLeadForm({ agentId }: Props) {
                         <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                             City
                         </label>
-                        <input
-                            type="text"
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10"
-                        />
+                        <div className="space-y-2">
+                            <select
+                                value={showCustomCity ? 'custom_city' : city}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === 'custom_city') {
+                                        setShowCustomCity(true);
+                                        setCity('');
+                                    } else {
+                                        setShowCustomCity(false);
+                                        setCity(val);
+                                    }
+                                }}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 cursor-pointer"
+                            >
+                                <option value="">Select City...</option>
+                                {ROMANIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                <option value="custom_city">Other / Alta...</option>
+                            </select>
+                            {showCustomCity && (
+                                <input
+                                    type="text"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    placeholder="Enter custom city..."
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                                />
+                            )}
+                        </div>
                     </div>
                     <div>
                         <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
