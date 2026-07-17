@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban, Baby, Building2, PieChart, TrendingUp } from 'lucide-react';
+import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban, Baby, Building2, PieChart, TrendingUp, Sliders } from 'lucide-react';
 import {
     PROPERTY_TYPES,
     TRANSACTION_TYPES,
@@ -168,6 +168,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
 
     const router = useRouter();
     const [isFeaturesExpanded, setIsFeaturesExpanded] = useState(false);
+    const [isMoreCriteriaExpanded, setIsMoreCriteriaExpanded] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -392,7 +393,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             )}
 
                             {/* Property Details Grid */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                            <div className="grid grid-cols-2 gap-3 mb-3">
                                 {/* Rooms */}
                                 <div>
                                     <label className={labelClass}>Min Rooms</label>
@@ -402,100 +403,111 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                     <label className={labelClass}>Max Rooms</label>
                                     <input type="number" name="preference_rooms_max" value={formData.preference_rooms_max || ''} onChange={handleChange} className={inputClass} />
                                 </div>
-                                <div>
-                                    <label className={labelClass}>Min Bedrooms</label>
-                                    <input type="number" name="preference_bedrooms_min" value={formData.preference_bedrooms_min || ''} onChange={handleChange} className={inputClass} />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Min Bathrooms</label>
-                                    <input type="number" name="preference_baths_min" value={formData.preference_baths_min || ''} onChange={handleChange} className={inputClass} />
-                                </div>
-
-                                {/* Surface & Floors */}
-                                <div>
-                                    <label className={labelClass}>Min Surface (sqm)</label>
-                                    <input type="number" name="preference_surface_min" value={formData.preference_surface_min || ''} onChange={handleChange} className={inputClass} />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Max Surface (sqm)</label>
-                                    <input type="number" name="preference_surface_max" value={formData.preference_surface_max || ''} onChange={handleChange} className={inputClass} />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Min Floor</label>
-                                    <input type="number" name="preference_floor_min" value={formData.preference_floor_min || ''} onChange={handleChange} className={inputClass} />
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Max Floor</label>
-                                    <input type="number" name="preference_floor_max" value={formData.preference_floor_max || ''} onChange={handleChange} className={inputClass} />
-                                </div>
-
-                                {/* Year Built */}
-                                <div>
-                                    <label className={labelClass}>Min Year Built</label>
-                                    <input type="number" name="preference_year_built_min" value={formData.preference_year_built_min || ''} onChange={handleChange} className={inputClass} />
-                                </div>
                             </div>
+                        </div>
 
-                            {/* Dropdowns */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                                <div>
-                                    <label className={labelClass}>Building Type</label>
-                                    <div className="relative">
-                                        <select name="preference_building_type" value={formData.preference_building_type || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="">Any</option>
-                                            {BUILDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Partitioning</label>
-                                    <div className="relative">
-                                        <select name="preference_partitioning" value={formData.preference_partitioning || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="">Any</option>
-                                            {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Comfort</label>
-                                    <div className="relative">
-                                        <select name="preference_comfort" value={formData.preference_comfort || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="">Any</option>
-                                            {COMFORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Interior Condition</label>
-                                    <div className="relative">
-                                        <select name="preference_interior_condition" value={formData.preference_interior_condition || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="">Any</option>
-                                            {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Furnishing</label>
-                                    <div className="relative">
-                                        <select name="preference_furnishing" value={formData.preference_furnishing || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="">Any</option>
-                                            {FURNISHING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* More Search Criteria Collapsible Section */}
+                        <div className="border-t border-slate-200 pt-3">
+                            <button
+                                type="button"
+                                onClick={() => setIsMoreCriteriaExpanded(!isMoreCriteriaExpanded)}
+                                className="w-full flex items-center justify-between text-sm font-bold text-slate-900 mb-3 group"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Sliders className="w-4 h-4 text-slate-500" />
+                                    More Search Criteria
+                                </span>
+                                {isMoreCriteriaExpanded ? (
+                                    <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                                ) : (
+                                    <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                                )}
+                            </button>
 
-                            {/* Agent Interest - Specific to Lead, but fits in requirements */}
-                            <div className="mb-3">
-                                <label className={labelClass}>Agent Interest Level</label>
-                                <div className="relative">
-                                    <select name="agent_interest_rating" value={formData.agent_interest_rating || ''} onChange={handleChange} className={selectClass}>
-                                        <option value="High">High</option>
-                                        <option value="Moderate">Moderate</option>
-                                        <option value="Low">Low</option>
-                                    </select>
+                            {isMoreCriteriaExpanded && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 pb-3">
+                                    {/* Bedrooms, Bathrooms, Surface, Floors, Year Built Grid */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        <div>
+                                            <label className={labelClass}>Min Bedrooms</label>
+                                            <input type="number" name="preference_bedrooms_min" value={formData.preference_bedrooms_min || ''} onChange={handleChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Min Bathrooms</label>
+                                            <input type="number" name="preference_baths_min" value={formData.preference_baths_min || ''} onChange={handleChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Min Surface (sqm)</label>
+                                            <input type="number" name="preference_surface_min" value={formData.preference_surface_min || ''} onChange={handleChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Max Surface (sqm)</label>
+                                            <input type="number" name="preference_surface_max" value={formData.preference_surface_max || ''} onChange={handleChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Min Floor</label>
+                                            <input type="number" name="preference_floor_min" value={formData.preference_floor_min || ''} onChange={handleChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Max Floor</label>
+                                            <input type="number" name="preference_floor_max" value={formData.preference_floor_max || ''} onChange={handleChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Min Year Built</label>
+                                            <input type="number" name="preference_year_built_min" value={formData.preference_year_built_min || ''} onChange={handleChange} className={inputClass} />
+                                        </div>
+                                    </div>
+
+                                    {/* Dropdowns */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <div>
+                                            <label className={labelClass}>Building Type</label>
+                                            <div className="relative">
+                                                <select name="preference_building_type" value={formData.preference_building_type || ''} onChange={handleChange} className={selectClass}>
+                                                    <option value="">Any</option>
+                                                    {BUILDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Partitioning</label>
+                                            <div className="relative">
+                                                <select name="preference_partitioning" value={formData.preference_partitioning || ''} onChange={handleChange} className={selectClass}>
+                                                    <option value="">Any</option>
+                                                    {PARTITIONING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Comfort</label>
+                                            <div className="relative">
+                                                <select name="preference_comfort" value={formData.preference_comfort || ''} onChange={handleChange} className={selectClass}>
+                                                    <option value="">Any</option>
+                                                    {COMFORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Interior Condition</label>
+                                            <div className="relative">
+                                                <select name="preference_interior_condition" value={formData.preference_interior_condition || ''} onChange={handleChange} className={selectClass}>
+                                                    <option value="">Any</option>
+                                                    {INTERIOR_CONDITIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Furnishing</label>
+                                            <div className="relative">
+                                                <select name="preference_furnishing" value={formData.preference_furnishing || ''} onChange={handleChange} className={selectClass}>
+                                                    <option value="">Any</option>
+                                                    {FURNISHING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Features Section */}
@@ -669,6 +681,18 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                         </select>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Agent Interest Level (Moved to bottom of Classification tab) */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <label className={labelClass}>Agent Interest Level</label>
+                            <div className="relative">
+                                <select name="agent_interest_rating" value={formData.agent_interest_rating || ''} onChange={handleChange} className={selectClass}>
+                                    <option value="High">High</option>
+                                    <option value="Moderate">Moderate</option>
+                                    <option value="Low">Low</option>
+                                </select>
                             </div>
                         </div>
                     </div>
