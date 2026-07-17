@@ -19,6 +19,7 @@ import PropertyValuationSection from '@/app/components/valuation/PropertyValuati
 import ShareButton from '@/app/components/property/ShareButton';
 import FavoriteButton from '@/app/components/property/FavoriteButton';
 import StatusToggleButton from '@/app/components/property/StatusToggleButton';
+import ReportSoldButton from '@/app/components/property/ReportSoldButton';
 import { createClient } from "@/app/lib/supabase/server";
 import PropertyAnalyticsWidget from '@/app/components/analytics/PropertyAnalyticsWidget';
 import PropertyViewTracker from '@/app/components/analytics/PropertyViewTracker';
@@ -591,6 +592,15 @@ export default async function PropertyDetailPage({
                                         <StatusToggleButton
                                             propertyId={property.id}
                                             currentStatus={property.status as 'active' | 'draft'}
+                                        />
+
+                                        {/* Report Sold Button */}
+                                        <ReportSoldButton
+                                            propertyId={property.id}
+                                            propertyTitle={property.title}
+                                            listingPrice={property.price}
+                                            currency={property.currency}
+                                            currentStatus={property.status}
                                         />
 
                                         {/* Generate Presentation Contract (Fișă de vizionare) */}
