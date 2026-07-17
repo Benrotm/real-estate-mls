@@ -665,7 +665,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
                     </div>
 
                     <div className="p-8 space-y-4">
-                        <div className="bg-slate-950/40 rounded-2xl border border-slate-800 overflow-hidden divide-y divide-slate-800 max-h-[500px] overflow-y-auto pr-2">
+                        <div className="bg-slate-950/40 rounded-2xl border border-slate-800 divide-y divide-slate-800 min-h-[350px] max-h-[1200px] h-[500px] overflow-auto resize-y pr-2">
                             {currentRoleOrder.map((item, idx) => {
                                 const IconComp = MENU_ICONS[item.icon] || Globe;
                                 return (
