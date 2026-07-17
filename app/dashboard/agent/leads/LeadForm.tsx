@@ -582,6 +582,72 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             )}
                         </div>
 
+                        {/* Lifestyle Habits (Moved from Profile tab to Classification tab) */}
+                        <div className="space-y-3 mb-3">
+                            <div className="flex items-center gap-2 mb-1">
+                                <div className="h-5 w-1 bg-rose-500 rounded-full"></div>
+                                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Social & Lifestyle Classification</h4>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.is_smoker ? 'bg-rose-100/70 border-rose-400 ring-2 ring-rose-500/20 text-rose-900' : 'bg-rose-50/40 border-rose-200 hover:bg-rose-50/60 text-rose-800/90 hover:border-rose-300'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <Ban className={`w-5 h-5 ${formData.is_smoker ? 'text-rose-600' : 'text-rose-500'}`} />
+                                        <div>
+                                            <p className={`text-sm font-bold ${formData.is_smoker ? 'text-rose-900 font-extrabold' : 'text-rose-800'}`}>Smoker</p>
+                                            <p className={`text-[11px] ${formData.is_smoker ? 'text-rose-700/80' : 'text-rose-600/70'}`}>Does the lead smoke?</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="is_smoker" checked={formData.is_smoker || false} onChange={handleChange} className="w-5 h-5 text-rose-600 rounded border-rose-300 focus:ring-rose-500 cursor-pointer" />
+                                </label>
+
+                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_pets ? 'bg-blue-100/70 border-blue-400 ring-2 ring-blue-500/20 text-blue-900' : 'bg-blue-50/40 border-blue-200 hover:bg-blue-50/60 text-blue-800/90 hover:border-blue-300'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <Dog className={`w-5 h-5 ${formData.has_pets ? 'text-blue-600' : 'text-blue-500'}`} />
+                                        <div>
+                                            <p className={`text-sm font-bold ${formData.has_pets ? 'text-blue-900 font-extrabold' : 'text-blue-800'}`}>Has Pets</p>
+                                            <p className={`text-[11px] ${formData.has_pets ? 'text-blue-700/80' : 'text-blue-600/70'}`}>Dogs, cats, or others?</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="has_pets" checked={formData.has_pets || false} onChange={handleChange} className="w-5 h-5 text-blue-600 rounded border-blue-300 focus:ring-blue-500 cursor-pointer" />
+                                </label>
+
+                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_small_kids ? 'bg-emerald-100/70 border-emerald-400 ring-2 ring-emerald-500/20 text-emerald-900' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <Baby className={`w-5 h-5 ${formData.has_small_kids ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                                        <div>
+                                            <p className={`text-sm font-bold ${formData.has_small_kids ? 'text-emerald-900 font-extrabold' : 'text-emerald-800'}`}>Has small Kids</p>
+                                            <p className={`text-[11px] ${formData.has_small_kids ? 'text-emerald-700/80' : 'text-emerald-600/70'}`}>Toddlers or young kids?</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="has_small_kids" checked={formData.has_small_kids || false} onChange={handleChange} className="w-5 h-5 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500 cursor-pointer" />
+                                </label>
+
+                                {formData.has_pets && (
+                                    <div className="md:col-span-3 animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
+                                        <label className={labelClass}>Pet Details (What kind, how many?)</label>
+                                        <input type="text" name="pets_details" value={formData.pets_details || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 2 Golden Retrievers" />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Agent Interest Level (Moved below Social & Lifestyle, and styled) */}
+                        <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 mb-3">
+                            <label className={`${labelClass} !text-indigo-700`}>Agent Interest Level</label>
+                            <div className="relative">
+                                <select 
+                                    name="agent_interest_rating" 
+                                    value={formData.agent_interest_rating || ''} 
+                                    onChange={handleChange} 
+                                    className={`${selectClass} !bg-white !border-indigo-200 focus:!border-indigo-500 focus:!ring-indigo-500/20`}
+                                >
+                                    <option value="High">High</option>
+                                    <option value="Moderate">Moderate</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                        </div>
+
                         {/* Features Section */}
                         <div className="border-t border-slate-200 pt-3">
                             <button
@@ -636,67 +702,6 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                     })}
                                 </div>
                             )}
-                        </div>
-
-                        {/* Lifestyle Habits (Moved from Profile tab to Classification tab) */}
-                        <div className="space-y-3 mb-3">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="h-5 w-1 bg-rose-500 rounded-full"></div>
-                                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Social & Lifestyle Classification</h4>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.is_smoker ? 'bg-rose-100/70 border-rose-400 ring-2 ring-rose-500/20 text-rose-900' : 'bg-rose-50/40 border-rose-200 hover:bg-rose-50/60 text-rose-800/90 hover:border-rose-300'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <Ban className={`w-5 h-5 ${formData.is_smoker ? 'text-rose-600' : 'text-rose-500'}`} />
-                                        <div>
-                                            <p className={`text-sm font-bold ${formData.is_smoker ? 'text-rose-900 font-extrabold' : 'text-rose-800'}`}>Smoker</p>
-                                            <p className={`text-[11px] ${formData.is_smoker ? 'text-rose-700/80' : 'text-rose-600/70'}`}>Does the lead smoke?</p>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" name="is_smoker" checked={formData.is_smoker || false} onChange={handleChange} className="w-5 h-5 text-rose-600 rounded border-rose-300 focus:ring-rose-500 cursor-pointer" />
-                                </label>
-
-                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_pets ? 'bg-blue-100/70 border-blue-400 ring-2 ring-blue-500/20 text-blue-900' : 'bg-blue-50/40 border-blue-200 hover:bg-blue-50/60 text-blue-800/90 hover:border-blue-300'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <Dog className={`w-5 h-5 ${formData.has_pets ? 'text-blue-600' : 'text-blue-500'}`} />
-                                        <div>
-                                            <p className={`text-sm font-bold ${formData.has_pets ? 'text-blue-900 font-extrabold' : 'text-blue-800'}`}>Has Pets</p>
-                                            <p className={`text-[11px] ${formData.has_pets ? 'text-blue-700/80' : 'text-blue-600/70'}`}>Dogs, cats, or others?</p>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" name="has_pets" checked={formData.has_pets || false} onChange={handleChange} className="w-5 h-5 text-blue-600 rounded border-blue-300 focus:ring-blue-500 cursor-pointer" />
-                                </label>
-
-                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_small_kids ? 'bg-emerald-100/70 border-emerald-400 ring-2 ring-emerald-500/20 text-emerald-900' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <Baby className={`w-5 h-5 ${formData.has_small_kids ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                                        <div>
-                                            <p className={`text-sm font-bold ${formData.has_small_kids ? 'text-emerald-900 font-extrabold' : 'text-emerald-800'}`}>Has small Kids</p>
-                                            <p className={`text-[11px] ${formData.has_small_kids ? 'text-emerald-700/80' : 'text-emerald-600/70'}`}>Toddlers or young kids?</p>
-                                        </div>
-                                    </div>
-                                    <input type="checkbox" name="has_small_kids" checked={formData.has_small_kids || false} onChange={handleChange} className="w-5 h-5 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500 cursor-pointer" />
-                                </label>
-
-                                {formData.has_pets && (
-                                    <div className="md:col-span-3 animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
-                                        <label className={labelClass}>Pet Details (What kind, how many?)</label>
-                                        <input type="text" name="pets_details" value={formData.pets_details || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 2 Golden Retrievers" />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Agent Interest Level (Moved to bottom of Classification tab) */}
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                            <label className={labelClass}>Agent Interest Level</label>
-                            <div className="relative">
-                                <select name="agent_interest_rating" value={formData.agent_interest_rating || ''} onChange={handleChange} className={selectClass}>
-                                    <option value="High">High</option>
-                                    <option value="Moderate">Moderate</option>
-                                    <option value="Low">Low</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
                 )}
