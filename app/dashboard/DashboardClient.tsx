@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert, History, FileText, Key, Share2, HelpCircle } from 'lucide-react';
+import { Bell, LayoutDashboard, Users, Home, BarChart2, Calendar, Briefcase, LogOut, Menu, X, MessageSquare, Building, Shield, Settings, TrendingUp, Flag, LifeBuoy, Check, Globe, Camera, Heart, FileDown, CopyCheck, Target, Zap, Activity, DollarSign, Wand2, Coins, Calculator, Gift, ShieldAlert, History, FileText, Key, Share2, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { SYSTEM_FEATURES } from '@/app/lib/auth/feature-keys';
 import { supabase } from '@/app/lib/supabase/client';
@@ -162,6 +162,7 @@ export default function DashboardClient({
 
     const [customOrderings, setCustomOrderings] = useState<Record<string, string[]>>({});
     const [hiddenMenuItems, setHiddenMenuItems] = useState<Record<string, string[]>>({});
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     useEffect(() => {
         async function loadMenuOrderAndVisibility() {
@@ -224,77 +225,123 @@ export default function DashboardClient({
         href: item.href
     }));
 
-    const NavContent = () => (
-        <>
-            <div className="p-6">
-                <h2 className="text-xl font-bold flex items-center gap-2 text-white">
-                    <span className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">D</span>
-                    Dashboard
-                </h2>
-                <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
-                    {isAdmin ? 'Super Admin' : isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : isClient ? 'Client Dashboard' : 'Welcome'}
-                </p>
-                <Link href="/cont/plati" className="mt-4 flex items-center justify-between bg-black/30 border border-slate-700/50 hover:border-yellow-500/50 p-2.5 rounded-xl transition-colors cursor-pointer group">
-                    <span className="text-xs font-semibold text-slate-400 group-hover:text-white transition-colors flex items-center gap-1.5"><Coins className="w-4 h-4 text-yellow-500" /> Balanță Credite</span>
-                    <span className="text-sm font-bold text-yellow-500">{credits}</span>
-                </Link>
-            </div>
-
-            <nav className="flex-1 px-4 space-y-1">
-                {menuItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${isActive
-                                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
-                                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                                }`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <item.icon className="w-5 h-5" />
-                                {item.name}
-                            </div>
-                            {(item.name === 'Chat' || item.name === 'Support Chat') && chatUnread > 0 && (
-                                <span className="bg-green-500 text-white text-[10px] font-normal px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-md">
-                                    {chatUnread > 9 ? '9+' : chatUnread}
-                                </span>
-                            )}
-                            {item.name === 'Leads & CRM' && leadsUnread > 0 && (
-                                <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                                    {leadsUnread > 9 ? '9+' : leadsUnread}
-                                </span>
-                            )}
-                            {item.name === 'Contract Deletions' && deletionRequestsCount > 0 && (
-                                <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                                    {deletionRequestsCount}
-                                </span>
-                            )}
-                            {item.name === 'Validare Plăți' && pendingPaymentsCount > 0 && (
-                                <span className="bg-yellow-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-md animate-pulse">
-                                    {pendingPaymentsCount}
-                                </span>
-                            )}
+    const NavContent = ({ forceOpen = false }: { forceOpen?: boolean }) => {
+        const collapsed = isCollapsed && !forceOpen;
+        return (
+            <>
+                <div className="p-6">
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+                        <span className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center text-sm font-bold shrink-0">D</span>
+                        {!collapsed && <span className="animate-in fade-in duration-300">Dashboard</span>}
+                    </h2>
+                    {!collapsed && (
+                        <div className="animate-in fade-in duration-300">
+                            <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold truncate">
+                                {isAdmin ? 'Super Admin' : isAgent ? 'Agent Workspace' : isOwner ? 'Property Owner' : isDeveloper ? 'Developer' : isClient ? 'Client Dashboard' : 'Welcome'}
+                            </p>
+                            <Link href="/cont/plati" className="mt-4 flex items-center justify-between bg-black/30 border border-slate-700/50 hover:border-yellow-500/50 p-2.5 rounded-xl transition-colors cursor-pointer group">
+                                <span className="text-xs font-semibold text-slate-400 group-hover:text-white transition-colors flex items-center gap-1.5"><Coins className="w-4 h-4 text-yellow-500" /> Balanță Credite</span>
+                                <span className="text-sm font-bold text-yellow-500">{credits}</span>
+                            </Link>
+                        </div>
+                    )}
+                    {collapsed && (
+                        <Link href="/cont/plati" className="mt-4 flex items-center justify-center bg-black/30 border border-slate-700/50 hover:border-yellow-500/50 p-2 rounded-xl transition-colors cursor-pointer text-yellow-500 animate-in fade-in duration-300" title={`Balance: ${credits} Credits`}>
+                            <Coins className="w-5 h-5" />
                         </Link>
-                    );
-                })}
-            </nav>
+                    )}
+                </div>
 
-            <div className="p-4 border-t border-slate-800">
-                <Link href="/" className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors">
-                    <LogOut className="w-5 h-5" />
-                    Sign Out
-                </Link>
-            </div>
-        </>
-    );
+                <nav className="flex-1 px-4 space-y-1">
+                    {menuItems.map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                title={collapsed ? item.name : undefined}
+                                className={`relative flex items-center ${collapsed ? 'justify-center' : 'justify-between'} px-4 py-3 text-sm font-medium rounded-lg transition-colors ${isActive
+                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <item.icon className="w-5 h-5 shrink-0" />
+                                    {!collapsed && <span className="truncate animate-in fade-in duration-300">{item.name}</span>}
+                                </div>
+                                
+                                {!collapsed && (
+                                    <div className="flex items-center gap-1">
+                                        {(item.name === 'Chat' || item.name === 'Support Chat') && chatUnread > 0 && (
+                                            <span className="bg-green-500 text-white text-[10px] font-normal px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-md">
+                                                {chatUnread > 9 ? '9+' : chatUnread}
+                                            </span>
+                                        )}
+                                        {item.name === 'Leads & CRM' && leadsUnread > 0 && (
+                                            <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                                {leadsUnread > 9 ? '9+' : leadsUnread}
+                                            </span>
+                                        )}
+                                        {item.name === 'Contract Deletions' && deletionRequestsCount > 0 && (
+                                            <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                                {deletionRequestsCount}
+                                            </span>
+                                        )}
+                                        {item.name === 'Validare Plăți' && pendingPaymentsCount > 0 && (
+                                            <span className="bg-yellow-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-md animate-pulse">
+                                                {pendingPaymentsCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                                {collapsed && (
+                                    <>
+                                        {((item.name === 'Chat' || item.name === 'Support Chat') && chatUnread > 0) && (
+                                            <span className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full" />
+                                        )}
+                                        {(item.name === 'Leads & CRM' && leadsUnread > 0) && (
+                                            <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full" />
+                                        )}
+                                        {(item.name === 'Contract Deletions' && deletionRequestsCount > 0) && (
+                                            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full" />
+                                        )}
+                                        {(item.name === 'Validare Plăți' && pendingPaymentsCount > 0) && (
+                                            <span className="absolute top-2 right-2 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+                                        )}
+                                    </>
+                                )}
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                <div className="p-4 border-t border-slate-800">
+                    <Link href="/" className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors`} title={collapsed ? "Sign Out" : undefined}>
+                        <LogOut className="w-5 h-5 shrink-0" />
+                        {!collapsed && <span className="animate-in fade-in duration-300">Sign Out</span>}
+                    </Link>
+                </div>
+            </>
+        );
+    };
 
     return (
         <div className="flex min-h-screen bg-slate-50">
             {/* Desktop Sidebar */}
-            <aside className="w-64 bg-slate-900 border-r border-slate-800 hidden md:flex flex-col shadow-xl z-20">
+            <aside className={`bg-slate-900 border-r border-slate-800 hidden md:flex flex-col shadow-xl z-20 transition-all duration-300 relative ${isCollapsed ? 'w-20' : 'w-64'}`}>
+                {/* Floating Expand/Collapse Button */}
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="absolute top-8 -right-3 w-6 h-6 bg-orange-500 hover:bg-orange-600 rounded-full flex items-center justify-center text-white border border-slate-900 shadow-md z-30 transition-all transform hover:scale-110 active:scale-95 cursor-pointer group animate-in fade-in duration-300"
+                    title={isCollapsed ? "Expand Menu" : "Collapse Menu"}
+                >
+                    {isCollapsed ? (
+                        <ChevronRight className="w-3.5 h-3.5 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5 animate-bounce-horizontal" />
+                    ) : (
+                        <ChevronLeft className="w-3.5 h-3.5 transition-transform duration-300 ease-in-out group-hover:-translate-x-0.5 animate-bounce-horizontal-left" />
+                    )}
+                </button>
                 <NavContent />
             </aside>
 
@@ -315,9 +362,9 @@ export default function DashboardClient({
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
                             aria-label="Toggle Menu"
-                    >
-                        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                    </button>
+                        >
+                            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
                     </div>
                 </header>
 
@@ -325,7 +372,7 @@ export default function DashboardClient({
                 {isMobileMenuOpen && (
                     <div className="fixed inset-0 top-16 z-20 bg-slate-900 md:hidden flex flex-col animate-in fade-in slide-in-from-top-4 duration-200">
                         <div className="flex-1 overflow-y-auto">
-                            <NavContent />
+                            <NavContent forceOpen={true} />
                         </div>
                     </div>
                 )}

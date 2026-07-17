@@ -164,3 +164,30 @@ body {
     border-radius: 6px !important;
   }
 }
+
+/* Sidebar toggle arrow bounce animation */
+@keyframes bounceHorizontal {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(2.5px);
+  }
+}
+
+@keyframes bounceHorizontalLeft {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-2.5px);
+  }
+}
+
+.animate-bounce-horizontal {
+  animation: bounceHorizontal 1.5s ease-in-out infinite;
+}
+
+.animate-bounce-horizontal-left {
+  animation: bounceHorizontalLeft 1.5s ease-in-out infinite;
+}
