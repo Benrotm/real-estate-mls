@@ -406,6 +406,78 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
                         </div>
 
+                        {/* Financials (Moved from Lead Score tab to Classification tab) */}
+                        <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 shadow-sm mb-3">
+                            <h4 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
+                                💰 Financial Classification
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                <div>
+                                    <label className={labelClass}>Cash or Credit</label>
+                                    <div className="flex gap-6 items-center p-2 bg-white rounded-xl border border-orange-200">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input type="radio" name="payment_method" value="Cash" checked={formData.payment_method === 'Cash'} onChange={handleChange} className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
+                                            <span className="text-slate-900 text-sm font-bold">Cash</span>
+                                        </label>
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input type="radio" name="payment_method" value="Credit" checked={formData.payment_method === 'Credit'} onChange={handleChange} className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
+                                            <span className="text-slate-900 text-sm font-bold">Credit</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Conditional Cash Amount (Only visible if Credit is selected) */}
+                                {formData.payment_method === 'Credit' && (
+                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className={labelClass}>Available Cash Amount</label>
+                                        <input
+                                            type="number"
+                                            name="cash_amount"
+                                            placeholder="e.g. 120000"
+                                            value={formData.cash_amount || ''}
+                                            onChange={handleChange}
+                                            className={`${inputClass} !bg-green-50 !border-green-200 !text-green-800 focus:!border-green-500 focus:!ring-green-500/20`}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Conditional Bank Status (Only visible if Credit is selected) */}
+                                {formData.payment_method === 'Credit' && (
+                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className={labelClass}>Bank Status (Pre-approval)</label>
+                                        <div className="relative">
+                                            <select name="bank_status" value={formData.bank_status || ''} onChange={handleChange} className={selectClass}>
+                                                <option value="No">No / Not Started</option>
+                                                <option value="In Progress">In Progress</option>
+                                                <option value="Pre-approved">Pre-approved</option>
+                                                <option value="Not Needed">Not Needed (Cash)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label className={labelClass}>Budget ({formData.currency})</label>
+                                    <div className="flex gap-3">
+                                        <input type="number" name="budget_min" placeholder="Min" value={formData.budget_min || ''} onChange={handleChange} className={inputClass} />
+                                        <input type="number" name="budget_max" placeholder="Max" value={formData.budget_max || ''} onChange={handleChange} className={inputClass} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Budget vs Market Reality</label>
+                                    <div className="relative">
+                                        <select name="budget_vs_market" value={formData.budget_vs_market || ''} onChange={handleChange} className={selectClass}>
+                                            <option value="Realistic">Realistic</option>
+                                            <option value="Low">Low / Difficult</option>
+                                            <option value="High">Generous</option>
+                                            <option value="Unsure">Unsure</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* More Search Criteria Collapsible Section */}
                         <div className="border-t border-slate-200 pt-3">
                             <button
@@ -612,75 +684,6 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                         <input type="text" name="pets_details" value={formData.pets_details || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 2 Golden Retrievers" />
                                     </div>
                                 )}
-                            </div>
-                        </div>
-
-                        {/* Financials (Moved from Lead Score tab to Classification tab) */}
-                        <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 shadow-sm mb-3">
-                            <h4 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
-                                💰 Financial Classification
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                <div>
-                                    <label className={labelClass}>Cash or Credit</label>
-                                    <div className="flex gap-6 items-center p-2 bg-white rounded-xl border border-orange-200">
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input type="radio" name="payment_method" value="Cash" checked={formData.payment_method === 'Cash'} onChange={handleChange} className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                                            <span className="text-slate-900 text-sm font-bold">Cash</span>
-                                        </label>
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input type="radio" name="payment_method" value="Credit" checked={formData.payment_method === 'Credit'} onChange={handleChange} className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                                            <span className="text-slate-900 text-sm font-bold">Credit</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Conditional Cash Amount (Only visible if Credit is selected) */}
-                                {formData.payment_method === 'Credit' && (
-                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <label className={labelClass}>Available Cash Amount</label>
-                                        <input
-                                            type="number"
-                                            name="cash_amount"
-                                            placeholder="e.g. 120000"
-                                            value={formData.cash_amount || ''}
-                                            onChange={handleChange}
-                                            className={`${inputClass} !bg-green-50 !border-green-200 !text-green-800 focus:!border-green-500 focus:!ring-green-500/20`}
-                                        />
-                                    </div>
-                                )}
-
-                                <div>
-                                    <label className={labelClass}>Bank Status (Pre-approval)</label>
-                                    <div className="relative">
-                                        <select name="bank_status" value={formData.bank_status || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="No">No / Not Started</option>
-                                            <option value="In Progress">In Progress</option>
-                                            <option value="Pre-approved">Pre-approved</option>
-                                            <option value="Not Needed">Not Needed (Cash)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label className={labelClass}>Budget ({formData.currency})</label>
-                                    <div className="flex gap-3">
-                                        <input type="number" name="budget_min" placeholder="Min" value={formData.budget_min || ''} onChange={handleChange} className={inputClass} />
-                                        <input type="number" name="budget_max" placeholder="Max" value={formData.budget_max || ''} onChange={handleChange} className={inputClass} />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Budget vs Market Reality</label>
-                                    <div className="relative">
-                                        <select name="budget_vs_market" value={formData.budget_vs_market || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="Realistic">Realistic</option>
-                                            <option value="Low">Low / Difficult</option>
-                                            <option value="High">Generous</option>
-                                            <option value="Unsure">Unsure</option>
-                                        </select>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
