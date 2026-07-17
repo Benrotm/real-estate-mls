@@ -553,6 +553,124 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                 </div>
                             )}
                         </div>
+
+                        {/* Lifestyle Habits (Moved from Profile tab to Classification tab) */}
+                        <div className="space-y-4 mb-6">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="h-6 w-1 bg-rose-500 rounded-full"></div>
+                                <h4 className="text-sm font-bold text-slate-700 uppercase tracking-widest">Social & Lifestyle Classification</h4>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.is_smoker ? 'bg-rose-50/50 border-rose-400 ring-2 ring-rose-500/10' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <Ban className={`w-5 h-5 ${formData.is_smoker ? 'text-rose-500' : 'text-slate-400'}`} />
+                                        <div>
+                                            <p className={`text-sm font-bold ${formData.is_smoker ? 'text-rose-900' : 'text-slate-700'}`}>Smoker</p>
+                                            <p className="text-[11px] text-slate-500">Does the lead smoke?</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="is_smoker" checked={formData.is_smoker || false} onChange={handleChange} className="w-5 h-5 text-rose-600 rounded border-slate-300 focus:ring-rose-500 cursor-pointer" />
+                                </label>
+
+                                <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_pets ? 'bg-blue-50/50 border-blue-400 ring-2 ring-blue-500/10' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <Dog className={`w-5 h-5 ${formData.has_pets ? 'text-blue-500' : 'text-slate-400'}`} />
+                                        <div>
+                                            <p className={`text-sm font-bold ${formData.has_pets ? 'text-blue-900' : 'text-slate-700'}`}>Has Pets</p>
+                                            <p className="text-[11px] text-slate-500">Dogs, cats, or others?</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="has_pets" checked={formData.has_pets || false} onChange={handleChange} className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer" />
+                                </label>
+
+                                <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_small_kids ? 'bg-emerald-50/50 border-emerald-400 ring-2 ring-emerald-500/10' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <Baby className={`w-5 h-5 ${formData.has_small_kids ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                        <div>
+                                            <p className={`text-sm font-bold ${formData.has_small_kids ? 'text-emerald-900' : 'text-slate-700'}`}>Has small Kids</p>
+                                            <p className="text-[11px] text-slate-500">Toddlers or young kids?</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="has_small_kids" checked={formData.has_small_kids || false} onChange={handleChange} className="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" />
+                                </label>
+
+                                {formData.has_pets && (
+                                    <div className="md:col-span-3 animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
+                                        <label className={labelClass}>Pet Details (What kind, how many?)</label>
+                                        <input type="text" name="pets_details" value={formData.pets_details || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 2 Golden Retrievers" />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Financials (Moved from Lead Score tab to Classification tab) */}
+                        <div className="p-6 bg-orange-50 rounded-xl border border-orange-100 shadow-sm mb-6">
+                            <h4 className="text-base font-bold text-orange-800 mb-6 flex items-center gap-2">
+                                💰 Financial Classification
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className={labelClass}>Cash or Credit</label>
+                                    <div className="flex gap-6 items-center p-3 bg-white rounded-xl border border-orange-200">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input type="radio" name="payment_method" value="Cash" checked={formData.payment_method === 'Cash'} onChange={handleChange} className="w-5 h-5 text-orange-600 focus:ring-orange-500 border-gray-300" />
+                                            <span className="text-slate-900 font-bold">Cash</span>
+                                        </label>
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input type="radio" name="payment_method" value="Credit" checked={formData.payment_method === 'Credit'} onChange={handleChange} className="w-5 h-5 text-orange-600 focus:ring-orange-500 border-gray-300" />
+                                            <span className="text-slate-900 font-bold">Credit</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Conditional Cash Amount (Only visible if Credit is selected) */}
+                                {formData.payment_method === 'Credit' && (
+                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className={labelClass}>Available Cash Amount</label>
+                                        <input
+                                            type="number"
+                                            name="cash_amount"
+                                            placeholder="e.g. 120000"
+                                            value={formData.cash_amount || ''}
+                                            onChange={handleChange}
+                                            className={`${inputClass} !bg-green-50 !border-green-200 !text-green-800 focus:!border-green-500 focus:!ring-green-500/20`}
+                                        />
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className={labelClass}>Bank Status (Pre-approval)</label>
+                                    <div className="relative">
+                                        <select name="bank_status" value={formData.bank_status || ''} onChange={handleChange} className={selectClass}>
+                                            <option value="No">No / Not Started</option>
+                                            <option value="In Progress">In Progress</option>
+                                            <option value="Pre-approved">Pre-approved</option>
+                                            <option value="Not Needed">Not Needed (Cash)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className={labelClass}>Budget ({formData.currency})</label>
+                                    <div className="flex gap-3">
+                                        <input type="number" name="budget_min" placeholder="Min" value={formData.budget_min || ''} onChange={handleChange} className={inputClass} />
+                                        <input type="number" name="budget_max" placeholder="Max" value={formData.budget_max || ''} onChange={handleChange} className={inputClass} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Budget vs Market Reality</label>
+                                    <div className="relative">
+                                        <select name="budget_vs_market" value={formData.budget_vs_market || ''} onChange={handleChange} className={selectClass}>
+                                            <option value="Realistic">Realistic</option>
+                                            <option value="Low">Low / Difficult</option>
+                                            <option value="High">Generous</option>
+                                            <option value="Unsure">Unsure</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -611,75 +729,6 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             <div>
                                 <label className={labelClass}>Last Viewing Date</label>
                                 <input type="date" name="last_viewing_date" value={formData.last_viewing_date || ''} onChange={handleChange} className={inputClass} />
-                            </div>
-                        </div>
-
-                        {/* Financials (Moved from Classification) */}
-                        <div className="p-6 bg-orange-50 rounded-xl border border-orange-100 shadow-sm">
-                            <h4 className="text-base font-bold text-orange-800 mb-6 flex items-center gap-2">
-                                💰 Financial Classification
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div>
-                                    <label className={labelClass}>Cash or Credit</label>
-                                    <div className="flex gap-6 items-center p-3 bg-white rounded-xl border border-orange-200">
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input type="radio" name="payment_method" value="Cash" checked={formData.payment_method === 'Cash'} onChange={handleChange} className="w-5 h-5 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                                            <span className="text-slate-900 font-bold">Cash</span>
-                                        </label>
-                                        <label className="flex items-center gap-3 cursor-pointer">
-                                            <input type="radio" name="payment_method" value="Credit" checked={formData.payment_method === 'Credit'} onChange={handleChange} className="w-5 h-5 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                                            <span className="text-slate-900 font-bold">Credit</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Conditional Cash Amount */}
-                                {formData.payment_method === 'Cash' && (
-                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <label className={labelClass}>Available Cash Amount</label>
-                                        <input
-                                            type="number"
-                                            name="cash_amount"
-                                            placeholder="e.g. 120000"
-                                            value={formData.cash_amount || ''}
-                                            onChange={handleChange}
-                                            className={`${inputClass} !bg-green-50 !border-green-200 !text-green-800 focus:!border-green-500 focus:!ring-green-500/20`}
-                                        />
-                                    </div>
-                                )}
-
-                                <div>
-                                    <label className={labelClass}>Bank Status (Pre-approval)</label>
-                                    <div className="relative">
-                                        <select name="bank_status" value={formData.bank_status || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="No">No / Not Started</option>
-                                            <option value="In Progress">In Progress</option>
-                                            <option value="Pre-approved">Pre-approved</option>
-                                            <option value="Not Needed">Not Needed (Cash)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className={labelClass}>Budget ({formData.currency})</label>
-                                    <div className="flex gap-3">
-                                        <input type="number" name="budget_min" placeholder="Min" value={formData.budget_min || ''} onChange={handleChange} className={inputClass} />
-                                        <input type="number" name="budget_max" placeholder="Max" value={formData.budget_max || ''} onChange={handleChange} className={inputClass} />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Budget vs Market Reality</label>
-                                    <div className="relative">
-                                        <select name="budget_vs_market" value={formData.budget_vs_market || ''} onChange={handleChange} className={selectClass}>
-                                            <option value="Realistic">Realistic</option>
-                                            <option value="Low">Low / Difficult</option>
-                                            <option value="High">Generous</option>
-                                            <option value="Unsure">Unsure</option>
-                                        </select>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -867,46 +916,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
                         </div>
 
-                        {/* Lifestyle Habits */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-slate-50 rounded-xl border border-slate-200">
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <Ban className="w-5 h-5 text-slate-400" />
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-700">Smoker</p>
-                                        <p className="text-xs text-slate-500">Does the lead smoke?</p>
-                                    </div>
-                                </div>
-                                <input type="checkbox" name="is_smoker" checked={formData.is_smoker || false} onChange={handleChange} className="w-5 h-5 text-orange-600 rounded border-slate-300 focus:ring-orange-500" />
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <Dog className="w-5 h-5 text-slate-400" />
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-700">Has Pets</p>
-                                        <p className="text-xs text-slate-500">Dogs, cats, or others?</p>
-                                    </div>
-                                </div>
-                                <input type="checkbox" name="has_pets" checked={formData.has_pets || false} onChange={handleChange} className="w-5 h-5 text-orange-600 rounded border-slate-300 focus:ring-orange-500" />
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <Baby className="w-5 h-5 text-slate-400" />
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-700">Has small Kids</p>
-                                        <p className="text-xs text-slate-500">Toddlers or young kids?</p>
-                                    </div>
-                                </div>
-                                <input type="checkbox" name="has_small_kids" checked={formData.has_small_kids || false} onChange={handleChange} className="w-5 h-5 text-orange-600 rounded border-slate-300 focus:ring-orange-500" />
-                            </div>
 
-                            {formData.has_pets && (
-                                <div className="md:col-span-3 animate-in fade-in slide-in-from-top-2 duration-300 mt-2">
-                                    <label className={labelClass}>Pet Details (What kind, how many?)</label>
-                                    <input type="text" name="pets_details" value={formData.pets_details || ''} onChange={handleChange} className={inputClass} placeholder="e.g. 2 Golden Retrievers" />
-                                </div>
-                            )}
-                        </div>
 
                         {/* Points of Interest */}
                         <div className="space-y-6">
@@ -915,55 +925,15 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                 <h4 className="text-sm font-bold text-slate-700 uppercase tracking-widest">Points of Interest & Favorite Locations</h4>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6">
                                 <div>
-                                    <label className={labelClass}>Schools / Kindergarten (Names & Addresses)</label>
-                                    <textarea
-                                        rows={2}
-                                        value={formData.points_of_interest?.schools || ''}
-                                        onChange={(e) => handlePOIChange('schools', e.target.value)}
-                                        className={inputClass}
-                                        placeholder="e.g. British School, Str. Scolii 5..."
-                                    ></textarea>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Supermarkets / Markets</label>
-                                    <textarea
-                                        rows={2}
-                                        value={formData.points_of_interest?.supermarkets || ''}
-                                        onChange={(e) => handlePOIChange('supermarkets', e.target.value)}
-                                        className={inputClass}
-                                        placeholder="e.g. Lidl, Mega Image, Piata Unirii..."
-                                    ></textarea>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Parks / Recreation</label>
-                                    <textarea
-                                        rows={2}
-                                        value={formData.points_of_interest?.parks || ''}
-                                        onChange={(e) => handlePOIChange('parks', e.target.value)}
-                                        className={inputClass}
-                                        placeholder="e.g. Parcul Central, Gym, Tennis Court..."
-                                    ></textarea>
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Office / Work Location</label>
-                                    <textarea
-                                        rows={2}
-                                        value={formData.points_of_interest?.work || ''}
-                                        onChange={(e) => handlePOIChange('work', e.target.value)}
-                                        className={inputClass}
-                                        placeholder="e.g. Business Park City, Str. Muncii 10..."
-                                    ></textarea>
-                                </div>
-                                <div className="md:col-span-2">
                                     <label className={labelClass}>Other Important Places</label>
                                     <textarea
-                                        rows={2}
+                                        rows={3}
                                         value={formData.points_of_interest?.others || ''}
                                         onChange={(e) => handlePOIChange('others', e.target.value)}
                                         className={inputClass}
-                                        placeholder="e.g. Hospital, Parents home, specific metro station..."
+                                        placeholder="Schools, Kindergarten (Names & Addresses), Supermarkets, Markets, Parks, Recreation, Office, Work Location, Public Transport, etc."
                                     ></textarea>
                                 </div>
                             </div>
