@@ -184,7 +184,6 @@ export default function DashboardClient({
             { name: 'Agency ROI', icon: TrendingUp, href: '/dashboard/agent/roi' },
             { name: 'Team Activities', icon: Activity, href: '/dashboard/agent/team-activities' },
         ] : []),
-        { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
         { name: 'Calculator Settings', icon: Calculator, href: '/dashboard/admin/settings/calculator-comisioane' },
         { name: 'Credit & Costs System', icon: Coins, href: '/dashboard/admin/credit-settings' },
@@ -204,6 +203,7 @@ export default function DashboardClient({
         { name: 'Invită un Prieten', icon: Gift, href: '/cont/profil' },
         { name: 'Chat', icon: MessageSquare, href: '/dashboard/admin/chat' },
         { name: 'Support Chat', icon: LifeBuoy, href: '/dashboard/admin/support-chat' },
+        { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
     ] : isAgent ? [
         { name: 'Overview', icon: LayoutDashboard, href: '/dashboard/agent' },
         ...(isAgencyManager ? [
