@@ -203,10 +203,10 @@ export default function ContactForm({ propertyId, propertyTitle, propertyAddress
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-normal py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
                     >
                         {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
-                        Send Inquiry
+                        Contact Agent (Free)
                     </button>
 
                     <div className="relative flex items-center py-2">
