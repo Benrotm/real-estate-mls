@@ -14,6 +14,7 @@ import { decodeHtmlEntities } from '@/app/lib/utils/string';
 interface Props {
     lead: LeadData;
     initialMatches: any[];
+    hideProfileCard?: boolean;
 }
 
 function MatchPropertyCard({ property, status, updatingIds, getStatusColor, getStatusIcon, handleUpdateStatus }: {
@@ -236,7 +237,7 @@ function MatchPropertyCard({ property, status, updatingIds, getStatusColor, getS
     );
 }
 
-export default function MatchesCurationClient({ lead, initialMatches }: Props) {
+export default function MatchesCurationClient({ lead, initialMatches, hideProfileCard = false }: Props) {
     const [matches, setMatches] = useState<any[]>(initialMatches);
     const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
     const [isLoadingAI, setIsLoadingAI] = useState(false);
@@ -532,48 +533,50 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     return (
         <div className="flex flex-col gap-6">
             {/* Lead Profile Summary Card - Collapsible */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-2">
-                <div 
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="bg-gradient-to-r from-slate-900 to-slate-800 py-4 px-6 text-white flex justify-between items-center cursor-pointer select-none transition-colors hover:from-slate-850 hover:to-slate-750"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-xl font-black border border-white/20 shrink-0">
-                            {(lead.name || '?').charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 text-white font-bold text-base mb-0.5">
-                                <span>{lead.name || 'Lead Profile & Requirements'}</span>
+            {!hideProfileCard && (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-2">
+                    <div 
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        className="bg-gradient-to-r from-slate-900 to-slate-800 py-4 px-6 text-white flex justify-between items-center cursor-pointer select-none transition-colors hover:from-slate-850 hover:to-slate-750"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-xl font-black border border-white/20 shrink-0">
+                                {(lead.name || '?').charAt(0).toUpperCase()}
                             </div>
-                            <div className="flex items-center gap-2 text-slate-300 text-xs font-normal">
-                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {lead.updated_at ? new Date(lead.updated_at).toLocaleDateString() : 'N/A'}</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-500"></span>
-                                <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id ? lead.id.slice(0, 8) : 'N/A'}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Lead Score</div>
-                            <div className="flex items-center justify-end gap-1.5">
-                                <div className={`text-xl font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
-                                    {lead.score || 0}
+                            <div>
+                                <div className="flex items-center gap-2 text-white font-bold text-base mb-0.5">
+                                    <span>{lead.name || 'Lead Profile & Requirements'}</span>
                                 </div>
-                                <Activity className={`w-5 h-5 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
+                                <div className="flex items-center gap-2 text-slate-300 text-xs font-normal">
+                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {lead.updated_at ? new Date(lead.updated_at).toLocaleDateString() : 'N/A'}</span>
+                                    <span className="w-1 h-1 rounded-full bg-slate-500"></span>
+                                    <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id ? lead.id.slice(0, 8) : 'N/A'}</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-300 bg-white/10 px-3 py-1.5 rounded-lg border border-white/15 shrink-0">
-                            <span>{isProfileOpen ? 'Hide Profile' : 'View Profile'}</span>
-                            {isProfileOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        <div className="flex items-center gap-4">
+                            <div className="text-right">
+                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Lead Score</div>
+                                <div className="flex items-center justify-end gap-1.5">
+                                    <div className={`text-xl font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
+                                        {lead.score || 0}
+                                    </div>
+                                    <Activity className={`w-5 h-5 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-slate-300 bg-white/10 px-3 py-1.5 rounded-lg border border-white/15 shrink-0">
+                                <span>{isProfileOpen ? 'Hide Profile' : 'View Profile'}</span>
+                                {isProfileOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </div>
                         </div>
                     </div>
+                    {isProfileOpen && (
+                        <div className="p-6 border-t border-slate-100 bg-slate-50/40">
+                            <LeadProfileDetails lead={lead} />
+                        </div>
+                    )}
                 </div>
-                {isProfileOpen && (
-                    <div className="p-6 border-t border-slate-100 bg-slate-50/40">
-                        <LeadProfileDetails lead={lead} />
-                    </div>
-                )}
-            </div>
+            )}
 
             {/* Tabs */}
             <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
