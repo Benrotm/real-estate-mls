@@ -69,14 +69,23 @@ export default function DrawAreaSelector({ city, value, onChange, onClose }: Dra
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 md:p-4">
             <div className="bg-white rounded-none md:rounded-2xl shadow-2xl w-full md:max-w-[98vw] h-full md:h-[96vh] flex flex-col overflow-hidden">
-                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                     <div>
                         <h2 className="text-lg font-bold text-slate-900">Draw Area of Interest</h2>
                         <p className="text-sm text-slate-500">Draw a shape on the map to define the target area.</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <X className="w-5 h-5 text-slate-500" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={handleSave} 
+                            className="px-4 py-2 rounded-xl font-bold text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-sm flex items-center gap-2 text-sm"
+                        >
+                            <Check className="w-4 h-4" />
+                            Save Area
+                        </button>
+                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors" title="Close">
+                            <X className="w-5 h-5 text-slate-500" />
+                        </button>
+                    </div>
                 </div>
                 
                 <div className="flex-1 relative">
@@ -147,19 +156,6 @@ export default function DrawAreaSelector({ city, value, onChange, onClose }: Dra
                             </button>
                         </div>
                     )}
-                </div>
-                
-                <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-5 py-2.5 rounded-xl font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-                        Cancel
-                    </button>
-                    <button 
-                        onClick={handleSave} 
-                        className="px-5 py-2.5 rounded-xl font-bold text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-sm flex items-center gap-2"
-                    >
-                        <Check className="w-4 h-4" />
-                        Save Area
-                    </button>
                 </div>
             </div>
         </div>
