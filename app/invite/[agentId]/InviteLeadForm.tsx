@@ -5,6 +5,9 @@ import { createLeadPublic } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 import { ROMANIAN_CITIES } from '@/app/lib/constants/locations';
+import SearchableSelect from '@/app/components/SearchableSelect';
+import { getSystemLocations } from '@/app/lib/actions/admin-settings';
+import { useEffect } from 'react';
 import { 
     ChevronDown, 
     ChevronUp, 
@@ -26,7 +29,15 @@ export default function InviteLeadForm({ agentId }: Props) {
     const [rooms, setRooms] = useState(2);
     const [budget, setBudget] = useState('');
     const [city, setCity] = useState('Timișoara');
-    const [showCustomCity, setShowCustomCity] = useState(false);
+    const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
+
+    useEffect(() => {
+        getSystemLocations().then(res => {
+            if (res.cities?.length) {
+                setCitiesList(res.cities.map(c => c.name));
+            }
+        });
+    }, []);
     const [polygon, setPolygon] = useState<{ lat: number; lng: number }[] | undefined>(undefined);
 
     // Accordion State
@@ -198,35 +209,13 @@ export default function InviteLeadForm({ agentId }: Props) {
                         <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                             City
                         </label>
-                        <div className="space-y-2">
-                            <select
-                                value={showCustomCity ? 'custom_city' : city}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === 'custom_city') {
-                                        setShowCustomCity(true);
-                                        setCity('');
-                                    } else {
-                                        setShowCustomCity(false);
-                                        setCity(val);
-                                    }
-                                }}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 cursor-pointer"
-                            >
-                                <option value="">Select City...</option>
-                                {ROMANIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                <option value="custom_city">Other / Alta...</option>
-                            </select>
-                            {showCustomCity && (
-                                <input
-                                    type="text"
-                                    value={city}
-                                    onChange={(e) => setCity(e.target.value)}
-                                    placeholder="Enter custom city..."
-                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10"
-                                />
-                            )}
-                        </div>
+                        <SearchableSelect
+                            value={city}
+                            options={citiesList}
+                            onChange={(val) => setCity(val)}
+                            placeholder="Type or select city..."
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                        />
                     </div>
                     <div>
                         <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">

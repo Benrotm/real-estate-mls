@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/app/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 // We create a helper to read/write settings. 
 // Note: Since we could not apply the DB migration automatically through scripts (due to Supabase pooler restrictions),
@@ -515,3 +517,88 @@ export async function saveMenuVisibility(role: string, disabledItems: string[]) 
         return { success: false, error: err.message };
     }
 }
+
+export async function getSystemLocations() {
+    try {
+        const { data, error } = await supabase
+            .from('system_locations')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+        
+        const cities = data.filter((x: any) => x.type === 'city').map((x: any) => ({ id: x.id, name: x.name }));
+        const areas = data.filter((x: any) => x.type === 'area').map((x: any) => ({ id: x.id, name: x.name }));
+
+        return { cities, areas };
+    } catch (err: any) {
+        console.error("Failed to load system locations:", err);
+        return { cities: [], areas: [] };
+    }
+}
+
+export async function addSystemLocation(type: 'city' | 'area', name: string) {
+    try {
+        const client = await createServerClient();
+        const { data: { user } } = await client.auth.getUser();
+        if (!user) return { success: false, error: 'Unauthorized' };
+
+        // Verify if super_admin
+        const { data: profile } = await client
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role !== 'super_admin') {
+            return { success: false, error: 'Access denied: Super Admin only' };
+        }
+
+        const { data, error } = await supabase
+            .from('system_locations')
+            .insert({ type, name: name.trim() })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        revalidatePath('/dashboard/admin/settings/locations');
+        return { success: true, data };
+    } catch (err: any) {
+        console.error("Failed to add system location:", err);
+        return { success: false, error: err.message || 'Failed to save location' };
+    }
+}
+
+export async function deleteSystemLocation(id: string) {
+    try {
+        const client = await createServerClient();
+        const { data: { user } } = await client.auth.getUser();
+        if (!user) return { success: false, error: 'Unauthorized' };
+
+        // Verify if super_admin
+        const { data: profile } = await client
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role !== 'super_admin') {
+            return { success: false, error: 'Access denied: Super Admin only' };
+        }
+
+        const { error } = await supabase
+            .from('system_locations')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        revalidatePath('/dashboard/admin/settings/locations');
+        return { success: true };
+    } catch (err: any) {
+        console.error("Failed to delete system location:", err);
+        return { success: false, error: err.message || 'Failed to delete location' };
+    }
+}
+

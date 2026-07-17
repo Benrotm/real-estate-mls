@@ -8,6 +8,8 @@ import { Loader2, Save, Camera, MapPin, Layout, DollarSign, Home, Briefcase, X, 
 import { supabase } from '@/app/lib/supabase/client';
 import Link from 'next/link';
 import { ROMANIAN_CITIES, TIMISOARA_AREAS } from '@/app/lib/constants/locations';
+import SearchableSelect from '@/app/components/SearchableSelect';
+import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 
 interface Props {
     initialData: Property;
@@ -24,16 +26,19 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
     const [cityVal, setCityVal] = useState(initialData.location_city || '');
     const [areaVal, setAreaVal] = useState(initialData.location_area || '');
 
-    const [showCustomCity, setShowCustomCity] = useState(
-        initialData.location_city 
-            ? !ROMANIAN_CITIES.includes(initialData.location_city) 
-            : false
-    );
-    const [showCustomArea, setShowCustomArea] = useState(
-        initialData.location_area 
-            ? !TIMISOARA_AREAS.includes(initialData.location_area) 
-            : false
-    );
+    const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
+    const [areasList, setAreasList] = useState<string[]>(TIMISOARA_AREAS);
+
+    useEffect(() => {
+        getSystemLocations().then(res => {
+            if (res.cities?.length) {
+                setCitiesList(res.cities.map(c => c.name));
+            }
+            if (res.areas?.length) {
+                setAreasList(res.areas.map(a => a.name));
+            }
+        });
+    }, []);
 
     // Photo reordering states
     const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);
@@ -139,19 +144,6 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
         setError(null);
 
         try {
-            // Unify city and area custom inputs if active
-            let city = formData.get('location_city') as string;
-            if (city === 'custom_city') {
-                city = formData.get('location_city_custom') as string || '';
-            }
-            formData.set('location_city', city);
-
-            let area = formData.get('location_area') as string;
-            if (area === 'custom_area') {
-                area = formData.get('location_area_custom') as string || '';
-            }
-            formData.set('location_area', area);
-
             // Append images manually
             formData.append('images', JSON.stringify(images));
 
@@ -241,72 +233,26 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1">City</label>
-                        <div className="space-y-2">
-                            <select
-                                name="location_city"
-                                required
-                                value={showCustomCity ? 'custom_city' : cityVal}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === 'custom_city') {
-                                        setShowCustomCity(true);
-                                        setCityVal('');
-                                    } else {
-                                        setShowCustomCity(false);
-                                        setCityVal(val);
-                                    }
-                                }}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none"
-                            >
-                                <option value="">Select City...</option>
-                                {ROMANIAN_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                <option value="custom_city">Other / Alta...</option>
-                            </select>
-                            {showCustomCity && (
-                                <input
-                                    name="location_city_custom"
-                                    required
-                                    value={cityVal}
-                                    onChange={(e) => setCityVal(e.target.value)}
-                                    placeholder="Enter custom city..."
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none"
-                                />
-                            )}
-                        </div>
+                        <SearchableSelect
+                            name="location_city"
+                            required
+                            value={cityVal}
+                            options={citiesList}
+                            onChange={(val) => setCityVal(val)}
+                            placeholder="Type or select city..."
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none"
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1">Area</label>
-                        <div className="space-y-2">
-                            <select
-                                name="location_area"
-                                value={showCustomArea ? 'custom_area' : areaVal}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === 'custom_area') {
-                                        setShowCustomArea(true);
-                                        setAreaVal('');
-                                    } else {
-                                        setShowCustomArea(false);
-                                        setAreaVal(val);
-                                    }
-                                }}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none"
-                            >
-                                <option value="">Select Area...</option>
-                                {TIMISOARA_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
-                                <option value="custom_area">Other / Alta...</option>
-                            </select>
-                            {showCustomArea && (
-                                <input
-                                    name="location_area_custom"
-                                    required
-                                    value={areaVal}
-                                    onChange={(e) => setAreaVal(e.target.value)}
-                                    placeholder="Enter custom area..."
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none"
-                                />
-                            )}
-                        </div>
+                        <SearchableSelect
+                            name="location_area"
+                            value={areaVal}
+                            options={areasList}
+                            onChange={(val) => setAreaVal(val)}
+                            placeholder="Type or select area..."
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none"
+                        />
                     </div>
                     <div className="col-span-1 md:col-span-3">
                         <label className="block text-sm font-bold text-slate-700 mb-1">Full Address</label>

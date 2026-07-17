@@ -48,6 +48,7 @@ export const DEFAULT_MENUS: Record<string, MenuItemDefinition[]> = {
         { name: 'Team Activities', icon: 'Activity', href: '/dashboard/agent/team-activities', superAdminOnly: true },
         // Settings/Scrapers/Import items
         { name: 'System Settings', icon: 'Settings', href: '/dashboard/admin/settings' },
+        { name: 'Location Lists', icon: 'Globe', href: '/dashboard/admin/settings/locations', superAdminOnly: true },
         { name: 'Calculator Settings', icon: 'Calculator', href: '/dashboard/admin/settings/calculator-comisioane' },
         { name: 'Credit & Costs System', icon: 'Coins', href: '/dashboard/admin/credit-settings' },
         { name: 'Validare Plăți', icon: 'DollarSign', href: '/dashboard/admin/validare-plati' },
