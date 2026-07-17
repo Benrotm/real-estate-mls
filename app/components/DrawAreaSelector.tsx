@@ -67,8 +67,8 @@ export default function DrawAreaSelector({ city, value, onChange, onClose }: Dra
     if (!isLoaded) return <div className="p-4">Loading Map...</div>;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 md:p-4">
+            <div className="bg-white rounded-none md:rounded-2xl shadow-2xl w-full md:max-w-[98vw] h-full md:h-[96vh] flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
                     <div>
                         <h2 className="text-lg font-bold text-slate-900">Draw Area of Interest</h2>
