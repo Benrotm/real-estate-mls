@@ -18,6 +18,7 @@ import OpenHouseWidget from '@/app/components/events/OpenHouseWidget';
 import PropertyValuationSection from '@/app/components/valuation/PropertyValuationSection';
 import ShareButton from '@/app/components/property/ShareButton';
 import FavoriteButton from '@/app/components/property/FavoriteButton';
+import StatusToggleButton from '@/app/components/property/StatusToggleButton';
 import { createClient } from "@/app/lib/supabase/server";
 import PropertyAnalyticsWidget from '@/app/components/analytics/PropertyAnalyticsWidget';
 import PropertyViewTracker from '@/app/components/analytics/PropertyViewTracker';
@@ -585,6 +586,12 @@ export default async function PropertyDetailPage({
                                             <Edit3 className="w-4 h-4 text-violet-400" />
                                             <span>EDIT PROPERTY</span>
                                         </Link>
+
+                                        {/* Save Draft / Publish Toggle Button */}
+                                        <StatusToggleButton
+                                            propertyId={property.id}
+                                            currentStatus={property.status as 'active' | 'draft'}
+                                        />
 
                                         {/* Generate Presentation Contract (Fișă de vizionare) */}
                                         {['agent', 'agency', 'developer', 'admin', 'super_admin', 'superadmin'].includes(userRole || '') && (
