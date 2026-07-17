@@ -223,9 +223,9 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
     );
 
     // Styled classes for consistent high-contrast design
-    const inputClass = "w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium";
-    const labelClass = "block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2";
-    const selectClass = "w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium cursor-pointer";
+    const inputClass = "w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium";
+    const labelClass = "block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1";
+    const selectClass = "w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium cursor-pointer";
 
     return (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden h-full flex flex-col">
@@ -323,17 +323,17 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
 
                 {/* CLASSIFICATION TAB */}
                 {activeTab === 'classification' && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
                         {/* Property Requirements Section */}
-                        <div className="border-t border-slate-200 pt-6 first:border-0 first:pt-0">
-                            <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-2">
-                                <ClipboardList className="w-5 h-5 text-slate-500" />
+                        <div className="border-t border-slate-200 pt-3 first:border-0 first:pt-0">
+                            <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                                <ClipboardList className="w-4 h-4 text-slate-500" />
                                 Property Requirements
                             </h3>
 
                             {/* Basic Info */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label className={labelClass}>Property Type</label>
                                     <div className="relative">
@@ -353,7 +353,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
 
                             {/* Location */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                                 <div>
                                     <label className={labelClass}>City</label>
                                     <input type="text" name="preference_location_city" value={formData.preference_location_city || ''} onChange={handleChange} className={inputClass} placeholder="e.g. New York" />
@@ -367,15 +367,15 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                     <button 
                                         type="button" 
                                         onClick={() => setShowAreaMap(true)}
-                                        className="w-full flex items-center justify-between px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
+                                        className="w-full flex items-center justify-between px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
                                     >
-                                        <span className="text-sm font-medium text-slate-700">
+                                        <span className="text-xs font-medium text-slate-700">
                                             🗺️ {formData.preference_location_polygon?.length ? 'Edit Area on Map' : 'Draw Area on Map'}
                                         </span>
                                         {formData.preference_location_polygon?.length ? (
-                                            <span className="text-xs bg-violet-100 text-violet-700 font-bold px-2 py-0.5 rounded-full">Area Selected</span>
+                                            <span className="text-[10px] bg-violet-100 text-violet-700 font-bold px-1.5 py-0.5 rounded-full">Area Selected</span>
                                         ) : (
-                                            <span className="text-xs bg-slate-200 text-slate-600 font-bold px-2 py-0.5 rounded-full">No Area</span>
+                                            <span className="text-[10px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded-full">No Area</span>
                                         )}
                                     </button>
                                 </div>
@@ -392,7 +392,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             )}
 
                             {/* Property Details Grid */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                                 {/* Rooms */}
                                 <div>
                                     <label className={labelClass}>Min Rooms</label>
@@ -437,7 +437,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
 
                             {/* Dropdowns */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                                 <div>
                                     <label className={labelClass}>Building Type</label>
                                     <div className="relative">
@@ -486,7 +486,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
 
                             {/* Agent Interest - Specific to Lead, but fits in requirements */}
-                            <div className="mb-6">
+                            <div className="mb-3">
                                 <label className={labelClass}>Agent Interest Level</label>
                                 <div className="relative">
                                     <select name="agent_interest_rating" value={formData.agent_interest_rating || ''} onChange={handleChange} className={selectClass}>
@@ -499,33 +499,33 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                         </div>
 
                         {/* Features Section */}
-                        <div className="border-t border-slate-200 pt-6">
+                        <div className="border-t border-slate-200 pt-3">
                             <button
                                 type="button"
                                 onClick={() => setIsFeaturesExpanded(!isFeaturesExpanded)}
-                                className="w-full flex items-center justify-between text-base font-bold text-slate-900 mb-6 group"
+                                className="w-full flex items-center justify-between text-sm font-bold text-slate-900 mb-3 group"
                             >
                                 <span className="flex items-center gap-2">
-                                    <Check className="w-5 h-5 text-slate-500" />
+                                    <Check className="w-4 h-4 text-slate-500" />
                                     Features
                                     <span className="text-xs font-normal text-slate-400 ml-2">
                                         ({(formData.preference_features || []).length} selected)
                                     </span>
                                 </span>
                                 {isFeaturesExpanded ? (
-                                    <ChevronUp className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                                    <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
                                 ) : (
-                                    <ChevronDown className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                                    <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
                                 )}
                             </button>
 
                             {isFeaturesExpanded && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                                     {Object.entries(FEATURE_CATEGORIES).map(([category, features]) => {
                                         const colors = CATEGORY_COLORS[category] || CATEGORY_COLORS['Unit Features'];
                                         return (
-                                            <div key={category} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                                                <h4 className={`text-xs font-bold uppercase tracking-wider ${colors.text.replace('text-', 'text-slate-500 ')} mb-3 flex items-center gap-2`}>
+                                            <div key={category} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                <h4 className={`text-[10px] font-bold uppercase tracking-wider ${colors.text.replace('text-', 'text-slate-500 ')} mb-2 flex items-center gap-2`}>
                                                     <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
                                                     {category}
                                                 </h4>
@@ -533,7 +533,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                                     {features.map(feature => (
                                                         <div key={feature}
                                                             onClick={() => handleFeatureToggle(feature)}
-                                                            className={`px-3 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all border shadow-sm flex items-center gap-2 ${(formData.preference_features || []).includes(feature)
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all border shadow-sm flex items-center gap-2 ${(formData.preference_features || []).includes(feature)
                                                                 ? `${colors.bg} text-white border-transparent shadow-md`
                                                                 : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                                                                 }`}
@@ -555,43 +555,43 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                         </div>
 
                         {/* Lifestyle Habits (Moved from Profile tab to Classification tab) */}
-                        <div className="space-y-4 mb-6">
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="h-6 w-1 bg-rose-500 rounded-full"></div>
-                                <h4 className="text-sm font-bold text-slate-700 uppercase tracking-widest">Social & Lifestyle Classification</h4>
+                        <div className="space-y-3 mb-3">
+                            <div className="flex items-center gap-2 mb-1">
+                                <div className="h-5 w-1 bg-rose-500 rounded-full"></div>
+                                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Social & Lifestyle Classification</h4>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.is_smoker ? 'bg-rose-50/50 border-rose-400 ring-2 ring-rose-500/10' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.is_smoker ? 'bg-rose-100/70 border-rose-400 ring-2 ring-rose-500/20 text-rose-900' : 'bg-rose-50/40 border-rose-200 hover:bg-rose-50/60 text-rose-800/90 hover:border-rose-300'}`}>
                                     <div className="flex items-center gap-3">
-                                        <Ban className={`w-5 h-5 ${formData.is_smoker ? 'text-rose-500' : 'text-slate-400'}`} />
+                                        <Ban className={`w-5 h-5 ${formData.is_smoker ? 'text-rose-600' : 'text-rose-500'}`} />
                                         <div>
-                                            <p className={`text-sm font-bold ${formData.is_smoker ? 'text-rose-900' : 'text-slate-700'}`}>Smoker</p>
-                                            <p className="text-[11px] text-slate-500">Does the lead smoke?</p>
+                                            <p className={`text-sm font-bold ${formData.is_smoker ? 'text-rose-900 font-extrabold' : 'text-rose-800'}`}>Smoker</p>
+                                            <p className={`text-[11px] ${formData.is_smoker ? 'text-rose-700/80' : 'text-rose-600/70'}`}>Does the lead smoke?</p>
                                         </div>
                                     </div>
-                                    <input type="checkbox" name="is_smoker" checked={formData.is_smoker || false} onChange={handleChange} className="w-5 h-5 text-rose-600 rounded border-slate-300 focus:ring-rose-500 cursor-pointer" />
+                                    <input type="checkbox" name="is_smoker" checked={formData.is_smoker || false} onChange={handleChange} className="w-5 h-5 text-rose-600 rounded border-rose-300 focus:ring-rose-500 cursor-pointer" />
                                 </label>
 
-                                <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_pets ? 'bg-blue-50/50 border-blue-400 ring-2 ring-blue-500/10' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_pets ? 'bg-blue-100/70 border-blue-400 ring-2 ring-blue-500/20 text-blue-900' : 'bg-blue-50/40 border-blue-200 hover:bg-blue-50/60 text-blue-800/90 hover:border-blue-300'}`}>
                                     <div className="flex items-center gap-3">
-                                        <Dog className={`w-5 h-5 ${formData.has_pets ? 'text-blue-500' : 'text-slate-400'}`} />
+                                        <Dog className={`w-5 h-5 ${formData.has_pets ? 'text-blue-600' : 'text-blue-500'}`} />
                                         <div>
-                                            <p className={`text-sm font-bold ${formData.has_pets ? 'text-blue-900' : 'text-slate-700'}`}>Has Pets</p>
-                                            <p className="text-[11px] text-slate-500">Dogs, cats, or others?</p>
+                                            <p className={`text-sm font-bold ${formData.has_pets ? 'text-blue-900 font-extrabold' : 'text-blue-800'}`}>Has Pets</p>
+                                            <p className={`text-[11px] ${formData.has_pets ? 'text-blue-700/80' : 'text-blue-600/70'}`}>Dogs, cats, or others?</p>
                                         </div>
                                     </div>
-                                    <input type="checkbox" name="has_pets" checked={formData.has_pets || false} onChange={handleChange} className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer" />
+                                    <input type="checkbox" name="has_pets" checked={formData.has_pets || false} onChange={handleChange} className="w-5 h-5 text-blue-600 rounded border-blue-300 focus:ring-blue-500 cursor-pointer" />
                                 </label>
 
-                                <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_small_kids ? 'bg-emerald-50/50 border-emerald-400 ring-2 ring-emerald-500/10' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer select-none transition-all shadow-sm ${formData.has_small_kids ? 'bg-emerald-100/70 border-emerald-400 ring-2 ring-emerald-500/20 text-emerald-900' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
                                     <div className="flex items-center gap-3">
-                                        <Baby className={`w-5 h-5 ${formData.has_small_kids ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                        <Baby className={`w-5 h-5 ${formData.has_small_kids ? 'text-emerald-600' : 'text-emerald-500'}`} />
                                         <div>
-                                            <p className={`text-sm font-bold ${formData.has_small_kids ? 'text-emerald-900' : 'text-slate-700'}`}>Has small Kids</p>
-                                            <p className="text-[11px] text-slate-500">Toddlers or young kids?</p>
+                                            <p className={`text-sm font-bold ${formData.has_small_kids ? 'text-emerald-900 font-extrabold' : 'text-emerald-800'}`}>Has small Kids</p>
+                                            <p className={`text-[11px] ${formData.has_small_kids ? 'text-emerald-700/80' : 'text-emerald-600/70'}`}>Toddlers or young kids?</p>
                                         </div>
                                     </div>
-                                    <input type="checkbox" name="has_small_kids" checked={formData.has_small_kids || false} onChange={handleChange} className="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer" />
+                                    <input type="checkbox" name="has_small_kids" checked={formData.has_small_kids || false} onChange={handleChange} className="w-5 h-5 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500 cursor-pointer" />
                                 </label>
 
                                 {formData.has_pets && (
@@ -604,21 +604,21 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                         </div>
 
                         {/* Financials (Moved from Lead Score tab to Classification tab) */}
-                        <div className="p-6 bg-orange-50 rounded-xl border border-orange-100 shadow-sm mb-6">
-                            <h4 className="text-base font-bold text-orange-800 mb-6 flex items-center gap-2">
+                        <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 shadow-sm mb-3">
+                            <h4 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
                                 💰 Financial Classification
                             </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label className={labelClass}>Cash or Credit</label>
-                                    <div className="flex gap-6 items-center p-3 bg-white rounded-xl border border-orange-200">
+                                    <div className="flex gap-6 items-center p-2 bg-white rounded-xl border border-orange-200">
                                         <label className="flex items-center gap-3 cursor-pointer">
-                                            <input type="radio" name="payment_method" value="Cash" checked={formData.payment_method === 'Cash'} onChange={handleChange} className="w-5 h-5 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                                            <span className="text-slate-900 font-bold">Cash</span>
+                                            <input type="radio" name="payment_method" value="Cash" checked={formData.payment_method === 'Cash'} onChange={handleChange} className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
+                                            <span className="text-slate-900 text-sm font-bold">Cash</span>
                                         </label>
                                         <label className="flex items-center gap-3 cursor-pointer">
-                                            <input type="radio" name="payment_method" value="Credit" checked={formData.payment_method === 'Credit'} onChange={handleChange} className="w-5 h-5 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                                            <span className="text-slate-900 font-bold">Credit</span>
+                                            <input type="radio" name="payment_method" value="Credit" checked={formData.payment_method === 'Credit'} onChange={handleChange} className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
+                                            <span className="text-slate-900 text-sm font-bold">Credit</span>
                                         </label>
                                     </div>
                                 </div>
@@ -650,7 +650,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                     </div>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
                                     <label className={labelClass}>Budget ({formData.currency})</label>
                                     <div className="flex gap-3">
