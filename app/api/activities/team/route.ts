@@ -24,7 +24,8 @@ export async function GET(req: Request) {
 
         // Verify agency access
         const { data: profile } = await supabaseAdmin.from('profiles').select('plan_tier, role').eq('id', user.id).single();
-        if (profile?.plan_tier !== 'enterprise' || profile?.role !== 'agent') {
+        const isSuperAdmin = profile?.role === 'super_admin' || profile?.role === 'superadmin';
+        if (!isSuperAdmin && (profile?.plan_tier !== 'enterprise' || profile?.role !== 'agent')) {
              return NextResponse.json({ error: 'Forbidden. Agency plan required.' }, { status: 403 });
         }
 

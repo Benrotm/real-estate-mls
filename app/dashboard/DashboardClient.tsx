@@ -178,7 +178,12 @@ export default function DashboardClient({
         { name: 'Features', icon: Check, href: '/dashboard/admin/features' },
         { name: 'AI Matching Engine', icon: Zap, href: '/dashboard/admin/scoring/match' },
         { name: 'User Management', icon: Users, href: '/dashboard/admin/users' },
-        ...(profile?.role === 'super_admin' ? [{ name: 'User Permission Matrix', icon: Users, href: '/dashboard/admin/permissions' }] : []),
+        ...(profile?.role === 'super_admin' ? [
+            { name: 'User Permission Matrix', icon: Users, href: '/dashboard/admin/permissions' },
+            { name: 'My Team', icon: Users, href: '/dashboard/agent/team' },
+            { name: 'Agency ROI', icon: TrendingUp, href: '/dashboard/agent/roi' },
+            { name: 'Team Activities', icon: Activity, href: '/dashboard/agent/team-activities' },
+        ] : []),
         { name: 'Tickets & Reports', icon: Flag, href: '/dashboard/admin/tickets' }, // Admin view
         { name: 'System Settings', icon: Settings, href: '/dashboard/admin/settings' },
         { name: 'Calculator Settings', icon: Calculator, href: '/dashboard/admin/settings/calculator-comisioane' },

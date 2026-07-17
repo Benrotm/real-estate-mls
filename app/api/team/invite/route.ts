@@ -25,7 +25,8 @@ export async function POST(req: Request) {
             .eq('id', user.id)
             .single();
 
-        if (!profile || profile.role !== 'agent' || profile.plan_tier !== 'enterprise') {
+        const isSuperAdmin = profile?.role === 'super_admin' || profile?.role === 'superadmin';
+        if (!profile || (!isSuperAdmin && (profile.role !== 'agent' || profile.plan_tier !== 'enterprise'))) {
             return NextResponse.json({ error: 'You must be on the Full House Agency plan to invite agents.' }, { status: 403 });
         }
 
