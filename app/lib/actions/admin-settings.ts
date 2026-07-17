@@ -458,3 +458,60 @@ export async function saveMenuOrdering(role: string, order: string[]) {
         return { success: false, error: err.message };
     }
 }
+
+export async function getMenuVisibilitySettings(): Promise<Record<string, string[]>> {
+    try {
+        const roles = ['admin', 'agent', 'owner', 'developer', 'client'];
+        const keys = roles.map(r => `menu_disabled_${r}`);
+
+        const { data, error } = await supabase
+            .from('admin_settings')
+            .select('key, value')
+            .in('key', keys);
+
+        const disabledItems: Record<string, string[]> = {};
+        
+        for (const role of roles) {
+            disabledItems[role] = [];
+        }
+
+        if (error || !data) {
+            return disabledItems;
+        }
+
+        for (const row of data) {
+            const role = row.key.replace('menu_disabled_', '');
+            try {
+                disabledItems[role] = typeof row.value === 'string' ? JSON.parse(row.value) : (row.value || []);
+            } catch {
+                disabledItems[role] = [];
+            }
+        }
+
+        return disabledItems;
+    } catch (err) {
+        console.error("Failed to load menu visibility settings:", err);
+        return {};
+    }
+}
+
+export async function saveMenuVisibility(role: string, disabledItems: string[]) {
+    try {
+        const key = `menu_disabled_${role}`;
+        const { error } = await supabase
+            .from('admin_settings')
+            .upsert({
+                key,
+                value: disabledItems,
+                description: `Custom navigation menu disabled/hidden items list configuration for the ${role} role`
+            }, { onConflict: 'key' });
+
+        if (error) {
+            console.error("Failed to update menu visibility:", error.message);
+            return { success: false, error: error.message };
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}

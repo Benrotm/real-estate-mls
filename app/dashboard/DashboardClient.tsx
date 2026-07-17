@@ -9,7 +9,7 @@ import { supabase } from '@/app/lib/supabase/client';
 import { getUnreadNotificationsCount } from '@/app/lib/actions/notifications';
 import { getTotalUnreadMessagesCount } from '@/app/lib/actions/chat';
 import { getCollaborationContractDeleteRequests } from '@/app/lib/actions/collaboration-contracts';
-import { getMenuOrderings } from '@/app/lib/actions/admin-settings';
+import { getMenuOrderings, getMenuVisibilitySettings } from '@/app/lib/actions/admin-settings';
 import { DEFAULT_MENUS, MENU_ICONS } from '@/app/lib/constants/menu';
 
 export default function DashboardClient({
@@ -161,15 +161,20 @@ export default function DashboardClient({
     const isAgencyManager = isAgent && profile?.plan_tier === 'enterprise';
 
     const [customOrderings, setCustomOrderings] = useState<Record<string, string[]>>({});
+    const [hiddenMenuItems, setHiddenMenuItems] = useState<Record<string, string[]>>({});
 
     useEffect(() => {
-        async function loadMenuOrder() {
+        async function loadMenuOrderAndVisibility() {
             const order = await getMenuOrderings();
             if (order) {
                 setCustomOrderings(order);
             }
+            const hidden = await getMenuVisibilitySettings();
+            if (hidden) {
+                setHiddenMenuItems(hidden);
+            }
         }
-        loadMenuOrder();
+        loadMenuOrderAndVisibility();
     }, []);
 
     const roleKey = isAdmin ? 'admin'
@@ -180,8 +185,12 @@ export default function DashboardClient({
         : '';
 
     const defaultList = roleKey ? DEFAULT_MENUS[roleKey] : [];
+    const activeHidden = hiddenMenuItems[roleKey] || [];
 
     const filteredList = defaultList.filter(item => {
+        if (activeHidden.includes(item.name)) {
+            return false;
+        }
         if (item.superAdminOnly && profile?.role !== 'super_admin') {
             return false;
         }

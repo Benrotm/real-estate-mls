@@ -10,6 +10,8 @@ import {
     updateGlobalWatermarkSetting,
     getMenuOrderings,
     saveMenuOrdering,
+    getMenuVisibilitySettings,
+    saveMenuVisibility,
     AdminSettings, 
     ProxyConfig,
     GlobalWatermarkConfig 
@@ -49,6 +51,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
     const [selectedRole, setSelectedRole] = useState<'admin' | 'agent' | 'owner' | 'developer' | 'client'>('admin');
     const [menuOrderings, setMenuOrderings] = useState<Record<string, string[]>>({});
     const [currentRoleOrder, setCurrentRoleOrder] = useState<any[]>([]);
+    const [disabledMenus, setDisabledMenus] = useState<Record<string, string[]>>({});
 
     useEffect(() => {
         loadMenuOrderings();
@@ -58,6 +61,10 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
         const order = await getMenuOrderings();
         if (order) {
             setMenuOrderings(order);
+        }
+        const disabled = await getMenuVisibilitySettings();
+        if (disabled) {
+            setDisabledMenus(disabled);
         }
     }
 
@@ -95,22 +102,40 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
         setCurrentRoleOrder(newOrder);
     };
 
+    const handleToggleVisibility = (name: string) => {
+        const activeDisabled = disabledMenus[selectedRole] || [];
+        let newDisabled: string[];
+        if (activeDisabled.includes(name)) {
+            newDisabled = activeDisabled.filter(n => n !== name);
+        } else {
+            newDisabled = [...activeDisabled, name];
+        }
+        setDisabledMenus({
+            ...disabledMenus,
+            [selectedRole]: newDisabled
+        });
+    };
+
     const handleSaveOrder = async () => {
         setIsSaving(true);
         setMessage({ text: '', type: '' });
         
         const orderNames = currentRoleOrder.map(item => item.name);
-        const result = await saveMenuOrdering(selectedRole, orderNames);
+        const orderResult = await saveMenuOrdering(selectedRole, orderNames);
+        
+        const activeDisabled = disabledMenus[selectedRole] || [];
+        const visibilityResult = await saveMenuVisibility(selectedRole, activeDisabled);
 
-        if (result.success) {
+        if (orderResult.success && visibilityResult.success) {
             setMenuOrderings({
                 ...menuOrderings,
                 [selectedRole]: orderNames
             });
-            setMessage({ text: `Menu order for ${selectedRole} saved successfully! Please refresh to see changes.`, type: 'success' });
+            setMessage({ text: `Menu configuration for ${selectedRole} saved successfully! Please refresh to see changes.`, type: 'success' });
             setTimeout(() => setMessage({ text: '', type: '' }), 4000);
         } else {
-            setMessage({ text: `Failed to save menu order: ${result.error}`, type: 'error' });
+            const errMsg = !orderResult.success ? orderResult.error : visibilityResult.error;
+            setMessage({ text: `Failed to save menu configuration: ${errMsg}`, type: 'error' });
         }
         setIsSaving(false);
     };
@@ -118,7 +143,11 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
     const handleResetOrder = () => {
         const defaultList = DEFAULT_MENUS[selectedRole] || [];
         setCurrentRoleOrder(defaultList);
-        setMessage({ text: 'Reset to default order. Save to persist changes.', type: 'success' });
+        setDisabledMenus({
+            ...disabledMenus,
+            [selectedRole]: []
+        });
+        setMessage({ text: 'Reset to default configuration. Save to persist changes.', type: 'success' });
         setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     };
 
@@ -668,8 +697,9 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
                         <div className="bg-slate-950/40 rounded-2xl border border-slate-800 divide-y divide-slate-800 min-h-[350px] max-h-[1200px] h-[500px] overflow-auto resize-y pr-2">
                             {currentRoleOrder.map((item, idx) => {
                                 const IconComp = MENU_ICONS[item.icon] || Globe;
+                                const isVisible = !(disabledMenus[selectedRole] || []).includes(item.name);
                                 return (
-                                    <div key={item.name} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-900/20 transition-colors">
+                                    <div key={item.name} className={`p-4 flex items-center justify-between gap-4 hover:bg-slate-900/20 transition-colors ${!isVisible ? 'opacity-60' : ''}`}>
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-slate-900 rounded-lg text-slate-400">
                                                 <IconComp className="w-5 h-5 text-violet-400" />
@@ -691,23 +721,37 @@ export default function SettingsClient({ initialSettings }: { initialSettings: A
                                                 <div className="text-[10px] text-slate-500 font-mono mt-0.5">{item.href}</div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-4">
+                                            <span className={`text-xs font-bold ${isVisible ? 'text-violet-400' : 'text-slate-500'}`}>
+                                                {isVisible ? 'Visible' : 'Hidden'}
+                                            </span>
                                             <button
-                                                onClick={() => handleMoveItem(idx, 'up')}
-                                                disabled={idx === 0}
-                                                className="p-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-700"
-                                                title="Move Up"
+                                                onClick={() => handleToggleVisibility(item.name)}
+                                                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-violet-500/20 ${isVisible ? 'bg-violet-500' : 'bg-slate-700'}`}
                                             >
-                                                ▲
+                                                <span
+                                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isVisible ? 'translate-x-5' : 'translate-x-0'}`}
+                                                />
                                             </button>
-                                            <button
-                                                onClick={() => handleMoveItem(idx, 'down')}
-                                                disabled={idx === currentRoleOrder.length - 1}
-                                                className="p-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-700"
-                                                title="Move Down"
-                                            >
-                                                ▼
-                                            </button>
+                                            <div className="h-4 w-px bg-slate-800" />
+                                            <div className="flex items-center gap-1.5">
+                                                <button
+                                                    onClick={() => handleMoveItem(idx, 'up')}
+                                                    disabled={idx === 0}
+                                                    className="p-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-700"
+                                                    title="Move Up"
+                                                >
+                                                    ▲
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMoveItem(idx, 'down')}
+                                                    disabled={idx === currentRoleOrder.length - 1}
+                                                    className="p-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-700"
+                                                    title="Move Down"
+                                                >
+                                                    ▼
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 );
