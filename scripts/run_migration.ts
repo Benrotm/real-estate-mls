@@ -45,7 +45,8 @@ const MIGRATIONS = [
     'supabase/migrations/20260716000000_add_user_property_restrictions.sql',
     'supabase/migrations/20260716000001_create_property_matrix_stats_rpc.sql',
     'supabase/migrations/20260716010000_add_signup_notification.sql',
-    'supabase/migrations/20260716020000_add_client_leads_rls.sql'
+    'supabase/migrations/20260716020000_add_client_leads_rls.sql',
+    'supabase/migrations/20260717180000_add_matches_rls_admin.sql'
 ];
 
 async function run() {
