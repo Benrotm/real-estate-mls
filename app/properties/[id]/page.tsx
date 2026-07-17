@@ -745,51 +745,74 @@ export default async function PropertyDetailPage({
                         </div>
 
                         {/* 3. Summary Metrics Cards */}
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-                            {/* Rooms */}
-                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 text-indigo-600">
-                                    <Home className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <div className="font-extrabold text-xl text-slate-900">{property.rooms || '-'}</div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Rooms</div>
-                                </div>
-                            </div>
+                        {(() => {
+                            const hasRooms = typeof property.rooms === 'number' && property.rooms > 0;
+                            const hasArea = typeof property.area_usable === 'number' && property.area_usable > 0;
+                            const hasFloor = typeof property.floor === 'number' || typeof property.total_floors === 'number';
 
-                            {/* Usable Area */}
-                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0 text-emerald-600">
-                                    <Ruler className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <div className="font-extrabold text-xl text-slate-900">
-                                        {property.area_usable ? `${property.area_usable} sqm` : '-'}
-                                    </div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Usable Area</div>
-                                </div>
-                            </div>
+                            const cards = [];
 
-                            {/* Floor */}
-                            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center shrink-0 text-violet-600">
-                                    <Layers className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <div className="font-extrabold text-xl text-slate-900">
-                                        {(property.floor !== null && property.floor !== undefined)
-                                            ? ((property.total_floors !== null && property.total_floors !== undefined)
-                                                ? `${property.floor}/${property.total_floors}`
-                                                : `${property.floor}`)
-                                            : ((property.total_floors !== null && property.total_floors !== undefined)
-                                                ? `-/ ${property.total_floors}`
-                                                : '-')
-                                        }
+                            if (hasRooms) {
+                                cards.push(
+                                    <div key="rooms" className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0 text-indigo-600">
+                                            <Home className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <div className="font-extrabold text-xl text-slate-900">{property.rooms}</div>
+                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Rooms</div>
+                                        </div>
                                     </div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Floor</div>
+                                );
+                            }
+
+                            if (hasArea) {
+                                cards.push(
+                                    <div key="area" className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0 text-emerald-600">
+                                            <Ruler className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <div className="font-extrabold text-xl text-slate-900">{property.area_usable} sqm</div>
+                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Usable Area</div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            if (hasFloor) {
+                                const hasFloorVal = typeof property.floor === 'number';
+                                const hasTotalFloorsVal = typeof property.total_floors === 'number';
+                                const floorValue = hasFloorVal
+                                    ? (hasTotalFloorsVal
+                                        ? `${property.floor}/${property.total_floors}`
+                                        : `${property.floor}`)
+                                    : `-/ ${property.total_floors}`;
+                                cards.push(
+                                    <div key="floor" className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center shrink-0 text-violet-600">
+                                            <Layers className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <div className="font-extrabold text-xl text-slate-900">{floorValue}</div>
+                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Floor</div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            if (cards.length === 0) return null;
+
+                            return (
+                                <div className={`grid gap-4 mb-10 ${
+                                    cards.length === 1 ? 'grid-cols-1 md:max-w-sm' :
+                                    cards.length === 2 ? 'grid-cols-2 max-w-2xl' :
+                                    'grid-cols-2 lg:grid-cols-3'
+                                }`}>
+                                    {cards}
                                 </div>
-                            </div>
-                        </div>
+                            );
+                        })()}
 
                         {/* 4. Key Details Grid */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
