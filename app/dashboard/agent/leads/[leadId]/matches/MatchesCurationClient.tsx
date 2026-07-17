@@ -5,7 +5,7 @@ import { LeadData } from '@/app/lib/types';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
 import { fetchPropertyByFriendlyId } from '@/app/lib/actions/properties';
-import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight, CheckCircle, Clock, List, Activity, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bookmark, Send, ThumbsUp, ThumbsDown, Calendar, AlertCircle, RefreshCw, Handshake, Share2, Eye, MapPin, XCircle, Zap, ArrowUpRight, CheckCircle, Clock, List, Activity, Plus, ChevronLeft, ChevronRight, Filter, ChevronDown, ChevronUp, Search, SlidersHorizontal } from 'lucide-react';
 import ShareMatchesModal from '@/app/components/dashboard/ShareMatchesModal';
 import LeadProfileDetails from '@/app/components/dashboard/LeadProfileDetails';
 import Link from 'next/link';
@@ -246,6 +246,65 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const [manualAddId, setManualAddId] = useState('');
     const [isSavingAll, setIsSavingAll] = useState(false);
     const [isAddingManual, setIsAddingManual] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterCity, setFilterCity] = useState('');
+    const [filterMinPrice, setFilterMinPrice] = useState('');
+    const [filterMaxPrice, setFilterMaxPrice] = useState('');
+    const [filterRooms, setFilterRooms] = useState('');
+    const [filterListingType, setFilterListingType] = useState('');
+
+    const filterProperty = (prop: any) => {
+        if (!prop) return false;
+        if (searchQuery.trim()) {
+            const q = searchQuery.trim().toLowerCase();
+            const friendlyId = (prop.friendly_id || prop.id || '').toLowerCase();
+            const title = (prop.title || '').toLowerCase();
+            const location = (prop.location || prop.city || prop.zone || prop.address || '').toLowerCase();
+            const description = (prop.description || '').toLowerCase();
+            if (!friendlyId.includes(q) && !title.includes(q) && !location.includes(q) && !description.includes(q)) {
+                return false;
+            }
+        }
+        if (filterCity.trim()) {
+            const city = (prop.city || prop.location || prop.zone || '').toLowerCase();
+            if (!city.includes(filterCity.trim().toLowerCase())) {
+                return false;
+            }
+        }
+        const price = Number(prop.price || prop.price_sale || prop.price_rent || 0);
+        if (filterMinPrice && price < Number(filterMinPrice)) return false;
+        if (filterMaxPrice && price > Number(filterMaxPrice)) return false;
+        if (filterRooms) {
+            const rooms = Number(prop.rooms || prop.number_of_rooms || 0);
+            if (filterRooms === '4+' && rooms < 4) return false;
+            if (filterRooms !== '4+' && rooms !== Number(filterRooms)) return false;
+        }
+        if (filterListingType) {
+            const type = (prop.transaction_type || prop.listing_type || prop.type || '').toLowerCase();
+            if (!type.includes(filterListingType.toLowerCase())) return false;
+        }
+        return true;
+    };
+
+    const activeFilterCount = [
+        searchQuery.trim() ? 1 : 0,
+        filterCity.trim() ? 1 : 0,
+        filterMinPrice ? 1 : 0,
+        filterMaxPrice ? 1 : 0,
+        filterRooms ? 1 : 0,
+        filterListingType ? 1 : 0
+    ].reduce((a, b) => a + b, 0);
+
+    const resetFilters = () => {
+        setSearchQuery('');
+        setFilterCity('');
+        setFilterMinPrice('');
+        setFilterMaxPrice('');
+        setFilterRooms('');
+        setFilterListingType('');
+    };
 
     useEffect(() => {
         if (activeTab === 'curate' && aiSuggestions.length === 0 && !isLoadingAI) {
@@ -273,21 +332,76 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
         if (!manualAddId.trim()) return;
         setIsAddingManual(true);
         try {
-            const res = await fetchPropertyByFriendlyId(manualAddId);
+            const cleanId = manualAddId.trim();
+            // Check if property is currently in AI suggestions
+            const existingSuggestion = aiSuggestions.find(s => 
+                (s.friendly_id && s.friendly_id.toLowerCase() === cleanId.toLowerCase()) || 
+                s.id === cleanId
+            );
+            if (existingSuggestion) {
+                await handleUpdateStatus(existingSuggestion.id, 'saved');
+                alert(`Property ${existingSuggestion.friendly_id || existingSuggestion.id} was found in AI suggestions and moved directly to the SAVED tab for the client!`);
+                setManualAddId('');
+                setIsAddingManual(false);
+                return;
+            }
+
+            // Check if property is currently inside matches tabs
+            const existingMatch = matches.find(m => 
+                (m.property?.friendly_id && m.property.friendly_id.toLowerCase() === cleanId.toLowerCase()) || 
+                (m.property_id || m.property?.id) === cleanId
+            );
+            if (existingMatch) {
+                if (existingMatch.status === 'saved' || existingMatch.status === 'sent') {
+                    alert(`Property ${existingMatch.property?.friendly_id || existingMatch.property_id || cleanId} is already in the SAVED tab!`);
+                    setActiveTab('saved');
+                    setManualAddId('');
+                    setIsAddingManual(false);
+                    return;
+                }
+                if (confirm(`Property ${existingMatch.property?.friendly_id || existingMatch.property_id || cleanId} is currently in "${existingMatch.status.toUpperCase()}". Move it directly to SAVED for the client?`)) {
+                    await handleUpdateStatus(existingMatch.property_id || existingMatch.property?.id, 'saved');
+                    setActiveTab('saved');
+                    setManualAddId('');
+                }
+                setIsAddingManual(false);
+                return;
+            }
+
+            // Otherwise fetch from server and check again
+            const res = await fetchPropertyByFriendlyId(cleanId);
             if (res.error || !res.data) {
                 alert(res.error || 'Property not found');
                 return;
             }
             const prop = res.data;
-            const existingIds = matches.map(m => m.property_id || m.property?.id);
-            if (existingIds.includes(prop.id)) {
-                alert('Property is already in one of the matches tabs.');
+            const existingMatchAfterFetch = matches.find(m => (m.property_id || m.property?.id) === prop.id);
+            if (existingMatchAfterFetch) {
+                if (existingMatchAfterFetch.status === 'saved' || existingMatchAfterFetch.status === 'sent') {
+                    alert(`Property ${prop.friendly_id || prop.id} is already in the SAVED tab!`);
+                    setActiveTab('saved');
+                    setManualAddId('');
+                    setIsAddingManual(false);
+                    return;
+                }
+                if (confirm(`Property ${prop.friendly_id || prop.id} is currently inside "${existingMatchAfterFetch.status.toUpperCase()}". Move it directly to SAVED for the client?`)) {
+                    await handleUpdateStatus(prop.id, 'saved');
+                    setActiveTab('saved');
+                    setManualAddId('');
+                }
+                setIsAddingManual(false);
                 return;
             }
-            if (aiSuggestions.find(s => s.id === prop.id)) {
-                alert('Property is already in AI suggestions.');
+            const existingSuggestionAfterFetch = aiSuggestions.find(s => s.id === prop.id);
+            if (existingSuggestionAfterFetch) {
+                await handleUpdateStatus(prop.id, 'saved');
+                alert(`Property ${prop.friendly_id || prop.id} was found in AI suggestions and moved directly to the SAVED tab for the client!`);
+                setManualAddId('');
+                setIsAddingManual(false);
                 return;
             }
+
+            // Completely new property
             setAiSuggestions(prev => [prop, ...prev]);
             setManualAddId('');
         } catch (err) {
@@ -407,38 +521,58 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
     const visitedMatches = matches.filter(m => m.status === 'visit_scheduled');
     const negotiationMatches = matches.filter(m => m.status === 'negotiation' || m.status === 'sold');
 
+    const filteredAiSuggestions = aiSuggestions.filter(prop => filterProperty(prop));
+    const filteredToVerifyMatches = toVerifyMatches.filter(m => filterProperty(m.property));
+    const filteredSavedMatches = savedMatches.filter(m => filterProperty(m.property));
+    const filteredInterestedMatches = interestedMatches.filter(m => filterProperty(m.property));
+    const filteredVisitedMatches = visitedMatches.filter(m => filterProperty(m.property));
+    const filteredNegotiationMatches = negotiationMatches.filter(m => filterProperty(m.property));
+    const filteredNotInterestedMatches = notInterestedMatches.filter(m => filterProperty(m.property));
+
     return (
         <div className="flex flex-col gap-6">
-            {/* Lead Profile Summary Card */}
+            {/* Lead Profile Summary Card - Collapsible */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-2">
-                <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex justify-between items-center">
+                <div 
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="bg-gradient-to-r from-slate-900 to-slate-800 py-4 px-6 text-white flex justify-between items-center cursor-pointer select-none transition-colors hover:from-slate-850 hover:to-slate-750"
+                >
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl font-black border border-white/20">
+                        <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-xl font-black border border-white/20 shrink-0">
                             {(lead.name || '?').charAt(0).toUpperCase()}
                         </div>
                         <div>
-                            <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
+                            <div className="flex items-center gap-2 text-white font-bold text-base mb-0.5">
+                                <span>{lead.name || 'Lead Profile & Requirements'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-300 text-xs font-normal">
                                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {lead.updated_at ? new Date(lead.updated_at).toLocaleDateString() : 'N/A'}</span>
                                 <span className="w-1 h-1 rounded-full bg-slate-500"></span>
                                 <span className="flex items-center gap-1"><List className="w-3 h-3" /> ID: {lead.id ? lead.id.slice(0, 8) : 'N/A'}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         <div className="text-right">
-                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Lead Score</div>
-                            <div className="flex items-center gap-2">
-                                <div className={`text-2xl font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
+                            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Lead Score</div>
+                            <div className="flex items-center justify-end gap-1.5">
+                                <div className={`text-xl font-black ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`}>
                                     {lead.score || 0}
                                 </div>
-                                <Activity className={`w-6 h-6 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
+                                <Activity className={`w-5 h-5 ${(lead.score || 0) >= 80 ? 'text-green-400' : (lead.score || 0) >= 50 ? 'text-orange-400' : 'text-slate-400'}`} />
                             </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-300 bg-white/10 px-3 py-1.5 rounded-lg border border-white/15 shrink-0">
+                            <span>{isProfileOpen ? 'Hide Profile' : 'View Profile'}</span>
+                            {isProfileOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </div>
                     </div>
                 </div>
-                <div className="p-8">
-                    <LeadProfileDetails lead={lead} />
-                </div>
+                {isProfileOpen && (
+                    <div className="p-6 border-t border-slate-100 bg-slate-50/40">
+                        <LeadProfileDetails lead={lead} />
+                    </div>
+                )}
             </div>
 
             {/* Tabs */}
@@ -473,6 +607,117 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                 >
                     <Share2 className="w-4 h-4" /> Manage & Share
                 </button>
+            </div>
+
+            {/* Search & Filters Toggle + Bar */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
+                                isFiltersOpen || activeFilterCount > 0
+                                    ? 'bg-orange-600 text-white shadow-sm'
+                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                            }`}
+                        >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            <span>Filters & Search</span>
+                            {activeFilterCount > 0 && (
+                                <span className="px-1.5 py-0.5 rounded bg-white text-orange-600 font-black text-[11px]">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                            {isFiltersOpen ? <ChevronUp className="w-3.5 h-3.5 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 ml-1" />}
+                        </button>
+                        {activeFilterCount > 0 && (
+                            <button
+                                onClick={resetFilters}
+                                className="text-xs text-rose-600 hover:text-rose-700 font-semibold underline transition-colors"
+                            >
+                                Clear all filters
+                            </button>
+                        )}
+                    </div>
+                    {activeFilterCount > 0 && (
+                        <div className="text-xs font-medium text-slate-500">
+                            Filtering active across all curation tabs
+                        </div>
+                    )}
+                </div>
+
+                {isFiltersOpen && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+                        <div className="lg:col-span-2">
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Search ID, Title, Keyword</label>
+                            <div className="relative">
+                                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="e.g. P7694, Mall, Aradului..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 text-slate-800"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">City / Zone</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Timisoara"
+                                value={filterCity}
+                                onChange={(e) => setFilterCity(e.target.value)}
+                                className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 text-slate-800"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Min Price (€)</label>
+                            <input
+                                type="number"
+                                placeholder="Min"
+                                value={filterMinPrice}
+                                onChange={(e) => setFilterMinPrice(e.target.value)}
+                                className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 text-slate-800"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Max Price (€)</label>
+                            <input
+                                type="number"
+                                placeholder="Max"
+                                value={filterMaxPrice}
+                                onChange={(e) => setFilterMaxPrice(e.target.value)}
+                                className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 text-slate-800"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">Rooms & Type</label>
+                            <div className="flex gap-1.5">
+                                <select
+                                    value={filterRooms}
+                                    onChange={(e) => setFilterRooms(e.target.value)}
+                                    className="w-1/2 px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 text-slate-800"
+                                >
+                                    <option value="">Rooms</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4+">4+</option>
+                                </select>
+                                <select
+                                    value={filterListingType}
+                                    onChange={(e) => setFilterListingType(e.target.value)}
+                                    className="w-1/2 px-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 text-slate-800"
+                                >
+                                    <option value="">Type</option>
+                                    <option value="vanzare">Sale</option>
+                                    <option value="inchiriere">Rent</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="mt-4">
@@ -517,13 +762,15 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         </div>
                         {isLoadingAI ? (
                             <div className="py-12 flex justify-center"><div className="w-8 h-8 border-4 border-orange-600/20 border-t-orange-600 rounded-full animate-spin"></div></div>
-                        ) : aiSuggestions.length > 0 ? (
+                        ) : filteredAiSuggestions.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {aiSuggestions.map(prop => renderPropertyCard(prop))}
+                                {filteredAiSuggestions.map(prop => renderPropertyCard(prop))}
                             </div>
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No new AI suggestions to curate at the moment.</p>
+                                <p className="text-slate-500 font-bold">
+                                    {activeFilterCount > 0 ? 'No AI suggestions match your active filters.' : 'No new AI suggestions to curate at the moment.'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -541,13 +788,15 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                                 </p>
                             </div>
                         </div>
-                        {toVerifyMatches.length > 0 ? (
+                        {filteredToVerifyMatches.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {toVerifyMatches.map(m => renderPropertyCard(m.property, m.status))}
+                                {filteredToVerifyMatches.map(m => renderPropertyCard(m.property, m.status))}
                             </div>
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No properties marked &quot;To Verify&quot;.</p>
+                                <p className="text-slate-500 font-bold">
+                                    {activeFilterCount > 0 ? 'No "To Verify" properties match your active filters.' : 'No properties marked "To Verify".'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -558,13 +807,15 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                             <Bookmark className="w-5 h-5 text-orange-600" /> Saved Properties
                         </h2>
-                        {savedMatches.length > 0 ? (
+                        {filteredSavedMatches.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {savedMatches.map(m => renderPropertyCard(m.property, m.status))}
+                                {filteredSavedMatches.map(m => renderPropertyCard(m.property, m.status))}
                             </div>
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No saved properties. Curate some AI suggestions first!</p>
+                                <p className="text-slate-500 font-bold">
+                                    {activeFilterCount > 0 ? 'No saved properties match your active filters.' : 'No saved properties. Curate some AI suggestions first!'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -577,13 +828,15 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                             <ThumbsUp className="w-5 h-5 text-green-600" /> Interested
                         </h2>
-                        {interestedMatches.length > 0 ? (
+                        {filteredInterestedMatches.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {interestedMatches.map(m => renderPropertyCard(m.property, m.status))}
+                                {filteredInterestedMatches.map(m => renderPropertyCard(m.property, m.status))}
                             </div>
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No interested properties yet.</p>
+                                <p className="text-slate-500 font-bold">
+                                    {activeFilterCount > 0 ? 'No interested properties match your active filters.' : 'No interested properties yet.'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -596,13 +849,15 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-purple-600" /> Visits
                         </h2>
-                        {visitedMatches.length > 0 ? (
+                        {filteredVisitedMatches.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {visitedMatches.map(m => renderPropertyCard(m.property, m.status))}
+                                {filteredVisitedMatches.map(m => renderPropertyCard(m.property, m.status))}
                             </div>
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No visits scheduled yet.</p>
+                                <p className="text-slate-500 font-bold">
+                                    {activeFilterCount > 0 ? 'No scheduled visits match your active filters.' : 'No visits scheduled yet.'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -613,13 +868,15 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                             <Handshake className="w-5 h-5 text-amber-600" /> Negotiation
                         </h2>
-                        {negotiationMatches.length > 0 ? (
+                        {filteredNegotiationMatches.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {negotiationMatches.map(m => renderPropertyCard(m.property, m.status))}
+                                {filteredNegotiationMatches.map(m => renderPropertyCard(m.property, m.status))}
                             </div>
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No properties in negotiation yet.</p>
+                                <p className="text-slate-500 font-bold">
+                                    {activeFilterCount > 0 ? 'No properties in negotiation match your active filters.' : 'No properties in negotiation yet.'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -630,13 +887,15 @@ export default function MatchesCurationClient({ lead, initialMatches }: Props) {
                         <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                             <ThumbsDown className="w-5 h-5 text-slate-600" /> Skipped
                         </h2>
-                        {notInterestedMatches.length > 0 ? (
+                        {filteredNotInterestedMatches.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {notInterestedMatches.map(m => renderPropertyCard(m.property, m.status))}
+                                {filteredNotInterestedMatches.map(m => renderPropertyCard(m.property, m.status))}
                             </div>
                         ) : (
                             <div className="p-12 text-center bg-white rounded-xl border border-dashed border-slate-300">
-                                <p className="text-slate-500 font-bold">No skipped properties yet.</p>
+                                <p className="text-slate-500 font-bold">
+                                    {activeFilterCount > 0 ? 'No skipped properties match your active filters.' : 'No skipped properties yet.'}
+                                </p>
                             </div>
                         )}
                     </div>
