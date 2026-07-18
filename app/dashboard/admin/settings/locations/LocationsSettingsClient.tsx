@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Plus, Trash2, Search, MapPin, Map, Loader2, Sparkles, Edit2, X, Save, Globe, Check, Info, HelpCircle } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Plus, Trash2, Search, MapPin, Map, Loader2, Sparkles, Edit2, X, Save, Globe, Check, Info, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { addSystemLocation, deleteSystemLocation, updateSystemLocation, batchAddSystemLocations, importRomaniaLocations } from '@/app/lib/actions/admin-settings';
 import { toast } from 'react-hot-toast';
 import LocationMap from '@/app/components/LocationMap';
@@ -466,6 +466,33 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
     const [editLng, setEditLng] = useState<number>(DEFAULT_LNG);
     const [isUpdating, setIsUpdating] = useState(false);
 
+    const formattedCountiesForSelect = useMemo(() => {
+        return [...counties].sort((a, b) => a.name.localeCompare(b.name, 'ro'));
+    }, [counties]);
+
+    const formattedCitiesForSelect = useMemo(() => {
+        const countyMap = new globalThis.Map<string, string>(counties.map(c => [c.id, c.name]));
+        return [...cities]
+            .map(c => {
+                const countyName = countyMap.get(c.parent_id || '');
+                return {
+                    id: c.id,
+                    name: c.name,
+                    displayName: countyName ? `${c.name} (${countyName})` : c.name,
+                    sortName: `${c.name.toLowerCase()}_${countyName?.toLowerCase() || ''}`
+                };
+            })
+            .sort((a, b) => a.sortName.localeCompare(b.sortName, 'ro'));
+    }, [cities, counties]);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
+
+    // Reset page to 1 when filter inputs, active tab, or items per page change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab, searchQuery, newLocationParentId, itemsPerPage]);
+
     // Get current list based on tab
     const currentList = 
         activeTab === 'country' ? countries :
@@ -483,8 +510,76 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
         return true;
     });
 
-    const RENDER_LIMIT = 100;
-    const displayedList = filteredList.slice(0, RENDER_LIMIT);
+    const totalItems = filteredList.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    const validCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+    const startIndex = (validCurrentPage - 1) * itemsPerPage;
+    const displayedList = filteredList.slice(startIndex, startIndex + itemsPerPage);
+
+    const renderPaginationControls = () => {
+        if (totalPages <= 1 && totalItems <= itemsPerPage) return null;
+        return (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 text-xs font-semibold text-slate-300">
+                <div className="flex items-center gap-3">
+                    <span>
+                        Showing <strong>{startIndex + 1}</strong> - <strong>{Math.min(startIndex + itemsPerPage, totalItems)}</strong> of <strong>{totalItems}</strong> entries
+                    </span>
+                    <div className="flex items-center gap-1.5 border-l border-slate-800 pl-3">
+                        <span className="text-slate-500 text-[11px]">Per page:</span>
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                            className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-white text-xs outline-none focus:border-orange-500 cursor-pointer font-bold"
+                        >
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                            <option value={250}>250</option>
+                            <option value={500}>500</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                    <button
+                        type="button"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={validCurrentPage === 1}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold"
+                    >
+                        First
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={validCurrentPage === 1}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 font-bold"
+                    >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                        Prev
+                    </button>
+                    <span className="px-3.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-orange-400 font-black tracking-wide">
+                        Page {validCurrentPage} of {totalPages}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={validCurrentPage === totalPages}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 font-bold"
+                    >
+                        Next
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={validCurrentPage === totalPages}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold"
+                    >
+                        Last
+                    </button>
+                </div>
+            </div>
+        );
+    };
 
     const handleAddLocation = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -837,7 +932,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                                     className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer w-full"
                                 >
                                     <option value="">Select Parent County... *</option>
-                                    {counties.map(c => (
+                                    {formattedCountiesForSelect.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
@@ -853,8 +948,8 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                                     className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer w-full"
                                 >
                                     <option value="">Select Parent City... *</option>
-                                    {cities.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    {formattedCitiesForSelect.map(c => (
+                                        <option key={c.id} value={c.id}>{c.displayName}</option>
                                     ))}
                                 </select>
                             </div>
@@ -917,20 +1012,13 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                                 );
                             })()
                         )}
-                        {!newLocationParentId && filteredList.length > RENDER_LIMIT && (
-                            <div className="bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-xl px-4 py-3 text-xs font-semibold flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 shrink-0" />
-                                <span>
-                                    Showing first <strong>{RENDER_LIMIT}</strong> of <strong>{filteredList.length}</strong> locations. Refine your search query or select a parent above to filter.
-                                </span>
-                            </div>
-                        )}
+                        {renderPaginationControls()}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                             {displayedList.map((item) => {
                                 const parentName = !item.parent_id ? null :
                                     activeTab === 'county' ? countries.find(c => c.id === item.parent_id)?.name :
                                     activeTab === 'city' ? counties.find(c => c.id === item.parent_id)?.name :
-                                    activeTab === 'area' ? cities.find(c => c.id === item.parent_id)?.name :
+                                    activeTab === 'area' ? formattedCitiesForSelect.find(c => c.id === item.parent_id)?.displayName :
                                     null;
 
                                 return (
@@ -958,20 +1046,21 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                                             <button
                                                 type="button"
-                                                className="text-slate-500 hover:text-orange-400 p-1 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                                title="Edit coordinates & details"
+                                                onClick={() => openEditModal(item)}
+                                                className="p-2 text-slate-500 hover:text-white rounded-lg transition-colors"
+                                                title="Edit / Set Coordinates"
                                             >
-                                                <Edit2 className="w-3.5 h-3.5" />
+                                                <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button
                                                 type="button"
-                                                disabled={deletingId === item.id}
                                                 onClick={(e) => handleDeleteLocation(item.id, item.name, e)}
-                                                className="text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 p-1.5 rounded-lg transition-all active:scale-90 opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
-                                                title={`Delete ${item.name}`}
+                                                disabled={deletingId === item.id}
+                                                className="p-2 text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-50"
+                                                title="Delete"
                                             >
                                                 {deletingId === item.id ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -984,6 +1073,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                                 );
                             })}
                         </div>
+                        {renderPaginationControls()}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/20 text-center">
@@ -1181,12 +1271,12 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                                     >
                                         <option value="">Select parent...</option>
                                         {scanType === 'city' ? (
-                                            counties.map(c => (
+                                            formattedCountiesForSelect.map(c => (
                                                 <option key={c.id} value={c.id}>{c.name}</option>
                                             ))
                                         ) : (
-                                            cities.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            formattedCitiesForSelect.map(c => (
+                                                <option key={c.id} value={c.id}>{c.displayName}</option>
                                             ))
                                         )}
                                     </select>
@@ -1344,11 +1434,11 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                                                 {activeTab === 'county' && countries.map(c => (
                                                     <option key={c.id} value={c.id}>{c.name}</option>
                                                 ))}
-                                                {activeTab === 'city' && counties.map(c => (
+                                                {activeTab === 'city' && formattedCountiesForSelect.map(c => (
                                                     <option key={c.id} value={c.id}>{c.name}</option>
                                                 ))}
-                                                {activeTab === 'area' && cities.map(c => (
-                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                {activeTab === 'area' && formattedCitiesForSelect.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.displayName}</option>
                                                 ))}
                                             </select>
                                         </div>
