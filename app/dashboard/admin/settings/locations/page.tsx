@@ -2,6 +2,7 @@ import { Globe } from 'lucide-react';
 import LocationsSettingsClient from './LocationsSettingsClient';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0; // Refresh data on request
 
 export default async function LocationsSettingsPage() {
