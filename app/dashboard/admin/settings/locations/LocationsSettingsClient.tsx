@@ -190,7 +190,7 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                         }}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
                             activeTab === 'city'
-                                ? 'bg-orange-50 text-white shadow-md'
+                                ? 'bg-orange-500 text-white shadow-md'
                                 : 'text-slate-400 hover:text-white'
                         }`}
                     >
