@@ -721,3 +721,51 @@ export async function deleteSystemLocation(id: string) {
     }
 }
 
+export async function batchAddSystemLocations(
+    items: {
+        type: 'city' | 'area';
+        name: string;
+        parent_id?: string | null;
+        latitude?: number | null;
+        longitude?: number | null;
+    }[]
+) {
+    try {
+        const client = await createServerClient();
+        const { data: { user } } = await client.auth.getUser();
+        if (!user) return { success: false, error: 'Unauthorized' };
+
+        // Verify if super_admin
+        const { data: profile } = await client
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role !== 'super_admin') {
+            return { success: false, error: 'Access denied: Super Admin only' };
+        }
+
+        const insertPayload = items.map(item => ({
+            type: item.type,
+            name: item.name.trim(),
+            parent_id: item.parent_id || null,
+            latitude: item.latitude || null,
+            longitude: item.longitude || null
+        }));
+
+        const { data, error } = await supabase
+            .from('system_locations')
+            .insert(insertPayload)
+            .select();
+
+        if (error) throw error;
+
+        revalidatePath('/dashboard/admin/settings/locations');
+        return { success: true, data };
+    } catch (err: any) {
+        console.error("Failed to batch add system locations:", err);
+        return { success: false, error: err.message || 'Failed to save locations' };
+    }
+}
+
