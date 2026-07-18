@@ -473,10 +473,15 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
         activeTab === 'city' ? cities :
         areas;
 
-    // Filter current list based on search query
-    const filteredList = currentList.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
-    );
+    // Filter current list based on search query AND selected parent inside Add Custom bar
+    const filteredList = currentList.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+        if (!matchesSearch) return false;
+        if (activeTab !== 'country' && activeTab !== 'auto-import' && newLocationParentId) {
+            return item.parent_id === newLocationParentId;
+        }
+        return true;
+    });
 
     const RENDER_LIMIT = 100;
     const displayedList = filteredList.slice(0, RENDER_LIMIT);
@@ -710,6 +715,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         onClick={() => {
                             setActiveTab('country');
                             setSearchQuery('');
+                            setNewLocationParentId('');
                         }}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
                             activeTab === 'country'
@@ -724,6 +730,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         onClick={() => {
                             setActiveTab('county');
                             setSearchQuery('');
+                            setNewLocationParentId('');
                         }}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
                             activeTab === 'county'
@@ -738,6 +745,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         onClick={() => {
                             setActiveTab('city');
                             setSearchQuery('');
+                            setNewLocationParentId('');
                         }}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
                             activeTab === 'city'
@@ -752,6 +760,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         onClick={() => {
                             setActiveTab('area');
                             setSearchQuery('');
+                            setNewLocationParentId('');
                         }}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
                             activeTab === 'area'
@@ -766,6 +775,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         onClick={() => {
                             setActiveTab('auto-import');
                             setSearchQuery('');
+                            setNewLocationParentId('');
                         }}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
                             activeTab === 'auto-import'
@@ -885,11 +895,33 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
             {activeTab !== 'auto-import' ? (
                 filteredList.length > 0 ? (
                     <div className="flex flex-col gap-3.5">
-                        {filteredList.length > RENDER_LIMIT && (
+                        {newLocationParentId && (
+                            (() => {
+                                const parentObj = [...countries, ...counties, ...cities].find(x => x.id === newLocationParentId);
+                                return (
+                                    <div className="bg-violet-500/10 border border-violet-500/20 text-violet-300 rounded-xl px-4 py-3 text-xs font-semibold flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 shrink-0 text-violet-400" />
+                                            <span>
+                                                Showing <strong>{filteredList.length}</strong> existing {activeTab === 'city' ? 'cities/communes' : activeTab === 'area' ? 'areas/neighbourhoods' : 'entries'} linked to <strong>{parentObj?.name || 'selected parent'}</strong>. Click any card to edit, delete, or inspect existing entries.
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewLocationParentId('')}
+                                            className="text-[11px] bg-violet-500/20 hover:bg-violet-500/30 text-violet-200 px-3 py-1 rounded-lg transition-all shrink-0 font-bold"
+                                        >
+                                            Show All
+                                        </button>
+                                    </div>
+                                );
+                            })()
+                        )}
+                        {!newLocationParentId && filteredList.length > RENDER_LIMIT && (
                             <div className="bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-xl px-4 py-3 text-xs font-semibold flex items-center gap-2">
                                 <Sparkles className="w-4 h-4 shrink-0" />
                                 <span>
-                                    Showing first <strong>{RENDER_LIMIT}</strong> of <strong>{filteredList.length}</strong> locations. Refine your search query to see other locations.
+                                    Showing first <strong>{RENDER_LIMIT}</strong> of <strong>{filteredList.length}</strong> locations. Refine your search query or select a parent above to filter.
                                 </span>
                             </div>
                         )}

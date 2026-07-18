@@ -55,7 +55,6 @@ export const TIMISOARA_AREAS = [
     'Piața Maria',
     'Piața Unirii',
     'Sinaia',
-    'Torontal',
     'Cetate',
     'Eso',
     'Planetei',
