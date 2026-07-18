@@ -85,11 +85,13 @@ export function formatCityList(cities: SystemCity[], counties: SystemCounty[]): 
         nameCounts.set(nameLower, (nameCounts.get(nameLower) || 0) + 1);
     });
 
-    return cities.map(c => {
+    const formatted = cities.map(c => {
         const countyName = countyMap.get(c.parent_id || '');
         const hasDuplicate = (nameCounts.get(c.name.toLowerCase()) || 0) > 1;
         return countyName && hasDuplicate ? `${c.name} (${countyName})` : c.name;
     });
+
+    return Array.from(new Set(formatted));
 }
 
 /**
