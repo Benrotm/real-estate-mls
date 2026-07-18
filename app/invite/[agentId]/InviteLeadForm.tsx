@@ -5,7 +5,7 @@ import { createLeadPublic } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 import { ROMANIAN_CITIES } from '@/app/lib/constants/locations';
-import SearchableSelect from '@/app/components/SearchableSelect';
+import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 import { useEffect } from 'react';
 import { 
@@ -209,11 +209,11 @@ export default function InviteLeadForm({ agentId }: Props) {
                         <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                             City
                         </label>
-                        <SearchableSelect
-                            value={city}
+                        <MultiSearchableSelect
+                            values={city ? city.split(',').map(c => c.trim()).filter(Boolean) : []}
                             options={citiesList}
-                            onChange={(val) => setCity(val)}
-                            placeholder="Type or select city..."
+                            onChange={(vals) => setCity(vals.join(', '))}
+                            placeholder="Type or select cities..."
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                         />
                     </div>

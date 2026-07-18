@@ -116,7 +116,7 @@ export default async function AdminPropertiesPage({ searchParams }: { searchPara
                                             </div>
                                             <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
                                                 <MapPin className="w-3 h-3" />
-                                                {property.location_city || 'N/A'}, {property.location_county || 'N/A'}
+                                                {property.location_city || 'N/A'}{property.location_area ? ` - ${property.location_area}` : ''}, {property.location_county || 'N/A'}
                                             </div>
                                         </div>
                                     </div>

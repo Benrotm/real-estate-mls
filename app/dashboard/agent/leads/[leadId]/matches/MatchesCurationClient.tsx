@@ -55,6 +55,13 @@ function MatchPropertyCard({ property, status, updatingIds, getStatusColor, getS
             <div className="h-48 w-full relative bg-slate-100 overflow-hidden shrink-0 group">
                 <img src={images[imageIndex] || '/placeholder-property.jpg'} alt={property.title} className="absolute inset-0 w-full h-full object-cover transition-opacity duration-200" />
                 
+                {property.match_score !== undefined && (
+                    <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-900/80 text-white border border-slate-700/50 shadow-sm backdrop-blur-sm z-10 flex items-center gap-1">
+                        <Zap className="w-3 h-3 text-orange-500 fill-current" />
+                        <span>Match: {property.match_score}</span>
+                    </div>
+                )}
+
                 {status && (
                     <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 border shadow-sm ${getStatusColor(status)} backdrop-blur-sm bg-opacity-90 z-10`}>
                         {getStatusIcon(status)}
@@ -87,8 +94,15 @@ function MatchPropertyCard({ property, status, updatingIds, getStatusColor, getS
 
             <div className="p-4 flex-1 flex flex-col">
                 <h4 className="font-black text-sm text-slate-900 line-clamp-2 mb-2 leading-tight">{property.title}</h4>
-                <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-3">
-                    <MapPin className="w-3 h-3" /> {property.location_city} {property.location_area && `• ${property.location_area}`}
+                <div className="flex items-center justify-between gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-3">
+                    <span className="flex items-center gap-1 truncate">
+                        <MapPin className="w-3 h-3 text-slate-400" /> {property.location_city} {property.location_area && `• ${property.location_area}`}
+                    </span>
+                    {property.friendly_id && (
+                        <span className="bg-slate-100 text-slate-700 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200 font-mono shrink-0">
+                            {property.friendly_id}
+                        </span>
+                    )}
                 </div>
 
                 {/* Property Specs (Rooms, Usable Area, Floor) */}
@@ -610,6 +624,15 @@ export default function MatchesCurationClient({ lead, initialMatches, hideProfil
                 >
                     <Share2 className="w-4 h-4" /> Manage & Share
                 </button>
+            </div>
+
+            {/* Informational Matching Notice */}
+            <div className="bg-orange-50/60 border border-orange-200/80 rounded-xl p-4 flex gap-3 text-xs text-orange-950 font-medium leading-relaxed shadow-sm">
+                <AlertCircle className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
+                <div>
+                    <span className="font-extrabold text-orange-900 block mb-0.5">Notă privind potrivirea locațiilor:</span>
+                    Proprietățile care nu au specificată o zonă/cartier (de exemplu, anunțurile preluate automat care conțin doar orașul) sunt incluse în mod intenționat în rezultate pentru a vă asigura că nu ratați nicio oportunitate. Proprietarii pot omite specificarea cartierului în câmpurile standard, dar pot menționa detaliile direct în titlu sau descriere.
+                </div>
             </div>
 
             {/* Search & Filters Toggle + Bar */}

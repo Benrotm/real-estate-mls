@@ -17,9 +17,9 @@ import { createLead, updateLead } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 import { ROMANIAN_CITIES, TIMISOARA_AREAS } from '@/app/lib/constants/locations';
-import SearchableSelect from '@/app/components/SearchableSelect';
+import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const FEATURE_CATEGORIES = {
     'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
@@ -132,19 +132,44 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
         ...initialData
     });
 
+    const [citiesListFull, setCitiesListFull] = useState<{ id: string; name: string }[]>([]);
+    const [allRawAreas, setAllRawAreas] = useState<{ name: string; parent_id: string | null }[]>([]);
     const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
-    const [areasList, setAreasList] = useState<string[]>(TIMISOARA_AREAS);
 
     useEffect(() => {
         getSystemLocations().then(res => {
             if (res.cities?.length) {
+                setCitiesListFull(res.cities);
                 setCitiesList(res.cities.map(c => c.name));
             }
             if (res.areas?.length) {
-                setAreasList(res.areas.map(a => a.name));
+                setAllRawAreas(res.areas);
             }
         });
     }, []);
+
+    const filteredAreasList = useMemo(() => {
+        const selectedCityNames = formData.preference_location_city
+            ? formData.preference_location_city.split(',').map(c => c.trim().toLowerCase()).filter(Boolean)
+            : [];
+
+        if (selectedCityNames.length === 0) {
+            return allRawAreas.length > 0 ? allRawAreas.map(a => a.name) : TIMISOARA_AREAS;
+        }
+
+        // Find IDs of selected cities
+        const selectedCityIds = citiesListFull
+            .filter(c => selectedCityNames.includes(c.name.toLowerCase()))
+            .map(c => c.id);
+
+        const matchedAreas = allRawAreas.filter(a => a.parent_id && selectedCityIds.includes(a.parent_id));
+        
+        if (matchedAreas.length === 0) {
+            return allRawAreas.length > 0 ? allRawAreas.map(a => a.name) : TIMISOARA_AREAS;
+        }
+
+        return matchedAreas.map(a => a.name);
+    }, [formData.preference_location_city, allRawAreas, citiesListFull]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -375,23 +400,21 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                                 <div>
                                     <label className={labelClass}>City</label>
-                                    <SearchableSelect
-                                        name="preference_location_city"
-                                        value={formData.preference_location_city || ''}
+                                    <MultiSearchableSelect
+                                        values={formData.preference_location_city ? formData.preference_location_city.split(',').map(c => c.trim()).filter(Boolean) : []}
                                         options={citiesList}
-                                        onChange={(val) => setFormData(prev => ({ ...prev, preference_location_city: val }))}
-                                        placeholder="Type or select city..."
+                                        onChange={(vals) => setFormData(prev => ({ ...prev, preference_location_city: vals.join(', ') }))}
+                                        placeholder="Type or select cities..."
                                         className={inputClass}
                                     />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Area / Neighbourhood</label>
-                                    <SearchableSelect
-                                        name="preference_location_area"
-                                        value={formData.preference_location_area || ''}
-                                        options={areasList}
-                                        onChange={(val) => setFormData(prev => ({ ...prev, preference_location_area: val }))}
-                                        placeholder="Type or select area..."
+                                    <MultiSearchableSelect
+                                        values={formData.preference_location_area ? formData.preference_location_area.split(',').map(a => a.trim()).filter(Boolean) : []}
+                                        options={filteredAreasList}
+                                        onChange={(vals) => setFormData(prev => ({ ...prev, preference_location_area: vals.join(', ') }))}
+                                        placeholder="Type or select areas..."
                                         className={inputClass}
                                     />
                                 </div>

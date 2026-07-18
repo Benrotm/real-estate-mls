@@ -87,7 +87,7 @@ export default function PropertyCard({ property, showEditButton }: PropertyCardP
 
                     <div className="flex items-center text-slate-500 mb-4 text-sm">
                         <MapPin className="w-4 h-4 mr-1 text-slate-400" />
-                        {property.location_city}, {property.location_county}
+                        {property.location_city}{property.location_area ? ` - ${property.location_area}` : ''}, {property.location_county}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 py-3 border-t border-slate-100">

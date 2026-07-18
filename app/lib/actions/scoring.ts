@@ -341,9 +341,11 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
         }
     }
 
-    // 3. City Match (Optional)
+    // 3. City Match (Optional - allows multiple)
     if (isActive('match_city') && lead.preference_location_city) {
-        if (lead.preference_location_city.toLowerCase() === property.location_city?.toLowerCase()) {
+        const leadCities = lead.preference_location_city.toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
+        const propCity = property.location_city?.toLowerCase().trim();
+        if (propCity && leadCities.includes(propCity)) {
             score += getWeight('match_city');
         }
     }
@@ -380,6 +382,12 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
 
         if (hasPolygonFilter) {
             // Polygon is STRICT
+            // BUT if the property has NO area specified (scraped listing with empty area),
+            // we do NOT disqualify it. We bypass exclusion so they don't miss opportunities!
+            const hasArea = !!property.location_area?.trim();
+            if (!hasArea) {
+                polygonMatched = true;
+            }
             if (!polygonMatched) return 0;
             score += getWeight('match_area');
         } else if (hasTextAreaFilter) {

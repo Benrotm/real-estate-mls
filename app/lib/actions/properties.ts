@@ -28,6 +28,47 @@ export async function fetchPropertyByFriendlyId(idOrFriendlyId: string) {
     return { data };
 }
 
+async function getFallbackCoordinates(city?: string, area?: string) {
+    if (!city && !area) return null;
+    
+    const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+
+    if (area) {
+        const { data: areaLoc } = await supabase
+            .from('system_locations')
+            .select('latitude, longitude')
+            .eq('type', 'area')
+            .ilike('name', area.trim())
+            .not('latitude', 'is', null)
+            .limit(1)
+            .maybeSingle();
+
+        if (areaLoc?.latitude && areaLoc?.longitude) {
+            return { lat: Number(areaLoc.latitude), lng: Number(areaLoc.longitude) };
+        }
+    }
+
+    if (city) {
+        const { data: cityLoc } = await supabase
+            .from('system_locations')
+            .select('latitude, longitude')
+            .eq('type', 'city')
+            .ilike('name', city.trim())
+            .not('latitude', 'is', null)
+            .limit(1)
+            .maybeSingle();
+
+        if (cityLoc?.latitude && cityLoc?.longitude) {
+            return { lat: Number(cityLoc.latitude), lng: Number(cityLoc.longitude) };
+        }
+    }
+
+    return null;
+}
+
 export async function createProperty(formData: FormData) {
     const supabase = await createClient();
 
@@ -143,6 +184,15 @@ export async function createProperty(formData: FormData) {
 
             status: (formData.get('status') as 'active' | 'draft') || 'active'
         };
+
+        // Fallback coordinates from system locations if not set
+        if (!propertyData.latitude || !propertyData.longitude) {
+            const coords = await getFallbackCoordinates(propertyData.location_city, propertyData.location_area);
+            if (coords) {
+                propertyData.latitude = coords.lat;
+                propertyData.longitude = coords.lng;
+            }
+        }
 
         // Check portal exports credits and deduct them
         let portalCostSum = 0;
@@ -873,6 +923,15 @@ export async function updateProperty(id: string, formData: FormData) {
             status: (formData.get('status') as 'active' | 'draft') || property?.status || 'active'
         };
 
+        // Fallback coordinates from system locations if not set
+        if (!propertyData.latitude || !propertyData.longitude) {
+            const coords = await getFallbackCoordinates(propertyData.location_city, propertyData.location_area);
+            if (coords) {
+                propertyData.latitude = coords.lat;
+                propertyData.longitude = coords.lng;
+            }
+        }
+
         // Check if listing is transitioning to active to update published_at
         const isTransitioningToActive = propertyData.status === 'active' && property?.status !== 'active';
         const updatePayload: Record<string, any> = {
@@ -1192,6 +1251,12 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             if (coords.lat && coords.lon) {
                 propertyData.latitude = coords.lat;
                 propertyData.longitude = coords.lon;
+            } else {
+                const fallback = await getFallbackCoordinates(propertyData.location_city, propertyData.location_area);
+                if (fallback) {
+                    propertyData.latitude = fallback.lat;
+                    propertyData.longitude = fallback.lng;
+                }
             }
         }
 

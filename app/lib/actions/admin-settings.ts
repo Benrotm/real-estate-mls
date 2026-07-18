@@ -573,8 +573,19 @@ export async function getSystemLocations() {
 
         if (error) throw error;
         
-        const cities = data.filter((x: any) => x.type === 'city').map((x: any) => ({ id: x.id, name: x.name }));
-        const areas = data.filter((x: any) => x.type === 'area').map((x: any) => ({ id: x.id, name: x.name }));
+        const cities = data.filter((x: any) => x.type === 'city').map((x: any) => ({
+            id: x.id,
+            name: x.name,
+            latitude: x.latitude,
+            longitude: x.longitude
+        }));
+        const areas = data.filter((x: any) => x.type === 'area').map((x: any) => ({
+            id: x.id,
+            name: x.name,
+            parent_id: x.parent_id,
+            latitude: x.latitude,
+            longitude: x.longitude
+        }));
 
         return { cities, areas };
     } catch (err: any) {
@@ -583,7 +594,13 @@ export async function getSystemLocations() {
     }
 }
 
-export async function addSystemLocation(type: 'city' | 'area', name: string) {
+export async function addSystemLocation(
+    type: 'city' | 'area', 
+    name: string,
+    parentId?: string | null,
+    latitude?: number | null,
+    longitude?: number | null
+) {
     try {
         const client = await createServerClient();
         const { data: { user } } = await client.auth.getUser();
@@ -602,7 +619,13 @@ export async function addSystemLocation(type: 'city' | 'area', name: string) {
 
         const { data, error } = await supabase
             .from('system_locations')
-            .insert({ type, name: name.trim() })
+            .insert({ 
+                type, 
+                name: name.trim(),
+                parent_id: parentId || null,
+                latitude: latitude || null,
+                longitude: longitude || null
+            })
             .select()
             .single();
 
@@ -613,6 +636,53 @@ export async function addSystemLocation(type: 'city' | 'area', name: string) {
     } catch (err: any) {
         console.error("Failed to add system location:", err);
         return { success: false, error: err.message || 'Failed to save location' };
+    }
+}
+
+export async function updateSystemLocation(
+    id: string,
+    updates: {
+        name?: string;
+        parent_id?: string | null;
+        latitude?: number | null;
+        longitude?: number | null;
+    }
+) {
+    try {
+        const client = await createServerClient();
+        const { data: { user } } = await client.auth.getUser();
+        if (!user) return { success: false, error: 'Unauthorized' };
+
+        // Verify if super_admin
+        const { data: profile } = await client
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role !== 'super_admin') {
+            return { success: false, error: 'Access denied: Super Admin only' };
+        }
+
+        const { data, error } = await supabase
+            .from('system_locations')
+            .update({
+                name: updates.name !== undefined ? updates.name.trim() : undefined,
+                parent_id: updates.parent_id !== undefined ? updates.parent_id : undefined,
+                latitude: updates.latitude !== undefined ? updates.latitude : undefined,
+                longitude: updates.longitude !== undefined ? updates.longitude : undefined
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        revalidatePath('/dashboard/admin/settings/locations');
+        return { success: true, data };
+    } catch (err: any) {
+        console.error("Failed to update system location:", err);
+        return { success: false, error: err.message || 'Failed to update location' };
     }
 }
 
