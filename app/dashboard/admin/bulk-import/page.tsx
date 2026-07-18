@@ -418,6 +418,18 @@ export default function BulkImportPage() {
                                     <p className="text-xs text-slate-500 mt-1">Checks Page 1 only for newly posted listings.</p>
                                 </div>
 
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Admin Notes & Scratchpad</label>
+                                    <textarea
+                                        value={conf.admin_notes || ''}
+                                        onChange={(e) => handlePubli24Change('admin_notes', e.target.value)}
+                                        rows={3}
+                                        placeholder="E.g., Paused at page 12 on July 18... Notes about Publi24..."
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm text-slate-800 placeholder-slate-400"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Keep track of your pause points or reminders.</p>
+                                </div>
+
                                 {message.text && (
                                     <div className={`p-4 rounded-xl flex items-start gap-3 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-rose-50 text-rose-800 border border-rose-100'}`}>
                                         {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Play, Loader2, AlertCircle, CheckCircle2, Globe, FileDown, Square, Terminal, Settings2 } from 'lucide-react';
+import { Play, Loader2, AlertCircle, CheckCircle2, Globe, FileDown, Square, Terminal, Settings2, Save } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/app/lib/supabase/client';
+import { getAdminSettings, updateOlxSetting } from '@/app/lib/actions/admin-settings';
 
 interface LogMessage {
     id: string;
@@ -16,6 +17,9 @@ export default function BulkImportOlxPage() {
     const [url, setUrl] = useState('');
     const [pagesToScrape, setPagesToScrape] = useState(1);
     const [delayMs, setDelayMs] = useState(12000);
+    const [adminNotes, setAdminNotes] = useState('');
+    const [olxConfig, setOlxConfig] = useState<any>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [isLoading, setIsLoading] = useState(false);
     const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
@@ -29,6 +33,55 @@ export default function BulkImportOlxPage() {
     useEffect(() => {
         logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [logs]);
+
+    useEffect(() => {
+        async function loadSettings() {
+            try {
+                const settings = await getAdminSettings();
+                if (settings && settings.olx_integration) {
+                    setOlxConfig(settings.olx_integration);
+                    if (settings.olx_integration.category_url) setUrl(settings.olx_integration.category_url);
+                    if (settings.olx_integration.admin_notes) setAdminNotes(settings.olx_integration.admin_notes);
+                }
+            } catch (e) {
+                console.error('Failed to load OLX settings', e);
+            }
+        }
+        loadSettings();
+    }, []);
+
+    const saveOlxSettings = async () => {
+        setIsSaving(true);
+        try {
+            const configToSave = {
+                ...(olxConfig || {
+                    is_active: false,
+                    category_url: url,
+                    last_scraped_id: 1,
+                    delay_min: 3,
+                    delay_max: 8,
+                    auto_interval: 10,
+                    watcher_interval_hours: 2,
+                }),
+                category_url: url,
+                admin_notes: adminNotes
+            };
+            const res = await updateOlxSetting(configToSave);
+            if (res.success) {
+                setOlxConfig(configToSave);
+                setMessage('OLX settings & notes saved successfully!');
+                setStatus('completed');
+            } else {
+                setMessage(`Failed to save: ${res.error}`);
+                setStatus('error');
+            }
+        } catch (e: any) {
+            setMessage(`Error saving: ${e.message}`);
+            setStatus('error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // Handle Realtime Subscription
     useEffect(() => {
@@ -182,9 +235,20 @@ export default function BulkImportOlxPage() {
                 {/* SETTINGS PANEL */}
                 <div className="lg:col-span-5 space-y-6">
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 bg-orange-50 flex items-center gap-2">
-                            <Settings2 className="w-5 h-5 text-orange-500" />
-                            <h2 className="font-bold text-slate-900">OLX Crawler Configuration</h2>
+                        <div className="px-6 py-4 border-b border-slate-100 bg-orange-50 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Settings2 className="w-5 h-5 text-orange-500" />
+                                <h2 className="font-bold text-slate-900">OLX Crawler Configuration</h2>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={saveOlxSettings}
+                                disabled={isSaving}
+                                className="px-4 py-1.5 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition flex items-center gap-2 disabled:opacity-50 text-sm"
+                            >
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Save Config
+                            </button>
                         </div>
 
                         <div className="p-6">
@@ -230,6 +294,19 @@ export default function BulkImportOlxPage() {
                                             disabled={isLoading || status === 'running'}
                                         />
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Admin Notes & Scratchpad</label>
+                                    <textarea
+                                        value={adminNotes}
+                                        onChange={(e) => setAdminNotes(e.target.value)}
+                                        rows={3}
+                                        placeholder="E.g., Paused at page 5 on July 18... Notes about OLX extraction..."
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 transition-all text-sm text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white"
+                                        disabled={isLoading || status === 'running'}
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1">Keep track of your pause points or reminders.</p>
                                 </div>
 
                                 {status === 'completed' && (

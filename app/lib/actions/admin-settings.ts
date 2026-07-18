@@ -38,6 +38,7 @@ export interface ImmofluxConfig {
     continuous_loop?: boolean;
     continuous_page_delay?: number;
     continuous_max_pages?: number;
+    admin_notes?: string;
 }
 
 export interface SoldImmofluxConfig {
@@ -66,6 +67,7 @@ export interface OlxConfig {
     delay_max: number;
     auto_interval: number;
     watcher_interval_hours: number;
+    admin_notes?: string;
 }
 
 export interface Publi24Config {
@@ -76,6 +78,7 @@ export interface Publi24Config {
     delay_max: number;
     auto_interval: number;
     watcher_interval_hours: number;
+    admin_notes?: string;
 }
 
 export interface ProxyConfig {

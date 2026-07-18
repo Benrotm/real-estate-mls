@@ -540,6 +540,18 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                             </div>
                         </div>
 
+                        {/* Admin Notes Box */}
+                        <div className="pt-4">
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Admin Notes & Scratchpad (Pause history, page notes, reminders)</label>
+                            <textarea
+                                value={settings.immoflux_integration.admin_notes || ''}
+                                onChange={(e) => handleImmofluxChange('admin_notes', e.target.value)}
+                                rows={3}
+                                placeholder="E.g., Paused at page 213 on July 18 because... / Note: Filter set to Timis..."
+                                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                        </div>
+
                         <div className="pt-6 border-t border-slate-800 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
                             <div className="flex items-center gap-3 w-full xl:w-auto">
                                 <label className="text-sm font-medium text-slate-300 whitespace-nowrap">Next Page to Scrape:</label>
