@@ -246,7 +246,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                 <Users className="w-3.5 h-3.5 text-white animate-pulse" />
                                 Monitorizare Live
                             </span>
-                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
+                            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight text-white">
                                 Câți clienți caută ACTIV în piață acum !
                             </h2>
                             <p className="text-orange-50 text-sm max-w-xl leading-relaxed">
@@ -270,8 +270,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                 <Key className="w-3.5 h-3.5 text-indigo-400" />
                                 Catalog Privat MLS
                             </span>
-                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
-                                Deblochează Catalogul MLS Imobum
+                            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight text-white">
+                                Accesează proprietățile Real Estate Hub MLS
                             </h2>
                             <p className="text-indigo-200 text-sm max-w-2xl leading-relaxed">
                                 Creează-ți un cont gratuit în câteva secunde pentru a debloca complet pozele la rezoluție maximă, adresele exacte ale proprietăților, tururile virtuale 3D și instrumentele de comunicare directă cu agenții sau proprietarii, dupa cum preferi tu.
@@ -305,7 +305,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                     <Target className="w-3.5 h-3.5 text-white" />
                                     Pentru Proprietari și Dezvoltatori
                                 </span>
-                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
+                                <h3 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight text-white">
                                     Află rapid care este prețul de piață al Proprietății tale și găsește-i un client imediat !
                                 </h3>
                                 <p className="text-indigo-100 text-sm font-semibold leading-relaxed">
