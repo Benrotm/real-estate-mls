@@ -82,7 +82,7 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
         if (mode === 'navigation') {
             return (
                 <Link
-                    href={`/pricing?role=${role}`}
+                    href="/auth/signup"
                     className={`${baseClasses} border-slate-700/50 hover:border-slate-500 bg-slate-800/50 hover:bg-slate-800`}
                     onMouseEnter={() => setHoveredRole(role)}
                     onMouseLeave={() => setHoveredRole(null)}

@@ -8,8 +8,8 @@ export default function TrustStats() {
         <div className="bg-slate-900 py-20 px-4">
             <div className="max-w-7xl mx-auto flex flex-col items-center">
 
-                <Link href="/pricing" className="inline-block mb-10 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-bold tracking-wide uppercase shadow-xl shadow-cyan-500/50 hover:scale-105 transition-transform cursor-pointer hover:from-cyan-400 hover:to-blue-400">
-                    ⭐ Free Price Evaluation for Properties
+                <Link href="/auth/signup" className="inline-block mb-10 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-bold tracking-wide uppercase shadow-xl shadow-cyan-500/50 hover:scale-105 transition-transform cursor-pointer hover:from-cyan-400 hover:to-blue-400">
+                    ⭐ Find out the current market value of a property
                 </Link>
 
                 <div className="w-full mb-16">
@@ -24,7 +24,7 @@ export default function TrustStats() {
                             <Building className="w-7 h-7" />
                         </div>
                         <div className="text-4xl font-bold text-white mb-2">2,500+</div>
-                        <div className="text-cyan-200 text-sm font-bold uppercase tracking-wide">Properties Listed</div>
+                        <div className="text-cyan-200 text-sm font-bold uppercase tracking-wide">Properties Sold</div>
                     </div>
                     <div className="text-center">
                         <div className="w-14 h-14 bg-gradient-to-br from-lime-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-lime-500/50">
