@@ -122,7 +122,9 @@ const DEFAULT_FORM_DATA: LeadData = {
     already_owns_properties: false,
     owned_properties_count: 0,
     ownership_purpose_investment: false,
-    ownership_purpose_personal: false
+    ownership_purpose_personal: false,
+    search_with_agent: true,
+    search_direct_owner: true
 };
 
 export default function LeadForm({ initialData, isEditing = false, onCancel, readOnly = false }: LeadFormProps) {
@@ -343,6 +345,40 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             <div className="md:col-span-2">
                                 <label className={labelClass}>Source</label>
                                 <input type="text" name="source" placeholder="e.g. Website, Walk-in, Referral" value={formData.source || ''} onChange={handleChange} className={inputClass} />
+                            </div>
+
+                            {/* Property Source Checkboxes */}
+                            <div className="md:col-span-2 mt-4 pt-4 border-t border-slate-100">
+                                <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                    🔍 Property Source Preferences (Find from Agent vs Direct Owner)
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all ${formData.search_with_agent !== false ? 'border-orange-500 bg-orange-50/40' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.search_with_agent !== false}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, search_with_agent: e.target.checked }))}
+                                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer"
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-slate-800">Listed by Real Estate Agents</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">Find properties listed by agencies/agents</span>
+                                        </div>
+                                    </label>
+
+                                    <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all ${formData.search_direct_owner !== false ? 'border-orange-500 bg-orange-50/40' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.search_direct_owner !== false}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, search_direct_owner: e.target.checked }))}
+                                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer"
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-slate-800">Listed Directly by Owners</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">Find properties listed direct from owners</span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
 
                             {/* Presentation Contract Verification Fields */}

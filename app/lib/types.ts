@@ -40,6 +40,8 @@ export interface LeadData {
     preference_furnishing?: string;
 
     preference_features?: string[];
+    search_with_agent?: boolean;
+    search_direct_owner?: boolean;
 
     // detailed criteria
     search_duration?: string;

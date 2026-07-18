@@ -146,7 +146,8 @@ export default function LeadList({
         payment_method: 'all',
         interest_rating: 'all',
         agent_name: '',
-        lead_phone: ''
+        lead_phone: '',
+        property_source: 'all'
     });
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -171,7 +172,8 @@ export default function LeadList({
             payment_method: 'all',
             interest_rating: 'all',
             agent_name: '',
-            lead_phone: ''
+            lead_phone: '',
+            property_source: 'all'
         });
         setSearchTerm('');
         setActiveStatus('all');
@@ -212,11 +214,15 @@ export default function LeadList({
             const matchesInterest = filters.interest_rating === 'all' || (isOwner && lead.agent_interest_rating === filters.interest_rating);
             const matchesAgentName = !filters.agent_name || (lead.agent?.full_name?.toLowerCase().includes(filters.agent_name.toLowerCase()) || lead.agent?.email?.toLowerCase().includes(filters.agent_name.toLowerCase()));
             const matchesLeadPhone = !filters.lead_phone || (isOwner && lead.phone?.includes(filters.lead_phone));
+            const matchesPropertySource = (filters as any).property_source === 'all' || !(filters as any).property_source ||
+                ((filters as any).property_source === 'agent' && lead.search_with_agent !== false) ||
+                ((filters as any).property_source === 'owner' && lead.search_direct_owner !== false) ||
+                ((filters as any).property_source === 'both' && lead.search_with_agent !== false && lead.search_direct_owner !== false);
 
             return matchesSearch && matchesStatus && matchesType && matchesListingType && matchesCity &&
                 matchesArea && matchesBudgetMin && matchesBudgetMax && matchesRooms && matchesSurface &&
                 matchesUrgency && matchesBuyingReason && matchesOccupation && matchesSource &&
-                matchesPayment && matchesInterest && matchesAgentName && matchesLeadPhone;
+                matchesPayment && matchesInterest && matchesAgentName && matchesLeadPhone && matchesPropertySource;
         });
 
         // Sorting
@@ -361,6 +367,15 @@ export default function LeadList({
                 {/* Advanced Filters Panel */}
                 {isFiltersExpanded && (
                     <div className="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Property Source</label>
+                            <select name="property_source" value={(filters as any).property_source || 'all'} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Any Source (Agent & Owner)</option>
+                                <option value="agent">Listed by Agents (= Yes)</option>
+                                <option value="owner">Listed by Owners (= Yes)</option>
+                                <option value="both">Both Agent & Owner (= Yes)</option>
+                            </select>
+                        </div>
                         <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Property Type</label>
                             <select name="preference_type" value={filters.preference_type} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">

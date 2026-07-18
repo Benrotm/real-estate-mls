@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createLeadPublic } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
-import { ROMANIAN_CITIES, formatCityList } from '@/app/lib/constants/locations';
+import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList, cleanCityName, normalizeText } from '@/app/lib/constants/locations';
 import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
-import { useEffect } from 'react';
 import { 
     ChevronDown, 
     ChevronUp, 
@@ -29,16 +28,54 @@ export default function InviteLeadForm({ agentId }: Props) {
     const [rooms, setRooms] = useState(2);
     const [budget, setBudget] = useState('');
     const [city, setCity] = useState('Timișoara');
+    const [area, setArea] = useState('');
     const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
+    const [citiesListFull, setCitiesListFull] = useState<{ id: string; name: string }[]>([]);
+    const [allRawAreas, setAllRawAreas] = useState<{ name: string; parent_id: string | null }[]>([]);
+    const [searchWithAgent, setSearchWithAgent] = useState(true);
+    const [searchDirectOwner, setSearchDirectOwner] = useState(true);
 
     useEffect(() => {
         getSystemLocations().then(res => {
             if (res.cities?.length) {
+                setCitiesListFull(res.cities);
                 const formatted = formatCityList(res.cities, res.counties || []);
                 setCitiesList(formatted);
             }
+            if (res.areas?.length) {
+                setAllRawAreas(res.areas);
+            }
         });
     }, []);
+
+    const filteredAreasList = useMemo(() => {
+        const selectedCityNames = city
+            ? city.split(',').map(c => cleanCityName(c).trim()).filter(Boolean)
+            : [];
+
+        if (selectedCityNames.length === 0) {
+            return [];
+        }
+
+        const normalizedSelected = selectedCityNames.map(name => normalizeText(name));
+
+        const selectedCityIds = citiesListFull
+            .filter(c => normalizedSelected.includes(normalizeText(c.name)))
+            .map(c => c.id);
+
+        const matchedAreas = allRawAreas.filter(a => a.parent_id && selectedCityIds.includes(a.parent_id));
+        
+        if (matchedAreas.length > 0) {
+            return Array.from(new Set(matchedAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
+        }
+
+        if (normalizedSelected.some(n => n.includes('timi'))) {
+            return TIMISOARA_AREAS;
+        }
+
+        return [];
+    }, [city, citiesListFull, allRawAreas]);
+
     const [polygon, setPolygon] = useState<{ lat: number; lng: number }[] | undefined>(undefined);
 
     // Accordion State
@@ -85,13 +122,16 @@ export default function InviteLeadForm({ agentId }: Props) {
             budget_max: Number(budget),
             currency: 'EUR',
             preference_location_city: city.trim(),
+            preference_location_area: area.trim() || undefined,
             preference_location_polygon: polygon,
             preference_surface_min: surfaceMin ? Number(surfaceMin) : undefined,
             move_urgency: urgency || undefined,
             has_small_kids: hasSmallKids,
             has_pets: hasPets,
             social_notes: notes.trim() || undefined,
-            notes: notes.trim() || undefined
+            notes: notes.trim() || undefined,
+            search_with_agent: searchWithAgent,
+            search_direct_owner: searchDirectOwner
         };
 
         try {
@@ -150,6 +190,40 @@ export default function InviteLeadForm({ agentId }: Props) {
                 </div>
             </div>
 
+            {/* Property Source / Checkboxes */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                    Find Properties From
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchWithAgent ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                        <input
+                            type="checkbox"
+                            checked={searchWithAgent}
+                            onChange={(e) => setSearchWithAgent(e.target.checked)}
+                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
+                        />
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-extrabold">Get help from an Real Estate Broker</span>
+                            <span className="text-[10px] text-slate-400 font-medium">Properties listed by agencies & brokers</span>
+                        </div>
+                    </label>
+
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchDirectOwner ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                        <input
+                            type="checkbox"
+                            checked={searchDirectOwner}
+                            onChange={(e) => setSearchDirectOwner(e.target.checked)}
+                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
+                        />
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-extrabold">Find yourself from Property Owners</span>
+                            <span className="text-[10px] text-slate-400 font-medium">Directly from owners without intermediary</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
             {/* Property Type Selection Chips */}
             <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
@@ -203,9 +277,9 @@ export default function InviteLeadForm({ agentId }: Props) {
                 {errors.budget && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.budget}</p>}
             </div>
 
-            {/* Area of Interest (Map Draw / City) */}
+            {/* Area of Interest (City, Area & Map Draw) */}
             <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                             City
@@ -220,17 +294,29 @@ export default function InviteLeadForm({ agentId }: Props) {
                     </div>
                     <div>
                         <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
-                            Select Area on Map
+                            Area / Neighbourhood
                         </label>
-                        <button
-                            type="button"
-                            onClick={() => setShowMap(true)}
-                            className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 border rounded-xl text-xs font-black transition-all active:scale-95 ${polygon?.length ? 'border-violet-500 bg-violet-50 text-violet-700 font-extrabold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}
-                        >
-                            <MapPin className="w-4 h-4" />
-                            {polygon?.length ? 'Edit Area' : 'Select Area'}
-                        </button>
+                        <MultiSearchableSelect
+                            values={area ? area.split(',').map(a => a.trim()).filter(Boolean) : []}
+                            options={filteredAreasList}
+                            onChange={(vals) => setArea(vals.join(', '))}
+                            placeholder={filteredAreasList.length ? "Select areas..." : "Select city first..."}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                        />
                     </div>
+                </div>
+                <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                        Draw on Map the exact area
+                    </label>
+                    <button
+                        type="button"
+                        onClick={() => setShowMap(true)}
+                        className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 border rounded-xl text-xs font-black transition-all active:scale-95 ${polygon?.length ? 'border-violet-500 bg-violet-50 text-violet-700 font-extrabold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}
+                    >
+                        <MapPin className="w-4 h-4" />
+                        {polygon?.length ? 'Edit Area on Map' : 'Draw Area on Map'}
+                    </button>
                 </div>
                 {polygon?.length && (
                     <div className="text-[10px] text-green-600 font-black flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
