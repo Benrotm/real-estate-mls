@@ -849,9 +849,11 @@ export async function importRomaniaLocations() {
 
         // Create missing counties
         const countiesToInsert: any[] = [];
+        const queuedCountyKeys = new Set<string>();
         for (const [cName, coords] of countyMap.entries()) {
             const key = `county:${cName.toLowerCase()}:${countryId}`;
-            if (!existingMap.has(key)) {
+            if (!existingMap.has(key) && !queuedCountyKeys.has(key)) {
+                queuedCountyKeys.add(key);
                 countiesToInsert.push({
                     type: 'county',
                     name: cName,
@@ -886,13 +888,15 @@ export async function importRomaniaLocations() {
 
         // 5. Identify missing cities
         const citiesToInsert: any[] = [];
+        const queuedCityKeys = new Set<string>();
         dataset.forEach(item => {
             const cName = item.judet;
             const parentId = countyNameToId.get(cName);
             if (!parentId) return;
 
             const key = `city:${item.nume.toLowerCase()}:${parentId}`;
-            if (!existingMap.has(key)) {
+            if (!existingMap.has(key) && !queuedCityKeys.has(key)) {
+                queuedCityKeys.add(key);
                 citiesToInsert.push({
                     type: 'city',
                     name: item.nume,
@@ -960,13 +964,15 @@ export async function importRomaniaLocations() {
         };
 
         const areasToInsert: any[] = [];
+        const queuedAreaKeys = new Set<string>();
         for (const [cityName, cityInfo] of Object.entries(majorNeighborhoods)) {
             const cityId = getCityId(cityName, cityInfo.countyName);
             if (!cityId) continue;
 
             cityInfo.areas.forEach(aName => {
                 const key = `area:${aName.toLowerCase()}:${cityId}`;
-                if (!existingMap.has(key)) {
+                if (!existingMap.has(key) && !queuedAreaKeys.has(key)) {
+                    queuedAreaKeys.add(key);
                     areasToInsert.push({
                         type: 'area',
                         name: aName,
