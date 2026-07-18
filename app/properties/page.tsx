@@ -332,7 +332,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                     </span>
                                     <h4 className="text-sm font-bold text-white uppercase tracking-wider">Predictibilitate de Vânzare</h4>
                                     <p className="text-xs text-white/90 leading-relaxed">
-                                        În cât Timp vei vinde la prețul dorit și care sunt șansele tale reale în funcție de câți clienți caută ce vinzi tu
+                                        Află în cât timp vei vinde la prețul dorit
+                                        <span className="block mt-1">+ care sunt șansele tale reale în funcție de câți clienți caută ce vinzi tu și ce concurența ai acum în piața.</span>
                                         <span className="block mt-1">+ Cum poti vinde în timpul dorit de tine: 1 săptămână, 1 lună, 3 luni.</span>
                                     </p>
                                 </div>
