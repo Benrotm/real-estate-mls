@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, Search, MapPin, Map, Loader2, Sparkles, Edit2, X, Save, Globe, Check } from 'lucide-react';
+import { Plus, Trash2, Search, MapPin, Map, Loader2, Sparkles, Edit2, X, Save, Globe, Check, Info, HelpCircle } from 'lucide-react';
 import { addSystemLocation, deleteSystemLocation, updateSystemLocation, batchAddSystemLocations, importRomaniaLocations } from '@/app/lib/actions/admin-settings';
 import { toast } from 'react-hot-toast';
 import LocationMap from '@/app/components/LocationMap';
@@ -623,9 +623,89 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
 
     return (
         <div className="space-y-6">
-            {/* Tab Swapping Header */}
-            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 border-b border-slate-800 pb-4">
-                <div className="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800/80 flex-wrap gap-1">
+            {/* 1. PREMIUM STATS & INTERACTIVE GUIDE CARD */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Info Card explaining what to do */}
+                <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden group">
+                    {/* Background glow */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl rounded-full group-hover:bg-orange-500/10 transition-all duration-500" />
+                    <div>
+                        <div className="flex items-center gap-2 text-white font-bold text-base mb-3">
+                            <Info className="w-5 h-5 text-orange-500" />
+                            <span>System Locations & Coordinates Guide</span>
+                        </div>
+                        <p className="text-slate-400 text-xs leading-relaxed mb-4">
+                            The location list defines the geographical hierarchy used across <strong>Properties</strong>, <strong>Leads</strong>, and <strong>Scraped Listings</strong>. Pinpointing locations on the map coordinates ensures lead preference drawn polygons match accurately.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-slate-300 text-xs">
+                            <div className="flex items-start gap-2.5">
+                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] shrink-0 mt-0.5">1</span>
+                                <div>
+                                    <p className="font-bold text-slate-200">Hierarchy Nesting</p>
+                                    <p className="text-slate-500 text-[11px] mt-0.5">Country ➔ County ➔ City/Commune ➔ Area/Neighborhood</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2.5">
+                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] shrink-0 mt-0.5">2</span>
+                                <div>
+                                    <p className="font-bold text-slate-200">Pin Coordinates</p>
+                                    <p className="text-slate-500 text-[11px] mt-0.5">Click any card to open the interactive map pin editor and pinpoint the coordinates.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2.5">
+                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] shrink-0 mt-0.5">3</span>
+                                <div>
+                                    <p className="font-bold text-slate-200">Manual Addition</p>
+                                    <p className="text-slate-500 text-[11px] mt-0.5">Under any tab, select the parent first (e.g. County), then type the city name and click Add.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2.5">
+                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] shrink-0 mt-0.5">4</span>
+                                <div>
+                                    <p className="font-bold text-slate-200">Auto-Import Google</p>
+                                    <p className="text-slate-500 text-[11px] mt-0.5">Go to the Auto-Import tab to batch-import whole counties or search google directly.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Database Quick Stats */}
+                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-white font-bold text-base mb-4">
+                            <Sparkles className="w-5 h-5 text-orange-500" />
+                            <span>Database Overview</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-900">
+                                <span className="text-slate-500 text-[10px] uppercase font-black tracking-wider block">Countries</span>
+                                <span className="text-lg font-black text-white mt-1 block">{countries.length}</span>
+                            </div>
+                            <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-900">
+                                <span className="text-slate-500 text-[10px] uppercase font-black tracking-wider block">Counties</span>
+                                <span className="text-lg font-black text-white mt-1 block">{counties.length}</span>
+                            </div>
+                            <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-900">
+                                <span className="text-slate-500 text-[10px] uppercase font-black tracking-wider block">Cities</span>
+                                <span className="text-lg font-black text-white mt-1 block">{cities.length}</span>
+                            </div>
+                            <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-900">
+                                <span className="text-slate-500 text-[10px] uppercase font-black tracking-wider block">Areas</span>
+                                <span className="text-lg font-black text-white mt-1 block">{areas.length}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-semibold border-t border-slate-800/80 pt-3 mt-4 flex items-center gap-1.5 justify-center">
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>All database entries are deduplicated & clean</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* 2. TAB CONTROL HEADER */}
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex bg-slate-955 p-1 rounded-xl border border-slate-800 flex-wrap gap-1">
                     <button
                         onClick={() => {
                             setActiveTab('country');
@@ -638,7 +718,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         }`}
                     >
                         <Globe className="w-4 h-4" />
-                        Countries ({countries.length})
+                        Countries
                     </button>
                     <button
                         onClick={() => {
@@ -652,7 +732,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         }`}
                     >
                         <MapPin className="w-4 h-4" />
-                        Counties ({counties.length})
+                        Counties
                     </button>
                     <button
                         onClick={() => {
@@ -666,7 +746,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         }`}
                     >
                         <MapPin className="w-4 h-4" />
-                        Cities & Communes ({cities.length})
+                        Cities & Communes
                     </button>
                     <button
                         onClick={() => {
@@ -680,7 +760,7 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                         }`}
                     >
                         <Map className="w-4 h-4" />
-                        Areas & Neighbourhoods ({areas.length})
+                        Areas & Neighbourhoods
                     </button>
                     <button
                         onClick={() => {
@@ -698,83 +778,105 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                     </button>
                 </div>
 
-                {/* Inline Add form */}
+                {/* Filter Search Input */}
                 {activeTab !== 'auto-import' && (
-                    <form onSubmit={handleAddLocation} className="flex flex-wrap gap-2 items-center">
-                        {activeTab === 'county' && (
-                            <select
-                                value={newLocationParentId}
-                                onChange={(e) => setNewLocationParentId(e.target.value)}
-                                required
-                                className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 w-52 cursor-pointer"
-                            >
-                                <option value="">Select Parent Country... *</option>
-                                {countries.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
-                        )}
-                        {activeTab === 'city' && (
-                            <select
-                                value={newLocationParentId}
-                                onChange={(e) => setNewLocationParentId(e.target.value)}
-                                required
-                                className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 w-52 cursor-pointer"
-                            >
-                                <option value="">Select Parent County... *</option>
-                                {counties.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
-                        )}
-                        {activeTab === 'area' && (
-                            <select
-                                value={newLocationParentId}
-                                onChange={(e) => setNewLocationParentId(e.target.value)}
-                                required
-                                className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 w-52 cursor-pointer"
-                            >
-                                <option value="">Select Parent City... *</option>
-                                {cities.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
-                        )}
+                    <div className="relative md:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                         <input
                             type="text"
-                            required
-                            value={newLocationName}
-                            onChange={(e) => setNewLocationName(e.target.value)}
-                            placeholder={`Add new ${activeTab}...`}
-                            className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white placeholder-slate-500 w-64"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={`Search ${activeTab === 'city' ? 'cities' : activeTab === 'area' ? 'areas' : activeTab} list...`}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white placeholder-slate-500"
                         />
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-lg shadow-orange-500/10 disabled:opacity-50"
-                        >
-                            {isSubmitting ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <Plus className="w-4 h-4" />
-                            )}
-                            Add
-                        </button>
-                    </form>
+                    </div>
                 )}
             </div>
 
-            {/* Filter Search Input */}
+            {/* 3. ADD CUSTOM LOCATION BAR */}
             {activeTab !== 'auto-import' && (
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={`Search ${activeTab} list...`}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-sm font-semibold outline-none focus:border-orange-500/50 text-white placeholder-slate-500"
-                    />
+                <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-5">
+                    <div className="flex items-center gap-2 mb-3 text-slate-200 font-bold text-xs uppercase tracking-wider">
+                        <Plus className="w-4 h-4 text-orange-500" />
+                        <span>Add Custom {activeTab === 'city' ? 'City' : activeTab === 'area' ? 'Area' : activeTab} Entry</span>
+                    </div>
+                    <form onSubmit={handleAddLocation} className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+                        {activeTab === 'county' && (
+                            <div className="flex flex-col gap-1 md:w-64">
+                                <span className="text-[10px] font-bold text-slate-500">1. Select Country</span>
+                                <select
+                                    value={newLocationParentId}
+                                    onChange={(e) => setNewLocationParentId(e.target.value)}
+                                    required
+                                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer w-full"
+                                >
+                                    <option value="">Select Parent Country... *</option>
+                                    {countries.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        {activeTab === 'city' && (
+                            <div className="flex flex-col gap-1 md:w-64">
+                                <span className="text-[10px] font-bold text-slate-500">1. Select County</span>
+                                <select
+                                    value={newLocationParentId}
+                                    onChange={(e) => setNewLocationParentId(e.target.value)}
+                                    required
+                                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer w-full"
+                                >
+                                    <option value="">Select Parent County... *</option>
+                                    {counties.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        {activeTab === 'area' && (
+                            <div className="flex flex-col gap-1 md:w-64">
+                                <span className="text-[10px] font-bold text-slate-500">1. Select City</span>
+                                <select
+                                    value={newLocationParentId}
+                                    onChange={(e) => setNewLocationParentId(e.target.value)}
+                                    required
+                                    className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer w-full"
+                                >
+                                    <option value="">Select Parent City... *</option>
+                                    {cities.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                        <div className="flex flex-col gap-1 flex-1">
+                            <span className="text-[10px] font-bold text-slate-500">
+                                {activeTab === 'country' ? '1. Country Name' : '2. Enter Name'}
+                            </span>
+                            <input
+                                type="text"
+                                required
+                                value={newLocationName}
+                                onChange={(e) => setNewLocationName(e.target.value)}
+                                placeholder={`Enter ${activeTab === 'city' ? 'city' : activeTab === 'area' ? 'area/neighborhood' : activeTab} name...`}
+                                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:border-orange-500/50 text-white placeholder-slate-500 w-full"
+                            />
+                        </div>
+                        <div className="flex flex-col justify-end pt-5">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider px-6 py-3.5 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-orange-500/10 disabled:opacity-50 h-[46px]"
+                            >
+                                {isSubmitting ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Plus className="w-4 h-4" />
+                                )}
+                                Add location
+                            </button>
+                        </div>
+                    </form>
                 </div>
             )}
 
