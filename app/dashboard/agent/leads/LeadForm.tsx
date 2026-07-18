@@ -16,7 +16,7 @@ import {
 import { createLead, updateLead } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
-import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList, cleanCityName } from '@/app/lib/constants/locations';
+import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList, cleanCityName, normalizeText } from '@/app/lib/constants/locations';
 import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 import { useEffect, useMemo } from 'react';
@@ -154,25 +154,31 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
 
     const filteredAreasList = useMemo(() => {
         const selectedCityNames = formData.preference_location_city
-            ? formData.preference_location_city.split(',').map(c => cleanCityName(c).toLowerCase()).filter(Boolean)
+            ? formData.preference_location_city.split(',').map(c => cleanCityName(c).trim()).filter(Boolean)
             : [];
 
         if (selectedCityNames.length === 0) {
-            return allRawAreas.length > 0 ? allRawAreas.map(a => a.name) : TIMISOARA_AREAS;
+            return [];
         }
+
+        const normalizedSelected = selectedCityNames.map(name => normalizeText(name));
 
         // Find IDs of selected cities
         const selectedCityIds = citiesListFull
-            .filter(c => selectedCityNames.includes(c.name.toLowerCase()))
+            .filter(c => normalizedSelected.includes(normalizeText(c.name)))
             .map(c => c.id);
 
         const matchedAreas = allRawAreas.filter(a => a.parent_id && selectedCityIds.includes(a.parent_id));
         
-        if (matchedAreas.length === 0) {
-            return allRawAreas.length > 0 ? allRawAreas.map(a => a.name) : TIMISOARA_AREAS;
+        if (matchedAreas.length > 0) {
+            return Array.from(new Set(matchedAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
         }
 
-        return matchedAreas.map(a => a.name);
+        if (normalizedSelected.some(n => n.includes('timi'))) {
+            return TIMISOARA_AREAS;
+        }
+
+        return [];
     }, [formData.preference_location_city, allRawAreas, citiesListFull]);
 
 

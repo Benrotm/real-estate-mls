@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { updatePropertyAdmin } from '@/app/lib/actions/admin';
 import { PROPERTY_TYPES, TRANSACTION_TYPES, PARTITIONING_TYPES, COMFORT_TYPES, BUILDING_TYPES, INTERIOR_CONDITIONS, FURNISHING_TYPES, PROPERTY_FEATURES, Property } from '@/app/lib/properties';
 import { Loader2, Save, Camera, MapPin, Layout, DollarSign, Home, Briefcase, X, ArrowLeft, Move, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import Link from 'next/link';
-import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList } from '@/app/lib/constants/locations';
+import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList, cleanCityName, normalizeText } from '@/app/lib/constants/locations';
 import SearchableSelect from '@/app/components/SearchableSelect';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 
@@ -26,20 +26,42 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
     const [cityVal, setCityVal] = useState(initialData.location_city || '');
     const [areaVal, setAreaVal] = useState(initialData.location_area || '');
 
+    const [citiesListFull, setCitiesListFull] = useState<{ id: string; name: string }[]>([]);
+    const [allRawAreas, setAllRawAreas] = useState<{ name: string; parent_id: string | null }[]>([]);
     const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
-    const [areasList, setAreasList] = useState<string[]>(TIMISOARA_AREAS);
 
     useEffect(() => {
         getSystemLocations().then(res => {
             if (res.cities?.length) {
+                setCitiesListFull(res.cities);
                 const formatted = formatCityList(res.cities, res.counties || []);
                 setCitiesList(formatted);
             }
             if (res.areas?.length) {
-                setAreasList(res.areas.map(a => a.name));
+                setAllRawAreas(res.areas);
             }
         });
     }, []);
+
+    const areasList = useMemo(() => {
+        const cleanedCity = cleanCityName(cityVal).trim();
+        if (!cleanedCity) {
+            return [];
+        }
+        const normalizedCity = normalizeText(cleanedCity);
+        const selectedCityIds = citiesListFull
+            .filter(c => normalizeText(c.name) === normalizedCity)
+            .map(c => c.id);
+
+        const matchedAreas = allRawAreas.filter(a => a.parent_id && selectedCityIds.includes(a.parent_id));
+        if (matchedAreas.length > 0) {
+            return Array.from(new Set(matchedAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
+        }
+        if (normalizedCity.includes('timi')) {
+            return TIMISOARA_AREAS;
+        }
+        return [];
+    }, [cityVal, allRawAreas, citiesListFull]);
 
     // Photo reordering states
     const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null);

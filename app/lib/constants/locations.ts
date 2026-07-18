@@ -94,10 +94,24 @@ export function formatCityList(cities: SystemCity[], counties: SystemCounty[]): 
     return Array.from(new Set(formatted));
 }
 
-/**
- * Cleans a city name by removing the "(County)" suffix.
- */
 export function cleanCityName(city: string): string {
     return city.replace(/\s*\(.*?\)\s*/g, '').trim();
 }
+
+/**
+ * Normalizes text by stripping diacritics and converting to lowercase for diacritic-insensitive search/matching.
+ */
+export function normalizeText(str: string): string {
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ș|ş/gi, 's')
+        .replace(/ț|ţ/gi, 't')
+        .replace(/ă|â/gi, 'a')
+        .replace(/î/gi, 'i')
+        .replace(/đ/gi, 'd')
+        .toLowerCase()
+        .trim();
+}
+
 
