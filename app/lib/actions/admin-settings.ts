@@ -34,7 +34,10 @@ export interface ImmofluxConfig {
         location_city: string;
         rooms: string;
         owner_phone: string;
-    }
+    };
+    continuous_loop?: boolean;
+    continuous_page_delay?: number;
+    continuous_max_pages?: number;
 }
 
 export interface SoldImmofluxConfig {
@@ -56,6 +59,16 @@ export interface SoldImmofluxConfig {
 }
 
 export interface OlxConfig {
+    is_active: boolean;
+    category_url: string;
+    last_scraped_id: number;
+    delay_min: number;
+    delay_max: number;
+    auto_interval: number;
+    watcher_interval_hours: number;
+}
+
+export interface Publi24Config {
     is_active: boolean;
     category_url: string;
     last_scraped_id: number;
@@ -91,6 +104,7 @@ export interface AdminSettings {
     fluxmls_integration?: ImmofluxConfig;
     sold_immoflux_integration?: SoldImmofluxConfig;
     olx_integration?: OlxConfig;
+    publi24_integration?: Publi24Config;
     proxy_integration?: ProxyConfig;
     global_watermark?: GlobalWatermarkConfig;
 }
@@ -104,9 +118,18 @@ const DEFAULT_SETTINGS: AdminSettings = {
         is_active: false,
         category_url: "https://www.olx.ro/imobiliare/apartamente-garsoniere-de-vanzare/timisoara/",
         last_scraped_id: 1,
-        delay_min: 5,
-        delay_max: 15,
-        auto_interval: 15,
+        delay_min: 3,
+        delay_max: 8,
+        auto_interval: 10,
+        watcher_interval_hours: 2,
+    },
+    publi24_integration: {
+        is_active: false,
+        category_url: "https://www.publi24.ro/anunturi/imobiliare/de-vanzare/apartamente/timis/timisoara/",
+        last_scraped_id: 1,
+        delay_min: 3,
+        delay_max: 8,
+        auto_interval: 10,
         watcher_interval_hours: 2,
     },
     immoflux_integration: {
@@ -131,7 +154,10 @@ const DEFAULT_SETTINGS: AdminSettings = {
             location_city: "td:nth-child(4) strong",
             rooms: "td:nth-child(4) span.label",
             owner_phone: "td:nth-child(4) div.btn-primary"
-        }
+        },
+        continuous_loop: false,
+        continuous_page_delay: 30,
+        continuous_max_pages: 0
     },
     sold_immoflux_integration: {
         is_active: false,
@@ -216,7 +242,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
 
         const settings: any = { ...DEFAULT_SETTINGS };
         for (const row of data) {
-            if (row.key === 'immoflux_integration' || row.key === 'sold_immoflux_integration' || row.key === 'fluxmls_integration' || row.key === 'olx_integration' || row.key === 'proxy_integration' || row.key === 'global_watermark') {
+            if (row.key === 'immoflux_integration' || row.key === 'sold_immoflux_integration' || row.key === 'fluxmls_integration' || row.key === 'olx_integration' || row.key === 'publi24_integration' || row.key === 'proxy_integration' || row.key === 'global_watermark') {
                 settings[row.key] = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
             } else {
                 if (row.value === 'true' || row.value === true) settings[row.key] = true;
@@ -351,11 +377,31 @@ export async function updateOlxSetting(config: OlxConfig) {
             .upsert({
                 key: 'olx_integration',
                 value: config,
-                description: 'Configuration for the OLX/Publi24 property scraper microservice'
+                description: 'Configuration for the OLX property scraper microservice'
             }, { onConflict: 'key' });
 
         if (error) {
             console.error("Failed to update OLX details:", error.message);
+            return { success: false, error: error.message };
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function updatePubli24Setting(config: Publi24Config) {
+    try {
+        const { error } = await supabase
+            .from('admin_settings')
+            .upsert({
+                key: 'publi24_integration',
+                value: config,
+                description: 'Configuration for the Publi24 property scraper microservice'
+            }, { onConflict: 'key' });
+
+        if (error) {
+            console.error("Failed to update Publi24 details:", error.message);
             return { success: false, error: error.message };
         }
         return { success: true };

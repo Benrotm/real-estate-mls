@@ -60,7 +60,7 @@ export const DEFAULT_MENUS: Record<string, MenuItemDefinition[]> = {
         { name: 'Sold Imoflux', icon: 'Target', href: '/dashboard/admin/sold-immoflux' },
         { name: 'FluxMLS', icon: 'CopyCheck', href: '/dashboard/admin/fluxmls' },
         { name: 'Single Import', icon: 'Globe', href: '/dashboard/admin/properties/import' },
-        { name: 'Bulk Import', icon: 'FileDown', href: '/dashboard/admin/bulk-import' },
+        { name: 'Bulk Import Publi24', icon: 'FileDown', href: '/dashboard/admin/bulk-import' },
         { name: 'Bulk Import OLX', icon: 'Globe', href: '/dashboard/admin/bulk-import-olx' },
         { name: 'Centru Notificări', icon: 'Bell', href: '/dashboard/notifications' },
         { name: 'Alimentare Credite', icon: 'Coins', href: '/cont/plati' },

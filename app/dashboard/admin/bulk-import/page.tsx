@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Play, Loader2, AlertCircle, CheckCircle2, Globe, FileDown, Square, Terminal, Settings2, Save, Timer } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/app/lib/supabase/client';
-import { getAdminSettings, updateOlxSetting, AdminSettings } from '@/app/lib/actions/admin-settings';
+import { getAdminSettings, updatePubli24Setting, AdminSettings } from '@/app/lib/actions/admin-settings';
 
 interface LogMessage {
     id: string;
@@ -53,7 +53,7 @@ export default function BulkImportPage() {
                 setAutoCountdown((prev) => {
                     if (prev <= 1) {
                         if (!isScraping) runScraper('history');
-                        return (settings?.olx_integration?.auto_interval || 10) * 60;
+                        return (settings?.publi24_integration?.auto_interval || settings?.olx_integration?.auto_interval || 10) * 60;
                     }
                     return prev - 1;
                 });
@@ -70,7 +70,7 @@ export default function BulkImportPage() {
                 setWatcherCountdown((prev) => {
                     if (prev <= 1) {
                         if (!isWatching) runScraper('watcher');
-                        return (settings?.olx_integration?.watcher_interval_hours || 2) * 3600;
+                        return (settings?.publi24_integration?.watcher_interval_hours || settings?.olx_integration?.watcher_interval_hours || 2) * 3600;
                     }
                     return prev - 1;
                 });
@@ -109,10 +109,11 @@ export default function BulkImportPage() {
                         setMessage({ text: payload.new.status === 'completed' ? 'Extraction run completed successfully!' : 'A critical error crashed the running job.', type: payload.new.status === 'completed' ? 'success' : 'error' });
 
                         // Increment last scraped ID if it was a history run and succeeded
-                        if (payload.new.status === 'completed' && settings?.olx_integration && !isWatcherActive && !isWatching) {
-                            const updatedConfig = { ...settings.olx_integration, last_scraped_id: settings.olx_integration.last_scraped_id + 1 };
-                            setSettings({ ...settings, olx_integration: updatedConfig });
-                            updateOlxSetting(updatedConfig); // Fire and forget update
+                        if (payload.new.status === 'completed' && (settings?.publi24_integration || settings?.olx_integration) && !isWatcherActive && !isWatching) {
+                            const currentConf = settings.publi24_integration || settings.olx_integration!;
+                            const updatedConfig = { ...currentConf, last_scraped_id: currentConf.last_scraped_id + 1 };
+                            setSettings({ ...settings, publi24_integration: updatedConfig });
+                            updatePubli24Setting(updatedConfig); // Fire and forget update
                         }
                     }
                 }
@@ -136,25 +137,33 @@ export default function BulkImportPage() {
         }
     }
 
-    const handleOlxChange = (field: string, value: any) => {
-        if (!settings || !settings.olx_integration) return;
-
-        const currentConfig = { ...settings.olx_integration };
+    const handlePubli24Change = (field: string, value: any) => {
+        if (!settings) return;
+        const currentConfig = settings.publi24_integration ? { ...settings.publi24_integration } : (settings.olx_integration ? { ...settings.olx_integration } : {
+            is_active: false,
+            category_url: "https://www.publi24.ro/anunturi/imobiliare/de-vanzare/apartamente/timis/timisoara/",
+            last_scraped_id: 1,
+            delay_min: 3,
+            delay_max: 8,
+            auto_interval: 10,
+            watcher_interval_hours: 2,
+        });
         (currentConfig as any)[field] = value;
-
-        setSettings({ ...settings, olx_integration: currentConfig });
+        setSettings({ ...settings, publi24_integration: currentConfig });
     };
 
     const saveSettings = async () => {
-        if (!settings || !settings.olx_integration) return;
+        if (!settings) return;
+        const configToSave = settings.publi24_integration || settings.olx_integration;
+        if (!configToSave) return;
 
         setIsSaving(true);
         setMessage({ text: '', type: '' });
 
-        const result = await updateOlxSetting(settings.olx_integration);
+        const result = await updatePubli24Setting(configToSave);
 
         if (result.success) {
-            setMessage({ text: 'Settings saved successfully!', type: 'success' });
+            setMessage({ text: 'Publi24 setup saved successfully!', type: 'success' });
             setTimeout(() => setMessage({ text: '', type: '' }), 3000);
         } else {
             setMessage({ text: `Failed to save setup: ${result.error}`, type: 'error' });
@@ -164,7 +173,7 @@ export default function BulkImportPage() {
 
     const toggleAutoScrape = () => {
         if (!isAutoScraping) {
-            setAutoCountdown((settings?.olx_integration?.auto_interval || 10) * 60);
+            setAutoCountdown((settings?.publi24_integration?.auto_interval || settings?.olx_integration?.auto_interval || 10) * 60);
             runScraper('history'); // Run first batch immediately
         }
         setIsAutoScraping(!isAutoScraping);
@@ -172,17 +181,17 @@ export default function BulkImportPage() {
 
     const toggleWatcher = () => {
         if (!isWatcherActive) {
-            setWatcherCountdown((settings?.olx_integration?.watcher_interval_hours || 2) * 3600);
+            setWatcherCountdown((settings?.publi24_integration?.watcher_interval_hours || settings?.olx_integration?.watcher_interval_hours || 2) * 3600);
             runScraper('watcher'); // Run first batch immediately
         }
         setIsWatcherActive(!isWatcherActive);
     };
 
     const runScraper = async (mode: 'history' | 'watcher' = 'history') => {
-        const config = settings?.olx_integration;
+        const config = settings?.publi24_integration || settings?.olx_integration;
         if (!config || !config.category_url) {
             setStatus('error');
-            setMessage({ text: 'Please configure and save the OLX setup rules first.', type: 'error' });
+            setMessage({ text: 'Please configure and save the Publi24 setup rules first.', type: 'error' });
             return;
         }
 
@@ -307,10 +316,10 @@ export default function BulkImportPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
                         <FileDown className="w-8 h-8 text-indigo-600" />
-                        OLX/Publi24 Automation
+                        Publi24.ro Automation Terminal
                     </h1>
                     <p className="text-slate-500 mt-2">
-                        Configure the proxy crawler to safely harvest listings via isolated Render instances.
+                        Deploy an automated Publi24.ro crawler with specialized Tesseract.js OCR image-to-text phone solving.
                     </p>
                 </div>
                 <Link
@@ -340,15 +349,17 @@ export default function BulkImportPage() {
                             </button>
                         </div>
 
-                        {config && (
+                        {(settings?.publi24_integration || settings?.olx_integration) && (() => {
+                            const conf = settings.publi24_integration || settings.olx_integration!;
+                            return (
                             <div className="p-6 space-y-6">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Target URL (OLX/Publi24)</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Target URL (Publi24)</label>
                                     <input
                                         type="url"
-                                        placeholder="https://www.olx.ro/imobiliare/..."
-                                        value={config.category_url}
-                                        onChange={(e) => handleOlxChange('category_url', e.target.value)}
+                                        placeholder="https://www.publi24.ro/anunturi/imobiliare/..."
+                                        value={conf.category_url}
+                                        onChange={(e) => handlePubli24Change('category_url', e.target.value)}
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all text-sm font-medium"
                                         disabled={isLoading || status === 'running'}
                                     />
@@ -359,8 +370,8 @@ export default function BulkImportPage() {
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Next Page Target</label>
                                         <input
                                             type="number"
-                                            value={config.last_scraped_id}
-                                            onChange={(e) => handleOlxChange('last_scraped_id', parseInt(e.target.value))}
+                                            value={conf.last_scraped_id}
+                                            onChange={(e) => handlePubli24Change('last_scraped_id', parseInt(e.target.value))}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
                                         />
                                     </div>
@@ -368,8 +379,8 @@ export default function BulkImportPage() {
                                         <label className="block text-sm font-bold text-slate-700 mb-2">History Interval (m)</label>
                                         <input
                                             type="number"
-                                            value={config.auto_interval}
-                                            onChange={(e) => handleOlxChange('auto_interval', parseInt(e.target.value))}
+                                            value={conf.auto_interval}
+                                            onChange={(e) => handlePubli24Change('auto_interval', parseInt(e.target.value))}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
                                         />
                                     </div>
@@ -380,8 +391,8 @@ export default function BulkImportPage() {
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Min Delay (s)</label>
                                         <input
                                             type="number"
-                                            value={config.delay_min}
-                                            onChange={(e) => handleOlxChange('delay_min', parseInt(e.target.value))}
+                                            value={conf.delay_min}
+                                            onChange={(e) => handlePubli24Change('delay_min', parseInt(e.target.value))}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
                                         />
                                     </div>
@@ -389,8 +400,8 @@ export default function BulkImportPage() {
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Max Delay (s)</label>
                                         <input
                                             type="number"
-                                            value={config.delay_max}
-                                            onChange={(e) => handleOlxChange('delay_max', parseInt(e.target.value))}
+                                            value={conf.delay_max}
+                                            onChange={(e) => handlePubli24Change('delay_max', parseInt(e.target.value))}
                                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
                                         />
                                     </div>
@@ -400,8 +411,8 @@ export default function BulkImportPage() {
                                     <label className="block text-sm font-bold text-slate-700 mb-2">Watcher Interval (Hours)</label>
                                     <input
                                         type="number"
-                                        value={config.watcher_interval_hours}
-                                        onChange={(e) => handleOlxChange('watcher_interval_hours', parseInt(e.target.value))}
+                                        value={conf.watcher_interval_hours}
+                                        onChange={(e) => handlePubli24Change('watcher_interval_hours', parseInt(e.target.value))}
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 transition text-sm"
                                     />
                                     <p className="text-xs text-slate-500 mt-1">Checks Page 1 only for newly posted listings.</p>
@@ -483,7 +494,8 @@ export default function BulkImportPage() {
                                     </button>
                                 )}
                             </div>
-                        )}
+                        );
+                    })()}
                     </div>
                 </div>
 

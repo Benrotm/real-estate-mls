@@ -23,7 +23,7 @@ export async function POST(req: Request) {
         }
 
         const payload = await req.json();
-        const { categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, platformUser, platformPassword, regionFilter, cityFilter, propertyTypeFilter, transactionTypeFilter } = payload;
+        const { categoryUrl, jobId, pageNum, delayMin, delayMax, mode, continuousLoop, continuousPageDelay, continuousMaxPages, linkSelector, extractSelectors, platformUser, platformPassword, regionFilter, cityFilter, propertyTypeFilter, transactionTypeFilter } = payload;
 
         if (!categoryUrl || !jobId || !linkSelector || !extractSelectors) {
             return NextResponse.json({ error: 'Missing required dynamic scraper parameters' }, { status: 400 });
@@ -65,6 +65,9 @@ export async function POST(req: Request) {
                 delayMin,
                 delayMax,
                 mode,
+                continuousLoop,
+                continuousPageDelay,
+                continuousMaxPages,
                 linkSelector,
                 extractSelectors,
                 proxyConfig,

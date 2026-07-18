@@ -99,11 +99,11 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                         setIsWatching(false);
                         setStatus(payload.new.status === 'completed' ? 'completed' : 'error');
 
-                        // Increment last scraped ID if it was a history run and succeeded
+                        // Sync fresh settings from DB when job completes since microservice updates last_scraped_id
                         if (payload.new.status === 'completed' && settings?.immoflux_integration && !isWatcherActive && !isWatching) {
-                            const updatedConfig = { ...settings.immoflux_integration, last_scraped_id: settings.immoflux_integration.last_scraped_id + 1 };
-                            setSettings({ ...settings, immoflux_integration: updatedConfig });
-                            updateImmofluxSetting(updatedConfig); // Fire and forget update
+                            getAdminSettings().then((fresh) => {
+                                if (fresh) setSettings(fresh);
+                            });
                         }
                     }
                 }
@@ -205,6 +205,9 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                     delayMin: config.delay_min,
                     delayMax: config.delay_max,
                     mode: mode,
+                    continuousLoop: mode === 'history' ? Boolean(config.continuous_loop) : false,
+                    continuousPageDelay: config.continuous_page_delay || 30,
+                    continuousMaxPages: config.continuous_max_pages || 0,
                     linkSelector: 'a', // Immoflux links are standard anchor tags
                     extractSelectors: config.mapping,
                     platformUser: config.username,
@@ -468,6 +471,55 @@ export default function ImofluxClient({ initialSettings }: { initialSettings: Ad
                                         />
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t border-slate-800">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                                            <RefreshCcw className="w-4 h-4" /> Continuous Page Loop Mode (No Logout)
+                                        </h4>
+                                        <p className="text-xs text-slate-400 mt-0.5">
+                                            Navigates page-to-page continuously within the same browser session without logging out/in.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleImmofluxChange('continuous_loop', !settings.immoflux_integration?.continuous_loop)}
+                                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${settings.immoflux_integration?.continuous_loop ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                                    >
+                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.immoflux_integration?.continuous_loop ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+
+                                {settings.immoflux_integration?.continuous_loop && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-300 mb-1.5">Page Navigation Delay (sec)</label>
+                                            <input
+                                                type="number"
+                                                min="10"
+                                                max="300"
+                                                value={settings.immoflux_integration.continuous_page_delay || 30}
+                                                onChange={(e) => handleImmofluxChange('continuous_page_delay', parseInt(e.target.value) || 30)}
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                                            />
+                                            <span className="text-[10px] text-slate-500">Wait between 10-60s before next page</span>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-300 mb-1.5">Max Consecutive Pages</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="500"
+                                                value={settings.immoflux_integration.continuous_max_pages || 0}
+                                                onChange={(e) => handleImmofluxChange('continuous_max_pages', parseInt(e.target.value) || 0)}
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                                            />
+                                            <span className="text-[10px] text-slate-500">0 = Unlimited (until no listings found)</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
