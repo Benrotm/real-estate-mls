@@ -478,6 +478,9 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
         item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
     );
 
+    const RENDER_LIMIT = 100;
+    const displayedList = filteredList.slice(0, RENDER_LIMIT);
+
     const handleAddLocation = async (e: React.FormEvent) => {
         e.preventDefault();
         const trimmedName = newLocationName.trim();
@@ -779,64 +782,74 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
             {/* Main items grid */}
             {activeTab !== 'auto-import' ? (
                 filteredList.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {filteredList.map((item) => {
-                            const parentName = !item.parent_id ? null :
-                                activeTab === 'county' ? countries.find(c => c.id === item.parent_id)?.name :
-                                activeTab === 'city' ? counties.find(c => c.id === item.parent_id)?.name :
-                                activeTab === 'area' ? cities.find(c => c.id === item.parent_id)?.name :
-                                null;
+                    <div className="flex flex-col gap-3.5">
+                        {filteredList.length > RENDER_LIMIT && (
+                            <div className="bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-xl px-4 py-3 text-xs font-semibold flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 shrink-0" />
+                                <span>
+                                    Showing first <strong>{RENDER_LIMIT}</strong> of <strong>{filteredList.length}</strong> locations. Refine your search query to see other locations.
+                                </span>
+                            </div>
+                        )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {displayedList.map((item) => {
+                                const parentName = !item.parent_id ? null :
+                                    activeTab === 'county' ? countries.find(c => c.id === item.parent_id)?.name :
+                                    activeTab === 'city' ? counties.find(c => c.id === item.parent_id)?.name :
+                                    activeTab === 'area' ? cities.find(c => c.id === item.parent_id)?.name :
+                                    null;
 
-                            return (
-                                <div
-                                    key={item.id}
-                                    onClick={() => openEditModal(item)}
-                                    className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-slate-800/80 hover:border-orange-500/30 rounded-xl transition-all group cursor-pointer hover:bg-slate-900"
-                                >
-                                    <div className="flex flex-col min-w-0 pr-2">
-                                        <span className="text-sm font-bold text-slate-200 truncate group-hover:text-orange-400 transition-colors">
-                                            {item.name}
-                                        </span>
-                                        {parentName && (
-                                            <span className="text-[10px] text-slate-500 font-medium">
-                                                linked to {parentName}
+                                return (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => openEditModal(item)}
+                                        className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-slate-800/80 hover:border-orange-500/30 rounded-xl transition-all group cursor-pointer hover:bg-slate-900"
+                                    >
+                                        <div className="flex flex-col min-w-0 pr-2">
+                                            <span className="text-sm font-bold text-slate-200 truncate group-hover:text-orange-400 transition-colors">
+                                                {item.name}
                                             </span>
-                                        )}
-                                        {item.latitude && item.longitude ? (
-                                            <span className="text-[10px] text-emerald-500 font-semibold mt-0.5">
-                                                📍 Coords Set
-                                            </span>
-                                        ) : (
-                                            <span className="text-[10px] text-rose-500/70 font-semibold mt-0.5">
-                                                ⚠️ No Coords
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            type="button"
-                                            className="text-slate-500 hover:text-orange-400 p-1 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                            title="Edit coordinates & details"
-                                        >
-                                            <Edit2 className="w-3.5 h-3.5" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            disabled={deletingId === item.id}
-                                            onClick={(e) => handleDeleteLocation(item.id, item.name, e)}
-                                            className="text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 p-1.5 rounded-lg transition-all active:scale-90 opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
-                                            title={`Delete ${item.name}`}
-                                        >
-                                            {deletingId === item.id ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="w-4 h-4" />
+                                            {parentName && (
+                                                <span className="text-[10px] text-slate-500 font-medium">
+                                                    linked to {parentName}
+                                                </span>
                                             )}
-                                        </button>
+                                            {item.latitude && item.longitude ? (
+                                                <span className="text-[10px] text-emerald-500 font-semibold mt-0.5">
+                                                    📍 Coords Set
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] text-rose-500/70 font-semibold mt-0.5">
+                                                    ⚠️ No Coords
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                className="text-slate-500 hover:text-orange-400 p-1 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                title="Edit coordinates & details"
+                                            >
+                                                <Edit2 className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={deletingId === item.id}
+                                                onClick={(e) => handleDeleteLocation(item.id, item.name, e)}
+                                                className="text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 p-1.5 rounded-lg transition-all active:scale-90 opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
+                                                title={`Delete ${item.name}`}
+                                            >
+                                                {deletingId === item.id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16 border border-dashed border-slate-800 rounded-2xl bg-slate-900/20 text-center">
