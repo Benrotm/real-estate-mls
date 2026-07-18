@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { createLeadPublic } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
-import { ROMANIAN_CITIES } from '@/app/lib/constants/locations';
+import { ROMANIAN_CITIES, formatCityList } from '@/app/lib/constants/locations';
 import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 import { useEffect } from 'react';
@@ -34,7 +34,8 @@ export default function InviteLeadForm({ agentId }: Props) {
     useEffect(() => {
         getSystemLocations().then(res => {
             if (res.cities?.length) {
-                setCitiesList(res.cities.map(c => c.name));
+                const formatted = formatCityList(res.cities, res.counties || []);
+                setCitiesList(formatted);
             }
         });
     }, []);

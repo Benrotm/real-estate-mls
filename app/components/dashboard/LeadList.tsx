@@ -16,6 +16,7 @@ import {
 import ContactPartnerModal from '../ContactPartnerModal';
 import LeadProfileDetails from './LeadProfileDetails';
 import LeadAIMatching from './LeadAIMatching';
+import { cleanCityName } from '@/app/lib/constants/locations';
 
 export const STATUS_COLORS = {
     new: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -197,7 +198,7 @@ export default function LeadList({
             // Advanced Filters
             const matchesType = filters.preference_type === 'all' || lead.preference_type === filters.preference_type;
             const matchesListingType = filters.preference_listing_type === 'all' || lead.preference_listing_type === filters.preference_listing_type;
-            const matchesCity = !filters.city || lead.preference_location_city?.toLowerCase().includes(filters.city.toLowerCase());
+            const matchesCity = !filters.city || cleanCityName(lead.preference_location_city || '').toLowerCase().includes(cleanCityName(filters.city).toLowerCase());
             const matchesArea = !filters.area || lead.preference_location_area?.toLowerCase().includes(filters.area.toLowerCase());
             const matchesBudgetMin = !filters.budget_min || (Number(lead.budget_max || 0) >= Number(filters.budget_min));
             const matchesBudgetMax = !filters.budget_max || (Number(lead.budget_max || 0) <= Number(filters.budget_max));

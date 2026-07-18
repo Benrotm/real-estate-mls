@@ -16,10 +16,13 @@ import {
 import { createLead, updateLead } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
-import { ROMANIAN_CITIES, TIMISOARA_AREAS } from '@/app/lib/constants/locations';
+import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList, cleanCityName } from '@/app/lib/constants/locations';
 import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 import { useEffect, useMemo } from 'react';
+
+// FEATURE_CATEGORIES block remains the same
+
 
 const FEATURE_CATEGORIES = {
     'Listing Tags': ['Commission 0%', 'Exclusive', 'Foreclosure', 'Hotel Regime', 'Luxury'],
@@ -140,7 +143,8 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
         getSystemLocations().then(res => {
             if (res.cities?.length) {
                 setCitiesListFull(res.cities);
-                setCitiesList(res.cities.map(c => c.name));
+                const formatted = formatCityList(res.cities, res.counties || []);
+                setCitiesList(formatted);
             }
             if (res.areas?.length) {
                 setAllRawAreas(res.areas);
@@ -150,7 +154,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
 
     const filteredAreasList = useMemo(() => {
         const selectedCityNames = formData.preference_location_city
-            ? formData.preference_location_city.split(',').map(c => c.trim().toLowerCase()).filter(Boolean)
+            ? formData.preference_location_city.split(',').map(c => cleanCityName(c).toLowerCase()).filter(Boolean)
             : [];
 
         if (selectedCityNames.length === 0) {
@@ -170,6 +174,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
 
         return matchedAreas.map(a => a.name);
     }, [formData.preference_location_city, allRawAreas, citiesListFull]);
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;

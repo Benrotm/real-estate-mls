@@ -7,7 +7,7 @@ import { PROPERTY_TYPES, TRANSACTION_TYPES, PARTITIONING_TYPES, COMFORT_TYPES, B
 import { Loader2, Save, Camera, MapPin, Layout, DollarSign, Home, Briefcase, X, ArrowLeft, Move, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import Link from 'next/link';
-import { ROMANIAN_CITIES, TIMISOARA_AREAS } from '@/app/lib/constants/locations';
+import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList } from '@/app/lib/constants/locations';
 import SearchableSelect from '@/app/components/SearchableSelect';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 
@@ -32,7 +32,8 @@ export default function PropertyAdminForm({ initialData, propertyId }: Props) {
     useEffect(() => {
         getSystemLocations().then(res => {
             if (res.cities?.length) {
-                setCitiesList(res.cities.map(c => c.name));
+                const formatted = formatCityList(res.cities, res.counties || []);
+                setCitiesList(formatted);
             }
             if (res.areas?.length) {
                 setAreasList(res.areas.map(a => a.name));

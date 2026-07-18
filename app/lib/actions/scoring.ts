@@ -7,6 +7,7 @@ import { Property } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
 
 import { pointInPolygon } from '@/app/lib/utils/polygon';
+import { cleanCityName } from '@/app/lib/constants/locations';
 
 export interface ScoringRule {
     id: string;
@@ -343,8 +344,8 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
 
     // 3. City Match (Optional - allows multiple)
     if (isActive('match_city') && lead.preference_location_city) {
-        const leadCities = lead.preference_location_city.toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
-        const propCity = property.location_city?.toLowerCase().trim();
+        const leadCities = lead.preference_location_city.toLowerCase().split(',').map(c => cleanCityName(c).trim()).filter(Boolean);
+        const propCity = property.location_city ? cleanCityName(property.location_city).toLowerCase().trim() : '';
         if (propCity && leadCities.includes(propCity)) {
             score += getWeight('match_city');
         }
