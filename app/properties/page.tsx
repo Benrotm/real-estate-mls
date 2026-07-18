@@ -91,14 +91,18 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                     {/* Stats Dashboard Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 pb-4 mb-4">
                         <div>
-                            <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                                 <BarChart3 className="w-5 h-5 text-indigo-600" />
                                 MLS Market Insights & Inventory Overview
                             </h2>
-                            <p className="text-xs font-bold text-slate-500 mt-0.5">Real-time inventory analysis of the active database</p>
+                            <p className="text-xs font-semibold text-slate-500 mt-0.5">Real-time inventory analysis of the active database</p>
                         </div>
-                        <div className="mt-2 md:mt-0 text-[10px] uppercase font-black tracking-wider text-slate-400 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 w-fit">
-                            Updated: Live
+                        <div className="mt-2 md:mt-0 text-[10px] uppercase font-bold tracking-wider text-rose-600 bg-rose-50 px-3 py-1.5 rounded-full border border-rose-200 w-fit flex items-center gap-2 shadow-sm shadow-rose-100">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                            </span>
+                            <span>Updated: Live</span>
                         </div>
                     </div>
 
@@ -242,7 +246,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                 <Users className="w-3.5 h-3.5 text-white animate-pulse" />
                                 Monitorizare Live
                             </span>
-                            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight leading-tight">
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
                                 Câți clienți caută ACTIV în piață acum !
                             </h2>
                             <p className="text-orange-50 text-sm max-w-xl leading-relaxed">
@@ -250,7 +254,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                             </p>
                         </div>
                         <div className="bg-slate-950/40 border border-white/10 rounded-2xl px-8 py-5 flex flex-col items-center justify-center min-w-[160px] text-center relative z-10 shadow-inner group-hover:scale-105 transition-transform duration-300">
-                            <span className="text-5xl font-mono font-extrabold text-white tracking-tight leading-none animate-pulse">
+                            <span className="text-5xl font-mono font-bold text-white tracking-tight leading-none animate-pulse">
                                 {leadsCount || 63}
                             </span>
                             <span className="text-[10px] font-semibold uppercase tracking-widest text-orange-200 mt-2 font-mono">Clienți Activi</span>
@@ -266,7 +270,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                 <Key className="w-3.5 h-3.5 text-indigo-400" />
                                 Catalog Privat MLS
                             </span>
-                            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight leading-tight">
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
                                 Deblochează Catalogul MLS Imobum
                             </h2>
                             <p className="text-indigo-200 text-sm max-w-2xl leading-relaxed">
@@ -301,7 +305,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                     <Target className="w-3.5 h-3.5 text-white" />
                                     Pentru Proprietari și Dezvoltatori
                                 </span>
-                                <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight leading-tight text-white">
+                                <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
                                     Află rapid care este prețul de piață al Proprietății tale și găsește-i un client imediat !
                                 </h3>
                                 <p className="text-indigo-100 text-sm font-semibold leading-relaxed">
