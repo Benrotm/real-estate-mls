@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Plus, Trash2, Search, MapPin, Map, Loader2, Sparkles, Edit2, X, Save, Globe, Check } from 'lucide-react';
-import { addSystemLocation, deleteSystemLocation, updateSystemLocation, batchAddSystemLocations } from '@/app/lib/actions/admin-settings';
+import { addSystemLocation, deleteSystemLocation, updateSystemLocation, batchAddSystemLocations, importRomaniaLocations } from '@/app/lib/actions/admin-settings';
 import { toast } from 'react-hot-toast';
 import LocationMap from '@/app/components/LocationMap';
 import { useGoogleMaps } from '@/app/lib/hooks/useGoogleMaps';
@@ -40,7 +40,28 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
     const [selectedResults, setSelectedResults] = useState<string[]>([]);
     const [isScanning, setIsScanning] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
+    const [isImportingRomania, setIsImportingRomania] = useState(false);
     const { isLoaded } = useGoogleMaps();
+
+    const handleImportRomania = async () => {
+        setIsImportingRomania(true);
+        const loadingToast = toast.loading("Importing all Romanian counties, cities, and neighborhoods...");
+        try {
+            const res = await importRomaniaLocations();
+            toast.dismiss(loadingToast);
+            if (res.success) {
+                toast.success(res.message || "Successfully imported all of Romania!");
+                window.location.reload();
+            } else {
+                toast.error(res.error || "Failed to import Romania dataset.");
+            }
+        } catch (err: any) {
+            toast.dismiss(loadingToast);
+            toast.error(err.message || "Failed to import Romania dataset.");
+        } finally {
+            setIsImportingRomania(false);
+        }
+    };
 
     const parseAddressComponents = (components: any[], targetLocation: { lat: number; lng: number }) => {
         const result: {
@@ -935,6 +956,43 @@ export default function LocationsSettingsClient({ initialCountries, initialCount
                                     Search for a query above to view the resolved address tree.
                                 </div>
                             )}
+
+                            {/* Romania One-Click Importer */}
+                            <div className="mt-4 border-t border-slate-800/80 pt-5 flex flex-col space-y-3 shrink-0">
+                                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                                    <Globe className="w-4 h-4 text-orange-500" />
+                                    <h4>One-Click Country Importer</h4>
+                                </div>
+                                <p className="text-[11px] text-slate-400 leading-relaxed">
+                                    Select a country to instantly seed/import its entire official administrative divisions (all counties, all cities/towns/communes, and major neighborhoods) in a single click.
+                                </p>
+                                <div className="flex gap-2">
+                                    <select
+                                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer"
+                                        defaultValue="RO"
+                                    >
+                                        <option value="RO">Romania (42 Counties, 13,800+ Cities & Major Neighbourhoods)</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={handleImportRomania}
+                                        disabled={isImportingRomania}
+                                        className="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
+                                    >
+                                        {isImportingRomania ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Importing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Plus className="w-4 h-4" />
+                                                Import Romania
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Right Column: Scan & Batch Import Sub-Locations */}

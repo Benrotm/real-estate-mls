@@ -783,3 +783,216 @@ export async function batchAddSystemLocations(
     }
 }
 
+export async function importRomaniaLocations() {
+    try {
+        const client = await createServerClient();
+        const { data: { user } } = await client.auth.getUser();
+        if (!user) return { success: false, error: 'Unauthorized' };
+
+        // Verify if super_admin
+        const { data: profile } = await client
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role !== 'super_admin') {
+            return { success: false, error: 'Access denied: Super Admin only' };
+        }
+
+        // 1. Fetch Romania localitati JSON
+        const response = await fetch('https://raw.githubusercontent.com/catalin87/baza-de-date-localitati-romania/master/date/localitati.json');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch Romania dataset: ${response.statusText}`);
+        }
+        const dataset: any[] = await response.json();
+
+        // 2. Load existing locations
+        const { data: existing, error: errFetch } = await supabase
+            .from('system_locations')
+            .select('id, name, type, parent_id');
+        if (errFetch) throw errFetch;
+
+        const existingMap = new Map<string, string>(); // key: "type:name:parentId", value: id
+        existing.forEach((item: any) => {
+            const key = `${item.type}:${item.name.toLowerCase()}:${item.parent_id || 'root'}`;
+            existingMap.set(key, item.id);
+        });
+
+        // 3. Find or create Country Romania
+        let countryIdStr = existingMap.get('country:românia:root') || existingMap.get('country:romania:root');
+        if (!countryIdStr) {
+            const { data: countryData, error: countryErr } = await supabase
+                .from('system_locations')
+                .insert({
+                    type: 'country',
+                    name: 'România',
+                    latitude: 45.943161,
+                    longitude: 24.96676
+                })
+                .select()
+                .single();
+            if (countryErr) throw countryErr;
+            countryIdStr = countryData.id as string;
+            existingMap.set(`country:românia:root`, countryIdStr);
+        }
+        const countryId = countryIdStr;
+
+        // 4. Identify unique counties
+        const countyMap = new Map<string, any>(); // key: countyName, value: { lat, lng }
+        dataset.forEach(item => {
+            const cName = item.judet;
+            if (!countyMap.has(cName)) {
+                countyMap.set(cName, { lat: item.lat, lng: item.lng });
+            }
+        });
+
+        // Create missing counties
+        const countiesToInsert: any[] = [];
+        for (const [cName, coords] of countyMap.entries()) {
+            const key = `county:${cName.toLowerCase()}:${countryId}`;
+            if (!existingMap.has(key)) {
+                countiesToInsert.push({
+                    type: 'county',
+                    name: cName,
+                    parent_id: countryId,
+                    latitude: coords.lat || null,
+                    longitude: coords.lng || null
+                });
+            }
+        }
+
+        if (countiesToInsert.length > 0) {
+            const { data: insertedCounties, error: insErr } = await supabase
+                .from('system_locations')
+                .insert(countiesToInsert)
+                .select();
+            if (insErr) throw insErr;
+            insertedCounties.forEach((c: any) => {
+                const key = `county:${c.name.toLowerCase()}:${countryId}`;
+                existingMap.set(key, c.id);
+            });
+        }
+
+        // Map of county name -> ID
+        const countyNameToId = new Map<string, string>();
+        for (const cName of countyMap.keys()) {
+            const key = `county:${cName.toLowerCase()}:${countryId}`;
+            const id = existingMap.get(key);
+            if (id) {
+                countyNameToId.set(cName, id);
+            }
+        }
+
+        // 5. Identify missing cities
+        const citiesToInsert: any[] = [];
+        dataset.forEach(item => {
+            const cName = item.judet;
+            const parentId = countyNameToId.get(cName);
+            if (!parentId) return;
+
+            const key = `city:${item.nume.toLowerCase()}:${parentId}`;
+            if (!existingMap.has(key)) {
+                citiesToInsert.push({
+                    type: 'city',
+                    name: item.nume,
+                    parent_id: parentId,
+                    latitude: item.lat || null,
+                    longitude: item.lng || null
+                });
+            }
+        });
+
+        // Batch insert cities in chunks of 1000 to avoid packet size limitations
+        const chunkSize = 1000;
+        let insertedCitiesCount = 0;
+        for (let i = 0; i < citiesToInsert.length; i += chunkSize) {
+            const chunk = citiesToInsert.slice(i, i + chunkSize);
+            const { data: insertedChunks, error: chunkErr } = await supabase
+                .from('system_locations')
+                .insert(chunk)
+                .select();
+            if (chunkErr) throw chunkErr;
+            insertedCitiesCount += chunk.length;
+            
+            // Add to existingMap for neighborhood matching
+            if (insertedChunks) {
+                insertedChunks.forEach((c: any) => {
+                    const key = `city:${c.name.toLowerCase()}:${c.parent_id}`;
+                    existingMap.set(key, c.id);
+                });
+            }
+        }
+
+        // Map of City Name -> ID for neighborhood matching
+        const getCityId = (cityName: string, countyName: string) => {
+            const parentId = countyNameToId.get(countyName);
+            if (!parentId) return null;
+            return existingMap.get(`city:${cityName.toLowerCase()}:${parentId}`);
+        };
+
+        // 6. Precompiled Major Cities Neighborhoods
+        const majorNeighborhoods: { [cityName: string]: { countyName: string; areas: string[] } } = {
+            'Timișoara': {
+                countyName: 'Timiș',
+                areas: ['Aradului', 'Bastion', 'Blașcovici', 'Braytim', 'Bucovina', 'Buziașului', 'Centru / Cetate', 'Ciarda Roșie', 'Circumvalațiunii', 'Complexul Studențesc', 'Dacia', 'Dâmbovița', 'Elisabetin', 'Fabric', 'Fratelia', 'Freidorf', 'Ghiroda Nouă', 'Girocului', 'Iosefin', 'Kuncz', 'Lipovei', 'Martirilor', 'Mehala', 'Modern', 'Olimpia–Stadion', 'Plopi', 'Ronaț', 'Soarelui', 'Steaua', 'Șagului', 'Telegrafului', 'Tipografilor', 'Torontalului', 'UMT–Pădurea Verde', 'Take Ionescu', 'Simion Bărnuțiu', 'Calea Urseni', 'Zona Odobescu', 'Zona Medicină']
+            },
+            'București': {
+                countyName: 'București',
+                areas: ['Sector 1', 'Sector 2', 'Sector 3', 'Sector 4', 'Sector 5', 'Sector 6', 'Băneasa', 'Aviatorilor', 'Dorobanți', 'Primaverii', 'Floreasca', 'Pipera', 'Tei', 'Colentina', 'Pantelimon', 'Titan', 'Dristor', 'Văcărești', 'Berceni', 'Giurgiului', 'Ferentari', 'Rahova', 'Cotroceni', 'Drumul Taberei', 'Militari', 'Crângași', 'Grivița', 'Chitila']
+            },
+            'Cluj-Napoca': {
+                countyName: 'Cluj',
+                areas: ['Mănăștur', 'Gheorgheni', 'Mărăști', 'Zorilor', 'Grigorescu', 'Andrei Mureșanu', 'Centru', 'Bună Ziua', 'Europa', 'Plopilor', 'Dâmbul Rotund', 'Iris', 'Bulgaria', 'Someșeni', 'Făget', 'Becaș', 'Sopor', 'Borhanci']
+            },
+            'Brașov': {
+                countyName: 'Brașov',
+                areas: ['Astra', 'Răcădău', 'Centrul Civic', 'Centrul Vechi', 'Griviței', 'Tractorul', 'Bartolomeu', 'Craiter', 'Florilor', 'Schei', 'Noua', 'Stupini']
+            },
+            'Constanța': {
+                countyName: 'Constanța',
+                areas: ['Faleză Nord', 'Tomis I', 'Tomis II', 'Tomis III', 'Tomis Nord', 'Inel II', 'Km 4-5', 'Km 5', 'Poarta 6', 'Centru', 'Bariera Dorobanți', 'Coiciu', 'Palas', 'Compozitori', 'Mamaia']
+            },
+            'Iași': {
+                countyName: 'Iași',
+                areas: ['Copou', 'Nicolina', 'CUG', 'Alexandru cel Bun', 'Dacia', 'Păcurari', 'Tătărași', 'Podu Roș', 'Cantemir', 'Bucium', 'Galata', 'Frumoasa', 'Baza 3', 'Centru']
+            }
+        };
+
+        const areasToInsert: any[] = [];
+        for (const [cityName, cityInfo] of Object.entries(majorNeighborhoods)) {
+            const cityId = getCityId(cityName, cityInfo.countyName);
+            if (!cityId) continue;
+
+            cityInfo.areas.forEach(aName => {
+                const key = `area:${aName.toLowerCase()}:${cityId}`;
+                if (!existingMap.has(key)) {
+                    areasToInsert.push({
+                        type: 'area',
+                        name: aName,
+                        parent_id: cityId,
+                        latitude: null,
+                        longitude: null
+                    });
+                }
+            });
+        }
+
+        if (areasToInsert.length > 0) {
+            const { error: areaErr } = await supabase
+                .from('system_locations')
+                .insert(areasToInsert);
+            if (areaErr) throw areaErr;
+        }
+
+        revalidatePath('/dashboard/admin/settings/locations');
+        return {
+            success: true,
+            message: `Successfully imported Romania: ${countiesToInsert.length} new counties, ${insertedCitiesCount} new cities, and ${areasToInsert.length} new neighborhoods.`
+        };
+    } catch (err: any) {
+        console.error("Failed to import Romania locations:", err);
+        return { success: false, error: err.message || 'Failed to import Romania locations' };
+    }
+}
+
