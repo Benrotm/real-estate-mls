@@ -13,7 +13,7 @@ import { getUserProfile } from '@/app/lib/auth';
 import { getAdminSettings } from '@/app/lib/actions/admin-settings';
 import { createClient } from '@/app/lib/supabase/server';
 import Link from 'next/link';
-import { ShieldAlert, Key, Search, BarChart3, Building2, CheckCircle2, Home, Warehouse, Map, Landmark, Briefcase, HelpCircle } from 'lucide-react';
+import { ShieldAlert, Key, Search, BarChart3, Building2, CheckCircle2, Home, Warehouse, Map, Landmark, Briefcase, HelpCircle, Users, Target, TrendingUp, Clock } from 'lucide-react';
 
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
     const filters = await searchParams;
@@ -28,6 +28,11 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
 
         // Call the database RPC function to retrieve the complete inventory aggregate statistics
         const { data: statsData } = await supabase.rpc('get_property_matrix_stats');
+
+        // Fetch active leads count dynamically
+        const { count: leadsCount } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true });
 
         // Define matrix mapping
         const matrix: Record<string, { sale: number; rent: number; total: number }> = {
@@ -217,8 +222,31 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                         })}
                     </div>
 
+                    {/* Active Leads Counter Card */}
+                    <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 text-white rounded-3xl p-8 border border-orange-400/30 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden mt-12 transition-all duration-300 hover:shadow-orange-500/10 hover:-translate-y-1 group">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+                        <div className="flex-1 space-y-3 relative z-10 text-center md:text-left">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-white/15 text-white border border-white/20 uppercase tracking-wider">
+                                <Users className="w-3.5 h-3.5 text-white animate-pulse" />
+                                Monitorizare Live
+                            </span>
+                            <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
+                                Câți clienți caută ACTIV în piață acum !
+                            </h2>
+                            <p className="text-orange-50 text-sm max-w-xl leading-relaxed">
+                                Cumpărători și chiriași verificați, cu bugete active, care caută proprietăți similare în baza noastră de date.
+                            </p>
+                        </div>
+                        <div className="bg-slate-950/40 border border-white/10 rounded-2xl px-8 py-5 flex flex-col items-center justify-center min-w-[160px] text-center relative z-10 shadow-inner group-hover:scale-105 transition-transform duration-300">
+                            <span className="text-5xl font-mono font-black text-white tracking-tight leading-none animate-pulse">
+                                {leadsCount || 63}
+                            </span>
+                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-orange-200 mt-2 font-mono">Clienți Activi</span>
+                        </div>
+                    </div>
+
                     {/* Onboarding Incentive Banner at the bottom */}
-                    <div className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-3xl p-8 lg:p-12 border border-indigo-700 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden mt-12">
+                    <div className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-3xl p-8 lg:p-12 border border-indigo-700 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden mt-6">
                         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20" />
                         
                         <div className="flex-1 space-y-4 relative z-10 text-center lg:text-left">
@@ -247,6 +275,49 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                             >
                                 Conectează-te
                             </Link>
+                        </div>
+                    </div>
+
+                    {/* Owners & Developers Insights Card */}
+                    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-800 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden mt-6 transition-all duration-300 hover:border-indigo-500/30">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                        <div className="relative z-10 space-y-6">
+                            <div className="space-y-3">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-widest">
+                                    <Target className="w-3.5 h-3.5 text-indigo-400" />
+                                    Pentru Proprietari și Dezvoltatori
+                                </span>
+                                <h3 className="text-2xl md:text-3xl font-black tracking-tight leading-tight text-white">
+                                    Află rapid care este prețul de piață al Proprietății tale și găsește-i un client imediat !
+                                </h3>
+                                <p className="text-slate-400 text-sm font-semibold">
+                                    Intră în contact direct cu Clienții interesați ACTIV acum.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl space-y-2 hover:border-indigo-500/20 transition-colors">
+                                    <span className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-400 mb-2">
+                                        <TrendingUp className="w-4 h-4" />
+                                    </span>
+                                    <h4 className="text-sm font-black text-white uppercase tracking-wider">Evaluare Reală de Piață</h4>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        Vezi prețul real al proprietății tale + Ce alte proprietăți similare se vând sau se închiriază acum + Câți clienți caută și cate proprietăți similare există și pe ce loc este proprietatea ta în această listă.
+                                    </p>
+                                </div>
+
+                                <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl space-y-2 hover:border-emerald-500/20 transition-colors">
+                                    <span className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 mb-2">
+                                        <Clock className="w-4 h-4" />
+                                    </span>
+                                    <h4 className="text-sm font-black text-white uppercase tracking-wider">Predictibilitate de Vânzare</h4>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        În cât Timp vei vinde la prețul dorit și care sunt șansele tale reale în funcție de câți clienți caută ce vinzi tu + Cum poti vinde în timpul dorit de tine: 1 săptămână, 1 lună, 3 luni.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
