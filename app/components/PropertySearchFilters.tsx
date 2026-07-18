@@ -15,6 +15,7 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
     const [showMoreDetails, setShowMoreDetails] = useState(false);
     const [showAmenities, setShowAmenities] = useState(false);
     const [showAreaMap, setShowAreaMap] = useState(false);
+    const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
     // Initialize state from URL params
     const initialFeatures = searchParams.getAll('features');
@@ -213,6 +214,19 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
             {/* Inner Content Card */}
             <div className="relative bg-white rounded-2xl h-full z-10">
 
+                {/* Mobile Filter Toggle Header */}
+                <button
+                    type="button"
+                    onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
+                    className="w-full px-5 py-4 flex items-center justify-between text-sm font-black text-slate-800 md:hidden transition-colors rounded-t-2xl hover:bg-slate-50 border-b border-slate-100"
+                >
+                    <span className="flex items-center gap-2">
+                        <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+                        Choose Filters
+                    </span>
+                    {isMobileFiltersOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                </button>
+
                 {/* Save Search Modal */}
                 {isSaveModalOpen && (
                     <div className="absolute top-20 right-5 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
@@ -249,7 +263,7 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                 )}
 
                 {/* HEADER / KEY FILTERS SECTION - "Always Visible" */}
-                <div className="p-5">
+                <div className={`p-5 ${isMobileFiltersOpen ? 'block' : 'hidden md:block'}`}>
                     <div className="flex flex-col lg:flex-row gap-4 items-end">
 
                         {/* Grid of Main Inputs */}
@@ -391,7 +405,7 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                 </div>
 
                 {/* COLLAPSIBLE: More Details */}
-                <div className="border-t border-slate-100">
+                <div className={`border-t border-slate-100 ${isMobileFiltersOpen ? 'block' : 'hidden md:block'}`}>
                     <button
                         onClick={() => setShowMoreDetails(!showMoreDetails)}
                         className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-teal-600 hover:bg-teal-50 transition-colors group"
@@ -556,7 +570,7 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                 </div>
 
                 {/* COLLAPSIBLE: Amenities */}
-                <div className="border-t border-slate-100">
+                <div className={`border-t border-slate-100 ${isMobileFiltersOpen ? 'block' : 'hidden md:block'}`}>
                     <button
                         onClick={() => setShowAmenities(!showAmenities)}
                         className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-amber-600 hover:bg-amber-50 transition-colors group"
