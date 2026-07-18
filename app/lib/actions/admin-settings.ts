@@ -576,9 +576,23 @@ export async function getSystemLocations() {
 
         if (error) throw error;
         
+        const countries = data.filter((x: any) => x.type === 'country').map((x: any) => ({
+            id: x.id,
+            name: x.name,
+            latitude: x.latitude,
+            longitude: x.longitude
+        }));
+        const counties = data.filter((x: any) => x.type === 'county').map((x: any) => ({
+            id: x.id,
+            name: x.name,
+            parent_id: x.parent_id,
+            latitude: x.latitude,
+            longitude: x.longitude
+        }));
         const cities = data.filter((x: any) => x.type === 'city').map((x: any) => ({
             id: x.id,
             name: x.name,
+            parent_id: x.parent_id,
             latitude: x.latitude,
             longitude: x.longitude
         }));
@@ -590,15 +604,15 @@ export async function getSystemLocations() {
             longitude: x.longitude
         }));
 
-        return { cities, areas };
+        return { countries, counties, cities, areas };
     } catch (err: any) {
         console.error("Failed to load system locations:", err);
-        return { cities: [], areas: [] };
+        return { countries: [], counties: [], cities: [], areas: [] };
     }
 }
 
 export async function addSystemLocation(
-    type: 'city' | 'area', 
+    type: 'country' | 'county' | 'city' | 'area', 
     name: string,
     parentId?: string | null,
     latitude?: number | null,
@@ -723,7 +737,7 @@ export async function deleteSystemLocation(id: string) {
 
 export async function batchAddSystemLocations(
     items: {
-        type: 'city' | 'area';
+        type: 'country' | 'county' | 'city' | 'area';
         name: string;
         parent_id?: string | null;
         latitude?: number | null;

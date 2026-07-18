@@ -5,7 +5,7 @@ import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 export const revalidate = 0; // Refresh data on request
 
 export default async function LocationsSettingsPage() {
-    const { cities, areas } = await getSystemLocations();
+    const { countries, counties, cities, areas } = await getSystemLocations();
 
     return (
         <div className="min-h-screen bg-slate-950 text-white p-8">
@@ -16,11 +16,16 @@ export default async function LocationsSettingsPage() {
                         Location Lists
                     </h1>
                     <p className="text-slate-400 mt-2">
-                        Manage the list of system cities and area/neighborhood suggestions synchronized across all properties, leads, and public invite forms.
+                        Manage the list of system countries, counties, cities, and area/neighborhood suggestions synchronized across all properties, leads, and public invite forms.
                     </p>
                 </header>
 
-                <LocationsSettingsClient initialCities={cities} initialAreas={areas} />
+                <LocationsSettingsClient 
+                    initialCountries={countries || []}
+                    initialCounties={counties || []}
+                    initialCities={cities || []} 
+                    initialAreas={areas || []} 
+                />
             </div>
         </div>
     );

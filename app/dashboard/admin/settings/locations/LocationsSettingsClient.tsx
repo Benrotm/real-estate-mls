@@ -10,13 +10,15 @@ import { useGoogleMaps } from '@/app/lib/hooks/useGoogleMaps';
 interface LocationItem {
     id: string;
     name: string;
-    type?: 'city' | 'area';
+    type?: 'country' | 'county' | 'city' | 'area';
     parent_id?: string | null;
     latitude?: number | null;
     longitude?: number | null;
 }
 
 interface Props {
+    initialCountries: LocationItem[];
+    initialCounties: LocationItem[];
     initialCities: LocationItem[];
     initialAreas: LocationItem[];
 }
@@ -24,79 +26,282 @@ interface Props {
 const DEFAULT_LAT = 45.75372;
 const DEFAULT_LNG = 21.22571;
 
-export default function LocationsSettingsClient({ initialCities, initialAreas }: Props) {
-    const [activeTab, setActiveTab] = useState<'city' | 'area' | 'auto-import'>('city');
+export default function LocationsSettingsClient({ initialCountries, initialCounties, initialCities, initialAreas }: Props) {
+    const [activeTab, setActiveTab] = useState<'country' | 'county' | 'city' | 'area' | 'auto-import'>('city');
 
     // Auto-Import States
-    const [citySearchQuery, setCitySearchQuery] = useState('');
-    const [citySearchResults, setCitySearchResults] = useState<any[]>([]);
-    const [isSearchingCity, setIsSearchingCity] = useState(false);
+    const [hierarchySearchQuery, setHierarchySearchQuery] = useState('');
+    const [resolvedHierarchy, setResolvedHierarchy] = useState<any | null>(null);
+    const [isResolving, setIsResolving] = useState(false);
 
-    const [selectedScanCity, setSelectedScanCity] = useState('');
+    const [scanType, setScanType] = useState<'city' | 'area'>('area');
+    const [selectedScanParentId, setSelectedScanParentId] = useState('');
     const [scanResults, setScanResults] = useState<any[]>([]);
     const [selectedResults, setSelectedResults] = useState<string[]>([]);
     const [isScanning, setIsScanning] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
     const { isLoaded } = useGoogleMaps();
 
-    const handleGoogleCitySearch = () => {
-        if (!citySearchQuery.trim()) return;
+    const parseAddressComponents = (components: any[], targetLocation: { lat: number; lng: number }) => {
+        const result: {
+            country?: { name: string; latitude: number; longitude: number };
+            county?: { name: string; latitude: number; longitude: number };
+            city?: { name: string; latitude: number; longitude: number };
+            area?: { name: string; latitude: number; longitude: number };
+        } = {};
+        
+        const countryComp = components.find(c => c.types.includes('country'));
+        if (countryComp) {
+            result.country = { name: countryComp.long_name, latitude: targetLocation.lat, longitude: targetLocation.lng };
+        }
+        
+        const countyComp = components.find(c => c.types.includes('administrative_area_level_1'));
+        if (countyComp) {
+            let name = countyComp.long_name;
+            if (name.startsWith('Județul ')) name = name.replace('Județul ', '');
+            if (name.endsWith(' County')) name = name.replace(' County', '');
+            result.county = { name, latitude: targetLocation.lat, longitude: targetLocation.lng };
+        }
+        
+        const cityComp = components.find(c => c.types.includes('locality')) || 
+                         components.find(c => c.types.includes('postal_town')) ||
+                         components.find(c => c.types.includes('administrative_area_level_2'));
+        if (cityComp) {
+            result.city = { name: cityComp.long_name, latitude: targetLocation.lat, longitude: targetLocation.lng };
+        }
+        
+        const areaComp = components.find(c => c.types.includes('neighborhood')) ||
+                         components.find(c => c.types.includes('sublocality')) ||
+                         components.find(c => c.types.includes('colloquial_area')) ||
+                         components.find(c => c.types.includes('sublocality_level_1'));
+        if (areaComp) {
+            result.area = { name: areaComp.long_name, latitude: targetLocation.lat, longitude: targetLocation.lng };
+        }
+
+        return result;
+    };
+
+    const handleResolveHierarchy = async () => {
+        if (!hierarchySearchQuery.trim()) return;
         if (!window.google) {
             toast.error("Google Maps script not loaded yet.");
             return;
         }
-        setIsSearchingCity(true);
-        setCitySearchResults([]);
+
+        setIsResolving(true);
+        setResolvedHierarchy(null);
 
         const service = new google.maps.places.PlacesService(document.createElement('div'));
-        service.textSearch({ query: citySearchQuery }, (results, status) => {
-            setIsSearchingCity(false);
-            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                const found = results.map(place => ({
-                    name: place.name,
-                    latitude: place.geometry?.location?.lat() || 0,
-                    longitude: place.geometry?.location?.lng() || 0,
-                    formatted_address: place.formatted_address || ''
-                }));
-                setCitySearchResults(found);
-                toast.success(`Found ${found.length} results on Google.`);
+        
+        service.textSearch({ query: hierarchySearchQuery }, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0]) {
+                const place = results[0];
+                const placeId = place.place_id;
+
+                if (!placeId) {
+                    toast.error("Place ID not found for this location.");
+                    setIsResolving(false);
+                    return;
+                }
+
+                service.getDetails({ placeId, fields: ['address_components', 'geometry'] }, async (placeDetail, detailStatus) => {
+                    if (detailStatus === google.maps.places.PlacesServiceStatus.OK && placeDetail) {
+                        const coords = {
+                            lat: placeDetail.geometry?.location?.lat() || DEFAULT_LAT,
+                            lng: placeDetail.geometry?.location?.lng() || DEFAULT_LNG
+                        };
+
+                        const parsed = parseAddressComponents(placeDetail.address_components || [], coords);
+                        const geocoder = new google.maps.Geocoder();
+
+                        const geocodePromise = (address: string) => {
+                            return new Promise<{lat: number, lng: number} | null>((resolve) => {
+                                geocoder.geocode({ address }, (geoResults, geoStatus) => {
+                                    if (geoStatus === 'OK' && geoResults && geoResults[0]) {
+                                        resolve({
+                                            lat: geoResults[0].geometry.location.lat(),
+                                            lng: geoResults[0].geometry.location.lng()
+                                        });
+                                    } else {
+                                        resolve(null);
+                                    }
+                                });
+                            });
+                        };
+
+                        // Geocode parents to get actual center coordinates if possible
+                        if (parsed.country) {
+                            const cGeo = await geocodePromise(parsed.country.name);
+                            parsed.country.latitude = cGeo?.lat || coords.lat;
+                            parsed.country.longitude = cGeo?.lng || coords.lng;
+                        }
+                        if (parsed.county) {
+                            const parentString = parsed.country ? `${parsed.county.name}, ${parsed.country.name}` : parsed.county.name;
+                            const cGeo = await geocodePromise(parentString);
+                            parsed.county.latitude = cGeo?.lat || coords.lat;
+                            parsed.county.longitude = cGeo?.lng || coords.lng;
+                        }
+                        if (parsed.city) {
+                            const parentString = [parsed.city.name, parsed.county?.name, parsed.country?.name].filter(Boolean).join(', ');
+                            const cGeo = await geocodePromise(parentString);
+                            parsed.city.latitude = cGeo?.lat || coords.lat;
+                            parsed.city.longitude = cGeo?.lng || coords.lng;
+                        }
+                        if (parsed.area) {
+                            parsed.area.latitude = coords.lat;
+                            parsed.area.longitude = coords.lng;
+                        }
+
+                        setResolvedHierarchy(parsed);
+                        toast.success("Resolved address hierarchy!");
+                    } else {
+                        toast.error("Failed to retrieve place details.");
+                    }
+                    setIsResolving(false);
+                });
             } else {
-                toast.error("No locations found matching that query.");
+                toast.error("No location found matching that query.");
+                setIsResolving(false);
             }
         });
     };
 
-    const handleImportSingleCity = async (cityData: any) => {
+    const handleImportHierarchy = async () => {
+        if (!resolvedHierarchy) return;
+
+        setIsImporting(true);
         try {
-            const res = await addSystemLocation(
-                'city',
-                cityData.name,
-                null,
-                cityData.latitude,
-                cityData.longitude
-            );
-            if (res.success && res.data) {
-                toast.success(`City "${cityData.name}" imported successfully!`);
-                const newItem: LocationItem = {
-                    id: res.data.id,
-                    name: res.data.name,
-                    type: 'city',
-                    latitude: res.data.latitude,
-                    longitude: res.data.longitude
-                };
-                setCities(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
-                setCitySearchResults(prev => prev.filter(c => c.name !== cityData.name));
-            } else {
-                toast.error(res.error || "Failed to import city.");
+            let currentParentId: string | null = null;
+
+            // 1. Process Country
+            if (resolvedHierarchy.country) {
+                const existing = countries.find(c => c.name.toLowerCase() === resolvedHierarchy.country.name.toLowerCase());
+                if (existing) {
+                    currentParentId = existing.id;
+                } else {
+                    const res = await addSystemLocation(
+                        'country',
+                        resolvedHierarchy.country.name,
+                        null,
+                        resolvedHierarchy.country.latitude,
+                        resolvedHierarchy.country.longitude
+                    );
+                    if (res.success && res.data) {
+                        const newItem: LocationItem = {
+                            id: res.data.id,
+                            name: res.data.name,
+                            type: 'country',
+                            latitude: res.data.latitude,
+                            longitude: res.data.longitude
+                        };
+                        setCountries(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                        currentParentId = res.data.id;
+                    } else {
+                        throw new Error(res.error || "Failed to import Country");
+                    }
+                }
             }
+
+            // 2. Process County
+            if (resolvedHierarchy.county) {
+                const existing = counties.find(c => c.name.toLowerCase() === resolvedHierarchy.county.name.toLowerCase() && c.parent_id === currentParentId);
+                if (existing) {
+                    currentParentId = existing.id;
+                } else {
+                    const res = await addSystemLocation(
+                        'county',
+                        resolvedHierarchy.county.name,
+                        currentParentId,
+                        resolvedHierarchy.county.latitude,
+                        resolvedHierarchy.county.longitude
+                    );
+                    if (res.success && res.data) {
+                        const newItem: LocationItem = {
+                            id: res.data.id,
+                            name: res.data.name,
+                            type: 'county',
+                            parent_id: res.data.parent_id,
+                            latitude: res.data.latitude,
+                            longitude: res.data.longitude
+                        };
+                        setCounties(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                        currentParentId = res.data.id;
+                    } else {
+                        throw new Error(res.error || "Failed to import County");
+                    }
+                }
+            }
+
+            // 3. Process City
+            if (resolvedHierarchy.city) {
+                const existing = cities.find(c => c.name.toLowerCase() === resolvedHierarchy.city.name.toLowerCase() && c.parent_id === currentParentId);
+                if (existing) {
+                    currentParentId = existing.id;
+                } else {
+                    const res = await addSystemLocation(
+                        'city',
+                        resolvedHierarchy.city.name,
+                        currentParentId,
+                        resolvedHierarchy.city.latitude,
+                        resolvedHierarchy.city.longitude
+                    );
+                    if (res.success && res.data) {
+                        const newItem: LocationItem = {
+                            id: res.data.id,
+                            name: res.data.name,
+                            type: 'city',
+                            parent_id: res.data.parent_id,
+                            latitude: res.data.latitude,
+                            longitude: res.data.longitude
+                        };
+                        setCities(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                        currentParentId = res.data.id;
+                    } else {
+                        throw new Error(res.error || "Failed to import City");
+                    }
+                }
+            }
+
+            // 4. Process Area
+            if (resolvedHierarchy.area) {
+                const existing = areas.find(c => c.name.toLowerCase() === resolvedHierarchy.area.name.toLowerCase() && c.parent_id === currentParentId);
+                if (!existing) {
+                    const res = await addSystemLocation(
+                        'area',
+                        resolvedHierarchy.area.name,
+                        currentParentId,
+                        resolvedHierarchy.area.latitude,
+                        resolvedHierarchy.area.longitude
+                    );
+                    if (res.success && res.data) {
+                        const newItem: LocationItem = {
+                            id: res.data.id,
+                            name: res.data.name,
+                            type: 'area',
+                            parent_id: res.data.parent_id,
+                            latitude: res.data.latitude,
+                            longitude: res.data.longitude
+                        };
+                        setAreas(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                    } else {
+                        throw new Error(res.error || "Failed to import Area");
+                    }
+                }
+            }
+
+            toast.success("Successfully imported entire nested location hierarchy!");
+            setResolvedHierarchy(null);
+            setHierarchySearchQuery('');
         } catch (err: any) {
-            toast.error(err.message || "Failed to import city.");
+            toast.error(err.message || "Failed to import location hierarchy.");
+        } finally {
+            setIsImporting(false);
         }
     };
 
     const handleGoogleScanAreas = () => {
-        if (!selectedScanCity) {
-            toast.error("Please select a city first.");
+        if (!selectedScanParentId) {
+            toast.error("Please select a parent location first.");
             return;
         }
         if (!window.google) {
@@ -104,19 +309,28 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
             return;
         }
 
-        const cityObj = cities.find(c => c.id === selectedScanCity);
-        if (!cityObj) return;
+        const parentObj = scanType === 'city' 
+            ? counties.find(c => c.id === selectedScanParentId) 
+            : cities.find(c => c.id === selectedScanParentId);
+            
+        if (!parentObj) return;
 
         setIsScanning(true);
         setScanResults([]);
         setSelectedResults([]);
 
         const service = new google.maps.places.PlacesService(document.createElement('div'));
-        const queries = [
-            `neighborhoods in ${cityObj.name}`,
-            `cartiere in ${cityObj.name}`,
-            `areas in ${cityObj.name}`
-        ];
+        const queries = scanType === 'city'
+            ? [
+                `cities in ${parentObj.name}`,
+                `towns in ${parentObj.name}`,
+                `localities in ${parentObj.name}`
+              ]
+            : [
+                `neighborhoods in ${parentObj.name}`,
+                `cartiere in ${parentObj.name}`,
+                `areas in ${parentObj.name}`
+              ];
 
         let combinedResults: any[] = [];
         let completed = 0;
@@ -143,14 +357,14 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                 }
 
                 if (completed === queries.length) {
-                    const filtered = combinedResults.filter(r => r.name.toLowerCase() !== cityObj.name.toLowerCase());
+                    const filtered = combinedResults.filter(r => r.name.toLowerCase() !== parentObj.name.toLowerCase());
                     setScanResults(filtered);
                     setSelectedResults(filtered.map(r => r.name));
                     setIsScanning(false);
                     if (filtered.length === 0) {
-                        toast.error(`No sublocalities or areas found for ${cityObj.name} on Google.`);
+                        toast.error(`No sub-locations found for ${parentObj.name} on Google.`);
                     } else {
-                        toast.success(`Found ${filtered.length} locations on Google for ${cityObj.name}!`);
+                        toast.success(`Found ${filtered.length} locations on Google for ${parentObj.name}!`);
                     }
                 }
             });
@@ -159,50 +373,60 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
 
     const handleImportSelectedAreas = async () => {
         if (selectedResults.length === 0) {
-            toast.error("Please select at least one area to import.");
+            toast.error("Please select at least one item to import.");
             return;
         }
 
-        const cityObj = cities.find(c => c.id === selectedScanCity);
-        if (!cityObj) return;
+        const parentObj = scanType === 'city'
+            ? counties.find(c => c.id === selectedScanParentId)
+            : cities.find(c => c.id === selectedScanParentId);
+
+        if (!parentObj) return;
 
         setIsImporting(true);
         try {
             const itemsToImport = scanResults
                 .filter(r => selectedResults.includes(r.name))
                 .map(r => ({
-                    type: 'area' as const,
+                    type: scanType,
                     name: r.name,
-                    parent_id: cityObj.id,
+                    parent_id: parentObj.id,
                     latitude: r.latitude,
                     longitude: r.longitude
                 }));
 
             const res = await batchAddSystemLocations(itemsToImport);
             if (res.success && res.data) {
-                toast.success(`Successfully imported ${itemsToImport.length} areas into ${cityObj.name}!`);
+                toast.success(`Successfully imported ${itemsToImport.length} ${scanType === 'city' ? 'cities' : 'areas'} into ${parentObj.name}!`);
                 
                 const newItems: LocationItem[] = res.data.map((d: any) => ({
                     id: d.id,
                     name: d.name,
-                    type: 'area',
+                    type: d.type,
                     parent_id: d.parent_id,
                     latitude: d.latitude,
                     longitude: d.longitude
                 }));
 
-                setAreas(prev => [...prev, ...newItems].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                if (scanType === 'city') {
+                    setCities(prev => [...prev, ...newItems].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                } else {
+                    setAreas(prev => [...prev, ...newItems].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                }
+                
                 setScanResults([]);
                 setSelectedResults([]);
             } else {
-                toast.error(res.error || "Failed to batch import areas.");
+                toast.error(res.error || `Failed to batch import ${scanType === 'city' ? 'cities' : 'areas'}.`);
             }
         } catch (err: any) {
-            toast.error(err.message || "Failed to import areas.");
+            toast.error(err.message || "Failed to import items.");
         } finally {
             setIsImporting(false);
         }
     };
+    const [countries, setCountries] = useState<LocationItem[]>(initialCountries || []);
+    const [counties, setCounties] = useState<LocationItem[]>(initialCounties || []);
     const [cities, setCities] = useState<LocationItem[]>(initialCities);
     const [areas, setAreas] = useState<LocationItem[]>(initialAreas);
     const [searchQuery, setSearchQuery] = useState('');
@@ -222,7 +446,11 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
     const [isUpdating, setIsUpdating] = useState(false);
 
     // Get current list based on tab
-    const currentList = activeTab === 'city' ? cities : areas;
+    const currentList = 
+        activeTab === 'country' ? countries :
+        activeTab === 'county' ? counties :
+        activeTab === 'city' ? cities :
+        areas;
 
     // Filter current list based on search query
     const filteredList = currentList.filter(item =>
@@ -245,12 +473,13 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
 
         setIsSubmitting(true);
         try {
+            const targetType = activeTab === 'auto-import' ? 'city' : activeTab;
             const res = await addSystemLocation(
-                activeTab === 'city' ? 'city' : 'area', 
+                targetType, 
                 trimmedName, 
-                activeTab === 'area' ? newLocationParentId || null : null,
-                activeTab === 'city' ? DEFAULT_LAT : null,
-                activeTab === 'city' ? DEFAULT_LNG : null
+                targetType === 'country' ? null : newLocationParentId || null,
+                targetType === 'city' ? DEFAULT_LAT : null,
+                targetType === 'city' ? DEFAULT_LNG : null
             );
             if (res.success && res.data) {
                 const newItem: LocationItem = { 
@@ -261,9 +490,13 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                     latitude: res.data.latitude,
                     longitude: res.data.longitude
                 };
-                if (activeTab === 'city') {
+                if (activeTab === 'country') {
+                    setCountries(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                } else if (activeTab === 'county') {
+                    setCounties(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                } else if (activeTab === 'city') {
                     setCities(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
-                } else {
+                } else if (activeTab === 'area') {
                     setAreas(prev => [...prev, newItem].sort((a, b) => a.name.localeCompare(b.name, 'ro')));
                 }
                 setNewLocationName('');
@@ -288,9 +521,13 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
         try {
             const res = await deleteSystemLocation(id);
             if (res.success) {
-                if (activeTab === 'city') {
+                if (activeTab === 'country') {
+                    setCountries(prev => prev.filter(item => item.id !== id));
+                } else if (activeTab === 'county') {
+                    setCounties(prev => prev.filter(item => item.id !== id));
+                } else if (activeTab === 'city') {
                     setCities(prev => prev.filter(item => item.id !== id));
-                } else {
+                } else if (activeTab === 'area') {
                     setAreas(prev => prev.filter(item => item.id !== id));
                 }
                 toast.success('Location removed successfully!');
@@ -322,7 +559,7 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
         try {
             const res = await updateSystemLocation(editingItem.id, {
                 name: editName,
-                parent_id: activeTab === 'area' ? editParentId || null : null,
+                parent_id: activeTab === 'country' ? null : editParentId || null,
                 latitude: editLat,
                 longitude: editLng
             });
@@ -337,9 +574,13 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                     longitude: res.data.longitude
                 };
 
-                if (activeTab === 'city') {
+                if (activeTab === 'country') {
+                    setCountries(prev => prev.map(item => item.id === editingItem.id ? updatedItem : item).sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                } else if (activeTab === 'county') {
+                    setCounties(prev => prev.map(item => item.id === editingItem.id ? updatedItem : item).sort((a, b) => a.name.localeCompare(b.name, 'ro')));
+                } else if (activeTab === 'city') {
                     setCities(prev => prev.map(item => item.id === editingItem.id ? updatedItem : item).sort((a, b) => a.name.localeCompare(b.name, 'ro')));
-                } else {
+                } else if (activeTab === 'area') {
                     setAreas(prev => prev.map(item => item.id === editingItem.id ? updatedItem : item).sort((a, b) => a.name.localeCompare(b.name, 'ro')));
                 }
 
@@ -360,7 +601,35 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
         <div className="space-y-6">
             {/* Tab Swapping Header */}
             <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 border-b border-slate-800 pb-4">
-                <div className="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800/80">
+                <div className="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800/80 flex-wrap gap-1">
+                    <button
+                        onClick={() => {
+                            setActiveTab('country');
+                            setSearchQuery('');
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
+                            activeTab === 'country'
+                                ? 'bg-orange-500 text-white shadow-md'
+                                : 'text-slate-400 hover:text-white'
+                        }`}
+                    >
+                        <Globe className="w-4 h-4" />
+                        Countries ({countries.length})
+                    </button>
+                    <button
+                        onClick={() => {
+                            setActiveTab('county');
+                            setSearchQuery('');
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
+                            activeTab === 'county'
+                                ? 'bg-orange-500 text-white shadow-md'
+                                : 'text-slate-400 hover:text-white'
+                        }`}
+                    >
+                        <MapPin className="w-4 h-4" />
+                        Counties ({counties.length})
+                    </button>
                     <button
                         onClick={() => {
                             setActiveTab('city');
@@ -400,7 +669,7 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                                 : 'text-slate-400 hover:text-white'
                         }`}
                     >
-                        <Globe className="w-4 h-4" />
+                        <Sparkles className="w-4 h-4" />
                         Auto-Import (Google)
                     </button>
                 </div>
@@ -408,6 +677,32 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                 {/* Inline Add form */}
                 {activeTab !== 'auto-import' && (
                     <form onSubmit={handleAddLocation} className="flex flex-wrap gap-2 items-center">
+                        {activeTab === 'county' && (
+                            <select
+                                value={newLocationParentId}
+                                onChange={(e) => setNewLocationParentId(e.target.value)}
+                                required
+                                className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 w-52 cursor-pointer"
+                            >
+                                <option value="">Select Parent Country... *</option>
+                                {countries.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        )}
+                        {activeTab === 'city' && (
+                            <select
+                                value={newLocationParentId}
+                                onChange={(e) => setNewLocationParentId(e.target.value)}
+                                required
+                                className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 w-52 cursor-pointer"
+                            >
+                                <option value="">Select Parent County... *</option>
+                                {counties.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        )}
                         {activeTab === 'area' && (
                             <select
                                 value={newLocationParentId}
@@ -426,7 +721,7 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                             required
                             value={newLocationName}
                             onChange={(e) => setNewLocationName(e.target.value)}
-                            placeholder={`Add new ${activeTab === 'city' ? 'city...' : 'area...'}`}
+                            placeholder={`Add new ${activeTab}...`}
                             className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white placeholder-slate-500 w-64"
                         />
                         <button
@@ -453,7 +748,7 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={`Search ${activeTab === 'city' ? 'cities' : 'areas'} list...`}
+                        placeholder={`Search ${activeTab} list...`}
                         className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-sm font-semibold outline-none focus:border-orange-500/50 text-white placeholder-slate-500"
                     />
                 </div>
@@ -465,9 +760,11 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                 filteredList.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                         {filteredList.map((item) => {
-                            const parentCityName = item.parent_id 
-                                ? cities.find(c => c.id === item.parent_id)?.name 
-                                : null;
+                            const parentName = !item.parent_id ? null :
+                                activeTab === 'county' ? countries.find(c => c.id === item.parent_id)?.name :
+                                activeTab === 'city' ? counties.find(c => c.id === item.parent_id)?.name :
+                                activeTab === 'area' ? cities.find(c => c.id === item.parent_id)?.name :
+                                null;
 
                             return (
                                 <div
@@ -479,9 +776,9 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                                         <span className="text-sm font-bold text-slate-200 truncate group-hover:text-orange-400 transition-colors">
                                             {item.name}
                                         </span>
-                                        {parentCityName && (
+                                        {parentName && (
                                             <span className="text-[10px] text-slate-500 font-medium">
-                                                linked to {parentCityName}
+                                                linked to {parentName}
                                             </span>
                                         )}
                                         {item.latitude && item.longitude ? (
@@ -536,103 +833,176 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-200">
-                        {/* Left Column: Search & Add Cities */}
+                        {/* Left Column: Search & Resolve Hierarchy */}
                         <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 flex flex-col space-y-4">
                             <div className="flex items-center gap-2 text-white font-bold text-base border-b border-slate-800 pb-3">
                                 <Globe className="w-5 h-5 text-orange-500" />
-                                <h3>Search & Import Cities from Google</h3>
+                                <h3>Resolve & Import Location Hierarchy</h3>
                             </div>
                             <p className="text-xs text-slate-400 leading-relaxed">
-                                Search any city globally using Google Maps Places database. It resolves the coordinates automatically so you can import the city into your database with a single click.
+                                Search for any specific location (e.g. <i>"Seminyak, Bali, Indonesia"</i> or <i>"Braytim, Timisoara"</i>). Google will automatically trace and resolve the entire parent hierarchy of countries, counties, cities, and areas for instant importing.
                             </p>
 
                             <div className="flex gap-2">
                                 <input
                                     type="text"
-                                    value={citySearchQuery}
-                                    onChange={(e) => setCitySearchQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleGoogleCitySearch()}
-                                    placeholder="Search City (e.g. Dubai, Bali, București...)"
+                                    value={hierarchySearchQuery}
+                                    onChange={(e) => setHierarchySearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleResolveHierarchy()}
+                                    placeholder="Search location hierarchy (e.g. Dubai Marina...)"
                                     className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white placeholder-slate-600"
                                 />
                                 <button
                                     type="button"
-                                    onClick={handleGoogleCitySearch}
-                                    disabled={isSearchingCity || !citySearchQuery.trim()}
+                                    onClick={handleResolveHierarchy}
+                                    disabled={isResolving || !hierarchySearchQuery.trim()}
                                     className="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50"
                                 >
-                                    {isSearchingCity ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                                    Search
+                                    {isResolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                    Resolve
                                 </button>
                             </div>
 
-                            {/* Search Results list */}
-                            <div className="flex-1 overflow-y-auto max-h-[400px] pr-1 space-y-2 mt-2">
-                                {citySearchResults.map((city, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3.5 bg-slate-950 border border-slate-800 rounded-xl hover:border-slate-700 transition-all">
-                                        <div className="flex flex-col min-w-0 pr-2">
-                                            <span className="text-sm font-bold text-slate-200 truncate">{city.name}</span>
-                                            <span className="text-[10px] text-slate-500 truncate">{city.formatted_address}</span>
-                                            <span className="text-[10px] text-orange-400 font-semibold mt-0.5">📍 Lat: {city.latitude.toFixed(4)}, Lng: {city.longitude.toFixed(4)}</span>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleImportSingleCity(city)}
-                                            className="bg-slate-900 border border-slate-800 hover:border-orange-500/30 text-white hover:text-orange-400 font-bold text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0"
-                                        >
-                                            <Plus className="w-3.5 h-3.5" />
-                                            Import
-                                        </button>
+                            {/* Resolved Hierarchy Tree */}
+                            {resolvedHierarchy && (
+                                <div className="mt-4 p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Resolved Location Tree</span>
+                                    <div className="space-y-2.5 border-l-2 border-orange-500/30 pl-4 ml-2">
+                                        {resolvedHierarchy.country && (
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-slate-200 font-semibold flex items-center gap-1.5">
+                                                    <span className="text-sm">🌍</span> Country: <strong className="text-white">{resolvedHierarchy.country.name}</strong>
+                                                </span>
+                                                {countries.some(c => c.name.toLowerCase() === resolvedHierarchy.country.name.toLowerCase()) ? (
+                                                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900/30">✓ Saved</span>
+                                                ) : (
+                                                    <span className="text-[10px] text-orange-400 font-bold bg-orange-950/40 px-2 py-0.5 rounded border border-orange-900/30">+ New</span>
+                                                )}
+                                            </div>
+                                        )}
+                                        {resolvedHierarchy.county && (
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-slate-200 font-semibold flex items-center gap-1.5">
+                                                    <span className="text-sm">📍</span> County: <strong className="text-white">{resolvedHierarchy.county.name}</strong>
+                                                </span>
+                                                {counties.some(c => c.name.toLowerCase() === resolvedHierarchy.county.name.toLowerCase()) ? (
+                                                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900/30">✓ Saved</span>
+                                                ) : (
+                                                    <span className="text-[10px] text-orange-400 font-bold bg-orange-950/40 px-2 py-0.5 rounded border border-orange-900/30">+ New</span>
+                                                )}
+                                            </div>
+                                        )}
+                                        {resolvedHierarchy.city && (
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-slate-200 font-semibold flex items-center gap-1.5">
+                                                    <span className="text-sm">🏙️</span> City: <strong className="text-white">{resolvedHierarchy.city.name}</strong>
+                                                </span>
+                                                {cities.some(c => c.name.toLowerCase() === resolvedHierarchy.city.name.toLowerCase()) ? (
+                                                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900/30">✓ Saved</span>
+                                                ) : (
+                                                    <span className="text-[10px] text-orange-400 font-bold bg-orange-950/40 px-2 py-0.5 rounded border border-orange-900/30">+ New</span>
+                                                )}
+                                            </div>
+                                        )}
+                                        {resolvedHierarchy.area && (
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-slate-200 font-semibold flex items-center gap-1.5">
+                                                    <span className="text-sm">📍</span> Area: <strong className="text-white">{resolvedHierarchy.area.name}</strong>
+                                                </span>
+                                                {areas.some(c => c.name.toLowerCase() === resolvedHierarchy.area.name.toLowerCase()) ? (
+                                                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900/30">✓ Saved</span>
+                                                ) : (
+                                                    <span className="text-[10px] text-orange-400 font-bold bg-orange-950/40 px-2 py-0.5 rounded border border-orange-900/30">+ New</span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                ))}
-                                {citySearchResults.length === 0 && !isSearchingCity && (
-                                    <div className="text-center py-12 text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-                                        Search for a city above to view results.
-                                    </div>
-                                )}
-                            </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleImportHierarchy}
+                                        disabled={isImporting}
+                                        className="w-full mt-3 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-orange-500/10"
+                                    >
+                                        {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                                        Import Entire Resolved Hierarchy
+                                    </button>
+                                </div>
+                            )}
+
+                            {!resolvedHierarchy && !isResolving && (
+                                <div className="text-center py-12 text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl flex-1 flex flex-col items-center justify-center">
+                                    Search for a query above to view the resolved address tree.
+                                </div>
+                            )}
                         </div>
 
-                        {/* Right Column: Scan & Batch Import Areas */}
+                        {/* Right Column: Scan & Batch Import Sub-Locations */}
                         <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 flex flex-col space-y-4">
                             <div className="flex items-center gap-2 text-white font-bold text-base border-b border-slate-800 pb-3">
                                 <Sparkles className="w-5 h-5 text-orange-500" />
-                                <h3>Scan & Batch Import Areas / Neighbourhoods</h3>
+                                <h3>Scan & Batch Import Sub-Locations</h3>
                             </div>
                             <p className="text-xs text-slate-400 leading-relaxed">
-                                Select an existing city from your list. Google Places will be queried to automatically discover all sub-locations, zones, or neighbourhoods with their coordinates.
+                                Select a hierarchy level to batch scan sub-locations from Google Places (e.g. scan all cities inside a county, or scan neighborhoods inside a city).
                             </p>
 
-                            <div className="flex gap-2">
-                                <select
-                                    value={selectedScanCity}
-                                    onChange={(e) => {
-                                        setSelectedScanCity(e.target.value);
-                                        setScanResults([]);
-                                    }}
-                                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer"
-                                >
-                                    <option value="">Select a city to scan...</option>
-                                    {cities.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    type="button"
-                                    onClick={handleGoogleScanAreas}
-                                    disabled={isScanning || !selectedScanCity}
-                                    className="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
-                                >
-                                    {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                    Scan Areas
-                                </button>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">Scan Type</label>
+                                    <select
+                                        value={scanType}
+                                        onChange={(e) => {
+                                            setScanType(e.target.value as 'city' | 'area');
+                                            setSelectedScanParentId('');
+                                            setScanResults([]);
+                                        }}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer"
+                                    >
+                                        <option value="city">Cities in a County</option>
+                                        <option value="area">Areas in a City</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">Parent Location</label>
+                                    <select
+                                        value={selectedScanParentId}
+                                        onChange={(e) => {
+                                            setSelectedScanParentId(e.target.value);
+                                            setScanResults([]);
+                                        }}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer"
+                                    >
+                                        <option value="">Select parent...</option>
+                                        {scanType === 'city' ? (
+                                            counties.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))
+                                        ) : (
+                                            cities.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))
+                                        )}
+                                    </select>
+                                </div>
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={handleGoogleScanAreas}
+                                disabled={isScanning || !selectedScanParentId}
+                                className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0"
+                            >
+                                {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                Scan Sub-Locations
+                            </button>
 
                             {/* Checklist of Scan Results */}
                             {scanResults.length > 0 && (
                                 <div className="flex flex-col flex-1 min-h-0 space-y-2 mt-2">
                                     <div className="flex justify-between items-center px-1">
-                                        <span className="text-xs font-bold text-slate-400 uppercase">Found {scanResults.length} Areas</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase">Found {scanResults.length} Sub-locations</span>
                                         <div className="flex gap-3 text-xs">
                                             <button
                                                 type="button"
@@ -652,9 +1022,11 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                                     </div>
 
                                     <div className="flex-1 overflow-y-auto max-h-[350px] pr-1 space-y-2 border border-slate-850 p-2.5 rounded-xl bg-slate-950/50">
-                                        {scanResults.map((area, idx) => {
-                                            const isChecked = selectedResults.includes(area.name);
-                                            const exists = areas.some(a => a.name.toLowerCase() === area.name.toLowerCase() && a.parent_id === selectedScanCity);
+                                        {scanResults.map((item, idx) => {
+                                            const isChecked = selectedResults.includes(item.name);
+                                            const exists = scanType === 'city' 
+                                                ? cities.some(c => c.name.toLowerCase() === item.name.toLowerCase() && c.parent_id === selectedScanParentId)
+                                                : areas.some(a => a.name.toLowerCase() === item.name.toLowerCase() && a.parent_id === selectedScanParentId);
 
                                             return (
                                                 <div
@@ -662,7 +1034,7 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                                                     onClick={() => {
                                                         if (exists) return;
                                                         setSelectedResults(prev =>
-                                                            isChecked ? prev.filter(n => n !== area.name) : [...prev, area.name]
+                                                            isChecked ? prev.filter(n => n !== item.name) : [...prev, item.name]
                                                         );
                                                     }}
                                                     className={`flex items-center justify-between p-3 border rounded-xl transition-all ${
@@ -678,8 +1050,8 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                                                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                                                         </div>
                                                         <div className="flex flex-col min-w-0">
-                                                            <span className="text-sm font-bold text-slate-200 truncate">{area.name}</span>
-                                                            <span className="text-[10px] text-orange-400/80 font-semibold">📍 Lat: {area.latitude.toFixed(4)}, Lng: {area.longitude.toFixed(4)}</span>
+                                                            <span className="text-sm font-bold text-slate-200 truncate">{item.name}</span>
+                                                            <span className="text-[10px] text-orange-400/80 font-semibold">📍 Lat: {item.latitude.toFixed(4)}, Lng: {item.longitude.toFixed(4)}</span>
                                                         </div>
                                                     </div>
                                                     {exists && (
@@ -705,8 +1077,8 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                             )}
 
                             {scanResults.length === 0 && !isScanning && (
-                                <div className="text-center py-12 text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-                                    Select a city and click "Scan Areas" above to list and import neighbourhoods automatically.
+                                <div className="text-center py-12 text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl flex-1 flex flex-col items-center justify-center">
+                                    Select a parent location and click "Scan Sub-Locations" above to preview and import sub-localities.
                                 </div>
                             )}
                         </div>
@@ -723,7 +1095,7 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <Edit2 className="w-5 h-5 text-orange-500" />
-                                Edit {activeTab === 'city' ? 'City' : 'Area'} Details
+                                Edit {activeTab} Details
                             </h3>
                             <button
                                 type="button"
@@ -738,7 +1110,7 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                         <form onSubmit={handleUpdateLocation} className="flex-1 flex flex-col min-h-0 overflow-hidden">
                             <div className="p-6 flex flex-col gap-4 flex-1 min-h-0">
                                 {/* Fields Row at the Top */}
-                                <div className={`grid grid-cols-1 sm:grid-cols-${activeTab === 'area' ? '4' : '3'} gap-4 shrink-0`}>
+                                <div className={`grid grid-cols-1 sm:grid-cols-${activeTab !== 'country' ? '4' : '3'} gap-4 shrink-0`}>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
                                             Name
@@ -752,10 +1124,10 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                                         />
                                     </div>
 
-                                    {activeTab === 'area' && (
+                                    {activeTab !== 'country' && (
                                         <div>
                                             <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
-                                                Parent City
+                                                Parent {activeTab === 'county' ? 'Country' : activeTab === 'city' ? 'County' : 'City'}
                                             </label>
                                             <select
                                                 value={editParentId}
@@ -763,8 +1135,14 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                                                 required
                                                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer"
                                             >
-                                                <option value="">Select Parent City... *</option>
-                                                {cities.map(c => (
+                                                <option value="">Select Parent... *</option>
+                                                {activeTab === 'county' && countries.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                                {activeTab === 'city' && counties.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                                {activeTab === 'area' && cities.map(c => (
                                                     <option key={c.id} value={c.id}>{c.name}</option>
                                                 ))}
                                             </select>
