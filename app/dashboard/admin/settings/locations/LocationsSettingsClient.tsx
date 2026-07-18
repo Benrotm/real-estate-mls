@@ -331,11 +331,12 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
             )}
 
             {/* Edit details modal dialog */}
+            {/* Edit details modal dialog */}
             {editingItem && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="bg-slate-900 border border-slate-800 rounded-none md:rounded-2xl w-full h-full md:max-w-[95vw] md:h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <Edit2 className="w-5 h-5 text-orange-500" />
                                 Edit {activeTab === 'city' ? 'City' : 'Area'} Details
@@ -350,86 +351,91 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                         </div>
 
                         {/* Modal Form */}
-                        <form onSubmit={handleUpdateLocation} className="flex flex-col overflow-y-auto">
-                            <div className="p-6 space-y-4">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
-                                        Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
-                                    />
-                                </div>
-
-                                {activeTab === 'area' && (
+                        <form onSubmit={handleUpdateLocation} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                            <div className="p-6 flex flex-col md:grid md:grid-cols-5 gap-6 overflow-y-auto flex-1 min-h-0">
+                                <div className="space-y-4 md:col-span-2">
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
-                                            Parent City
-                                        </label>
-                                        <select
-                                            value={editParentId}
-                                            onChange={(e) => setEditParentId(e.target.value)}
-                                            required
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer"
-                                        >
-                                            <option value="">Select Parent City... *</option>
-                                            {cities.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
-                                            Latitude
+                                            Name
                                         </label>
                                         <input
-                                            type="number"
-                                            step="0.000001"
+                                            type="text"
                                             required
-                                            value={editLat}
-                                            onChange={(e) => setEditLat(Number(e.target.value))}
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
                                             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
-                                            Longitude
-                                        </label>
-                                        <input
-                                            type="number"
-                                            step="0.000001"
-                                            required
-                                            value={editLng}
-                                            onChange={(e) => setEditLng(Number(e.target.value))}
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
-                                        />
+
+                                    {activeTab === 'area' && (
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+                                                Parent City
+                                            </label>
+                                            <select
+                                                value={editParentId}
+                                                onChange={(e) => setEditParentId(e.target.value)}
+                                                required
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none text-white focus:border-orange-500/50 cursor-pointer"
+                                            >
+                                                <option value="">Select Parent City... *</option>
+                                                {cities.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+                                                Latitude
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.000001"
+                                                required
+                                                value={editLat}
+                                                onChange={(e) => setEditLat(Number(e.target.value))}
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+                                                Longitude
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.000001"
+                                                required
+                                                value={editLng}
+                                                onChange={(e) => setEditLng(Number(e.target.value))}
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="border border-slate-800 rounded-xl overflow-hidden">
-                                    <div className="bg-slate-950 px-4 py-2 text-xs font-bold text-slate-400 border-b border-slate-800">
+                                <div className="border border-slate-800 rounded-xl overflow-hidden md:col-span-3 flex flex-col h-[50vh] md:h-full min-h-[350px]">
+                                    <div className="bg-slate-950 px-4 py-2 text-xs font-bold text-slate-400 border-b border-slate-800 shrink-0">
                                         Drag Pin to Location / Click Map to Update Coordinates
                                     </div>
-                                    <LocationMap
-                                        lat={editLat}
-                                        lng={editLng}
-                                        onLocationSelect={(lat, lng) => {
-                                            setEditLat(Number(lat.toFixed(6)));
-                                            setEditLng(Number(lng.toFixed(6)));
-                                        }}
-                                    />
+                                    <div className="flex-1 relative w-full">
+                                        <LocationMap
+                                            lat={editLat}
+                                            lng={editLng}
+                                            height="100%"
+                                            onLocationSelect={(lat, lng) => {
+                                                setEditLat(Number(lat.toFixed(6)));
+                                                setEditLng(Number(lng.toFixed(6)));
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="flex justify-end gap-3 px-6 py-4 bg-slate-950 border-t border-slate-800">
+                            <div className="flex justify-end gap-3 px-6 py-4 bg-slate-950 border-t border-slate-800 shrink-0">
                                 <button
                                     type="button"
                                     onClick={() => setEditingItem(null)}

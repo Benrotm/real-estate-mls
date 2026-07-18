@@ -9,18 +9,19 @@ interface LocationMapProps {
     lat: number;
     lng: number;
     onLocationSelect: (lat: number, lng: number) => void;
+    height?: string;
 }
 
-const containerStyle = {
-    width: '100%',
-    height: '400px',
-    borderRadius: '0.75rem' // rounded-xl
-};
-
-export default function LocationMap({ lat, lng, onLocationSelect }: LocationMapProps) {
+export default function LocationMap({ lat, lng, onLocationSelect, height }: LocationMapProps) {
     const { isLoaded } = useGoogleMaps();
 
     const center = useMemo(() => ({ lat, lng }), [lat, lng]);
+
+    const containerStyle = useMemo(() => ({
+        width: '100%',
+        height: height || '400px',
+        borderRadius: '0.75rem'
+    }), [height]);
 
     const onMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
         if (e.latLng) {
