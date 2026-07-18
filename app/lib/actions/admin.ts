@@ -143,6 +143,15 @@ export async function deletePropertyAdmin(propertyId: string) {
 export async function updatePropertyStatusAdmin(propertyId: string, status: string) {
     const { supabase } = await checkAdmin();
 
+    if (status === 'active') {
+        const { data: prop } = await supabase.from('properties').select('owner_phone').eq('id', propertyId).single();
+        const phone = (prop?.owner_phone || '').trim();
+        const hasValidPhone = phone !== '' && phone.toLowerCase() !== 'n/a' && phone.replace(/\D/g, '').length >= 6;
+        if (!hasValidPhone) {
+            throw new Error('Anunțul nu poate fi publicat (statut activ) deoarece lipsește numărul de telefon din câmpul Telefon Proprietar (Owner Phone).');
+        }
+    }
+
     const { error } = await supabase
         .from('properties')
         .update({ status })
@@ -157,6 +166,15 @@ export async function updatePropertyAdmin(propertyId: string, formData: FormData
     const { supabase } = await checkAdmin();
 
     try {
+        const requestedStatus = formData.get('status') as string;
+        if (requestedStatus === 'active') {
+            const phone = (formData.get('owner_phone') as string || '').trim();
+            const hasValidPhone = phone !== '' && phone.toLowerCase() !== 'n/a' && phone.replace(/\D/g, '').length >= 6;
+            if (!hasValidPhone) {
+                throw new Error('Anunțul nu poate fi publicat (statut activ) deoarece lipsește numărul de telefon din câmpul Telefon Proprietar (Owner Phone).');
+            }
+        }
+
         // Parse fields - similar to createProperty but no owner_id override
         const featuresRaw = formData.get('features');
         const features = featuresRaw ? JSON.parse(featuresRaw as string) : [];

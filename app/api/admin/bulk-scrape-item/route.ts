@@ -113,7 +113,7 @@ async function createSystemProperty(data: any, url: string, phoneNumber?: string
             location_area: location?.area || data.location_area || '',
             latitude: location?.latitude || data.latitude,
             longitude: location?.longitude || data.longitude,
-            status: 'active'
+            status: (phoneNumber || data.owner_phone || '').replace(/\D/g, '').length >= 6 ? 'active' : 'draft'
         };
 
         // Use the centralized robust action that handles enrichment, geocoding, and scoring

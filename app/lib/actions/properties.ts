@@ -38,6 +38,14 @@ export async function createProperty(formData: FormData) {
     }
 
     try {
+        const requestedStatus = (formData.get('status') as 'active' | 'draft') || 'active';
+        const ownerPhoneInput = (formData.get('owner_phone') as string || '').trim();
+        const hasValidPhone = ownerPhoneInput !== '' && ownerPhoneInput.toLowerCase() !== 'n/a' && ownerPhoneInput.replace(/\D/g, '').length >= 6;
+
+        if (requestedStatus === 'active' && !hasValidPhone) {
+            return { error: 'Anunțul nu poate fi publicat (statut activ) deoarece lipsește numărul de telefon din câmpul Telefon Proprietar (Owner Phone). Salvați anunțul ca Draft.' };
+        }
+
         // Extract and parse fields
         const featuresRaw = formData.get('features');
         const features = featuresRaw ? JSON.parse(featuresRaw as string) : [];
@@ -751,7 +759,7 @@ export async function updateProperty(id: string, formData: FormData) {
 
     const { data: property } = await supabase
         .from('properties')
-        .select('owner_id, status, publish_imobiliare, publish_storia, publish_romimo, publish_homezz, publish_imobiliarepret, promoted, publish_whatsapp_groups, publish_facebook_groups, publish_facebook_page, publish_instagram, publish_tiktok')
+        .select('owner_id, owner_phone, status, publish_imobiliare, publish_storia, publish_romimo, publish_homezz, publish_imobiliarepret, promoted, publish_whatsapp_groups, publish_facebook_groups, publish_facebook_page, publish_instagram, publish_tiktok')
         .eq('id', id)
         .single();
 
@@ -760,6 +768,14 @@ export async function updateProperty(id: string, formData: FormData) {
     }
 
     try {
+        const requestedStatus = (formData.get('status') as 'active' | 'draft') || property.status || 'active';
+        const ownerPhoneInput = formData.has('owner_phone') ? (formData.get('owner_phone') as string || '').trim() : (property.owner_phone || '').trim();
+        const hasValidPhone = ownerPhoneInput !== '' && ownerPhoneInput.toLowerCase() !== 'n/a' && ownerPhoneInput.replace(/\D/g, '').length >= 6;
+
+        if (requestedStatus === 'active' && !hasValidPhone) {
+            return { error: 'Anunțul nu poate fi publicat (statut activ) deoarece lipsește numărul de telefon din câmpul Telefon Proprietar (Owner Phone). Salvați anunțul ca Draft.' };
+        }
+
         // Extract and parse fields
         const featuresRaw = formData.get('features');
         const features = featuresRaw ? JSON.parse(featuresRaw as string) : [];
@@ -1027,7 +1043,7 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
 
     const { data: property } = await supabase
         .from('properties')
-        .select('owner_id')
+        .select('owner_id, owner_phone')
         .eq('id', id)
         .single();
 
@@ -1038,6 +1054,12 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
     const newStatus = currentStatus === 'active' ? 'draft' : 'active';
 
     if (newStatus === 'active') {
+        const phone = (property.owner_phone || '').trim();
+        const hasValidPhone = phone !== '' && phone.toLowerCase() !== 'n/a' && phone.replace(/\D/g, '').length >= 6;
+        if (!hasValidPhone) {
+            return { error: 'Anunțul nu poate fi publicat deoarece lipsește numărul de telefon al proprietarului (se poate păstra/salva doar ca Draft).' };
+        }
+
         const profile = await getUserProfile();
         if (profile) {
             const currentUsage = await getActiveUsageStats(profile.id);
@@ -1174,7 +1196,10 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
         }
 
         // 4. Status & Publication
-        propertyData.status = 'active'; // Automatically publish
+        // Rule: Properties without valid owner_phone must be saved as draft not deleted, and cannot be published active
+        const phone = propertyData.owner_phone;
+        const hasValidPhone = phone && typeof phone === 'string' && phone.trim() !== '' && phone.trim().toLowerCase() !== 'n/a' && phone.replace(/\D/g, '').length >= 6;
+        propertyData.status = hasValidPhone ? (propertyData.status === 'draft' ? 'draft' : 'active') : 'draft';
 
         // 5. Calculate Property Score (AFTER Enrichment)
         const score = await calculatePropertyScore(propertyData as any);

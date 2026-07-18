@@ -27,15 +27,27 @@ export async function GET(request: Request) {
     const listingRenewalCost = typeof costs.listing_renewal === 'number' ? costs.listing_renewal : 2;
 
     // 2. Fetch all active properties
-    // 2. Fetch all active properties
     const { data: properties, error: propertiesError } = await supabase
         .from('properties')
-        .select('id, user_id, title, published_at, created_at, status, listing_type')
+        .select('id, user_id, title, published_at, created_at, status, listing_type, owner_phone')
         .eq('status', 'active');
 
     if (propertiesError) {
         return NextResponse.json({ error: 'Error fetching properties', details: propertiesError.message }, { status: 500 });
     }
+
+    // 2.5 Auto-draft active properties that do not have a valid phone number
+    const draftedNoPhoneIds: string[] = [];
+    for (const prop of (properties || [])) {
+        const phone = (prop.owner_phone || '').trim();
+        const hasValidPhone = phone !== '' && phone.toLowerCase() !== 'n/a' && phone.replace(/\D/g, '').length >= 6;
+        if (!hasValidPhone) {
+            draftedNoPhoneIds.push(prop.id);
+            await supabase.from('properties').update({ status: 'draft' }).eq('id', prop.id);
+        }
+    }
+
+    const validActiveProperties = (properties || []).filter(prop => !draftedNoPhoneIds.includes(prop.id));
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -44,7 +56,7 @@ export async function GET(request: Request) {
     const expired: Array<{ id: string; title: string; user_id: string }> = [];
     const skipped: Array<{ id: string; error: string }> = [];
 
-    const expiredListings = (properties || []).filter(prop => {
+    const expiredListings = validActiveProperties.filter(prop => {
         const dateToUse = prop.published_at || prop.created_at;
         if (!dateToUse) return false;
         return new Date(dateToUse).getTime() < thirtyDaysAgo.getTime();
@@ -186,6 +198,7 @@ export async function GET(request: Request) {
         renewedCount: renewed.length,
         expiredCount: expired.length,
         skippedCount: skipped.length,
+        draftedNoPhoneCount: draftedNoPhoneIds.length,
         renewed,
         expired,
         skipped
