@@ -569,34 +569,48 @@ export async function saveMenuVisibility(role: string, disabledItems: string[]) 
 
 export async function getSystemLocations() {
     try {
-        const { data, error } = await supabase
-            .from('system_locations')
-            .select('*')
-            .order('name', { ascending: true });
+        let allRows: any[] = [];
+        let from = 0;
+        const limit = 1000;
+        let hasMore = true;
 
-        if (error) throw error;
+        while (hasMore) {
+            const { data, error } = await supabase
+                .from('system_locations')
+                .select('*')
+                .order('name', { ascending: true })
+                .range(from, from + limit - 1);
+                
+            if (error) throw error;
+            allRows = allRows.concat(data);
+            if (data.length < limit) {
+                hasMore = false;
+            } else {
+                from += limit;
+            }
+        }
         
-        const countries = data.filter((x: any) => x.type === 'country').map((x: any) => ({
+        const countries = allRows.filter((x: any) => x.type === 'country').map((x: any) => ({
             id: x.id,
             name: x.name,
             latitude: x.latitude,
             longitude: x.longitude
         }));
-        const counties = data.filter((x: any) => x.type === 'county').map((x: any) => ({
-            id: x.id,
-            name: x.name,
-            parent_id: x.parent_id,
-            latitude: x.latitude,
-            longitude: x.longitude
-        }));
-        const cities = data.filter((x: any) => x.type === 'city').map((x: any) => ({
+        const counties = allRows.filter((x: any) => x.type === 'county').map((x: any) => ({
             id: x.id,
             name: x.name,
             parent_id: x.parent_id,
             latitude: x.latitude,
             longitude: x.longitude
         }));
-        const areas = data.filter((x: any) => x.type === 'area').map((x: any) => ({
+        const cities = allRows.filter((x: any) => x.type === 'city').map((x: any) => ({
+            id: x.id,
+            name: x.name,
+            parent_id: x.parent_id,
+            latitude: x.latitude,
+            longitude: x.longitude
+        }));
+        const areas = allRows.filter((x: any) => x.type === 'area').map((x: any) => ({
             id: x.id,
             name: x.name,
             parent_id: x.parent_id,
