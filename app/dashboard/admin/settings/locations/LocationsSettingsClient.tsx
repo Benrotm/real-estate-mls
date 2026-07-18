@@ -352,8 +352,9 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
 
                         {/* Modal Form */}
                         <form onSubmit={handleUpdateLocation} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                            <div className="p-6 flex flex-col md:grid md:grid-cols-5 gap-6 overflow-y-auto flex-1 min-h-0">
-                                <div className="space-y-4 md:col-span-2">
+                            <div className="p-6 flex flex-col gap-4 flex-1 min-h-0">
+                                {/* Fields Row at the Top */}
+                                <div className={`grid grid-cols-1 sm:grid-cols-${activeTab === 'area' ? '4' : '3'} gap-4 shrink-0`}>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
                                             Name
@@ -386,37 +387,36 @@ export default function LocationsSettingsClient({ initialCities, initialAreas }:
                                         </div>
                                     )}
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
-                                                Latitude
-                                            </label>
-                                            <input
-                                                type="number"
-                                                step="0.000001"
-                                                required
-                                                value={editLat}
-                                                onChange={(e) => setEditLat(Number(e.target.value))}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
-                                                Longitude
-                                            </label>
-                                            <input
-                                                type="number"
-                                                step="0.000001"
-                                                required
-                                                value={editLng}
-                                                onChange={(e) => setEditLng(Number(e.target.value))}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+                                            Latitude
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.000001"
+                                            required
+                                            value={editLat}
+                                            onChange={(e) => setEditLat(Number(e.target.value))}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+                                            Longitude
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.000001"
+                                            required
+                                            value={editLng}
+                                            onChange={(e) => setEditLng(Number(e.target.value))}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:border-orange-500/50 text-white"
+                                        />
                                     </div>
                                 </div>
 
-                                <div className="border border-slate-800 rounded-xl overflow-hidden md:col-span-3 flex flex-col h-[50vh] md:h-full min-h-[350px]">
+                                {/* Full Width Map beneath the fields */}
+                                <div className="border border-slate-800 rounded-xl overflow-hidden flex flex-col flex-1 min-h-[300px]">
                                     <div className="bg-slate-950 px-4 py-2 text-xs font-bold text-slate-400 border-b border-slate-800 shrink-0">
                                         Drag Pin to Location / Click Map to Update Coordinates
                                     </div>
