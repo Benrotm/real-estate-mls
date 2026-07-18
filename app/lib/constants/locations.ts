@@ -78,15 +78,15 @@ export interface SystemCounty {
 export function formatCityList(cities: SystemCity[], counties: SystemCounty[]): string[] {
     const countyMap = new Map(counties.map(c => [c.id, c.name]));
     
-    const nameCounts = new Map<string, number>();
+    const normCounts = new Map<string, number>();
     cities.forEach(c => {
-        const nameLower = c.name.toLowerCase();
-        nameCounts.set(nameLower, (nameCounts.get(nameLower) || 0) + 1);
+        const norm = normalizeText(c.name);
+        normCounts.set(norm, (normCounts.get(norm) || 0) + 1);
     });
 
     const formatted = cities.map(c => {
         const countyName = countyMap.get(c.parent_id || '');
-        const hasDuplicate = (nameCounts.get(c.name.toLowerCase()) || 0) > 1;
+        const hasDuplicate = (normCounts.get(normalizeText(c.name)) || 0) > 1;
         return countyName && hasDuplicate ? `${c.name} (${countyName})` : c.name;
     });
 

@@ -190,40 +190,6 @@ export default function InviteLeadForm({ agentId }: Props) {
                 </div>
             </div>
 
-            {/* Property Source / Checkboxes */}
-            <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
-                    Find Properties From
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchWithAgent ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
-                        <input
-                            type="checkbox"
-                            checked={searchWithAgent}
-                            onChange={(e) => setSearchWithAgent(e.target.checked)}
-                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
-                        />
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-extrabold">Get help from an Real Estate Broker</span>
-                            <span className="text-[10px] text-slate-400 font-medium">Properties listed by agencies & brokers</span>
-                        </div>
-                    </label>
-
-                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchDirectOwner ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
-                        <input
-                            type="checkbox"
-                            checked={searchDirectOwner}
-                            onChange={(e) => setSearchDirectOwner(e.target.checked)}
-                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
-                        />
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-extrabold">Find yourself from Property Owners</span>
-                            <span className="text-[10px] text-slate-400 font-medium">Directly from owners without intermediary</span>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
             {/* Property Type Selection Chips */}
             <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
@@ -243,24 +209,39 @@ export default function InviteLeadForm({ agentId }: Props) {
                 </div>
             </div>
 
-            {/* Rooms Selector */}
-            <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
-                    Number of Rooms
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                    {([1, 2, 3, 4] as const).map(num => (
-                        <button
-                            key={num}
-                            type="button"
-                            onClick={() => setRooms(num)}
-                            className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${rooms === num ? 'border-orange-500 bg-orange-50/50 text-orange-600 font-extrabold shadow-sm shadow-orange-500/5' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'}`}
-                        >
-                            {num === 4 ? '4+' : num}
-                        </button>
-                    ))}
+            {/* Rooms or Surface Selector based on Property Type */}
+            {propertyType === 'Land' || propertyType === 'Commercial' ? (
+                <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                        Surface (sqm) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                        type="number"
+                        value={surfaceMin}
+                        onChange={(e) => setSurfaceMin(e.target.value)}
+                        placeholder="e.g. 500"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
+                    />
                 </div>
-            </div>
+            ) : (
+                <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                        Number of Rooms
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                        {([1, 2, 3, 4] as const).map(num => (
+                            <button
+                                key={num}
+                                type="button"
+                                onClick={() => setRooms(num)}
+                                className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${rooms === num ? 'border-orange-500 bg-orange-50/50 text-orange-600 font-extrabold shadow-sm shadow-orange-500/5' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'}`}
+                            >
+                                {num === 4 ? '4+' : num}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Budget */}
             <div>
@@ -300,7 +281,7 @@ export default function InviteLeadForm({ agentId }: Props) {
                             values={area ? area.split(',').map(a => a.trim()).filter(Boolean) : []}
                             options={filteredAreasList}
                             onChange={(vals) => setArea(vals.join(', '))}
-                            placeholder={filteredAreasList.length ? "Select areas..." : "Select city first..."}
+                            placeholder={filteredAreasList.length ? "Type or Select More Areas" : "Select city first..."}
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10"
                         />
                     </div>
@@ -368,6 +349,40 @@ export default function InviteLeadForm({ agentId }: Props) {
                 {errors.phone && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.phone}</p>}
             </div>
 
+            {/* Property Source / Checkboxes moved right before Optional Details */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                    Find Properties From
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchWithAgent ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                        <input
+                            type="checkbox"
+                            checked={searchWithAgent}
+                            onChange={(e) => setSearchWithAgent(e.target.checked)}
+                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
+                        />
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-extrabold">Get help from an Real Estate Broker</span>
+                            <span className="text-[10px] text-slate-400 font-medium">Properties listed by agencies & brokers</span>
+                        </div>
+                    </label>
+
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchDirectOwner ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                        <input
+                            type="checkbox"
+                            checked={searchDirectOwner}
+                            onChange={(e) => setSearchDirectOwner(e.target.checked)}
+                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
+                        />
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-extrabold">Find yourself from Property Owners</span>
+                            <span className="text-[10px] text-slate-400 font-medium">Directly from owners without intermediary</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
             {/* Optional Details Collapsible Accordion */}
             <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
                 <button
@@ -382,17 +397,19 @@ export default function InviteLeadForm({ agentId }: Props) {
                 {showMoreDetails && (
                     <div className="p-4 space-y-4 bg-white animate-in slide-in-from-top-4 duration-200">
                         {/* Min Surface / Moving Urgency */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-1">Min Surface (sqm)</label>
-                                <input
-                                    type="number"
-                                    value={surfaceMin}
-                                    onChange={(e) => setSurfaceMin(e.target.value)}
-                                    placeholder="e.g. 50"
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500"
-                                />
-                            </div>
+                        <div className={`grid ${propertyType === 'Land' || propertyType === 'Commercial' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+                            {propertyType !== 'Land' && propertyType !== 'Commercial' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 mb-1">Min Surface (sqm)</label>
+                                    <input
+                                        type="number"
+                                        value={surfaceMin}
+                                        onChange={(e) => setSurfaceMin(e.target.value)}
+                                        placeholder="e.g. 50"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs font-medium focus:outline-none focus:border-orange-500"
+                                    />
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 mb-1">Moving Urgency</label>
                                 <select
