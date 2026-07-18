@@ -11,6 +11,19 @@ interface Props {
     name?: string;
 }
 
+function normalizeText(str: string): string {
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ș|ş/gi, 's')
+        .replace(/ț|ţ/gi, 't')
+        .replace(/ă|â/gi, 'a')
+        .replace(/î/gi, 'i')
+        .replace(/đ/gi, 'd')
+        .toLowerCase()
+        .trim();
+}
+
 export default function SearchableSelect({
     value,
     onChange,
@@ -29,21 +42,33 @@ export default function SearchableSelect({
         setSearch(value);
     }, [value]);
 
-    // Handle click outside to close dropdown
+    // Handle click outside to close dropdown and snap to valid match
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
-                // If closed, ensure value is synced with the current search input text
-                onChange(search);
+                const trimmed = search.trim();
+                if (trimmed && trimmed !== value) {
+                    const exactMatch = options.find(o => normalizeText(o) === normalizeText(trimmed));
+                    if (exactMatch) {
+                        onChange(exactMatch);
+                        setSearch(exactMatch);
+                    } else {
+                        // Revert to current value if not exactly matched from dropdown options
+                        setSearch(value);
+                    }
+                } else if (!trimmed && value) {
+                    onChange('');
+                    setSearch('');
+                }
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [search, onChange]);
+    }, [search, value, options, onChange]);
 
     const filteredOptions = options.filter(option =>
-        option.toLowerCase().includes(search.toLowerCase())
+        normalizeText(option).includes(normalizeText(search))
     );
 
     const handleSelect = (option: string) => {
@@ -56,6 +81,18 @@ export default function SearchableSelect({
         onChange('');
         setSearch('');
         setIsOpen(true);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (filteredOptions.length > 0) {
+                handleSelect(filteredOptions[0]);
+            }
+        } else if (e.key === 'Escape') {
+            setIsOpen(false);
+            setSearch(value);
+        }
     };
 
     return (
@@ -72,6 +109,7 @@ export default function SearchableSelect({
                         onChange(e.target.value);
                         setIsOpen(true);
                     }}
+                    onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     className={`${className} pr-10`}
                     autoComplete="off"
@@ -116,8 +154,12 @@ export default function SearchableSelect({
                             ))}
                         </div>
                     ) : (
-                        <div className="p-4 text-center text-xs text-slate-400">
-                            No match found. Press outer space to keep "{search}" as custom text.
+                        <div className="p-4 text-center text-xs text-slate-400 font-medium">
+                            {search.trim() ? (
+                                <span>No matching location found in database for "<strong>{search}</strong>".</span>
+                            ) : (
+                                <span>No options available.</span>
+                            )}
                         </div>
                     )}
                 </div>

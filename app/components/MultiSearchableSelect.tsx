@@ -9,6 +9,19 @@ interface Props {
     className?: string;
 }
 
+function normalizeText(str: string): string {
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ș|ş/gi, 's')
+        .replace(/ț|ţ/gi, 't')
+        .replace(/ă|â/gi, 'a')
+        .replace(/î/gi, 'i')
+        .replace(/đ/gi, 'd')
+        .toLowerCase()
+        .trim();
+}
+
 export default function MultiSearchableSelect({
     values = [],
     onChange,
@@ -20,26 +33,20 @@ export default function MultiSearchableSelect({
     const [search, setSearch] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Handle click outside to close dropdown and add custom input if any
+    // Handle click outside to close dropdown without adding custom input
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
-                if (search.trim()) {
-                    const trimmed = search.trim();
-                    if (!values.includes(trimmed)) {
-                        onChange([...values, trimmed]);
-                    }
-                    setSearch('');
-                }
+                setSearch('');
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [search, values, onChange]);
+    }, []);
 
     const filteredOptions = options.filter(option =>
-        option.toLowerCase().includes(search.toLowerCase()) && !values.includes(option)
+        normalizeText(option).includes(normalizeText(search)) && !values.includes(option)
     );
 
     const handleSelect = (option: string) => {
@@ -58,13 +65,18 @@ export default function MultiSearchableSelect({
         if (e.key === 'Enter') {
             e.preventDefault();
             const trimmed = search.trim();
-            if (trimmed) {
-                if (!values.includes(trimmed)) {
-                    onChange([...values, trimmed]);
+            if (trimmed && filteredOptions.length > 0) {
+                // Select the best matching option from dropdown
+                const bestMatch = filteredOptions[0];
+                if (!values.includes(bestMatch)) {
+                    onChange([...values, bestMatch]);
                 }
                 setSearch('');
                 setIsOpen(false);
             }
+        } else if (e.key === 'Escape') {
+            setIsOpen(false);
+            setSearch('');
         }
     };
 
@@ -127,18 +139,18 @@ export default function MultiSearchableSelect({
                                     key={option}
                                     type="button"
                                     onClick={() => handleSelect(option)}
-                                    className="w-full text-left px-3 py-2 text-sm rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="w-full text-left px-3 py-2 text-sm rounded-lg text-slate-700 hover:bg-slate-50 transition-colors font-medium"
                                 >
                                     {option}
                                 </button>
                             ))}
                         </div>
                     ) : (
-                        <div className="p-4 text-center text-xs text-slate-400">
+                        <div className="p-4 text-center text-xs text-slate-400 font-medium">
                             {search.trim() ? (
-                                <span>Press Enter to add custom location: "<strong>{search}</strong>"</span>
+                                <span>No matching location found in database for "<strong>{search}</strong>". Please select from dropdown.</span>
                             ) : (
-                                <span>No more locations to select.</span>
+                                <span>No more locations available to select.</span>
                             )}
                         </div>
                     )}
@@ -147,3 +159,4 @@ export default function MultiSearchableSelect({
         </div>
     );
 }
+
