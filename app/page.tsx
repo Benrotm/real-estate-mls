@@ -9,6 +9,8 @@ import InviteLeadForm from "./invite/[agentId]/InviteLeadForm";
 import { getProperties } from "./lib/actions/properties";
 import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 import { fetchAllFeatures } from '@/app/lib/admin';
+import { getServiceCategories } from '@/app/lib/actions/services-marketplace';
+import { FileText, Calculator, Compass, Truck, Sparkles, Hammer, Palette, Armchair, ChevronRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +30,9 @@ export default async function Home({
   // Fetch properties for different sections
   const { properties: bestRatedProperties } = await getProperties({ sort: 'score_desc', per_page: 3 });
   const { properties: recentProperties } = await getProperties({ sort: 'newest', per_page: 3 });
+  
+  // Fetch service categories
+  const { categories: serviceCategories } = await getServiceCategories();
 
   // Bulk check for "Make an Offer" feature for all property owners
   const allPropertiesForOfferCheck = [...bestRatedProperties, ...recentProperties];
@@ -103,6 +108,24 @@ export default async function Home({
       case 'TrendingUp': return <TrendingUp className="w-4 h-4" />;
       case 'Shield': return <Shield className="w-4 h-4" />;
       default: return <Target className="w-4 h-4" />;
+    }
+  };
+
+  const getServiceIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'FileText': return <FileText className="w-5 h-5 text-orange-500" />;
+      case 'Calculator': return <Calculator className="w-5 h-5 text-orange-500" />;
+      case 'Shield': return <Shield className="w-5 h-5 text-orange-500" />;
+      case 'Compass': return <Compass className="w-5 h-5 text-orange-500" />;
+      case 'TrendingUp': return <TrendingUp className="w-5 h-5 text-orange-500" />;
+      case 'Truck': return <Truck className="w-5 h-5 text-orange-500" />;
+      case 'Sparkles': return <Sparkles className="w-5 h-5 text-orange-500" />;
+      case 'Hammer': return <Hammer className="w-5 h-5 text-orange-500" />;
+      case 'Palette': return <Palette className="w-5 h-5 text-orange-500" />;
+      case 'Armchair': return <Armchair className="w-5 h-5 text-orange-500" />;
+      case 'Video': return <Video className="w-5 h-5 text-orange-500" />;
+      case 'Users': return <Users className="w-5 h-5 text-orange-500" />;
+      default: return <Target className="w-5 h-5 text-orange-500" />;
     }
   };
 
@@ -259,6 +282,62 @@ export default async function Home({
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+      {/* Dynamic Services Preview Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="text-center space-y-4 max-w-3xl mx-auto">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-650 border border-orange-500/20 uppercase tracking-widest">
+              Services Catalog
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+              Servicii Imobiliare Premium
+            </h2>
+            <p className="text-slate-500 text-sm sm:text-base leading-relaxed">
+              Tot ce ai nevoie pentru a cumpăra, vinde sau administra o proprietate în mod eficient. Colaborează cu experți verificați din domeniu.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-6">
+            {serviceCategories && serviceCategories.slice(0, 8).map((cat: any) => (
+              <Link
+                key={cat.slug}
+                href={`/services/${cat.slug}`}
+                className="group bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:border-orange-100 transition-all duration-300 flex flex-col justify-between items-start text-left"
+              >
+                <div className="space-y-4">
+                  <span className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                    {getServiceIcon(cat.icon)}
+                  </span>
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+                    {cat.title}
+                  </h3>
+                  <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">
+                    {cat.description || 'Găsește specialiști parteneri verificați pentru acest serviciu.'}
+                  </p>
+                </div>
+                <div className="flex items-center text-xs font-bold text-orange-600 mt-6 group-hover:gap-1.5 transition-all">
+                  Vezi Oferte <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <Link
+              href="/services"
+              className="w-full sm:w-auto px-6 py-3.5 bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-700 font-bold rounded-xl text-center text-xs uppercase tracking-wider transition-all"
+            >
+              Explorează Toate Serviciile
+            </Link>
+            <Link
+              href="/services/register"
+              className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-center text-xs uppercase tracking-wider transition-all shadow-lg shadow-orange-600/10"
+            >
+              Înregistrează-te ca Furnizor (Devino Partener)
+            </Link>
           </div>
         </div>
       </section>

@@ -52,6 +52,7 @@ export const DEFAULT_MENUS: Record<string, MenuItemDefinition[]> = {
         { name: 'Calculator Settings', icon: 'Calculator', href: '/dashboard/admin/settings/calculator-comisioane' },
         { name: 'Solicitări Proprietari', icon: 'FileText', href: '/dashboard/admin/solicitari-proprietari' },
         { name: 'Marketing Pages Builder', icon: 'Settings', href: '/dashboard/admin/marketing-pages', superAdminOnly: true },
+        { name: 'Services Marketplace', icon: 'Briefcase', href: '/dashboard/admin/services', superAdminOnly: true },
         { name: 'Credit & Costs System', icon: 'Coins', href: '/dashboard/admin/credit-settings' },
         { name: 'Validare Plăți', icon: 'DollarSign', href: '/dashboard/admin/validare-plati' },
         { name: 'Portal Activations', icon: 'Key', href: '/dashboard/admin/portal-activations' },
