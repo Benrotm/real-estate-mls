@@ -111,21 +111,22 @@ export default async function Home({
     }
   };
 
-  const getServiceIcon = (iconName: string) => {
+  const getServiceIcon = (iconName: string, colorClass: string = 'text-orange-500') => {
+    const cls = `w-5 h-5 ${colorClass}`;
     switch (iconName) {
-      case 'FileText': return <FileText className="w-5 h-5 text-orange-500" />;
-      case 'Calculator': return <Calculator className="w-5 h-5 text-orange-500" />;
-      case 'Shield': return <Shield className="w-5 h-5 text-orange-500" />;
-      case 'Compass': return <Compass className="w-5 h-5 text-orange-500" />;
-      case 'TrendingUp': return <TrendingUp className="w-5 h-5 text-orange-500" />;
-      case 'Truck': return <Truck className="w-5 h-5 text-orange-500" />;
-      case 'Sparkles': return <Sparkles className="w-5 h-5 text-orange-500" />;
-      case 'Hammer': return <Hammer className="w-5 h-5 text-orange-500" />;
-      case 'Palette': return <Palette className="w-5 h-5 text-orange-500" />;
-      case 'Armchair': return <Armchair className="w-5 h-5 text-orange-500" />;
-      case 'Video': return <Video className="w-5 h-5 text-orange-500" />;
-      case 'Users': return <Users className="w-5 h-5 text-orange-500" />;
-      default: return <Target className="w-5 h-5 text-orange-500" />;
+      case 'FileText': return <FileText className={cls} />;
+      case 'Calculator': return <Calculator className={cls} />;
+      case 'Shield': return <Shield className={cls} />;
+      case 'Compass': return <Compass className={cls} />;
+      case 'TrendingUp': return <TrendingUp className={cls} />;
+      case 'Truck': return <Truck className={cls} />;
+      case 'Sparkles': return <Sparkles className={cls} />;
+      case 'Hammer': return <Hammer className={cls} />;
+      case 'Palette': return <Palette className={cls} />;
+      case 'Armchair': return <Armchair className={cls} />;
+      case 'Video': return <Video className={cls} />;
+      case 'Users': return <Users className={cls} />;
+      default: return <Target className={cls} />;
     }
   };
 
@@ -346,7 +347,7 @@ export default async function Home({
 
       {/* Dynamic Services Preview Section */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="bg-gradient-to-br from-orange-800 via-rose-800 to-indigo-950 border border-orange-500/20 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden transition-all duration-300 hover:shadow-orange-500/10 hover:-translate-y-0.5 group">
+        <div className="bg-gradient-to-br from-emerald-800 via-teal-800 to-cyan-950 border border-emerald-500/20 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden transition-all duration-300 hover:shadow-emerald-500/10 hover:-translate-y-0.5 group">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -359,34 +360,95 @@ export default async function Home({
               <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
                 Servicii Imobiliare Premium
               </h3>
-              <p className="text-orange-100 text-sm font-semibold leading-relaxed">
+              <p className="text-emerald-100 text-sm font-semibold leading-relaxed">
                 Tot ce ai nevoie pentru a cumpăra, vinde sau administra o proprietate în mod eficient. Colaborează cu experți verificați din domeniu.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-2">
-              {serviceCategories && serviceCategories.slice(0, 8).map((cat: any) => (
-                <Link
-                  key={cat.slug}
-                  href={`/services/${cat.slug}`}
-                  className="group bg-white/5 hover:bg-white/10 rounded-2xl p-6 border border-white/10 hover:border-orange-400/50 transition-all duration-300 flex flex-col justify-between items-start text-left text-white shadow-lg"
-                >
-                  <div className="space-y-4">
-                    <span className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-orange-500 transition-colors">
-                      {getServiceIcon(cat.icon)}
-                    </span>
-                    <h4 className="text-sm font-bold text-white group-hover:text-orange-300 transition-colors">
-                      {cat.title}
-                    </h4>
-                    <p className="text-slate-300 text-xs leading-relaxed line-clamp-2">
-                      {cat.description || 'Găsește specialiști parteneri verificați pentru acest serviciu.'}
-                    </p>
-                  </div>
-                  <div className="flex items-center text-xs font-bold text-orange-400 mt-6 group-hover:gap-1.5 transition-all">
-                    Vezi Oferte <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </Link>
-              ))}
+            <div className="flex flex-row overflow-x-auto gap-6 pt-2 pb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent snap-x snap-mandatory">
+              {serviceCategories && serviceCategories.slice(0, 8).map((cat: any, idx: number) => {
+                const PALETTES = [
+                  {
+                    hoverBorder: 'hover:border-emerald-400/50',
+                    iconText: 'text-emerald-400',
+                    hoverIconBg: 'group-hover:bg-emerald-500',
+                    titleText: 'group-hover:text-emerald-400',
+                    linkText: 'text-emerald-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-orange-400/50',
+                    iconText: 'text-orange-400',
+                    hoverIconBg: 'group-hover:bg-orange-500',
+                    titleText: 'group-hover:text-orange-400',
+                    linkText: 'text-orange-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-cyan-400/50',
+                    iconText: 'text-cyan-400',
+                    hoverIconBg: 'group-hover:bg-cyan-500',
+                    titleText: 'group-hover:text-cyan-400',
+                    linkText: 'text-cyan-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-amber-400/50',
+                    iconText: 'text-amber-400',
+                    hoverIconBg: 'group-hover:bg-amber-500',
+                    titleText: 'group-hover:text-amber-400',
+                    linkText: 'text-amber-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-pink-400/50',
+                    iconText: 'text-pink-400',
+                    hoverIconBg: 'group-hover:bg-pink-500',
+                    titleText: 'group-hover:text-pink-400',
+                    linkText: 'text-pink-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-sky-400/50',
+                    iconText: 'text-sky-400',
+                    hoverIconBg: 'group-hover:bg-sky-500',
+                    titleText: 'group-hover:text-sky-400',
+                    linkText: 'text-sky-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-teal-400/50',
+                    iconText: 'text-teal-400',
+                    hoverIconBg: 'group-hover:bg-teal-500',
+                    titleText: 'group-hover:text-teal-400',
+                    linkText: 'text-teal-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-rose-400/50',
+                    iconText: 'text-rose-400',
+                    hoverIconBg: 'group-hover:bg-rose-500',
+                    titleText: 'group-hover:text-rose-400',
+                    linkText: 'text-rose-400'
+                  }
+                ];
+                const palette = PALETTES[idx % PALETTES.length];
+                return (
+                  <Link
+                    key={cat.slug}
+                    href={`/services/${cat.slug}`}
+                    className={`group bg-white/5 hover:bg-white/10 rounded-2xl p-6 border border-white/10 ${palette.hoverBorder} transition-all duration-300 flex flex-col justify-between items-start text-left text-white shadow-lg w-[280px] sm:w-[320px] shrink-0 snap-start`}
+                  >
+                    <div className="space-y-4">
+                      <span className={`w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center transition-colors ${palette.hoverIconBg}`}>
+                        {getServiceIcon(cat.icon, palette.iconText)}
+                      </span>
+                      <h4 className={`text-sm font-bold text-white transition-colors ${palette.titleText}`}>
+                        {cat.title}
+                      </h4>
+                      <p className="text-slate-300 text-xs leading-relaxed line-clamp-2">
+                        {cat.description || 'Găsește specialiști parteneri verificați pentru acest serviciu.'}
+                      </p>
+                    </div>
+                    <div className={`flex items-center text-xs font-bold mt-6 group-hover:gap-1.5 transition-all ${palette.linkText}`}>
+                      Vezi Oferte <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
 
             <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
@@ -398,7 +460,7 @@ export default async function Home({
               </Link>
               <Link
                 href="/services/register"
-                className="w-full sm:w-auto px-6 py-3.5 bg-white text-orange-600 font-bold rounded-xl text-center text-xs uppercase tracking-wider transition-all shadow-lg hover:bg-slate-50 transform hover:-translate-y-0.5"
+                className="w-full sm:w-auto px-6 py-3.5 bg-white text-emerald-700 font-bold rounded-xl text-center text-xs uppercase tracking-wider transition-all shadow-lg hover:bg-slate-50 transform hover:-translate-y-0.5"
               >
                 Înregistrează-te ca Furnizor (Devino Partener)
               </Link>
