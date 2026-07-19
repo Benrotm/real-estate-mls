@@ -295,3 +295,111 @@ export async function updateServiceCategoryOrder(categoriesList: { id: string, s
         return { success: false, error: e.message || 'Failed to update order' };
     }
 }
+
+export async function createServiceRequest(
+    clientName: string,
+    clientPhone: string,
+    categorySlug: string,
+    categoryTitle: string,
+    requestDetails: string
+) {
+    try {
+        const supabase = await createClient();
+        const adminClient = createAdminClient();
+
+        // 1. Insert request
+        const { data: request, error: insertError } = await adminClient
+            .from('service_requests')
+            .insert({
+                client_name: clientName,
+                client_phone: clientPhone,
+                category_slug: categorySlug,
+                category_title: categoryTitle,
+                request_details: requestDetails
+            })
+            .select()
+            .single();
+
+        if (insertError) throw insertError;
+
+        // 2. Fetch admins and superadmins to notify
+        const { data: admins, error: adminError } = await adminClient
+            .from('profiles')
+            .select('id')
+            .in('role', ['admin', 'super_admin']);
+
+        if (!adminError && admins && admins.length > 0) {
+            const notifications = admins.map(admin => ({
+                user_id: admin.id,
+                type: 'system',
+                title: 'Solicitare nouă Serviciu HUB',
+                content: `Clientul ${clientName} solicită: ${categoryTitle}`,
+                link: '/dashboard/admin/services?tab=requests',
+                is_read: false
+            }));
+
+            await adminClient.from('notifications').insert(notifications);
+        }
+
+        revalidatePath('/dashboard/admin/services');
+        return { success: true, request };
+    } catch (e: any) {
+        console.error('Error creating service request:', e);
+        return { success: false, error: e.message || 'Failed to create request' };
+    }
+}
+
+export async function getServiceRequests() {
+    try {
+        await verifyAdmin();
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from('service_requests')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return { success: true, requests: data || [] };
+    } catch (e: any) {
+        console.error('Error fetching service requests:', e);
+        return { success: false, error: e.message || 'Failed to fetch requests', requests: [] };
+    }
+}
+
+export async function updateServiceRequestStatus(id: string, status: string) {
+    try {
+        await verifyAdmin();
+        const adminClient = createAdminClient();
+        const { data, error } = await adminClient
+            .from('service_requests')
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        revalidatePath('/dashboard/admin/services');
+        return { success: true, request: data };
+    } catch (e: any) {
+        console.error('Error updating request status:', e);
+        return { success: false, error: e.message || 'Failed to update request' };
+    }
+}
+
+export async function deleteServiceRequest(id: string) {
+    try {
+        await verifyAdmin();
+        const adminClient = createAdminClient();
+        const { error } = await adminClient
+            .from('service_requests')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        revalidatePath('/dashboard/admin/services');
+        return { success: true };
+    } catch (e: any) {
+        console.error('Error deleting request:', e);
+        return { success: false, error: e.message || 'Failed to delete request' };
+    }
+}

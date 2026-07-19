@@ -4,7 +4,8 @@ import { getUserProfile } from '@/app/lib/auth';
 import { 
     getServiceCategories, 
     getPendingServiceProviders, 
-    getAllServiceProviders 
+    getAllServiceProviders,
+    getServiceRequests
 } from '@/app/lib/actions/services-marketplace';
 import ServicesCMS from './ServicesCMS';
 
@@ -17,10 +18,11 @@ export default async function ServicesAdminPage() {
         redirect('/dashboard');
     }
 
-    const [categoriesRes, pendingRes, allRes] = await Promise.all([
+    const [categoriesRes, pendingRes, allRes, requestsRes] = await Promise.all([
         getServiceCategories(),
         getPendingServiceProviders(),
-        getAllServiceProviders()
+        getAllServiceProviders(),
+        getServiceRequests()
     ]);
 
     return (
@@ -41,6 +43,7 @@ export default async function ServicesAdminPage() {
                     initialCategories={categoriesRes.categories || []}
                     initialPending={pendingRes.providers || []}
                     initialAll={allRes.providers || []}
+                    initialRequests={requestsRes.requests || []}
                 />
             </div>
         </div>

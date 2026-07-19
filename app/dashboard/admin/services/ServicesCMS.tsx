@@ -5,11 +5,13 @@ import {
     createServiceCategory, 
     deleteServiceCategory, 
     updateProviderStatus,
-    updateServiceCategoryOrder
+    updateServiceCategoryOrder,
+    updateServiceRequestStatus,
+    deleteServiceRequest
 } from '@/app/lib/actions/services-marketplace';
 import { 
     Plus, Trash2, ShieldCheck, Clock, X, Check, FileText, ExternalLink, Mail, Phone, MapPin, Eye,
-    ArrowUp, ArrowDown
+    ArrowUp, ArrowDown, ClipboardList
 } from 'lucide-react';
 
 interface Category {
@@ -38,10 +40,22 @@ interface Provider {
     created_at: string;
 }
 
+interface ServiceRequest {
+    id: string;
+    client_name: string;
+    client_phone: string;
+    category_slug: string;
+    category_title: string;
+    request_details?: string;
+    status: string;
+    created_at: string;
+}
+
 interface ServicesCMSProps {
     initialCategories: Category[];
     initialPending: Provider[];
     initialAll: Provider[];
+    initialRequests: ServiceRequest[];
 }
 
 const ICON_OPTIONS = ['FileText', 'Calculator', 'Shield', 'Compass', 'TrendingUp', 'Truck', 'Sparkles', 'Hammer', 'Palette', 'Armchair', 'Video', 'Users', 'Zap'];
@@ -49,9 +63,10 @@ const ICON_OPTIONS = ['FileText', 'Calculator', 'Shield', 'Compass', 'TrendingUp
 export default function ServicesCMS({ 
     initialCategories, 
     initialPending, 
-    initialAll 
+    initialAll,
+    initialRequests
 }: ServicesCMSProps) {
-    const [activeTab, setActiveTab] = useState<'pending' | 'categories' | 'all'>('pending');
+    const [activeTab, setActiveTab] = useState<'pending' | 'categories' | 'all' | 'requests'>('pending');
     
     // Categories states
     const [categories, setCategories] = useState(initialCategories);
@@ -66,8 +81,38 @@ export default function ServicesCMS({
     const [allProviders, setAllProviders] = useState(initialAll);
     const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
+    // Requests state
+    const [requests, setRequests] = useState<ServiceRequest[]>(initialRequests);
+
     // Modal state for provider review
     const [reviewProvider, setReviewProvider] = useState<Provider | null>(null);
+
+    const handleRequestStatusUpdate = async (id: string, status: string) => {
+        try {
+            const res = await updateServiceRequestStatus(id, status);
+            if (res.success && res.request) {
+                setRequests(prev => prev.map(r => r.id === id ? res.request : r));
+            } else {
+                alert('Eroare: ' + res.error);
+            }
+        } catch (e: any) {
+            alert('Eroare tehnică: ' + e.message);
+        }
+    };
+
+    const handleRequestDelete = async (id: string) => {
+        if (!confirm('Sigur doriți să ștergeți această solicitare?')) return;
+        try {
+            const res = await deleteServiceRequest(id);
+            if (res.success) {
+                setRequests(prev => prev.filter(r => r.id !== id));
+            } else {
+                alert('Eroare: ' + res.error);
+            }
+        } catch (e: any) {
+            alert('Eroare tehnică: ' + e.message);
+        }
+    };
 
     // Auto-generate slug from title
     const handleTitleChange = (val: string) => {
@@ -212,6 +257,14 @@ export default function ServicesCMS({
                     }`}
                 >
                     Toți Furnizorii ({allProviders.length})
+                </button>
+                <button
+                    onClick={() => setActiveTab('requests')}
+                    className={`px-4 py-2.5 font-bold text-xs uppercase tracking-wider border-b-2 transition-all shrink-0 ${
+                        activeTab === 'requests' ? 'border-orange-500 text-white' : 'border-transparent text-slate-400 hover:text-white'
+                    }`}
+                >
+                    Solicitări Clienți ({requests.length})
                 </button>
             </div>
 
@@ -471,6 +524,109 @@ export default function ServicesCMS({
                                         <tr>
                                             <td colSpan={7} className="p-12 text-center text-slate-500">
                                                 Nu există furnizori înregistrați.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 4: SOLICITĂRI CLIENȚI */}
+            {activeTab === 'requests' && (
+                <div className="space-y-4 text-left animate-in fade-in duration-200">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <ClipboardList className="w-4 h-4 text-orange-500" /> Solicitări Oferte &amp; Servicii Clienți
+                    </h3>
+
+                    <div className="bg-slate-900/40 rounded-3xl border border-slate-850 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs">
+                                <thead className="bg-slate-950/60 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-850">
+                                    <tr>
+                                        <th className="p-4">Nume Client</th>
+                                        <th className="p-4">Telefon</th>
+                                        <th className="p-4">Categorie</th>
+                                        <th className="p-4">Detalii Solicitare</th>
+                                        <th className="p-4">Dată Solicitare</th>
+                                        <th className="p-4">Status</th>
+                                        <th className="p-4 text-right">Acțiuni</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-850">
+                                    {requests.map((req) => (
+                                        <tr key={req.id} className="hover:bg-white/5 transition-colors">
+                                            <td className="p-4 font-bold text-white">{req.client_name}</td>
+                                            <td className="p-4 text-cyan-400 font-semibold">
+                                                <a href={`tel:${req.client_phone}`} className="hover:underline">
+                                                    {req.client_phone}
+                                                </a>
+                                            </td>
+                                            <td className="p-4 text-slate-350">
+                                                <span className="bg-slate-950 px-2 py-1 rounded border border-slate-850 font-bold text-[10px] uppercase">
+                                                    {req.category_title}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-slate-300 max-w-xs font-normal whitespace-pre-line leading-relaxed">
+                                                {req.request_details || <span className="text-slate-650 italic">Fără detalii suplimentare.</span>}
+                                            </td>
+                                            <td className="p-4 text-slate-500 font-medium">
+                                                {new Date(req.created_at).toLocaleString('ro-RO')}
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+                                                    req.status === 'resolved' 
+                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
+                                                        : req.status === 'contacted'
+                                                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/25'
+                                                        : 'bg-amber-500/10 text-amber-400 border-amber-500/25'
+                                                }`}>
+                                                    {req.status === 'resolved' 
+                                                        ? 'Rezolvat' 
+                                                        : req.status === 'contacted'
+                                                        ? 'Contactat'
+                                                        : 'În Așteptare'}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {req.status !== 'resolved' && (
+                                                        <>
+                                                            {req.status === 'pending' && (
+                                                                <button
+                                                                    onClick={() => handleRequestStatusUpdate(req.id, 'contacted')}
+                                                                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all"
+                                                                    title="Marchează ca Contactat"
+                                                                >
+                                                                    Contactat
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => handleRequestStatusUpdate(req.id, 'resolved')}
+                                                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all"
+                                                                title="Marchează ca Rezolvat"
+                                                            >
+                                                                Rezolvat
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleRequestDelete(req.id)}
+                                                        className="p-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all"
+                                                        title="Șterge solicitarea"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {requests.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="p-12 text-center text-slate-500 font-medium">
+                                                Nu există solicitări de la clienți.
                                             </td>
                                         </tr>
                                     )}

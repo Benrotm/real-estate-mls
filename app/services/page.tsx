@@ -6,6 +6,7 @@ import {
     getProviderByUserId 
 } from '@/app/lib/actions/services-marketplace';
 import { getUserProfile } from '@/app/lib/auth';
+import ServiceRequestForm from './ServiceRequestForm';
 import { 
     Video, Users, TrendingUp, Calculator, Target, Shield, Compass, Truck, Sparkles, Hammer, Palette, Armchair, Zap,
     Search, User, Coins, BadgeCheck, FileText, Phone, Mail, MapPin, Globe, ArrowRight, ExternalLink 
@@ -192,6 +193,13 @@ export default async function ServicesPage({
                         )}
 
                         <div className="grid grid-cols-1 gap-6">
+                            {activeCategory && (
+                                <ServiceRequestForm 
+                                    categorySlug={activeCategory.slug} 
+                                    categoryTitle={activeCategory.title} 
+                                />
+                            )}
+
                             {providers.map((prov) => (
                                 <div 
                                     key={prov.id}
@@ -251,22 +259,6 @@ export default async function ServicesPage({
                                     </div>
                                 </div>
                             ))}
-
-                            {providers.length === 0 && (
-                                <div className="py-16 text-center text-slate-500 bg-slate-900/10 border border-dashed border-slate-850 rounded-3xl space-y-2">
-                                    <MapPin className="w-8 h-8 text-slate-650 mx-auto" />
-                                    <p className="font-medium text-xs">Momentan nu există furnizori în această categorie.</p>
-                                    <p className="text-[10px] text-slate-600">Fii primul furnizor aprobat din categoria ta înregistrat în Imobum!</p>
-                                    <div className="pt-2">
-                                        <Link
-                                            href="/services/register"
-                                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all"
-                                        >
-                                            Creează Cerere de Parteneriat <ArrowRight className="w-3 h-3" />
-                                        </Link>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
