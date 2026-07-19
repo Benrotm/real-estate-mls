@@ -442,7 +442,7 @@ export default async function Home({
                 return (
                   <Link
                     key={cat.slug}
-                    href={`/services/${cat.slug}`}
+                    href={`/services?category=${cat.slug}`}
                     className={`group bg-white/5 hover:bg-white/10 rounded-2xl p-6 border border-white/10 ${palette.hoverBorder} transition-all duration-300 flex flex-col justify-between items-start text-left text-white shadow-lg w-[280px] sm:w-[320px] shrink-0 snap-start`}
                   >
                     <div className="space-y-4">
