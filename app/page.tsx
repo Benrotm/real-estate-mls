@@ -41,6 +41,18 @@ export default async function Home({
 
   // Fetch plan features
   const allFeatures = await fetchAllFeatures();
+
+  // Deduplicate and process features list for homepage section
+  const uniqueFeatures = Array.from(new Set((allFeatures || []).map(f => f.feature_key)))
+    .map(key => {
+      const match = allFeatures.find(f => f.feature_key === key);
+      return {
+        key: key,
+        label: match?.feature_label || key,
+        desc: "Funcționalitate avansată integrată în platforma imobiliară Imobum.com."
+      };
+    });
+
   const brokerFeaturesKeys = Array.from(new Set(
     (allFeatures || [])
       .filter(f => (f.role === 'agent' || f.role === 'developer') && f.is_included)
@@ -128,6 +140,12 @@ export default async function Home({
       case 'Users': return <Users className={cls} />;
       default: return <Target className={cls} />;
     }
+  };
+
+  const getFeatureIconComponent = (idx: number, colorClass: string) => {
+    const icons = [Sparkles, Target, Shield, Compass, TrendingUp, Users, Video, BadgeCheck];
+    const Icon = icons[idx % icons.length] || Sparkles;
+    return <Icon className={`w-5 h-5 ${colorClass}`} />;
   };
 
   return (
@@ -459,6 +477,106 @@ export default async function Home({
               >
                 Înregistrează-te ca Furnizor (Devino Partener)
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dynamic Features Section */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="bg-gradient-to-br from-violet-800 via-purple-800 to-indigo-950 border border-purple-500/20 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden transition-all duration-300 hover:shadow-indigo-500/10 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-8">
+            <div className="space-y-3 text-left">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white border border-white/30 uppercase tracking-widest">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+                Real Estate HUB Features
+              </span>
+              <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
+                Platform Features &amp; System Capabilities
+              </h3>
+              <p className="text-indigo-100 text-sm font-semibold leading-relaxed">
+                Descoperă tool-urile și instrumentele disponibile utilizatorilor platformei noastre.
+              </p>
+            </div>
+
+            <div className="flex flex-row overflow-x-auto gap-6 pt-2 pb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent snap-x snap-mandatory">
+              {uniqueFeatures.map((feat, idx) => {
+                const PALETTES = [
+                  {
+                    hoverBorder: 'hover:border-violet-400/50',
+                    iconText: 'text-violet-400',
+                    hoverIconBg: 'group-hover:bg-violet-500',
+                    titleText: 'group-hover:text-violet-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-indigo-400/50',
+                    iconText: 'text-indigo-400',
+                    hoverIconBg: 'group-hover:bg-indigo-500',
+                    titleText: 'group-hover:text-indigo-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-purple-400/50',
+                    iconText: 'text-purple-400',
+                    hoverIconBg: 'group-hover:bg-purple-500',
+                    titleText: 'group-hover:text-purple-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-fuchsia-400/50',
+                    iconText: 'text-fuchsia-400',
+                    hoverIconBg: 'group-hover:bg-fuchsia-500',
+                    titleText: 'group-hover:text-fuchsia-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-sky-400/50',
+                    iconText: 'text-sky-400',
+                    hoverIconBg: 'group-hover:bg-sky-500',
+                    titleText: 'group-hover:text-sky-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-blue-400/50',
+                    iconText: 'text-blue-400',
+                    hoverIconBg: 'group-hover:bg-blue-500',
+                    titleText: 'group-hover:text-blue-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-pink-400/50',
+                    iconText: 'text-pink-400',
+                    hoverIconBg: 'group-hover:bg-pink-500',
+                    titleText: 'group-hover:text-pink-400'
+                  },
+                  {
+                    hoverBorder: 'hover:border-cyan-400/50',
+                    iconText: 'text-cyan-400',
+                    hoverIconBg: 'group-hover:bg-cyan-500',
+                    titleText: 'group-hover:text-cyan-400'
+                  }
+                ];
+                const palette = PALETTES[idx % PALETTES.length];
+                return (
+                  <div
+                    key={feat.key}
+                    className={`group bg-white/5 hover:bg-white/10 rounded-2xl p-6 border border-white/10 ${palette.hoverBorder} transition-all duration-300 flex flex-col justify-between items-start text-left text-white shadow-lg w-[280px] sm:w-[320px] shrink-0 snap-start`}
+                  >
+                    <div className="space-y-4 w-full">
+                      <span className={`w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center transition-colors ${palette.hoverIconBg}`}>
+                        {getFeatureIconComponent(idx, palette.iconText)}
+                      </span>
+                      <h4 className={`text-sm font-bold text-white transition-colors ${palette.titleText}`}>
+                        {feat.label}
+                      </h4>
+                      <p className="text-slate-300 text-xs leading-relaxed line-clamp-2">
+                        {feat.desc}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center text-[10px] uppercase font-bold text-white/50 border border-white/10 px-2.5 py-0.5 rounded-full mt-6">
+                      Sistem Activ
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
