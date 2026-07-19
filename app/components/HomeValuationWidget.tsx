@@ -11,7 +11,7 @@ interface HomeValuationWidgetProps {
 }
 
 export default function HomeValuationWidget({ linkPath, variant = 'default' }: HomeValuationWidgetProps) {
-    const [targetPath, setTargetPath] = useState<string>(linkPath || '/pricing');
+    const [targetPath, setTargetPath] = useState<string>(linkPath || '/auth/signup');
 
     useEffect(() => {
         if (linkPath) {
@@ -24,7 +24,7 @@ export default function HomeValuationWidget({ linkPath, variant = 'default' }: H
             if (session?.user) {
                 setTargetPath('/dashboard/owner/valuation');
             } else {
-                setTargetPath('/pricing');
+                setTargetPath('/auth/signup');
             }
         });
 
@@ -33,7 +33,7 @@ export default function HomeValuationWidget({ linkPath, variant = 'default' }: H
             if (session?.user) {
                 setTargetPath('/dashboard/owner/valuation');
             } else {
-                setTargetPath('/pricing');
+                setTargetPath('/auth/signup');
             }
         });
 
