@@ -109,7 +109,7 @@ export default async function Home({
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl -translate-x-1/3 translate-y-1/3"></div>
 
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Ready to sell Your Property?</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to sell Your Property?</h2>
           <p className="text-xl text-orange-100 mb-10 max-w-2xl mx-auto">
             Join thousands of property owners, clients and agents on the Imobum.com Real Estate Platform. Get maximum experience with virtual tours or direct contact, AI tools, targeted marketing, market insights, Automatic Price Evaluation feature and professional dashboards with chat between the platform users.
           </p>
@@ -133,7 +133,7 @@ export default async function Home({
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-100 text-orange-750 rounded-full text-xs font-extrabold uppercase tracking-wider">
               <span>Quick Match</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
               No time to search? Let us find the perfect match for you!
             </h2>
             <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
