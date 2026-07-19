@@ -18,19 +18,11 @@ export default function TrustStats() {
 
 
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full">
-                    <div className="text-center">
-                        <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-cyan-500/50">
-                            <Building className="w-7 h-7" />
-                        </div>
-                        <div className="text-4xl font-bold text-white mb-2">2,500+</div>
-                        <div className="text-cyan-200 text-sm font-bold uppercase tracking-wide">Properties Sold</div>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-3xl mx-auto">
                     <div className="text-center">
                         <div className="w-14 h-14 bg-gradient-to-br from-lime-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-lime-500/50">
                             <Users className="w-7 h-7" />
                         </div>
-                        <div className="text-4xl font-bold text-white mb-2">1,200+</div>
                         <div className="text-lime-200 text-sm font-bold uppercase tracking-wide">Happy Clients</div>
                     </div>
                     <div className="text-center">
