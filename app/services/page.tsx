@@ -153,7 +153,7 @@ export default async function ServicesPage({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     
                     {/* Left Column: Categories List */}
-                    <div className="lg:col-span-3 space-y-3 bg-slate-900/30 p-5 rounded-3xl border border-slate-855 text-left">
+                    <div className="lg:col-span-3 space-y-3 bg-slate-900/30 p-5 rounded-3xl border border-slate-800 text-left">
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">
                             Categorii Servicii
                         </h3>

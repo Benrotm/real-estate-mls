@@ -223,7 +223,7 @@ export default async function Home({
             <p className="text-xs text-orange-100 font-semibold uppercase tracking-wider">Daca vrei sa lucrezi cu un profesionist</p>
             <Link 
               href="/calculator-comisioane"
-              className="px-6 py-3 bg-white text-orange-650 font-bold rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider hover:bg-slate-50 transform hover:-translate-y-0.5 active:scale-95"
+              className="px-6 py-3 bg-white text-orange-600 font-bold rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider hover:bg-slate-50 transform hover:-translate-y-0.5 active:scale-95"
             >
               Calculator Servicii &amp; Comisioane
             </Link>
@@ -346,7 +346,7 @@ export default async function Home({
 
       {/* Dynamic Services Preview Section */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="bg-gradient-to-br from-orange-800 via-rose-800 to-indigo-955 border border-orange-500/20 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden transition-all duration-300 hover:shadow-orange-500/10 hover:-translate-y-0.5 group">
+        <div className="bg-gradient-to-br from-orange-800 via-rose-800 to-indigo-950 border border-orange-500/20 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden transition-all duration-300 hover:shadow-orange-500/10 hover:-translate-y-0.5 group">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
 
