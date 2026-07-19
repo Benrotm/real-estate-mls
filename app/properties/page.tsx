@@ -399,14 +399,27 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                 </div>
                             </div>
 
-                            {/* New Report Generator Button */}
-                            <div className="pt-4 flex justify-center w-full">
-                                <Link 
-                                    href="/auth/signup"
-                                    className="w-full md:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg transition-all text-center text-sm uppercase tracking-wider transform hover:-translate-y-0.5"
-                                >
-                                    Genereaza un raport de piata Complet pentru proprietatea care te intereseaza
-                                </Link>
+                            {/* Actions Container */}
+                            <div className="pt-4 flex flex-col lg:flex-row items-center justify-center gap-6 w-full">
+                                <div className="flex flex-col items-center gap-2 text-center w-full lg:w-auto">
+                                    <span className="text-xs text-indigo-200/0 hidden lg:inline-block pointer-events-none select-none">&nbsp;</span>
+                                    <Link 
+                                        href="/auth/signup"
+                                        className="w-full lg:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg transition-all text-center text-sm uppercase tracking-wider transform hover:-translate-y-0.5"
+                                    >
+                                        Genereaza un raport de piata Complet pentru proprietatea care te intereseaza
+                                    </Link>
+                                </div>
+
+                                <div className="flex flex-col items-center gap-2 text-center w-full lg:w-auto">
+                                    <p className="text-xs text-indigo-200 font-semibold">Daca vrei sa lucrezi cu un profesionist</p>
+                                    <Link 
+                                        href="/calculator-comisioane"
+                                        className="w-full lg:w-auto px-6 py-3.5 bg-white hover:bg-slate-100 text-indigo-900 font-bold rounded-xl shadow-lg transition-all text-center text-sm uppercase tracking-wider transform hover:-translate-y-0.5 border border-white"
+                                    >
+                                        Calculator Servicii & Comisioane
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
