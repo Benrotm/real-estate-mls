@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -43,6 +43,11 @@ export const metadata: Metadata = {
     description: "Platformă imobiliară inteligentă. Găsește proprietăți premium și evaluează-le folosind inteligența artificială.",
     images: ["/icon.png"],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 0.85,
 };
 
 export const dynamic = 'force-dynamic';

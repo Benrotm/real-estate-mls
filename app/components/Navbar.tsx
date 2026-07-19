@@ -84,7 +84,7 @@ export default function Navbar({ user }: NavbarProps) {
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#1e293b] border-b border-white/10 shadow-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 cursor-pointer group">
@@ -161,7 +161,7 @@ export default function Navbar({ user }: NavbarProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 md:gap-4">
 
             {/* Notification Bell */}
             {isLoggedIn && user?.id && (
@@ -172,11 +172,11 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="relative">
               <button
                 onClick={() => setIsLangOpen(!isLangOpen)}
-                className="flex items-center gap-1 p-2 rounded-lg text-white hover:bg-white/10 hover:text-cyan-300 transition-colors"
+                className="flex items-center gap-0.5 p-1 md:p-2 rounded-lg text-white hover:bg-white/10 hover:text-cyan-300 transition-colors"
               >
-                <Globe className="w-4 h-4" />
-                <span className="text-sm font-bold uppercase">{language}</span>
-                <ChevronDown className="w-3 h-3" />
+                <Globe className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="text-xs md:text-sm font-bold uppercase">{language}</span>
+                <ChevronDown className="w-2.5 h-2.5 md:w-3 md:h-3" />
               </button>
 
               {isLangOpen && (
@@ -324,11 +324,11 @@ export default function Navbar({ user }: NavbarProps) {
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 md:gap-3">
                 {/* Sign In - Orange to green gradient, subdued on signup page */}
                 <Link
                   href="/auth/login"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all text-sm md:text-base md:px-5 md:py-2.5 ${pathname === '/auth/signup'
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold transition-all text-xs md:text-sm md:px-4 md:py-2 md:rounded-xl ${pathname === '/auth/signup'
                     ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
                     : 'bg-gradient-to-r from-orange-500 to-emerald-500 text-white hover:from-orange-400 hover:to-emerald-400 shadow-lg shadow-orange-500/30'
                     }`}
@@ -339,7 +339,7 @@ export default function Navbar({ user }: NavbarProps) {
                 {/* Sign Up - Green gradient, subdued on login page */}
                 <Link
                   href="/auth/signup"
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all ${pathname === '/auth/login'
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold transition-all text-xs md:text-sm md:px-5 md:py-2.5 md:rounded-xl ${pathname === '/auth/login'
                     ? 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/20'
                     : 'bg-gradient-to-r from-lime-500 to-emerald-600 text-white hover:from-lime-400 hover:to-emerald-500 shadow-lg shadow-lime-500/50'
                     }`}
@@ -353,9 +353,9 @@ export default function Navbar({ user }: NavbarProps) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 hover:bg-cyan-500/20 rounded-md text-white"
+              className="md:hidden p-1.5 hover:bg-cyan-500/20 rounded-md text-white shrink-0"
             >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMobileMenuOpen ? <X className="w-5.5 h-5.5" /> : <Menu className="w-5.5 h-5.5" />}
             </button>
           </div>
         </div>
