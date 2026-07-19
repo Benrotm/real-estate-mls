@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import { 
     createServiceCategory, 
     deleteServiceCategory, 
-    updateProviderStatus 
+    updateProviderStatus,
+    updateServiceCategoryOrder
 } from '@/app/lib/actions/services-marketplace';
 import { 
-    Plus, Trash2, ShieldCheck, Clock, X, Check, FileText, ExternalLink, Mail, Phone, MapPin, Eye 
+    Plus, Trash2, ShieldCheck, Clock, X, Check, FileText, ExternalLink, Mail, Phone, MapPin, Eye,
+    ArrowUp, ArrowDown
 } from 'lucide-react';
 
 interface Category {
@@ -115,6 +117,33 @@ export default function ServicesCMS({
             }
         } catch (e: any) {
             alert('Eroare tehnică: ' + e.message);
+        }
+    };
+
+    // Move Category Up/Down
+    const handleMoveCategory = async (index: number, direction: 'up' | 'down') => {
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= categories.length) return;
+
+        const updatedCategories = [...categories];
+        const temp = updatedCategories[index];
+        updatedCategories[index] = updatedCategories[newIndex];
+        updatedCategories[newIndex] = temp;
+
+        setCategories(updatedCategories);
+
+        const listToUpdate = updatedCategories.map((cat, idx) => ({
+            id: cat.id,
+            sort_order: idx + 1
+        }));
+
+        try {
+            const res = await updateServiceCategoryOrder(listToUpdate);
+            if (!res.success) {
+                alert('Eroare la salvarea ordinii în baza de date: ' + res.error);
+            }
+        } catch (e: any) {
+            alert('Eroare tehnică la reordonare: ' + e.message);
         }
     };
 
@@ -318,16 +347,38 @@ export default function ServicesCMS({
 
                         <div className="bg-slate-900/20 border border-slate-850 rounded-3xl overflow-hidden">
                             <div className="divide-y divide-slate-850">
-                                {categories.map((cat) => (
+                                {categories.map((cat, idx) => (
                                     <div key={cat.id} className="p-4 flex items-center justify-between gap-4 hover:bg-white/5 transition-colors">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-white text-xs uppercase flex items-center gap-1.5">
-                                                <span className="text-slate-500">{cat.icon}</span>
-                                                {cat.title}
-                                            </h4>
-                                            <p className="text-[10px] text-slate-500 truncate max-w-[400px]">
-                                                {cat.description || 'Fără descriere.'} • Slug: <code className="text-indigo-400">{cat.slug}</code>
-                                            </p>
+                                        <div className="flex items-center gap-4">
+                                            {/* Order buttons */}
+                                            <div className="flex flex-col gap-1 mr-2">
+                                                <button
+                                                    onClick={() => handleMoveCategory(idx, 'up')}
+                                                    disabled={idx === 0}
+                                                    className="p-1 hover:bg-slate-800 text-slate-500 hover:text-white rounded disabled:opacity-30 disabled:hover:bg-transparent"
+                                                    title="Mută mai sus"
+                                                >
+                                                    <ArrowUp className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMoveCategory(idx, 'down')}
+                                                    disabled={idx === categories.length - 1}
+                                                    className="p-1 hover:bg-slate-800 text-slate-500 hover:text-white rounded disabled:opacity-30 disabled:hover:bg-transparent"
+                                                    title="Mută mai jos"
+                                                >
+                                                    <ArrowDown className="w-3 h-3" />
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <h4 className="font-bold text-white text-xs uppercase flex items-center gap-1.5">
+                                                    <span className="text-slate-500">{cat.icon}</span>
+                                                    {cat.title}
+                                                </h4>
+                                                <p className="text-[10px] text-slate-500 truncate max-w-[400px]">
+                                                    {cat.description || 'Fără descriere.'} • Slug: <code className="text-indigo-400">{cat.slug}</code>
+                                                </p>
+                                            </div>
                                         </div>
                                         <button
                                             onClick={() => handleDeleteCategory(cat.id)}

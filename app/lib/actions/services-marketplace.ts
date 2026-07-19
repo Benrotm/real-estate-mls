@@ -28,6 +28,7 @@ export async function getServiceCategories() {
         const { data, error } = await supabase
             .from('service_categories')
             .select('*')
+            .order('sort_order', { ascending: true })
             .order('title', { ascending: true });
 
         if (error) throw error;
@@ -264,5 +265,28 @@ export async function getProviderByUserId(userId: string) {
     } catch (e: any) {
         console.error('Error fetching provider by user id:', e);
         return { success: false, error: e.message || 'Failed to fetch provider' };
+    }
+}
+
+export async function updateServiceCategoryOrder(categoriesList: { id: string, sort_order: number }[]) {
+    try {
+        await verifyAdmin();
+        const adminClient = createAdminClient();
+
+        // Perform parallel updates
+        const promises = categoriesList.map(item => 
+            adminClient
+                .from('service_categories')
+                .update({ sort_order: item.sort_order })
+                .eq('id', item.id)
+        );
+        await Promise.all(promises);
+        
+        revalidatePath('/dashboard/admin/services');
+        revalidatePath('/');
+        return { success: true };
+    } catch (e: any) {
+        console.error('Error updating service category order:', e);
+        return { success: false, error: e.message || 'Failed to update order' };
     }
 }

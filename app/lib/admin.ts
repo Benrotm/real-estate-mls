@@ -124,6 +124,31 @@ export async function deleteGlobalFeature(key: string) {
     revalidatePath('/pricing');
 }
 
+export async function updatePlanFeaturesOrder(featuresList: { key: string, sort_order: number }[]) {
+    try {
+        await verifyAdmin();
+        const supabase = await createClient();
+
+        // Update sort_order for all instances matching feature_key
+        const promises = featuresList.map(item => 
+            supabase
+                .from('plan_features')
+                .update({ sort_order: item.sort_order })
+                .eq('feature_key', item.key)
+        );
+        await Promise.all(promises);
+
+        revalidatePath('/dashboard/admin/features');
+        revalidatePath('/dashboard/admin/plans');
+        revalidatePath('/pricing');
+        revalidatePath('/');
+        return { success: true };
+    } catch (e: any) {
+        console.error('Error updating plan features order:', e);
+        return { success: false, error: e.message || 'Failed to update order' };
+    }
+}
+
 // Fallback Data for when DB tables are missing
 const FALLBACK_FEATURES = [
     { role: 'owner', plan_name: 'Free', feature_label: 'Basic Listings', is_included: true, sort_order: 1 },
