@@ -141,15 +141,13 @@ export default async function Home({
 
       {/* Premium Listings Section */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <div className="flex items-center gap-2 text-secondary font-bold uppercase tracking-wider text-sm mb-2 bg-orange-100 w-fit px-3 py-1 rounded-full text-orange-700">
-              <BadgeCheck className="w-4 h-4" />
-              Best Price Property Listings
-            </div>
+        <div className="flex flex-col items-center justify-center text-center mb-12">
+          <div className="flex items-center gap-2 text-secondary font-bold uppercase tracking-wider text-sm mb-2 bg-orange-100 w-fit px-3 py-1 rounded-full text-orange-700">
+            <BadgeCheck className="w-4 h-4" />
+            Best Price Property Listings
           </div>
-          <Link href="/properties" className="hidden md:flex items-center gap-2 text-orange-600 font-bold hover:text-orange-700 transition-colors">
-            View All <ArrowRight className="w-5 h-5" />
+          <Link href="/properties" className="flex items-center gap-1.5 text-xs font-bold text-orange-600 hover:text-orange-700 transition-colors uppercase tracking-wider mt-1">
+            View All <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -175,12 +173,9 @@ export default async function Home({
 
       {/* Recent Properties Section (Another Row) */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full border-t border-gray-200">
-        <div className="flex justify-between items-center mb-10">
-          <div>
-            <div className="text-secondary font-bold uppercase tracking-wider text-sm mb-2 bg-blue-100 w-fit px-3 py-1 rounded-full text-blue-700">Just Added</div>
-
-          </div>
-          <Link href="/properties" className="text-sm font-semibold text-slate-500 hover:text-primary">
+        <div className="flex flex-col items-center justify-center text-center mb-10">
+          <div className="text-secondary font-bold uppercase tracking-wider text-sm mb-2 bg-blue-100 w-fit px-3 py-1 rounded-full text-blue-700">Just Added</div>
+          <Link href="/properties" className="text-xs font-bold text-slate-500 hover:text-primary uppercase tracking-wider mt-1">
             View All
           </Link>
         </div>
@@ -239,15 +234,15 @@ export default async function Home({
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 space-y-6">
-            <div className="space-y-3 text-left">
+            <div className="space-y-3 text-center flex flex-col items-center">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white border border-white/30 uppercase tracking-widest">
                 <Target className="w-3.5 h-3.5 text-white" />
                 For Real Estate Brokers, Agency and Developers
               </span>
-              <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
+              <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white max-w-3xl mx-auto">
                 Optimizează-ți afacerea imobiliară cu cel mai avansat sistem MLS &amp; AI!
               </h3>
-              <p className="text-indigo-100 text-sm font-semibold leading-relaxed">
+              <p className="text-indigo-100 text-sm font-semibold leading-relaxed max-w-2xl mx-auto">
                 Colaborează, accesează lead-uri calificate, generează tururi virtuale și utilizează instrumentele noastre premium dedicate brokerilor și dezvoltatorilor.
               </p>
             </div>
@@ -290,7 +285,7 @@ export default async function Home({
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-100 border-t border-slate-200">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Explanation Text */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="lg:col-span-5 space-y-6 flex flex-col items-center text-center justify-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-100 text-orange-750 rounded-full text-xs font-extrabold uppercase tracking-wider">
               <span>Quick Match</span>
             </div>
@@ -300,7 +295,7 @@ export default async function Home({
             <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
               If you are busy or can't find properties matching your requirements, simply submit your preferences here. Our team will analyze your request and send matching properties directly to your WhatsApp or email!
             </p>
-            <div className="space-y-4 pt-4">
+            <div className="space-y-4 pt-4 text-left w-full max-w-md">
               <div className="flex items-start gap-3">
                 <div className="p-2.5 bg-orange-500 text-white rounded-lg shrink-0 shadow-lg shadow-orange-500/10">
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
