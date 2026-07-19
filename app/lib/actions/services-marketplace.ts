@@ -50,7 +50,12 @@ export async function createServiceCategory(title: string, slug: string, descrip
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            if (error.code === '23505') {
+                throw new Error('O categorie cu acest nume sau slug există deja.');
+            }
+            throw error;
+        }
         revalidatePath('/services');
         revalidatePath('/dashboard/admin/services');
         return { success: true, category: data };

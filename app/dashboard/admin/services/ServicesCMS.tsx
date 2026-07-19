@@ -81,7 +81,7 @@ export default function ServicesCMS({
     // Add new Category
     const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newTitle.trim() || !newSlug.trim()) return;
+        if (!newTitle.trim() || !newSlug.trim() || addingCat) return;
 
         setAddingCat(true);
         try {
