@@ -18,26 +18,26 @@ export default function TrustStats() {
 
 
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-3xl mx-auto">
+                <div className="grid grid-cols-3 gap-3 sm:gap-8 w-full max-w-3xl mx-auto">
                     <div className="text-center">
-                        <div className="w-14 h-14 bg-gradient-to-br from-lime-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-lime-500/50">
-                            <Users className="w-7 h-7" />
+                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-lime-500 to-emerald-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-4 text-white shadow-lg shadow-lime-500/50">
+                            <Users className="w-5 h-5 sm:w-7 sm:h-7" />
                         </div>
-                        <div className="text-lime-200 text-sm font-bold uppercase tracking-wide">Happy Clients</div>
+                        <div className="text-lime-200 text-[10px] sm:text-sm font-bold uppercase tracking-wide">Happy Clients</div>
                     </div>
                     <div className="text-center">
-                        <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-purple-500/50">
-                            <Star className="w-7 h-7" />
+                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-4 text-white shadow-lg shadow-purple-500/50">
+                            <Star className="w-5 h-5 sm:w-7 sm:h-7" />
                         </div>
-                        <div className="text-4xl font-bold text-white mb-2">98%</div>
-                        <div className="text-purple-200 text-sm font-bold uppercase tracking-wide">Satisfaction Rate</div>
+                        <div className="text-2xl sm:text-4xl font-bold text-white mb-0.5 sm:mb-2">98%</div>
+                        <div className="text-purple-200 text-[10px] sm:text-sm font-bold uppercase tracking-wide">Satisfaction Rate</div>
                     </div>
                     <div className="text-center">
-                        <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-yellow-500/50">
-                            <ShieldCheck className="w-7 h-7" />
+                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-4 text-white shadow-lg shadow-yellow-500/50">
+                            <ShieldCheck className="w-5 h-5 sm:w-7 sm:h-7" />
                         </div>
-                        <div className="text-4xl font-bold text-white mb-2">24/7</div>
-                        <div className="text-yellow-200 text-sm font-bold uppercase tracking-wide">Support Available</div>
+                        <div className="text-2xl sm:text-4xl font-bold text-white mb-0.5 sm:mb-2">24/7</div>
+                        <div className="text-yellow-200 text-[10px] sm:text-sm font-bold uppercase tracking-wide">Support Available</div>
                     </div>
                 </div>
             </div>
