@@ -218,6 +218,16 @@ export default async function Home({
               Free Property Price Evaluation
             </Link>
           </div>
+
+          <div className="mt-8 pt-4 flex flex-col items-center gap-2">
+            <p className="text-xs text-orange-100 font-semibold uppercase tracking-wider">Daca vrei sa lucrezi cu un profesionist</p>
+            <Link 
+              href="/calculator-comisioane"
+              className="px-6 py-3 bg-white text-orange-650 font-bold rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider hover:bg-slate-50 transform hover:-translate-y-0.5 active:scale-95"
+            >
+              Calculator Servicii &amp; Comisioane
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -261,7 +271,7 @@ export default async function Home({
             </div>
 
             {/* Actions Container */}
-            <div className="pt-4 flex flex-col lg:flex-row items-center justify-center gap-6 w-full">
+            <div className="pt-4 flex items-center justify-center w-full">
               <div className="flex flex-col items-center gap-2 text-center w-full lg:w-auto">
                 <p className="text-xs text-indigo-200 font-semibold">Alătură-te celei mai avansate platforme MLS</p>
                 <Link 
@@ -269,16 +279,6 @@ export default async function Home({
                   className="w-full lg:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg transition-all text-center text-sm uppercase tracking-wider transform hover:-translate-y-0.5"
                 >
                   Creează Cont de Broker / Dezvoltator
-                </Link>
-              </div>
-
-              <div className="flex flex-col items-center gap-2 text-center w-full lg:w-auto">
-                <p className="text-xs text-indigo-200 font-semibold">Află costurile și comisionul ideal de colaborare</p>
-                <Link 
-                  href="/calculator-comisioane"
-                  className="w-full lg:w-auto px-6 py-3.5 bg-white hover:bg-slate-100 text-indigo-900 font-bold rounded-xl shadow-lg transition-all text-center text-sm uppercase tracking-wider transform hover:-translate-y-0.5 border border-white"
-                >
-                  Calculator Servicii &amp; Comisioane
                 </Link>
               </div>
             </div>
