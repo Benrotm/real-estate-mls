@@ -1,13 +1,14 @@
 import Hero from "./components/Hero";
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowRight, Plus, BadgeCheck } from 'lucide-react';
+import { ArrowRight, Plus, BadgeCheck, Target, TrendingUp, Users, Video, Shield } from 'lucide-react';
 import PropertyCard from "./components/PropertyCard";
 import RoleSelector from "./components/RoleSelector";
 import TrustStats from "./components/TrustStats";
 import InviteLeadForm from "./invite/[agentId]/InviteLeadForm";
 import { getProperties } from "./lib/actions/properties";
 import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
+import { fetchAllFeatures } from '@/app/lib/admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,78 @@ export default async function Home({
   const allPropertiesForOfferCheck = [...bestRatedProperties, ...recentProperties];
   const ownerIds = Array.from(new Set(allPropertiesForOfferCheck.map(p => p.owner_id).filter(Boolean)));
   const makeOfferAccessMap = await bulkCheckUserFeatureAccess(ownerIds, SYSTEM_FEATURES.MAKE_AN_OFFER);
+
+  // Fetch plan features
+  const allFeatures = await fetchAllFeatures();
+  const brokerFeaturesKeys = Array.from(new Set(
+    (allFeatures || [])
+      .filter(f => (f.role === 'agent' || f.role === 'developer') && f.is_included)
+      .map(f => f.feature_key)
+  ));
+
+  const defaultBrokerFeatures = [
+    {
+      key: 'leads_access',
+      title: 'Leads, Matching & CRM System',
+      desc: 'Identifică și conectează-te cu clienți calificați instant.',
+      icon: 'Users',
+      items: [
+        'Matching automat între proprietățile tale și căutările active din MLS.',
+        'Pipeline vizual pentru monitorizarea tranzacțiilor și stadiului lead-urilor.',
+        'Distribuire inteligentă a contactelor către agenții din echipa ta.'
+      ]
+    },
+    {
+      key: 'virtual_tour',
+      title: 'Virtual Tours & AI Staging Studio',
+      desc: 'Oferă tururi 3D imersive și design virtual de top.',
+      icon: 'Video',
+      items: [
+        'Tururi virtuale interactive hostate direct în platformă.',
+        'Instrumente AI pentru mobilarea virtuală a spațiilor goale din browser.',
+        'Atrage cu 70% mai mulți cumpărători online prin prezentări ultra-realiste.'
+      ]
+    },
+    {
+      key: 'market_insights',
+      title: 'Real-time Market Insights & Valuations',
+      desc: 'Accesează statistici avansate despre piața locală.',
+      icon: 'TrendingUp',
+      items: [
+        'Rapoarte detaliate de evaluare bazate pe tranzacții reale.',
+        'Date analitice despre concurență și timpii medii de tranzacționare.',
+        'Alerte automate pentru modificări de preț în zonele de interes.'
+      ]
+    },
+    {
+      key: 'agency_team',
+      title: 'Agency Teams & ROI Performance',
+      desc: 'Gestionează-ți echipa de brokeri dintr-o consolă centralizată.',
+      icon: 'Shield',
+      items: [
+        'Monitorizare activități zilnice și performanță individuală agenți.',
+        'Analiză ROI detaliată pe campanii, proprietăți și bugete.',
+        'Roluri și permisiuni personalizate pentru managementul agenției.'
+      ]
+    }
+  ];
+
+  const activeBrokerFeatures = defaultBrokerFeatures.filter(feat => {
+    if (brokerFeaturesKeys.length > 0) {
+      return brokerFeaturesKeys.includes(feat.key);
+    }
+    return true;
+  });
+
+  const getFeatureIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'Users': return <Users className="w-4 h-4" />;
+      case 'Video': return <Video className="w-4 h-4" />;
+      case 'TrendingUp': return <TrendingUp className="w-4 h-4" />;
+      case 'Shield': return <Shield className="w-4 h-4" />;
+      default: return <Target className="w-4 h-4" />;
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -121,6 +194,71 @@ export default async function Home({
             <Link href="/properties" className="bg-white text-orange-600 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:scale-105 transition-all">
               Free Property Price Evaluation
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Brokers, Agencies & Developers Section */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="bg-gradient-to-br from-violet-800 via-purple-800 to-indigo-950 border border-purple-500/20 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden transition-all duration-300 hover:shadow-indigo-500/20 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-6">
+            <div className="space-y-3 text-left">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white border border-white/30 uppercase tracking-widest">
+                <Target className="w-3.5 h-3.5 text-white" />
+                For Real Estate Brokers, Agency and Developers
+              </span>
+              <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
+                Optimizează-ți afacerea imobiliară cu cel mai avansat sistem MLS &amp; AI!
+              </h3>
+              <p className="text-indigo-100 text-sm font-semibold leading-relaxed">
+                Colaborează, accesează lead-uri calificate, generează tururi virtuale și utilizează instrumentele noastre premium dedicate brokerilor și dezvoltatorilor.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 text-left">
+              {activeBrokerFeatures.map((feat) => (
+                <div key={feat.key} className="bg-white/10 backdrop-blur-md border border-white/10 p-5 rounded-2xl space-y-2 hover:bg-white/15 transition-colors">
+                  <span className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white mb-2">
+                    {getFeatureIcon(feat.icon)}
+                  </span>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wider">{feat.title}</h4>
+                  <div className="text-xs text-indigo-50/90 leading-relaxed font-medium">
+                    {feat.desc}
+                    {feat.items.map((item, idx) => (
+                      <span key={idx} className="block mt-1.5 pl-3 relative before:content-['+'] before:absolute before:left-0 before:text-indigo-300 font-normal">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions Container */}
+            <div className="pt-4 flex flex-col lg:flex-row items-center justify-center gap-6 w-full">
+              <div className="flex flex-col items-center gap-2 text-center w-full lg:w-auto">
+                <p className="text-xs text-indigo-200 font-semibold">Alătură-te celei mai avansate platforme MLS</p>
+                <Link 
+                  href="/auth/signup"
+                  className="w-full lg:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg transition-all text-center text-sm uppercase tracking-wider transform hover:-translate-y-0.5"
+                >
+                  Creează Cont de Broker / Dezvoltator
+                </Link>
+              </div>
+
+              <div className="flex flex-col items-center gap-2 text-center w-full lg:w-auto">
+                <p className="text-xs text-indigo-200 font-semibold">Află costurile și comisionul ideal de colaborare</p>
+                <Link 
+                  href="/calculator-comisioane"
+                  className="w-full lg:w-auto px-6 py-3.5 bg-white hover:bg-slate-100 text-indigo-900 font-bold rounded-xl shadow-lg transition-all text-center text-sm uppercase tracking-wider transform hover:-translate-y-0.5 border border-white"
+                >
+                  Calculator Servicii &amp; Comisioane
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

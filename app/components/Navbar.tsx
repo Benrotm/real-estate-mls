@@ -113,10 +113,24 @@ export default function Navbar({ user }: NavbarProps) {
                 Dashboard
               </Link>
             )}
-            <Link href="/calculator-comisioane" className="text-sm font-bold text-white hover:text-orange-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md flex items-center gap-1.5">
-              <Calculator className="w-4 h-4 text-orange-400" />
-              Calculator
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/calculator-comisioane" className="text-sm font-bold text-white hover:text-orange-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md flex items-center gap-1.5">
+                <Calculator className="w-4 h-4 text-orange-400" />
+                Calculator
+              </Link>
+            ) : (
+              <>
+                <Link href="/for-clients" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+                  For Clients
+                </Link>
+                <Link href="/for-owners" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+                  For Owners
+                </Link>
+                <Link href="/for-brokers" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
+                  For Brokers
+                </Link>
+              </>
+            )}
 
             {/* Services Dropdown */}
             <div className="relative group">
@@ -382,10 +396,24 @@ export default function Navbar({ user }: NavbarProps) {
               </Link>
             )}
 
-            <Link href="/calculator-comisioane" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10">
-              <Calculator className="w-4 h-4" />
-              Calculator Comisioane
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/calculator-comisioane" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10">
+                <Calculator className="w-4 h-4" />
+                Calculator Comisioane
+              </Link>
+            ) : (
+              <>
+                <Link href="/for-clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-cyan-300 hover:bg-white/10">
+                  For Clients
+                </Link>
+                <Link href="/for-owners" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-cyan-300 hover:bg-white/10">
+                  For Owners
+                </Link>
+                <Link href="/for-brokers" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-cyan-300 hover:bg-white/10">
+                  For Brokers, Agencies &amp; Developers
+                </Link>
+              </>
+            )}
             <div className="space-y-1">
               <div className="px-3 py-2 text-base font-medium text-gray-400 uppercase text-xs tracking-wider">Services</div>
               {SERVICES.map((service) => (

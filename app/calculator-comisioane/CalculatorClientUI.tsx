@@ -4,9 +4,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/app/lib/supabase/client';
 import { saveAnexa1ToContract } from '@/app/lib/actions/collaboration-contracts';
+import { createCalculatorRequest } from '@/app/lib/actions/calculator-requests';
 import { 
     Sliders, Shield, Activity, Info, Lock, Check, HelpCircle, 
-    AlertCircle, Sparkles, Receipt, UserCheck, ShieldCheck, FileText
+    AlertCircle, Sparkles, Receipt, UserCheck, ShieldCheck, FileText, Users
 } from 'lucide-react';
 
 interface Model {
@@ -81,6 +82,13 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
     const [associatedContract, setAssociatedContract] = useState<any>(null);
     const [propertyName, setPropertyName] = useState<string>('');
     const [savingAnexa, setSavingAnexa] = useState(false);
+
+    // Guest Inquiry States
+    const [visitorName, setVisitorName] = useState<string>('');
+    const [visitorPhone, setVisitorPhone] = useState<string>('');
+    const [submittingRequest, setSubmittingRequest] = useState<boolean>(false);
+    const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     useEffect(() => {
         if (!searchParams) return;
@@ -379,6 +387,222 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
             alert('A apărut o eroare la generarea Anexei 1.');
         } finally {
             setSavingAnexa(false);
+        }
+    };
+
+    const handleSubmitBrokerRequest = async () => {
+        if (!visitorName.trim()) {
+            setErrorMessage('Te rugăm să introduci numele complet.');
+            return;
+        }
+        if (!visitorPhone.trim()) {
+            setErrorMessage('Te rugăm să introduci numărul de telefon.');
+            return;
+        }
+
+        setSubmittingRequest(true);
+        setErrorMessage('');
+        setSubmissionStatus('idle');
+
+        try {
+            // 1. Trigger the standard print preview generation first so visitor gets their document
+            const now = new Date();
+            const formattedDate = now.toLocaleString('ro-RO', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            const activeModelObj = initialSettings.commission_models[activeModel] || { nm: '', desc: '' };
+            const exclusivityText = isExclusive 
+                ? `Exclusivă (${exclusivityPeriodDays} zile, ajustare ${calculations.exclusivityAdjustment >= 0 ? '+' : ''}${calculations.exclusivityAdjustment.toFixed(2)}%)` 
+                : 'Non-exclusivă';
+
+            const selectedServices = services.filter(s => s.always || s.on);
+
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                // Construct standard HTML (reused from handleGenerateDocument logic)
+                const servicesRows = selectedServices.map(s => {
+                    const mode = getEffectivePayMode(s);
+                    const modeLabel = mode === 'commission' ? 'Inclus în comision' : 'Plată separată';
+                    const costLabel = mode === 'commission' 
+                        ? `+${formatPercent(s.coef * calculations.tierFactor)}` 
+                        : formatServiceCost(s.cost, s.monthly);
+                    const monthlyBadge = s.monthly ? ' <span style="font-size: 9px; font-weight: 500; color: #1d4ed8; background-color: #eff6ff; border: 1px solid #dbeafe; padding: 2px 4px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">lunar</span>' : '';
+                    return `
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+                                <div style="font-weight: 600; font-size: 13px; color: #1e293b;">${s.nm}</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${s.dc}</div>
+                            </td>
+                            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #334155;">${s.cat}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; font-weight: 500; color: #334155;">${modeLabel}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; font-weight: 700; color: #0f172a; text-align: right;">${costLabel}${monthlyBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Calculator Servicii & Comisioane - Imobum</title>
+                        <style>
+                            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; line-height: 1.5; padding: 40px; margin: 0; background-color: #fff; }
+                            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+                            .logo-area { display: flex; align-items: center; gap: 10px; }
+                            .logo-box { width: 32px; height: 32px; background: linear-gradient(135deg, #06b6d4, #2563eb); border-radius: 8px; }
+                            .logo-text { font-size: 22px; font-weight: 800; tracking-tight: -0.05em; color: #0f172a; }
+                            .doc-title { text-align: right; }
+                            .doc-title h1 { margin: 0; font-size: 20px; font-weight: 800; color: #0f172a; text-transform: uppercase; }
+                            .doc-title p { margin: 5px 0 0; font-size: 12px; color: #64748b; }
+                            .meta-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+                            .meta-card { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; }
+                            .meta-card h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; }
+                            .meta-card p { margin: 6px 0; font-size: 13px; color: #334155; }
+                            .meta-card strong { color: #0f172a; }
+                            .calculations-box { background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 25px; border-radius: 16px; margin-bottom: 40px; border: 1px solid #334155; }
+                            .calculations-box h2 { margin: 0 0 15px; font-size: 16px; font-weight: 700; text-transform: uppercase; color: #f97316; letter-spacing: 0.05em; }
+                            .calc-grid { display: grid; grid-template-cols: repeat(3, 1fr); gap: 15px; text-align: center; }
+                            .calc-item { border-right: 1px solid #334155; padding: 5px 0; }
+                            .calc-item:last-child { border-right: none; }
+                            .calc-val { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+                            .calc-lbl { font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+                            .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #0f172a; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+                            th { background-color: #f1f5f9; padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: left; border-bottom: 2px solid #e2e8f0; }
+                            .footer-notes { border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 11px; color: #64748b; margin-top: 50px; text-align: center; }
+                            @media print {
+                                body { padding: 0; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <div class="logo-area" style="display: flex; align-items: center; gap: 10px;">
+                                <div class="logo-box"></div>
+                                <div class="logo-text">Imobum</div>
+                            </div>
+                            <div class="doc-title">
+                                <h1>Cotație Servicii Imobiliare</h1>
+                                <p>Generat la: ${formattedDate}</p>
+                            </div>
+                        </div>
+
+                        <div class="meta-grid">
+                            <div class="meta-card">
+                                <h3>Date Client (Proprietar)</h3>
+                                <p><strong>Nume:</strong> ${visitorName}</p>
+                                <p><strong>Telefon:</strong> ${visitorPhone}</p>
+                                <p><strong>Status Cont:</strong> Vizitator Neautentificat</p>
+                            </div>
+                            <div class="meta-card">
+                                <h3>Parametri Evaluare</h3>
+                                <p><strong>Valoare Proprietate:</strong> ${formatEUR(propertyValue)}</p>
+                                <p><strong>Model Comision:</strong> ${activeModelObj.nm}</p>
+                                <p><strong>Exclusivitate:</strong> ${exclusivityText}</p>
+                            </div>
+                        </div>
+
+                        <div class="calculations-box">
+                            <h2>Rezumat Cotație Comisioane &amp; Servicii</h2>
+                            <div class="calc-grid">
+                                <div class="calc-item">
+                                    <div class="calc-val">${formatPercent(calculations.finalSellerPercent)}</div>
+                                    <div class="calc-lbl">Comision Vânzător</div>
+                                </div>
+                                <div class="calc-item">
+                                    <div class="calc-val">${formatEUR(calculations.sellerCommissionEUR)}</div>
+                                    <div class="calc-lbl">Valoare Comision (EUR)</div>
+                                </div>
+                                <div class="calc-item">
+                                    <div class="calc-val">${formatEUR(calculations.sellerTotalOutlayEUR)}</div>
+                                    <div class="calc-lbl">Total Cost Vânzător</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-title">Servicii Configurate Incluse în Cotație</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">Denumire Serviciu</th>
+                                    <th style="width: 20%">Categorie</th>
+                                    <th style="width: 20%">Mod Plată</th>
+                                    <th style="text-align: right; width: 20%">Tarif / Coeficient</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${servicesRows}
+                            </tbody>
+                        </table>
+
+                        <div class="footer-notes">
+                            Prezenta simulare reprezintă o cotație informativă generată automat prin platforma Imobum.com.<br>
+                            Toate tarifele și comisioanele nu includ TVA. Semnarea unui contract de prestări servicii este necesară pentru angajarea răspunderii.
+                        </div>
+
+                        <div class="no-print" style="margin-top: 30px; text-align: center;">
+                            <button onclick="window.print()" style="background-color: #f97316; color: white; border: none; padding: 12px 30px; font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);">
+                                Printează Documentul
+                            </button>
+                        </div>
+                    </body>
+                    </html>
+                `;
+
+                printWindow.document.write(html);
+                printWindow.document.close();
+            }
+
+            // 2. Call the server action to save this submission to DB and notify the admin team
+            const res = await createCalculatorRequest({
+                name: visitorName,
+                phone: visitorPhone,
+                property_value: propertyValue,
+                selected_model: activeModel,
+                is_exclusive: isExclusive,
+                exclusivity_days: exclusivityPeriodDays,
+                selected_services: selectedServices.map(s => ({
+                    id: s.id,
+                    name: s.nm,
+                    category: s.cat,
+                    cost: s.cost,
+                    coef: s.coef,
+                    pay_mode: getEffectivePayMode(s)
+                })),
+                calculations: {
+                    tier_factor: calculations.tierFactor,
+                    final_seller_percent: calculations.finalSellerPercent,
+                    final_buyer_percent: calculations.finalBuyerPercent,
+                    seller_commission_eur: calculations.sellerCommissionEUR,
+                    buyer_commission_eur: calculations.buyerCommissionEUR,
+                    total_commission_eur: calculations.totalCommissionEUR,
+                    seller_total_outlay_eur: calculations.sellerTotalOutlayEUR,
+                    total_services_cost_eur: calculations.totalServicesCostEUR,
+                    monthly_services_cost_eur: calculations.monthlyServicesCostEUR
+                }
+            });
+
+            if (res.success) {
+                setSubmissionStatus('success');
+                setVisitorName('');
+                setVisitorPhone('');
+            } else {
+                setSubmissionStatus('error');
+                setErrorMessage(res.error || 'A apărut o eroare la trimiterea solicitării.');
+            }
+        } catch (err: any) {
+            console.error(err);
+            setSubmissionStatus('error');
+            setErrorMessage('Eroare tehnică la procesarea solicitării.');
+        } finally {
+            setSubmittingRequest(false);
         }
     };
 
@@ -1372,6 +1596,68 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                                 </>
                             )}
                         </button>
+                    ) : !user ? (
+                        <div className="mt-4 p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-4 text-left">
+                            <div className="text-xs text-amber-200 font-semibold flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                                <span>Solicită consultanță gratuită de la un Broker</span>
+                            </div>
+                            <div className="space-y-3">
+                                <div>
+                                    <label htmlFor="inquiry-name" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Nume Complet *</label>
+                                    <input
+                                        id="inquiry-name"
+                                        type="text"
+                                        placeholder="ex. Popescu Ion"
+                                        value={visitorName}
+                                        onChange={(e) => setVisitorName(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-850 focus:border-orange-500 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 outline-none transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="inquiry-phone" className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Număr de Telefon *</label>
+                                    <input
+                                        id="inquiry-phone"
+                                        type="tel"
+                                        placeholder="ex. +40 722 000 000"
+                                        value={visitorPhone}
+                                        onChange={(e) => setVisitorPhone(e.target.value)}
+                                        className="w-full bg-slate-950 border border-slate-850 focus:border-orange-500 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 outline-none transition-colors"
+                                    />
+                                </div>
+                            </div>
+                            
+                            {submissionStatus === 'success' ? (
+                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-center text-xs font-semibold">
+                                    Solicitare trimisă cu succes! Un broker te va contacta în curând.
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleSubmitBrokerRequest}
+                                    disabled={submittingRequest}
+                                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg hover:shadow-orange-500/20 transition-all flex items-center justify-center gap-2 border border-orange-500/30 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {submittingRequest ? (
+                                        <>
+                                            <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-white rounded-full animate-spin"></div>
+                                            <span>Se trimite solicitarea...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Users className="w-4 h-4" />
+                                            <span>Vreau un Broker sa imi dea detalii</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                            
+                            {errorMessage && (
+                                <div className="text-[10px] text-rose-400 font-semibold text-center mt-1">
+                                    {errorMessage}
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <button
                             type="button"
