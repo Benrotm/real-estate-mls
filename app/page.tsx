@@ -10,7 +10,7 @@ import { getProperties } from "./lib/actions/properties";
 import { bulkCheckUserFeatureAccess, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 import { fetchAllFeatures } from '@/app/lib/admin';
 import { getServiceCategories } from '@/app/lib/actions/services-marketplace';
-import { FileText, Calculator, Compass, Truck, Sparkles, Hammer, Palette, Armchair, ChevronRight } from 'lucide-react';
+import { FileText, Calculator, Compass, Truck, Sparkles, Hammer, Palette, Armchair, ChevronRight, Briefcase } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -345,58 +345,64 @@ export default async function Home({
       </section>
 
       {/* Dynamic Services Preview Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto space-y-12">
-          <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-655 border border-orange-500/20 uppercase tracking-widest">
-              Real Estate HUB Services
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
-              Servicii Imobiliare Premium
-            </h2>
-            <p className="text-slate-500 text-sm sm:text-base leading-relaxed">
-              Tot ce ai nevoie pentru a cumpăra, vinde sau administra o proprietate în mod eficient. Colaborează cu experți verificați din domeniu.
-            </p>
-          </div>
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="bg-gradient-to-br from-orange-800 via-rose-800 to-indigo-955 border border-orange-500/20 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden transition-all duration-300 hover:shadow-orange-500/10 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-6">
-            {serviceCategories && serviceCategories.slice(0, 8).map((cat: any) => (
+          <div className="relative z-10 space-y-8">
+            <div className="space-y-3 text-left">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white border border-white/30 uppercase tracking-widest">
+                <Briefcase className="w-3.5 h-3.5 text-white" />
+                Real Estate HUB Services
+              </span>
+              <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight text-white">
+                Servicii Imobiliare Premium
+              </h3>
+              <p className="text-orange-100 text-sm font-semibold leading-relaxed">
+                Tot ce ai nevoie pentru a cumpăra, vinde sau administra o proprietate în mod eficient. Colaborează cu experți verificați din domeniu.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-2">
+              {serviceCategories && serviceCategories.slice(0, 8).map((cat: any) => (
+                <Link
+                  key={cat.slug}
+                  href={`/services/${cat.slug}`}
+                  className="group bg-white/5 hover:bg-white/10 rounded-2xl p-6 border border-white/10 hover:border-orange-400/50 transition-all duration-300 flex flex-col justify-between items-start text-left text-white shadow-lg"
+                >
+                  <div className="space-y-4">
+                    <span className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-orange-500 transition-colors">
+                      {getServiceIcon(cat.icon)}
+                    </span>
+                    <h4 className="text-sm font-bold text-white group-hover:text-orange-300 transition-colors">
+                      {cat.title}
+                    </h4>
+                    <p className="text-slate-300 text-xs leading-relaxed line-clamp-2">
+                      {cat.description || 'Găsește specialiști parteneri verificați pentru acest serviciu.'}
+                    </p>
+                  </div>
+                  <div className="flex items-center text-xs font-bold text-orange-400 mt-6 group-hover:gap-1.5 transition-all">
+                    Vezi Oferte <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
               <Link
-                key={cat.slug}
-                href={`/services/${cat.slug}`}
-                className="group bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:border-orange-100 transition-all duration-300 flex flex-col justify-between items-start text-left"
+                href="/services"
+                className="w-full sm:w-auto px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold rounded-xl text-center text-xs uppercase tracking-wider transition-all"
               >
-                <div className="space-y-4">
-                  <span className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                    {getServiceIcon(cat.icon)}
-                  </span>
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
-                    {cat.title}
-                  </h3>
-                  <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">
-                    {cat.description || 'Găsește specialiști parteneri verificați pentru acest serviciu.'}
-                  </p>
-                </div>
-                <div className="flex items-center text-xs font-bold text-orange-600 mt-6 group-hover:gap-1.5 transition-all">
-                  Vezi Oferte <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                </div>
+                Explorează Toate Serviciile
               </Link>
-            ))}
-          </div>
-
-          <div className="pt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
-            <Link
-              href="/services"
-              className="w-full sm:w-auto px-6 py-3.5 bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-700 font-bold rounded-xl text-center text-xs uppercase tracking-wider transition-all"
-            >
-              Explorează Toate Serviciile
-            </Link>
-            <Link
-              href="/services/register"
-              className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-center text-xs uppercase tracking-wider transition-all shadow-lg shadow-orange-600/10"
-            >
-              Înregistrează-te ca Furnizor (Devino Partener)
-            </Link>
+              <Link
+                href="/services/register"
+                className="w-full sm:w-auto px-6 py-3.5 bg-white text-orange-600 font-bold rounded-xl text-center text-xs uppercase tracking-wider transition-all shadow-lg hover:bg-slate-50 transform hover:-translate-y-0.5"
+              >
+                Înregistrează-te ca Furnizor (Devino Partener)
+              </Link>
+            </div>
           </div>
         </div>
       </section>
