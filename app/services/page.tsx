@@ -7,6 +7,7 @@ import {
 } from '@/app/lib/actions/services-marketplace';
 import { getUserProfile } from '@/app/lib/auth';
 import ServiceRequestForm from './ServiceRequestForm';
+import CategoriesSidebarClient from './CategoriesSidebarClient';
 import { 
     Video, Users, TrendingUp, Calculator, Target, Shield, Compass, Truck, Sparkles, Hammer, Palette, Armchair, Zap,
     Search, User, Coins, BadgeCheck, FileText, Phone, Mail, MapPin, Globe, ArrowRight, ExternalLink 
@@ -153,30 +154,11 @@ export default async function ServicesPage({
                 {/* 3. Main Grid Categories & Providers */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     
-                    {/* Left Column: Categories List */}
-                    <div className="lg:col-span-3 space-y-3 bg-slate-900/30 p-5 rounded-3xl border border-slate-800 text-left">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">
-                            Categorii Servicii
-                        </h3>
-                        <div className="flex flex-col gap-1.5">
-                            {categories.map((cat) => (
-                                <Link
-                                    key={cat.slug}
-                                    href={`/services?category=${cat.slug}`}
-                                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                                        activeCategorySlug === cat.slug
-                                            ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg shadow-orange-500/10'
-                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                                >
-                                    <span className={activeCategorySlug === cat.slug ? 'text-white' : 'text-slate-500 group-hover:text-white'}>
-                                        {getIcon(cat.icon)}
-                                    </span>
-                                    <span>{cat.title}</span>
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
+                    {/* Left Column: Categories List (Collapsible on Mobile) */}
+                    <CategoriesSidebarClient 
+                        categories={categories} 
+                        activeCategorySlug={activeCategorySlug} 
+                    />
 
                     {/* Right Column: Providers Display */}
                     <div className="lg:col-span-9 space-y-6 text-left">
@@ -195,6 +177,7 @@ export default async function ServicesPage({
                         <div className="grid grid-cols-1 gap-6">
                             {activeCategory && (
                                 <ServiceRequestForm 
+                                    key={activeCategory.slug}
                                     categorySlug={activeCategory.slug} 
                                     categoryTitle={activeCategory.title} 
                                 />
