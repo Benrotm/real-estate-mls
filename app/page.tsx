@@ -379,7 +379,7 @@ export default async function Home({
             </div>
 
             <div className="flex flex-row overflow-x-auto gap-6 pt-2 pb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent snap-x snap-mandatory">
-              {serviceCategories && serviceCategories.slice(0, 8).map((cat: any, idx: number) => {
+              {serviceCategories && serviceCategories.map((cat: any, idx: number) => {
                 const PALETTES = [
                   {
                     hoverBorder: 'hover:border-emerald-400/50',
