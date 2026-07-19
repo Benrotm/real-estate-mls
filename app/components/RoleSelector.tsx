@@ -59,19 +59,19 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
         const isSelected = selectedRole === role;
 
         // Base classes
-        const baseClasses = `${verticalOnly ? 'w-full' : 'flex-1'} flex items-center gap-4 p-4 rounded-xl transition-all border-2 text-left relative overflow-hidden group`;
+        const baseClasses = `${verticalOnly ? 'w-full' : 'flex-1'} flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 rounded-xl transition-all border-2 text-left relative overflow-hidden group`;
         const activeClasses = isSelected
             ? `${borderClass} ${bgClass}`
             : `border-transparent hover:bg-slate-700/50`; // Default hover for non-selected
 
         const content = (
             <>
-                <div className={`p-3 rounded-lg bg-gradient-to-br ${colorClass} text-white shadow-lg ${shadowClass} relative z-10 transition-transform group-hover:scale-110 duration-300`}>
-                    <Icon className="w-6 h-6" />
+                <div className={`p-2 sm:p-3 rounded-lg bg-gradient-to-br ${colorClass} text-white shadow-lg ${shadowClass} relative z-10 transition-transform group-hover:scale-110 duration-300 shrink-0`}>
+                    <Icon className="w-4.5 h-4.5 sm:w-6 sm:h-6" />
                 </div>
-                <div className="relative z-10">
-                    <div className={`font-bold transition-colors duration-300 ${isSelected ? textClass : 'text-gray-300 group-hover:text-white'}`}>{label}</div>
-                    <div className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors duration-300">{subLabel}</div>
+                <div className="relative z-10 min-w-0">
+                    <div className={`text-xs sm:text-sm font-bold truncate transition-colors duration-300 ${isSelected ? textClass : 'text-gray-300 group-hover:text-white'}`}>{label}</div>
+                    <div className="text-[10px] sm:text-xs text-gray-400 group-hover:text-gray-300 transition-colors duration-300 truncate">{subLabel}</div>
                 </div>
 
                 {/* Hover Glow Effect */}
@@ -109,7 +109,7 @@ export default function RoleSelector({ mode, selectedRole, onSelect, title = "I 
             <h1 className={`text-3xl md:text-4xl font-bold ${activeStyle.text} mb-1 drop-shadow-2xl text-center mt-2 transition-all duration-500`} style={{ WebkitTextStroke: `1px ${activeStyle.stroke}`, textShadow: `0 0 20px ${activeStyle.shadow}` }}>
                 {title}
             </h1>
-            <div className={`flex flex-col ${verticalOnly ? '' : 'md:flex-row'} gap-2`}>
+            <div className={verticalOnly ? 'flex flex-col gap-2' : 'grid grid-cols-2 md:flex md:flex-row gap-2'}>
                 <RoleButton
                     role="owner"
                     label="Property Owner"

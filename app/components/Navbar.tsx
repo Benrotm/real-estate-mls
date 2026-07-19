@@ -85,7 +85,7 @@ export default function Navbar({ user }: NavbarProps) {
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#1e293b] border-b border-white/10 shadow-xl">
       <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-14 md:h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 cursor-pointer group">
             <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center text-white group-hover:rotate-3 transition-transform shadow-lg shadow-cyan-500/50">

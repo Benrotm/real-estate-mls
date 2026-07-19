@@ -44,18 +44,18 @@ export default function HomeValuationWidget({ linkPath, variant = 'default' }: H
 
     if (variant === 'home') {
         return (
-            <Link href={targetPath} className="block w-full max-w-md mx-auto group">
-                <div className="relative bg-slate-900 rounded-2xl p-6 border border-fuchsia-500/30 overflow-hidden shadow-2xl shadow-fuchsia-500/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-fuchsia-500/40">
+            <Link href={targetPath} className="block w-full max-w-xs sm:max-w-md mx-auto group">
+                <div className="relative bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 border border-fuchsia-500/30 overflow-hidden shadow-2xl shadow-fuchsia-500/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-fuchsia-500/40">
                     {/* Background Glow */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
 
-                    <div className="flex items-center gap-6 relative z-10">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-fuchsia-500/30 group-hover:rotate-6 transition-transform">
-                            <BarChart className="w-8 h-8" />
+                    <div className="flex items-center gap-3 sm:gap-6 relative z-10">
+                        <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-fuchsia-500/30 group-hover:rotate-6 transition-transform shrink-0">
+                            <BarChart className="w-5.5 h-5.5 sm:w-8 sm:h-8" />
                         </div>
-                        <div className="flex-1">
-                            <h3 className="text-xl font-bold text-white mb-1 group-hover:text-fuchsia-300 transition-colors">Property Price Calculator</h3>
-                            <p className="text-fuchsia-200/70 text-sm">AI-powered price insights for any property.</p>
+                        <div className="flex-1 text-left min-w-0">
+                            <h3 className="text-sm xs:text-base sm:text-xl font-bold text-white mb-0.5 sm:mb-1 group-hover:text-fuchsia-300 transition-colors whitespace-nowrap overflow-hidden text-ellipsis">Property Price Calculator</h3>
+                            <p className="text-fuchsia-200/70 text-[10px] sm:text-sm leading-tight truncate">AI-powered price insights for any property.</p>
                         </div>
                     </div>
                 </div>
