@@ -11,6 +11,7 @@ import PropertiesClientView from '@/app/components/properties/PropertiesClientVi
 
 import { getUserProfile } from '@/app/lib/auth';
 import { getAdminSettings } from '@/app/lib/actions/admin-settings';
+import InviteLeadForm from '@/app/invite/[agentId]/InviteLeadForm';
 import { createClient } from '@/app/lib/supabase/server';
 import Link from 'next/link';
 import { ShieldAlert, Key, Search, BarChart3, Building2, CheckCircle2, Home, Warehouse, Map, Landmark, Briefcase, HelpCircle, Users, Target, TrendingUp, Clock } from 'lucide-react';
@@ -291,6 +292,65 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                             >
                                 Conectează-te
                             </Link>
+                        </div>
+                    </div>
+
+                    {/* Quick Match Section */}
+                    <div className="bg-slate-800 rounded-3xl p-8 lg:p-12 border border-slate-700 shadow-2xl relative overflow-hidden mt-6 text-slate-100">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            {/* Left Column: Explanation Text */}
+                            <div className="lg:col-span-5 space-y-6 text-left">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 text-orange-400 rounded-full text-xs font-bold uppercase tracking-wider border border-orange-500/20 w-fit">
+                                    <span>Quick Match</span>
+                                </div>
+                                <h3 className="text-2xl md:text-3xl font-bold leading-tight text-white">
+                                    No time to search? Let us find the perfect match for you!
+                                </h3>
+                                <p className="text-slate-350 text-sm leading-relaxed">
+                                    If you are busy or can't find properties matching your requirements, simply submit your preferences here. Our team will analyze your request and send matching properties directly to your WhatsApp or email!
+                                </p>
+                                <div className="space-y-4 pt-2">
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2.5 bg-orange-500/15 border border-orange-500/30 text-orange-400 rounded-lg shrink-0">
+                                            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.39-4.836c1.674.993 3.348 1.517 5.561 1.518 5.485 0 9.948-4.468 9.95-9.956.002-2.659-1.03-5.158-2.906-7.036C17.177 1.813 14.67 .78 12.005.78c-5.49 0-9.954 4.469-9.956 9.958-.001 2.032.536 4.02 1.55 5.768L2.57 20.3l3.877-1.136z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-sm text-slate-200">WhatsApp Alerts</h4>
+                                            <p className="text-xs text-slate-400">Receive customized property matching links straight to your chat.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2.5 bg-orange-500/15 border border-orange-500/30 text-orange-400 rounded-lg shrink-0">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-sm text-slate-200">Save Search Time</h4>
+                                            <p className="text-xs text-slate-400">Skip browsing hundreds of listings; let our systems filter them for you.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Invite Form Container */}
+                            <div className="lg:col-span-7 bg-slate-900 rounded-2xl border border-slate-700/60 overflow-hidden shadow-xl text-slate-900">
+                                {/* Form Header */}
+                                <div className="bg-gradient-to-r from-orange-500 to-rose-500 p-6 text-white text-center space-y-1">
+                                    <h4 className="text-base font-bold tracking-tight">
+                                        Let me know what property you are looking for so I can find the perfect match!
+                                    </h4>
+                                    <p className="text-xs text-orange-100 font-medium font-semibold">
+                                        You will receive back a link with all properties matching your needs.
+                                    </p>
+                                </div>
+                                
+                                <div className="p-6 bg-white text-left">
+                                    <InviteLeadForm agentId="430ed9f0-3164-4346-a7e3-8124f35b5053" />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
