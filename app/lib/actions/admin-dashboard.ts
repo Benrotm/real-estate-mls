@@ -74,6 +74,12 @@ export interface DashboardData {
         calculatorRequests: { id: string; name: string; phone: string; property_value: number; selected_model: string; created_at: string }[];
         openTickets: { id: string; subject: string; type: string; priority: string; status: string; user_name: string; user_email: string; created_at: string }[];
     };
+    recentOffers: { id: string; property_title: string; offer_amount: number; currency: string; name: string; phone: string; status: string; created_at: string }[];
+    recentChats: { id: string; participant_name: string; participant_email: string; last_message: string; updated_at: string; unread: boolean }[];
+    recentNotifications: {
+        byType: Record<string, { id: string; title: string; content: string; is_read: boolean; created_at: string; link: string }[]>;
+        unreadCount: number;
+    };
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
@@ -352,6 +358,54 @@ export async function getDashboardData(): Promise<DashboardData> {
         supabase.from('tickets').select('id, subject, type, priority, status, created_at, user_id, profiles:user_id(full_name, email)').in('status', ['open', 'in_progress']).order('created_at', { ascending: false }).limit(20),
     ]);
 
+    // ─── 12. OFFERS ─────────────────────────────────────────────
+    const { data: recentOffersData } = await supabase
+        .from('offers')
+        .select('id, property_id, offer_amount, currency, name, phone, status, created_at, properties:property_id(title)')
+        .order('created_at', { ascending: false })
+        .limit(15);
+
+    // ─── 13. RECENT CHATS ───────────────────────────────────────
+    const { data: recentChatsData } = await supabase
+        .from('chat_rooms')
+        .select(`
+            id,
+            updated_at,
+            chat_participants(user_id, profiles:user_id(full_name, email)),
+            chat_messages(content, is_read, created_at)
+        `)
+        .order('updated_at', { ascending: false })
+        .limit(10);
+
+    // ─── 14. NOTIFICATIONS ──────────────────────────────────────
+    const { data: recentNotifData } = await supabase
+        .from('notifications')
+        .select('id, type, title, content, is_read, created_at, link')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+    const { count: unreadNotifCount } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_read', false);
+
+    // Group notifications by type
+    const notifByType: Record<string, any[]> = {};
+    (recentNotifData || []).forEach((n: any) => {
+        const type = n.type || 'system';
+        if (!notifByType[type]) notifByType[type] = [];
+        if (notifByType[type].length < 10) {
+            notifByType[type].push({
+                id: n.id,
+                title: n.title,
+                content: n.content || '',
+                is_read: n.is_read,
+                created_at: n.created_at,
+                link: n.link || '',
+            });
+        }
+    });
+
     return {
         users: {
             total: totalUsers || 0,
@@ -478,6 +532,33 @@ export async function getDashboardData(): Promise<DashboardData> {
                 user_email: t.profiles?.email || '',
                 created_at: t.created_at,
             })),
+        },
+        recentOffers: (recentOffersData || []).map((o: any) => ({
+            id: o.id,
+            property_title: o.properties?.title || `Proprietate #${o.property_id?.slice(0, 8)}`,
+            offer_amount: o.offer_amount,
+            currency: o.currency || 'EUR',
+            name: o.name || 'Anonim',
+            phone: o.phone || '',
+            status: o.status,
+            created_at: o.created_at,
+        })),
+        recentChats: (recentChatsData || []).map((c: any) => {
+            const participants = c.chat_participants || [];
+            const otherParticipant = participants[0];
+            const lastMsg = (c.chat_messages || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+            return {
+                id: c.id,
+                participant_name: otherParticipant?.profiles?.full_name || 'Necunoscut',
+                participant_email: otherParticipant?.profiles?.email || '',
+                last_message: lastMsg?.content?.slice(0, 80) || 'Fără mesaje',
+                updated_at: c.updated_at,
+                unread: lastMsg ? !lastMsg.is_read : false,
+            };
+        }),
+        recentNotifications: {
+            byType: notifByType,
+            unreadCount: unreadNotifCount || 0,
         },
     };
 }
