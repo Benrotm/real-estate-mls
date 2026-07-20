@@ -31,6 +31,7 @@ export const DEFAULT_MENUS: Record<string, MenuItemDefinition[]> = {
         { name: 'My Properties', icon: 'Home', href: '/dashboard/admin/my-properties' },
         { name: 'All Properties', icon: 'Building', href: '/dashboard/admin/properties' },
         { name: 'Contract Deletions', icon: 'ShieldAlert', href: '/dashboard/admin/contract-deletions' },
+        { name: 'Blacklist Telefonic', icon: 'ShieldAlert', href: '/dashboard/admin/blacklist' },
         { name: 'Presentation Contracts', icon: 'FileText', href: '/dashboard/admin/presentation-contracts' },
         { name: 'AI Studio', icon: 'Wand2', href: '/dashboard/admin/ai-staging' },
         { name: 'All Virtual Tours', icon: 'Globe', href: '/dashboard/admin/tours' },

@@ -84,11 +84,18 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
     const [savingAnexa, setSavingAnexa] = useState(false);
 
     // Guest Inquiry States
-    const [visitorName, setVisitorName] = useState<string>('');
-    const [visitorPhone, setVisitorPhone] = useState<string>('');
+    const [visitorName, setVisitorName] = useState<string>(user?.full_name || '');
+    const [visitorPhone, setVisitorPhone] = useState<string>(user?.phone || '');
     const [submittingRequest, setSubmittingRequest] = useState<boolean>(false);
     const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState<string>('');
+
+    useEffect(() => {
+        if (user) {
+            if (user.full_name && !visitorName) setVisitorName(user.full_name);
+            if (user.phone && !visitorPhone) setVisitorPhone(user.phone);
+        }
+    }, [user]);
 
     useEffect(() => {
         if (!searchParams) return;
@@ -1596,7 +1603,7 @@ export default function CalculatorClientUI({ initialSettings, user }: Calculator
                                 </>
                             )}
                         </button>
-                    ) : !user ? (
+                    ) : (!user || user?.role === 'owner' || user?.role === 'client') ? (
                         <div className="mt-4 p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-4 text-left">
                             <div className="text-xs text-amber-200 font-semibold flex items-center gap-1.5">
                                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />

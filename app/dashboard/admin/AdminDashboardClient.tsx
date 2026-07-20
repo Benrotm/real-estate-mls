@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
     Users, Home, Target, Coins, Ticket, Wrench, Eye, Shield, BarChart3,
-    TrendingUp, TrendingDown, Minus, ArrowRight, Clock, AlertTriangle,
+    TrendingUp, TrendingDown, Minus, ArrowRight, Clock, AlertTriangle, ShieldAlert,
     Settings, CreditCard, MessageSquare, Layers, Compass, Star, Zap,
     MonitorPlay, UserCog, Activity, Building2, ChevronRight, RefreshCw
 } from 'lucide-react';
@@ -128,6 +128,7 @@ function CustomTooltip({ active, payload, label }: any) {
 const QUICK_NAV = [
     { label: 'Utilizatori', href: '/dashboard/admin/users', icon: Users, color: 'text-blue-400' },
     { label: 'Proprietăți', href: '/dashboard/admin/properties', icon: Home, color: 'text-emerald-400' },
+    { label: 'Blacklist', href: '/dashboard/admin/blacklist', icon: ShieldAlert, color: 'text-rose-400' },
     { label: 'Leads', href: '/dashboard/admin/leads', icon: Target, color: 'text-amber-400' },
     { label: 'Credite', href: '/dashboard/admin/credit-settings', icon: CreditCard, color: 'text-purple-400' },
     { label: 'Validare Plăți', href: '/dashboard/admin/validare-plati', icon: Coins, color: 'text-yellow-400' },

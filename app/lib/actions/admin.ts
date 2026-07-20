@@ -140,6 +140,8 @@ export async function deletePropertyAdmin(propertyId: string) {
     revalidatePath('/properties');
 }
 
+import { isPhoneBlacklisted } from './blacklist';
+
 export async function updatePropertyStatusAdmin(propertyId: string, status: string) {
     const { supabase } = await checkAdmin();
 
@@ -150,6 +152,11 @@ export async function updatePropertyStatusAdmin(propertyId: string, status: stri
         if (!hasValidPhone) {
             throw new Error('Anunțul nu poate fi publicat (statut activ) deoarece lipsește numărul de telefon din câmpul Telefon Proprietar (Owner Phone).');
         }
+
+        const blacklisted = await isPhoneBlacklisted(phone);
+        if (blacklisted) {
+            throw new Error('Anunțul nu poate fi activat deoarece numărul de telefon este adăugat în Blacklist.');
+        }
     }
 
     const { error } = await supabase
@@ -159,6 +166,7 @@ export async function updatePropertyStatusAdmin(propertyId: string, status: stri
 
     if (error) throw new Error('Failed to update property status');
     revalidatePath('/dashboard/admin/properties');
+    revalidatePath('/dashboard/admin/blacklist');
     revalidatePath('/properties');
 }
 
