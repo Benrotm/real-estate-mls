@@ -434,10 +434,34 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         }
 
         if (locationPolygon && Array.isArray(locationPolygon) && locationPolygon.length > 2) {
-            // Fetch all property coords to filter them
-            const { data: allProps } = await supabase.from('properties').select('id, latitude, longitude').eq('status', 'active');
+            // Fetch all active property coords & names to filter them
+            const { data: allProps } = await supabase.from('properties').select('id, latitude, longitude, location_area, location_city').eq('status', 'active');
             if (allProps) {
-                const matchingIds = allProps.filter(p => p.latitude && p.longitude && pointInPolygon({lat: p.latitude, lng: p.longitude}, locationPolygon)).map(p => p.id);
+                // Fetch system locations to get fallback center pins for properties lacking direct coordinates
+                const { data: sysLocs } = await supabase.from('system_locations').select('name, latitude, longitude').not('latitude', 'is', null);
+                const locMap = new Map<string, {lat: number, lng: number}>();
+                if (sysLocs) {
+                    sysLocs.forEach(loc => {
+                        if (loc.name && loc.latitude && loc.longitude) {
+                            locMap.set(loc.name.toLowerCase().trim(), { lat: loc.latitude, lng: loc.longitude });
+                        }
+                    });
+                }
+
+                const matchingIds = allProps.filter(p => {
+                    if (p.latitude && p.longitude) {
+                        return pointInPolygon({lat: p.latitude, lng: p.longitude}, locationPolygon);
+                    }
+                    // Fallback to area or city center pin from system locations
+                    const areaPin = p.location_area ? locMap.get(p.location_area.toLowerCase().trim()) : null;
+                    const cityPin = p.location_city ? locMap.get(p.location_city.toLowerCase().trim()) : null;
+                    const fallbackPin = areaPin || cityPin;
+                    if (fallbackPin) {
+                        return pointInPolygon(fallbackPin, locationPolygon);
+                    }
+                    return false;
+                }).map(p => p.id);
+
                 if (matchingIds.length > 0) {
                     query = query.in('id', matchingIds);
                 } else {
@@ -470,8 +494,13 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         
         const rawCity = filters.location_city || filters.city;
         if (rawCity) {
-            const cleanC = String(rawCity).replace(/\s*\(.*?\)\s*/g, '').trim();
-            if (cleanC) query = query.ilike('location_city', `%${cleanC}%`);
+            const cities = String(rawCity).split(',').map(c => c.replace(/\s*\(.*?\)\s*/g, '').trim()).filter(Boolean);
+            if (cities.length === 1) {
+                query = query.ilike('location_city', `%${cities[0]}%`);
+            } else if (cities.length > 1) {
+                const cityConds = cities.map(c => `location_city.ilike.%${c}%`).join(',');
+                query = query.or(cityConds);
+            }
         }
         
         if (filters.location_area) {

@@ -8,6 +8,7 @@ import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote, Phon
 import { saveSearch } from '@/app/lib/actions/savedSearches';
 import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 import { TIMISOARA_AREAS, formatCityList, cleanCityName } from '@/app/lib/constants/locations';
+import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 
 export default function PropertySearchFilters({ basePath = '/properties', isAdmin = false }: { basePath?: string; isAdmin?: boolean }) {
     const router = useRouter();
@@ -432,14 +433,13 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                                 <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
                                     <Building2 className="w-3 h-3 text-blue-500" /> City
                                 </label>
-                                <select
-                                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium"
-                                    value={filters.location_city}
-                                    onChange={(e) => handleChange('location_city', e.target.value)}
-                                >
-                                    <option value="">All Cities</option>
-                                    {citiesOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                <MultiSearchableSelect
+                                    values={filters.location_city ? filters.location_city.split(',').map(c => c.trim()).filter(Boolean) : []}
+                                    options={citiesOptions}
+                                    onChange={(vals) => handleChange('location_city', vals.join(', '))}
+                                    placeholder="All Cities..."
+                                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 font-medium"
+                                />
                             </div>
 
                             {/* Area Filter */}
@@ -447,14 +447,13 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                                 <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
                                     <MapPin className="w-3 h-3 text-red-500" /> Area / Neighbourhood
                                 </label>
-                                <select
-                                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 text-slate-900 font-medium"
-                                    value={filters.location_area}
-                                    onChange={(e) => handleChange('location_area', e.target.value)}
-                                >
-                                    <option value="">All Areas</option>
-                                    {areasOptions.map(a => <option key={a} value={a}>{a}</option>)}
-                                </select>
+                                <MultiSearchableSelect
+                                    values={filters.location_area ? filters.location_area.split(',').map(a => a.trim()).filter(Boolean) : []}
+                                    options={areasOptions}
+                                    onChange={(vals) => handleChange('location_area', vals.join(', '))}
+                                    placeholder="All Areas..."
+                                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 font-medium"
+                                />
                             </div>
 
                             {/* Exact Location Draw Button */}

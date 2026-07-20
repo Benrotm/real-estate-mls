@@ -7,7 +7,7 @@ import { Property } from '@/app/lib/properties';
 import { revalidatePath } from 'next/cache';
 
 import { pointInPolygon } from '@/app/lib/utils/polygon';
-import { cleanCityName } from '@/app/lib/constants/locations';
+import { cleanCityName, normalizeText } from '@/app/lib/constants/locations';
 
 export interface ScoringRule {
     id: string;
@@ -373,16 +373,38 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
         }
     }
 
-    // 3. City Match (Optional - allows multiple)
+    // 3. City Match (Strict Core Criteria when active)
     if (isActive('match_city') && lead.preference_location_city) {
         const leadCities = lead.preference_location_city.toLowerCase().split(',').map(c => cleanCityName(c).trim()).filter(Boolean);
         const propCity = property.location_city ? cleanCityName(property.location_city).toLowerCase().trim() : '';
-        if (propCity && leadCities.includes(propCity)) {
+        const propCounty = property.location_county ? property.location_county.toLowerCase().trim() : '';
+
+        if (leadCities.length > 0) {
+            const matchesCity = leadCities.some(leadCity => {
+                const normLead = normalizeText(leadCity);
+                const normPropCity = normalizeText(propCity);
+                const normPropCounty = normalizeText(propCounty);
+
+                // Disambiguate City (County) format
+                if (normLead.includes('(')) {
+                    const match = normLead.match(/^(.*?)\s*\((.*?)\)$/);
+                    if (match) {
+                        const cName = match[1].trim();
+                        const cntyName = match[2].trim();
+                        return normPropCity === cName && (!normPropCounty || normPropCounty === cntyName);
+                    }
+                }
+                return normPropCity === normLead || (normPropCity && normLead.includes(normPropCity)) || (normLead && normPropCity.includes(normLead));
+            });
+
+            if (!matchesCity) {
+                return 0; // Strict Core Requirement: Property is in a different city!
+            }
             score += getWeight('match_city');
         }
     }
 
-    // 4. Area Match (Polygon based strict, text based optional)
+    // 4. Area Match (Polygon based & Text based strict hierarchy)
     if (isActive('match_area')) {
         let polygonMatched = false;
         let hasPolygonFilter = false;
@@ -401,32 +423,34 @@ export async function calculateMatchScore(lead: LeadData, property: Property, ru
             }
         } 
         
-        // Text match (OPTIONAL BONUS)
+        // Text match
         if (lead.preference_location_area) {
             hasTextAreaFilter = true;
-            const leadAreas = lead.preference_location_area.toLowerCase().split(',').map(a => a.trim()).filter(Boolean);
-            const propArea = property.location_area?.toLowerCase().trim();
+            const leadAreas = lead.preference_location_area.toLowerCase().split(',').map(a => normalizeText(a)).filter(Boolean);
+            const propArea = property.location_area ? normalizeText(property.location_area) : '';
             
             if (propArea && leadAreas.length > 0) {
-                textAreaMatched = leadAreas.some(area => propArea.includes(area) || area.includes(propArea));
+                textAreaMatched = leadAreas.some(area => propArea === area || propArea.includes(area) || area.includes(propArea));
             }
         }
 
         if (hasPolygonFilter) {
             // Polygon is STRICT
-            // BUT if the property has NO area specified (scraped listing with empty area),
-            // we do NOT disqualify it. We bypass exclusion so they don't miss opportunities!
-            const hasArea = !!property.location_area?.trim();
-            if (!hasArea) {
-                polygonMatched = true;
+            if (!polygonMatched) {
+                // Fallback: If property has location_area text matching requested text areas, allow bonus
+                if (hasTextAreaFilter && textAreaMatched) {
+                    polygonMatched = true;
+                } else {
+                    return 0; // Disqualify if outside drawn polygon and no matching text area
+                }
             }
-            if (!polygonMatched) return 0;
             score += getWeight('match_area');
         } else if (hasTextAreaFilter) {
-            // Text area is OPTIONAL
-            if (textAreaMatched) {
-                score += getWeight('match_area');
+            // Strict Hierarchical Area Check: If lead specifies specific areas, property MUST match one of them
+            if (!textAreaMatched) {
+                return 0; // Disqualify property outside requested neighborhood/area
             }
+            score += getWeight('match_area');
         }
     }
 
