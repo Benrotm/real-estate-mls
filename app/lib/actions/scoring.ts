@@ -22,6 +22,18 @@ export interface ScoringRule {
 
 export async function fetchScoringRules(scope?: 'lead' | 'property' | 'match') {
     const supabase = createAdminClient();
+    
+    // Auto-migrate match_city to Match - Core in DB
+    try {
+        await supabase
+            .from('scoring_rules')
+            .update({ category: 'Match - Core' })
+            .eq('criteria_key', 'match_city')
+            .neq('category', 'Match - Core');
+    } catch (e) {
+        // ignore fallback
+    }
+
     let query = supabase
         .from('scoring_rules')
         .select('*')
@@ -38,7 +50,15 @@ export async function fetchScoringRules(scope?: 'lead' | 'property' | 'match') {
         console.error('Error fetching scoring rules:', error);
         return [];
     }
-    return (data || []) as ScoringRule[];
+
+    const rules = (data || []).map((r: any) => {
+        if (r.criteria_key === 'match_city') {
+            return { ...r, category: 'Match - Core' };
+        }
+        return r;
+    });
+
+    return rules as ScoringRule[];
 }
 
 export async function updateScoringRule(id: string, weight: number, is_active?: boolean, config?: Record<string, any>) {
