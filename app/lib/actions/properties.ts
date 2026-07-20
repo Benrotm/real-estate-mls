@@ -509,10 +509,21 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
         
         if (filters.location_area) {
             const areas = String(filters.location_area).split(',').map(a => a.trim()).filter(Boolean);
-            if (areas.length === 1) {
-                query = query.ilike('location_area', `%${areas[0]}%`);
-            } else if (areas.length > 1) {
-                const areaConds = areas.map(a => `location_area.ilike.%${a}%`).join(',');
+            const includesNoArea = areas.some(a => a.toLowerCase() === 'no area completed' || a.toLowerCase() === 'no_area');
+            const validAreas = areas.filter(a => a.toLowerCase() !== 'no area completed' && a.toLowerCase() !== 'no_area');
+
+            if (includesNoArea && validAreas.length === 0) {
+                // Filter exclusively for properties with no area completed
+                query = query.or('location_area.is.null,location_area.eq.,location_area.ilike.n/a');
+            } else if (includesNoArea && validAreas.length > 0) {
+                // Filter for properties with no area OR matching one of valid areas
+                const areaConds = validAreas.map(a => `location_area.ilike.%${a}%`);
+                areaConds.push('location_area.is.null', 'location_area.eq.');
+                query = query.or(areaConds.join(','));
+            } else if (validAreas.length === 1) {
+                query = query.ilike('location_area', `%${validAreas[0]}%`);
+            } else if (validAreas.length > 1) {
+                const areaConds = validAreas.map(a => `location_area.ilike.%${a}%`).join(',');
                 query = query.or(areaConds);
             }
         }

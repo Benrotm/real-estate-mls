@@ -40,6 +40,49 @@ export async function upsertMatchStatus(leadId: string, propertyId: string, stat
     return { success: true, data };
 }
 
+export async function addPropertyToLeadMatchingByLookup(propertyId: string, leadIdentifier: string) {
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: 'Unauthorized' };
+    }
+
+    const cleanInput = leadIdentifier.trim().replace(/^#/, '');
+    const cleanPhone = cleanInput.replace(/\D/g, '');
+
+    const adminSupabase = createAdminClient();
+    
+    let lead: any = null;
+
+    // Check by exact UUID if 36 chars
+    if (cleanInput.length === 36) {
+        const { data } = await adminSupabase.from('leads').select('id, name, phone').eq('id', cleanInput).maybeSingle();
+        lead = data;
+    }
+
+    // Check by substring ID or friendly search
+    if (!lead) {
+        const { data } = await adminSupabase.from('leads').select('id, name, phone').ilike('id', `%${cleanInput}%`).limit(1).maybeSingle();
+        lead = data;
+    }
+
+    // Check by phone number
+    if (!lead && cleanPhone.length >= 5) {
+        const { data } = await adminSupabase.from('leads').select('id, name, phone').ilike('phone', `%${cleanPhone}%`).limit(1).maybeSingle();
+        lead = data;
+    }
+
+    if (!lead) {
+        return { error: `No Lead found matching "${leadIdentifier}". Please check the phone number or Lead ID.` };
+    }
+
+    const res = await upsertMatchStatus(lead.id, propertyId, 'verify');
+    if (res.error) return { error: res.error };
+
+    return { success: true, leadName: lead.name, leadId: lead.id };
+}
+
 export async function bulkUpsertMatchStatus(leadId: string, propertyIds: string[], status: string) {
     const supabase = await createClient();
 

@@ -81,18 +81,22 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
     }, [systemCities, systemCounties]);
 
     const areasOptions = useMemo(() => {
+        let baseList: string[] = [];
         if (!filters.location_city) {
-            if (systemAreas.length) return Array.from(new Set(systemAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
-            return TIMISOARA_AREAS;
+            baseList = systemAreas.length ? Array.from(new Set(systemAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro')) : TIMISOARA_AREAS;
+        } else {
+            const cleanSel = cleanCityName(filters.location_city).toLowerCase();
+            const cityMatch = systemCities.find(c => cleanCityName(c.name).toLowerCase() === cleanSel || c.name.toLowerCase() === cleanSel);
+            if (cityMatch) {
+                const childAreas = systemAreas.filter(a => a.parent_id === cityMatch.id).map(a => a.name).sort((a, b) => a.localeCompare(b, 'ro'));
+                if (childAreas.length) baseList = childAreas;
+            }
+            if (!baseList.length) {
+                if (cleanSel.includes('timisoara')) baseList = TIMISOARA_AREAS;
+                else baseList = Array.from(new Set(systemAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
+            }
         }
-        const cleanSel = cleanCityName(filters.location_city).toLowerCase();
-        const cityMatch = systemCities.find(c => cleanCityName(c.name).toLowerCase() === cleanSel || c.name.toLowerCase() === cleanSel);
-        if (cityMatch) {
-            const childAreas = systemAreas.filter(a => a.parent_id === cityMatch.id).map(a => a.name).sort((a, b) => a.localeCompare(b, 'ro'));
-            if (childAreas.length) return childAreas;
-        }
-        if (cleanSel.includes('timisoara')) return TIMISOARA_AREAS;
-        return Array.from(new Set(systemAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
+        return ['No Area Completed', ...baseList];
     }, [filters.location_city, systemCities, systemAreas]);
 
     // Check if sections have active filters for badges

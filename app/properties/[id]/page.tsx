@@ -33,6 +33,7 @@ import RevealContactWidget from '@/app/components/property/RevealContactWidget';
 import { checkContactUnlock } from '@/app/lib/actions/credits';
 import { getPresentationContractsForProperty } from '@/app/lib/actions/presentation-contracts';
 import { decodeHtmlEntities } from '@/app/lib/utils/string';
+import AddToLeadButton from '@/app/components/dashboard/AddToLeadButton';
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return '';
@@ -510,11 +511,14 @@ export default async function PropertyDetailPage({
                             </div>
                             <div className="space-y-4 flex-1">
                                 <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h2 className="text-xl font-bold text-white">Private Information</h2>
-                                        <span className="bg-violet-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">
-                                            {property.owner_id === user?.id ? 'Owner View' : hasAccess ? 'Admin View' : 'Premium View'}
-                                        </span>
+                                    <div className="flex items-center justify-between gap-4 flex-wrap mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-xl font-bold text-white">Private Information</h2>
+                                            <span className="bg-violet-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">
+                                                {property.owner_id === user?.id ? 'Owner View' : hasAccess ? 'Admin View' : 'Premium View'}
+                                            </span>
+                                        </div>
+                                        <AddToLeadButton propertyId={property.id} />
                                     </div>
                                     <p className="text-slate-400 text-sm">
                                         {hasAccess ? 'This section contains private notes, documents, and contact info.' : 'You have access to view private owner contact details.'}
