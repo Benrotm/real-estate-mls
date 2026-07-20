@@ -469,37 +469,245 @@ export default function AdminDashboardClient({ data, adminName, isSuperAdmin }: 
                     </div>
                 </div>
             </div>
+            {/* ═══ PENDING APPROVALS ═══ */}
+            {(data.pendingApprovals.creditPurchases.length > 0 ||
+              data.pendingApprovals.serviceProviders.length > 0 ||
+              data.pendingApprovals.portalActivations.length > 0 ||
+              data.pendingApprovals.userApprovals.length > 0) && (
+                <div className="space-y-4">
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                        <div className="w-8 h-8 bg-rose-500/10 rounded-lg flex items-center justify-center">
+                            <AlertTriangle className="w-4 h-4 text-rose-400" />
+                        </div>
+                        Necesită Aprobare
+                        <span className="text-[9px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/25 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            {data.pendingApprovals.creditPurchases.length + data.pendingApprovals.serviceProviders.length + data.pendingApprovals.portalActivations.length + data.pendingApprovals.userApprovals.length} în așteptare
+                        </span>
+                    </h2>
 
-            {/* ═══ IMPERSONATION (Super Admin Only) ═══ */}
-            {isSuperAdmin && (
-                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 md:p-6">
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center">
-                            <Eye className="w-5 h-5 text-indigo-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-white">Impersonation Mode</h3>
-                            <p className="text-[10px] text-slate-500">Vizualizează platforma din perspectiva fiecărui tip de utilizator.</p>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {['owner', 'client', 'agent', 'developer'].map((role) => (
-                            <form key={role} action={`/api/impersonate?role=${role}`} method="POST">
-                                <button
-                                    type="submit"
-                                    className="w-full p-3 rounded-xl border border-slate-800 hover:border-indigo-500 hover:bg-indigo-500/5 transition-all text-left group"
-                                >
-                                    <div className="font-bold capitalize text-sm group-hover:text-indigo-400 flex items-center justify-between">
-                                        {role}
-                                        <Eye className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                    <div className="text-[10px] text-slate-500 mt-1">View as {role}</div>
-                                </button>
-                            </form>
-                        ))}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Credit Purchases Pending */}
+                        {data.pendingApprovals.creditPurchases.length > 0 && (
+                            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                                <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/30">
+                                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <Coins className="w-3.5 h-3.5 text-yellow-400" /> Plăți Credite în Așteptare
+                                    </h3>
+                                    <Link href="/dashboard/admin/validare-plati" className="text-[9px] font-bold text-orange-400 hover:text-orange-300 uppercase tracking-wider flex items-center gap-1">
+                                        Gestionează <ArrowRight className="w-3 h-3" />
+                                    </Link>
+                                </div>
+                                <div className="divide-y divide-slate-850">
+                                    {data.pendingApprovals.creditPurchases.map((p) => (
+                                        <div key={p.id} className="px-5 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                                            <div>
+                                                <p className="text-xs font-bold text-white">{p.user_name}</p>
+                                                <p className="text-[10px] text-slate-500">{p.user_email} · Ref: {p.reference_id}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs font-bold text-yellow-400">{p.amount_ron} RON</p>
+                                                <p className="text-[10px] text-slate-500">{p.credits} credite</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Service Providers Pending */}
+                        {data.pendingApprovals.serviceProviders.length > 0 && (
+                            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                                <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/30">
+                                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <Wrench className="w-3.5 h-3.5 text-cyan-400" /> Cereri Parteneriat Furnizori
+                                    </h3>
+                                    <Link href="/dashboard/admin/services" className="text-[9px] font-bold text-orange-400 hover:text-orange-300 uppercase tracking-wider flex items-center gap-1">
+                                        Gestionează <ArrowRight className="w-3 h-3" />
+                                    </Link>
+                                </div>
+                                <div className="divide-y divide-slate-850">
+                                    {data.pendingApprovals.serviceProviders.map((sp) => (
+                                        <div key={sp.id} className="px-5 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                                            <div>
+                                                <p className="text-xs font-bold text-white">{sp.brand_name}</p>
+                                                <p className="text-[10px] text-slate-500">{sp.city} · {sp.category_slug} · {sp.phone}</p>
+                                            </div>
+                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                                                sp.selected_plan === 'exclusivity' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/25' : 'bg-blue-500/10 text-blue-400 border-blue-500/25'
+                                            }`}>{sp.selected_plan}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Portal Activations Pending */}
+                        {data.pendingApprovals.portalActivations.length > 0 && (
+                            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                                <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/30">
+                                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <Building2 className="w-3.5 h-3.5 text-purple-400" /> Activări Portal
+                                    </h3>
+                                    <Link href="/dashboard/admin/portal-activations" className="text-[9px] font-bold text-orange-400 hover:text-orange-300 uppercase tracking-wider flex items-center gap-1">
+                                        Gestionează <ArrowRight className="w-3 h-3" />
+                                    </Link>
+                                </div>
+                                <div className="divide-y divide-slate-850">
+                                    {data.pendingApprovals.portalActivations.map((pa) => (
+                                        <div key={pa.id} className="px-5 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                                            <div>
+                                                <p className="text-xs font-bold text-white">{pa.user_name}</p>
+                                                <p className="text-[10px] text-slate-500">{pa.user_email}</p>
+                                            </div>
+                                            <span className="text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/25 px-2 py-0.5 rounded-full uppercase">{pa.portal_name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* User Approvals Pending */}
+                        {data.pendingApprovals.userApprovals.length > 0 && (
+                            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                                <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/30">
+                                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <Users className="w-3.5 h-3.5 text-blue-400" /> Utilizatori Neaprobați
+                                    </h3>
+                                    <Link href="/dashboard/admin/users" className="text-[9px] font-bold text-orange-400 hover:text-orange-300 uppercase tracking-wider flex items-center gap-1">
+                                        Gestionează <ArrowRight className="w-3 h-3" />
+                                    </Link>
+                                </div>
+                                <div className="divide-y divide-slate-850">
+                                    {data.pendingApprovals.userApprovals.map((u) => (
+                                        <div key={u.id} className="px-5 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                                            <div>
+                                                <p className="text-xs font-bold text-white">{u.full_name}</p>
+                                                <p className="text-[10px] text-slate-500">{u.email}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[9px] font-bold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full capitalize">{u.role}</span>
+                                                <span className="text-[9px] font-bold bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{u.plan_tier}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
+
+            {/* ═══ REQUEST QUEUES ═══ */}
+            <div className="space-y-4">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-amber-400" />
+                    </div>
+                    Cereri & Solicitări Active
+                </h2>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* Service Requests */}
+                    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                        <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/30">
+                            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <Wrench className="w-3.5 h-3.5 text-cyan-400" /> Solicitări Servicii
+                                <span className="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/25 px-1.5 py-0.5 rounded-full">{data.requestQueues.serviceRequests.length}</span>
+                            </h3>
+                            <Link href="/dashboard/admin/services" className="text-[9px] font-bold text-orange-400 hover:text-orange-300 uppercase tracking-wider flex items-center gap-1">
+                                Vezi Tot <ArrowRight className="w-3 h-3" />
+                            </Link>
+                        </div>
+                        <div className="divide-y divide-slate-850 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                            {data.requestQueues.serviceRequests.map((sr) => (
+                                <div key={sr.id} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <p className="text-xs font-bold text-white">{sr.client_name}</p>
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                                            sr.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
+                                            : sr.status === 'contacted' ? 'bg-blue-500/10 text-blue-400 border-blue-500/25'
+                                            : 'bg-amber-500/10 text-amber-400 border-amber-500/25'
+                                        }`}>{sr.status === 'resolved' ? 'Rezolvat' : sr.status === 'contacted' ? 'Contactat' : 'Pending'}</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-medium">{sr.category_title}</p>
+                                    <div className="flex items-center justify-between mt-1">
+                                        <a href={`tel:${sr.client_phone}`} className="text-[10px] text-cyan-400 hover:underline font-semibold">{sr.client_phone}</a>
+                                        <span className="text-[9px] text-slate-600">{timeAgo(sr.created_at)}</span>
+                                    </div>
+                                </div>
+                            ))}
+                            {data.requestQueues.serviceRequests.length === 0 && (
+                                <div className="px-5 py-8 text-center text-xs text-slate-500">Nu există solicitări de servicii.</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Calculator Requests */}
+                    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                        <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/30">
+                            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <CreditCard className="w-3.5 h-3.5 text-emerald-400" /> Solicitări Calculator
+                                <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 px-1.5 py-0.5 rounded-full">{data.requestQueues.calculatorRequests.length}</span>
+                            </h3>
+                            <Link href="/dashboard/admin/solicitari-proprietari" className="text-[9px] font-bold text-orange-400 hover:text-orange-300 uppercase tracking-wider flex items-center gap-1">
+                                Vezi Tot <ArrowRight className="w-3 h-3" />
+                            </Link>
+                        </div>
+                        <div className="divide-y divide-slate-850 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                            {data.requestQueues.calculatorRequests.map((cr) => (
+                                <div key={cr.id} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <p className="text-xs font-bold text-white">{cr.name}</p>
+                                        <span className="text-[9px] font-bold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full capitalize">{cr.selected_model}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <a href={`tel:${cr.phone}`} className="text-[10px] text-cyan-400 hover:underline font-semibold">{cr.phone}</a>
+                                        <span className="text-[10px] text-emerald-400 font-bold">€{formatNum(cr.property_value)}</span>
+                                    </div>
+                                    <span className="text-[9px] text-slate-600">{timeAgo(cr.created_at)}</span>
+                                </div>
+                            ))}
+                            {data.requestQueues.calculatorRequests.length === 0 && (
+                                <div className="px-5 py-8 text-center text-xs text-slate-500">Nu există solicitări din calculator.</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Open Tickets */}
+                    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+                        <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/30">
+                            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <Ticket className="w-3.5 h-3.5 text-rose-400" /> Tickets Deschise
+                                <span className="text-[9px] bg-rose-500/10 text-rose-400 border border-rose-500/25 px-1.5 py-0.5 rounded-full">{data.requestQueues.openTickets.length}</span>
+                            </h3>
+                            <Link href="/dashboard/admin/tickets" className="text-[9px] font-bold text-orange-400 hover:text-orange-300 uppercase tracking-wider flex items-center gap-1">
+                                Vezi Tot <ArrowRight className="w-3 h-3" />
+                            </Link>
+                        </div>
+                        <div className="divide-y divide-slate-850 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                            {data.requestQueues.openTickets.map((t) => (
+                                <div key={t.id} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <p className="text-xs font-bold text-white truncate mr-2">{t.subject}</p>
+                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                                            t.priority === 'high' ? 'bg-rose-500/10 text-rose-400 border-rose-500/25'
+                                            : t.priority === 'low' ? 'bg-slate-500/10 text-slate-400 border-slate-500/25'
+                                            : 'bg-amber-500/10 text-amber-400 border-amber-500/25'
+                                        }`}>{t.priority}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-[10px] text-slate-400">{t.user_name}</p>
+                                        <span className="text-[9px] text-slate-600">{timeAgo(t.created_at)}</span>
+                                    </div>
+                                </div>
+                            ))}
+                            {data.requestQueues.openTickets.length === 0 && (
+                                <div className="px-5 py-8 text-center text-xs text-slate-500">Nu există tickets deschise.</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

@@ -63,6 +63,17 @@ export interface DashboardData {
         detail: string;
         timestamp: string;
     }[];
+    pendingApprovals: {
+        creditPurchases: { id: string; user_name: string; user_email: string; amount_ron: number; credits: number; reference_id: string; created_at: string }[];
+        serviceProviders: { id: string; brand_name: string; category_slug: string; city: string; phone: string; email: string; selected_plan: string; created_at: string }[];
+        portalActivations: { id: string; user_name: string; user_email: string; portal_name: string; requested_at: string }[];
+        userApprovals: { id: string; full_name: string; email: string; role: string; plan_tier: string; created_at: string }[];
+    };
+    requestQueues: {
+        serviceRequests: { id: string; client_name: string; client_phone: string; category_title: string; request_details: string; status: string; created_at: string }[];
+        calculatorRequests: { id: string; name: string; phone: string; property_value: number; selected_model: string; created_at: string }[];
+        openTickets: { id: string; subject: string; type: string; priority: string; status: string; user_name: string; user_email: string; created_at: string }[];
+    };
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
@@ -317,6 +328,30 @@ export async function getDashboardData(): Promise<DashboardData> {
     // Sort all activity by timestamp descending
     recentActivity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
+    // ─── 10. PENDING APPROVALS ───────────────────────────────────
+    const [
+        { data: pendingCreditPurchases },
+        { data: pendingServiceProvidersList },
+        { data: pendingPortalActivations },
+        { data: unapprovedUsers },
+    ] = await Promise.all([
+        supabase.from('credit_purchases').select('id, user_id, amount_ron, credits, reference_id, created_at, profiles:user_id(full_name, email)').eq('status', 'pending').order('created_at', { ascending: false }).limit(20),
+        supabase.from('service_providers').select('id, brand_name, category_slug, city, phone, email, selected_plan, created_at').eq('status', 'pending').order('created_at', { ascending: false }).limit(20),
+        supabase.from('portal_activations').select('id, user_id, portal_name, requested_at, profiles:user_id(full_name, email)').eq('status', 'pending').order('requested_at', { ascending: false }).limit(20),
+        supabase.from('profiles').select('id, full_name, email, role, plan_tier, created_at').eq('is_approved', false).order('created_at', { ascending: false }).limit(20),
+    ]);
+
+    // ─── 11. REQUEST QUEUES ──────────────────────────────────────
+    const [
+        { data: serviceRequestsList },
+        { data: calculatorRequestsList },
+        { data: openTicketsList },
+    ] = await Promise.all([
+        supabase.from('service_requests').select('id, client_name, client_phone, category_title, request_details, status, created_at').order('created_at', { ascending: false }).limit(30),
+        supabase.from('calculator_requests').select('id, name, phone, property_value, selected_model, created_at').order('created_at', { ascending: false }).limit(20),
+        supabase.from('tickets').select('id, subject, type, priority, status, created_at, user_id, profiles:user_id(full_name, email)').in('status', ['open', 'in_progress']).order('created_at', { ascending: false }).limit(20),
+    ]);
+
     return {
         users: {
             total: totalUsers || 0,
@@ -379,5 +414,70 @@ export async function getDashboardData(): Promise<DashboardData> {
         },
         monthlyGrowth,
         recentActivity: recentActivity.slice(0, 20),
+        pendingApprovals: {
+            creditPurchases: (pendingCreditPurchases || []).map((p: any) => ({
+                id: p.id,
+                user_name: p.profiles?.full_name || 'Necunoscut',
+                user_email: p.profiles?.email || '',
+                amount_ron: p.amount_ron,
+                credits: p.credits,
+                reference_id: p.reference_id,
+                created_at: p.created_at,
+            })),
+            serviceProviders: (pendingServiceProvidersList || []).map((sp: any) => ({
+                id: sp.id,
+                brand_name: sp.brand_name,
+                category_slug: sp.category_slug,
+                city: sp.city,
+                phone: sp.phone,
+                email: sp.email,
+                selected_plan: sp.selected_plan,
+                created_at: sp.created_at,
+            })),
+            portalActivations: (pendingPortalActivations || []).map((pa: any) => ({
+                id: pa.id,
+                user_name: pa.profiles?.full_name || 'Necunoscut',
+                user_email: pa.profiles?.email || '',
+                portal_name: pa.portal_name,
+                requested_at: pa.requested_at,
+            })),
+            userApprovals: (unapprovedUsers || []).map((u: any) => ({
+                id: u.id,
+                full_name: u.full_name || 'Anonim',
+                email: u.email || '',
+                role: u.role,
+                plan_tier: u.plan_tier,
+                created_at: u.created_at,
+            })),
+        },
+        requestQueues: {
+            serviceRequests: (serviceRequestsList || []).map((sr: any) => ({
+                id: sr.id,
+                client_name: sr.client_name,
+                client_phone: sr.client_phone,
+                category_title: sr.category_title,
+                request_details: sr.request_details || '',
+                status: sr.status,
+                created_at: sr.created_at,
+            })),
+            calculatorRequests: (calculatorRequestsList || []).map((cr: any) => ({
+                id: cr.id,
+                name: cr.name,
+                phone: cr.phone,
+                property_value: cr.property_value,
+                selected_model: cr.selected_model,
+                created_at: cr.created_at,
+            })),
+            openTickets: (openTicketsList || []).map((t: any) => ({
+                id: t.id,
+                subject: t.subject,
+                type: t.type || 'general',
+                priority: t.priority,
+                status: t.status,
+                user_name: t.profiles?.full_name || 'Anonim',
+                user_email: t.profiles?.email || '',
+                created_at: t.created_at,
+            })),
+        },
     };
 }
