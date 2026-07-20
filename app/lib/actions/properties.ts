@@ -10,6 +10,7 @@ import { getUserProfile, getActiveUsageStats } from '../auth';
 import { generatePropertyFingerprint } from '../utils/fingerprint';
 import { getAdminSettings } from './admin-settings';
 import { enrichPropertyFromDescription, geocodeProperty } from './enrichment';
+import { processAndNormalizePropertyLocation } from './location-ingestion';
 
 export async function fetchPropertyByFriendlyId(idOrFriendlyId: string) {
     const supabase = await createClient();
@@ -281,6 +282,9 @@ export async function createProperty(formData: FormData) {
                 }
             }
         }
+
+        // Location Ingestion & NLP Area Extraction
+        await processAndNormalizePropertyLocation(propertyData);
 
         // Anti-Duplicate Intelligence Layer
         const fingerprint = generatePropertyFingerprint(propertyData);
@@ -1302,7 +1306,10 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             }
         }
 
-        // 4. Status & Publication
+        // 4. Location Ingestion & NLP Area Extraction
+        await processAndNormalizePropertyLocation(propertyData);
+
+        // 5. Status & Publication
         // Rule: Properties without valid owner_phone must be saved as draft not deleted, and cannot be published active
         const phone = propertyData.owner_phone;
         const hasValidPhone = phone && typeof phone === 'string' && phone.trim() !== '' && phone.trim().toLowerCase() !== 'n/a' && phone.replace(/\D/g, '').length >= 6;
