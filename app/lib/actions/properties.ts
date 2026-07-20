@@ -467,9 +467,22 @@ export async function getProperties(filters?: any): Promise<{ properties: Proper
 
         // Location
         if (filters.location_county) query = query.ilike('location_county', `%${filters.location_county}%`);
-        if (filters.city) query = query.ilike('location_city', `%${filters.city}%`); // keeping 'city' param support if used elsewhere
-        if (filters.location_city && !filters.keywords) query = query.ilike('location_city', `%${filters.location_city}%`);
-        if (filters.location_area) query = query.ilike('location_area', `%${filters.location_area}%`);
+        
+        const rawCity = filters.location_city || filters.city;
+        if (rawCity) {
+            const cleanC = String(rawCity).replace(/\s*\(.*?\)\s*/g, '').trim();
+            if (cleanC) query = query.ilike('location_city', `%${cleanC}%`);
+        }
+        
+        if (filters.location_area) {
+            const areas = String(filters.location_area).split(',').map(a => a.trim()).filter(Boolean);
+            if (areas.length === 1) {
+                query = query.ilike('location_area', `%${areas[0]}%`);
+            } else if (areas.length > 1) {
+                const areaConds = areas.map(a => `location_area.ilike.%${a}%`).join(',');
+                query = query.or(areaConds);
+            }
+        }
 
         // Specs
         if (filters.rooms) query = query.gte('rooms', filters.rooms);

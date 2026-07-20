@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 import { PROPERTY_TYPES, TRANSACTION_TYPES, COMFORT_TYPES, PARTITIONING_TYPES, PROPERTY_FEATURES, INTERIOR_CONDITIONS, FURNISHING_TYPES, FEATURE_CATEGORIES, CATEGORY_COLORS } from '@/app/lib/properties';
-import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote, Phone } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, SlidersHorizontal, Home, Banknote, Phone, MapPin, Map, Building2 } from 'lucide-react';
 import { saveSearch } from '@/app/lib/actions/savedSearches';
+import { getSystemLocations } from '@/app/lib/actions/admin-settings';
+import { TIMISOARA_AREAS, formatCityList, cleanCityName } from '@/app/lib/constants/locations';
 
 export default function PropertySearchFilters({ basePath = '/properties', isAdmin = false }: { basePath?: string; isAdmin?: boolean }) {
     const router = useRouter();
@@ -16,6 +18,27 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
     const [showAmenities, setShowAmenities] = useState(false);
     const [showAreaMap, setShowAreaMap] = useState(false);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+
+    // System locations state
+    const [systemCities, setSystemCities] = useState<any[]>([]);
+    const [systemCounties, setSystemCounties] = useState<any[]>([]);
+    const [systemAreas, setSystemAreas] = useState<any[]>([]);
+
+    useEffect(() => {
+        async function loadLocations() {
+            try {
+                const res = await getSystemLocations();
+                if (res && res.cities) {
+                    setSystemCities(res.cities);
+                    setSystemCounties(res.counties || []);
+                    setSystemAreas(res.areas || []);
+                }
+            } catch (err) {
+                console.error("Failed to fetch system locations in PropertySearchFilters:", err);
+            }
+        }
+        loadLocations();
+    }, []);
 
     // Initialize state from URL params
     const initialFeatures = searchParams.getAll('features');
@@ -50,6 +73,26 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
         owner_phone: searchParams.get('owner_phone') || '',
         features: initialFeatures
     });
+
+    const citiesOptions = useMemo(() => {
+        if (!systemCities.length) return ['Timișoara', 'Arad', 'Cluj-Napoca', 'București', 'Oradea'];
+        return formatCityList(systemCities, systemCounties);
+    }, [systemCities, systemCounties]);
+
+    const areasOptions = useMemo(() => {
+        if (!filters.location_city) {
+            if (systemAreas.length) return Array.from(new Set(systemAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
+            return TIMISOARA_AREAS;
+        }
+        const cleanSel = cleanCityName(filters.location_city).toLowerCase();
+        const cityMatch = systemCities.find(c => cleanCityName(c.name).toLowerCase() === cleanSel || c.name.toLowerCase() === cleanSel);
+        if (cityMatch) {
+            const childAreas = systemAreas.filter(a => a.parent_id === cityMatch.id).map(a => a.name).sort((a, b) => a.localeCompare(b, 'ro'));
+            if (childAreas.length) return childAreas;
+        }
+        if (cleanSel.includes('timisoara')) return TIMISOARA_AREAS;
+        return Array.from(new Set(systemAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
+    }, [filters.location_city, systemCities, systemAreas]);
 
     // Check if sections have active filters for badges
     const hasActiveDetails =
@@ -262,12 +305,22 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                     </div>
                 )}
 
+                {/* DrawAreaSelector Modal */}
+                {showAreaMap && (
+                    <DrawAreaSelector
+                        city={filters.location_city ? cleanCityName(filters.location_city) : 'Timisoara'}
+                        value={filters.location_polygon}
+                        onChange={(polygon) => handleChange('location_polygon', polygon)}
+                        onClose={() => setShowAreaMap(false)}
+                    />
+                )}
+
                 {/* HEADER / KEY FILTERS SECTION - "Always Visible" */}
                 <div className={`p-5 ${isMobileFiltersOpen ? 'block' : 'hidden md:block'}`}>
-                    <div className="flex flex-col lg:flex-row gap-4 items-end">
+                    <div className="space-y-4">
 
-                        {/* Grid of Main Inputs */}
-                        <div className={`flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${isAdmin ? '5' : '4'} gap-4 w-full`}>
+                        {/* Grid of Main Inputs - Row 1 */}
+                        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${isAdmin ? '5' : '4'} gap-4 w-full`}>
 
                             {/* 1. Search Bar */}
                             <div className="space-y-1 md:col-span-2 lg:col-span-1">
@@ -276,7 +329,7 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="Ref ID, Title, City..."
+                                    placeholder="Ref ID, Title..."
                                     className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 placeholder:text-slate-400"
                                     value={filters.keywords}
                                     onChange={(e) => handleChange('keywords', e.target.value)}
@@ -372,35 +425,84 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                             )}
                         </div>
 
-                        {/* Actions Group */}
-                        <div className="flex gap-2 self-end shrink-0">
-                            {/* Clear Button */}
-                            {(Object.values(filters).some(val => val !== '' && val !== false && (!Array.isArray(val) || val.length > 0))) && (
+                        {/* Row 2: Location & Map Controls + Action Buttons */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full items-end pt-3 border-t border-slate-100">
+                            {/* City Filter */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                    <Building2 className="w-3 h-3 text-blue-500" /> City
+                                </label>
+                                <select
+                                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium"
+                                    value={filters.location_city}
+                                    onChange={(e) => handleChange('location_city', e.target.value)}
+                                >
+                                    <option value="">All Cities</option>
+                                    {citiesOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Area Filter */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                    <MapPin className="w-3 h-3 text-red-500" /> Area / Neighbourhood
+                                </label>
+                                <select
+                                    className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 text-slate-900 font-medium"
+                                    value={filters.location_area}
+                                    onChange={(e) => handleChange('location_area', e.target.value)}
+                                >
+                                    <option value="">All Areas</option>
+                                    {areasOptions.map(a => <option key={a} value={a}>{a}</option>)}
+                                </select>
+                            </div>
+
+                            {/* Exact Location Draw Button */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                    <Map className="w-3 h-3 text-violet-500" /> Exact Location Map
+                                </label>
                                 <button
                                     type="button"
-                                    onClick={clearFilters}
-                                    className="h-[34px] px-3 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-medium transition-colors"
+                                    onClick={() => setShowAreaMap(true)}
+                                    className={`w-full h-[34px] px-3 border rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold transition-all active:scale-95 ${filters.location_polygon?.length ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}
                                 >
-                                    Clear
+                                    <MapPin className="w-3.5 h-3.5 text-violet-600" />
+                                    {filters.location_polygon?.length ? 'Edit Area on Map' : '📍 Select / Draw on Map'}
                                 </button>
-                            )}
+                            </div>
 
-                            <button
-                                type="button"
-                                onClick={() => setIsSaveModalOpen(!isSaveModalOpen)}
-                                className="h-[34px] px-4 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 text-xs font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 border border-transparent"
-                            >
-                                Save
-                            </button>
+                            {/* Actions Group (Clear, Save, Search) */}
+                            <div className="flex gap-2 justify-end self-end shrink-0">
+                                {/* Clear Button */}
+                                {(Object.values(filters).some(val => val !== '' && val !== false && (!Array.isArray(val) || val.length > 0))) && (
+                                    <button
+                                        type="button"
+                                        onClick={clearFilters}
+                                        className="h-[34px] px-3 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-medium transition-colors"
+                                    >
+                                        Clear
+                                    </button>
+                                )}
 
-                            <button
-                                type="button"
-                                onClick={applyFilters}
-                                className="h-[34px] px-6 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white text-xs font-bold shadow-lg shadow-violet-500/30 transition-all transform hover:-translate-y-0.5 border border-transparent"
-                            >
-                                Search
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSaveModalOpen(!isSaveModalOpen)}
+                                    className="h-[34px] px-4 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 text-xs font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 border border-transparent"
+                                >
+                                    Save
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={applyFilters}
+                                    className="h-[34px] px-6 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white text-xs font-bold shadow-lg shadow-violet-500/30 transition-all transform hover:-translate-y-0.5 border border-transparent"
+                                >
+                                    Search
+                                </button>
+                            </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -468,38 +570,17 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                                 </div>
                             </div>
 
-                            {/* Location Detail */}
+                            {/* County Filter */}
                             <div className="space-y-1">
-                                <label className="text-xs font-bold text-slate-400 uppercase">Exact Location</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="County"
-                                        className="p-2 border rounded-md text-sm flex-1 w-full text-slate-900 placeholder:text-slate-400 focus:ring-teal-500 focus:border-teal-500"
-                                        value={filters.location_county}
-                                        onChange={(e) => handleChange('location_county', e.target.value)}
-                                    />
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setShowAreaMap(true)}
-                                        className="w-full flex items-center justify-between px-3 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors text-sm"
-                                    >
-                                        <span className="text-slate-700">
-                                            📍 {filters.location_polygon ? 'Edit Area on Map' : 'Select on Map'}
-                                        </span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Modal with DrawAreaSelector */}
-                            {showAreaMap && (
-                                <DrawAreaSelector
-                                    city={filters.location_city || 'Timisoara'}
-                                    value={filters.location_polygon}
-                                    onChange={(polygon) => handleChange('location_polygon', polygon)}
-                                    onClose={() => setShowAreaMap(false)}
+                                <label className="text-xs font-bold text-slate-400 uppercase">County Filter</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Timis"
+                                    className="p-2 border rounded-md text-sm w-full text-slate-900 placeholder:text-slate-400 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                                    value={filters.location_county}
+                                    onChange={(e) => handleChange('location_county', e.target.value)}
                                 />
-                            )}
+                            </div>
 
                             {/* Furnishing */}
                             <div className="space-y-1">
