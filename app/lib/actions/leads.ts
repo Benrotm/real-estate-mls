@@ -248,7 +248,38 @@ export async function createNote(leadId: string, content: string) {
     });
 
     if (error) throw new Error('Failed to create note');
+
+    // Auto-update lead status if CLOSED or LOST tag was selected
+    const upperContent = content.toUpperCase();
+    if (upperContent.includes('[CLOSED]')) {
+        await supabase.from('leads').update({ status: 'closed' }).eq('id', leadId);
+    } else if (upperContent.includes('[LOST]')) {
+        await supabase.from('leads').update({ status: 'lost' }).eq('id', leadId);
+    }
+
     revalidatePath(`/dashboard/agent/leads/${leadId}`);
+    revalidatePath('/dashboard/agent/leads');
+}
+
+export async function updateLeadStatus(leadId: string, status: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) throw new Error('Unauthorized');
+
+    const { error } = await supabase.from('leads').update({ status }).eq('id', leadId);
+    if (error) throw new Error(`Failed to update lead status: ${error.message}`);
+
+    await supabase.from('lead_activities').insert({
+        lead_id: leadId,
+        type: 'status_change',
+        description: `Status updated to ${status}`,
+        created_by: user.id
+    });
+
+    revalidatePath(`/dashboard/agent/leads/${leadId}`);
+    revalidatePath('/dashboard/agent/leads');
+    return { success: true };
 }
 
 export async function logLeadActivity(leadId: string, type: string, description: string) {

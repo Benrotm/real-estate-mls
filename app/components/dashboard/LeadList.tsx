@@ -27,6 +27,7 @@ export const STATUS_COLORS = {
     closed: 'bg-green-100 text-green-700 border-green-200',
     lost: 'bg-slate-100 text-slate-500 border-slate-200',
     not_interested: 'bg-red-100 text-red-700 border-red-200',
+    archived: 'bg-slate-200 text-slate-700 border-slate-300',
 } as const;
 
 export const STATUS_LABELS = {
@@ -35,9 +36,10 @@ export const STATUS_LABELS = {
     properties_selection: 'Properties Selection',
     viewing: 'Viewing Scheduled',
     negotiation: 'Negotiation',
-    closed: 'Closed / Won',
-    lost: 'Lost',
+    closed: 'Closed / Won (Archive)',
+    lost: 'Lost (Archive)',
     not_interested: 'Not Interested',
+    archived: 'Archive (Closed & Lost)',
 };
 
 interface LeadListProps {
@@ -195,7 +197,23 @@ export default function LeadList({
                 (lead.preference_type?.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (lead.id?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-            const matchesStatus = activeStatus === 'all' || lead.status === activeStatus;
+            // Status Matching & Archiving Logic
+            const isSearchingPhoneOrTerm = !!searchTerm.trim() || !!filters.lead_phone.trim();
+            let matchesStatus = false;
+
+            if (activeStatus === 'all') {
+                if (isSearchingPhoneOrTerm) {
+                    // Include closed/lost leads if specifically searching by phone or search term
+                    matchesStatus = true;
+                } else {
+                    // Hide closed & lost (archived) leads by default from main CRM list view
+                    matchesStatus = lead.status !== 'closed' && lead.status !== 'lost' && lead.status !== 'archived';
+                }
+            } else if (activeStatus === 'archived') {
+                matchesStatus = lead.status === 'closed' || lead.status === 'lost' || lead.status === 'archived';
+            } else {
+                matchesStatus = lead.status === activeStatus;
+            }
 
             // Advanced Filters
             const matchesType = filters.preference_type === 'all' || lead.preference_type === filters.preference_type;
@@ -265,7 +283,7 @@ export default function LeadList({
         }
     };
 
-    const statuses = ['all', 'new', 'contacted', 'properties_selection', 'viewing', 'negotiation', 'closed', 'lost', 'not_interested'];
+    const statuses = ['all', 'new', 'contacted', 'properties_selection', 'viewing', 'negotiation', 'closed', 'lost', 'archived', 'not_interested'];
 
     return (
         <div className="space-y-6">

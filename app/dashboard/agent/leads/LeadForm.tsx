@@ -328,8 +328,8 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                         <option value="properties_selection" className="bg-white text-pink-700 font-medium">Properties Selection</option>
                                         <option value="viewing" className="bg-white text-purple-700 font-medium">Viewing Scheduled</option>
                                         <option value="negotiation" className="bg-white text-orange-700 font-medium">Negotiation</option>
-                                        <option value="closed" className="bg-white text-green-700 font-medium">Closed / Won</option>
-                                        <option value="lost" className="bg-white text-slate-700 font-medium">Lost</option>
+                                        <option value="closed" className="bg-white text-green-700 font-medium">Closed / Won (Archive)</option>
+                                        <option value="lost" className="bg-white text-slate-700 font-medium">Lost (Archive)</option>
                                         <option value="not_interested" className="bg-white text-red-700 font-medium">Not Interested</option>
                                     </select>
                                 </div>
