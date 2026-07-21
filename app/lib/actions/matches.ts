@@ -55,29 +55,33 @@ export async function addPropertyToLeadMatchingByLookup(propertyId: string, lead
     
     let lead: any = null;
 
-    // Check by exact UUID if 36 chars
-    if (cleanInput.length === 36) {
-        const { data } = await adminSupabase.from('leads').select('id, name, phone').eq('id', cleanInput).maybeSingle();
-        lead = data;
-    }
+    // Fetch leads to perform safe string & ID matching (bypassing UUID ilike type cast errors)
+    const { data: allLeads } = await adminSupabase
+        .from('leads')
+        .select('id, name, phone');
 
-    // Check by substring ID or friendly search
-    if (!lead) {
-        const { data } = await adminSupabase.from('leads').select('id, name, phone').ilike('id', `%${cleanInput}%`).limit(1).maybeSingle();
-        lead = data;
-    }
+    if (allLeads && allLeads.length > 0) {
+        const queryLower = cleanInput.toLowerCase();
+        
+        lead = allLeads.find(l => {
+            const lId = (l.id || '').toLowerCase();
+            const lPhone = (l.phone || '').replace(/\D/g, '');
+            const lName = (l.name || '').toLowerCase();
 
-    // Check by phone number
-    if (!lead && cleanPhone.length >= 5) {
-        const { data } = await adminSupabase.from('leads').select('id, name, phone').ilike('phone', `%${cleanPhone}%`).limit(1).maybeSingle();
-        lead = data;
+            if (lId === queryLower) return true;
+            if (queryLower.length >= 4 && lId.includes(queryLower)) return true;
+            if (cleanPhone.length >= 5 && lPhone.includes(cleanPhone)) return true;
+            if (lName.includes(queryLower)) return true;
+            return false;
+        });
     }
 
     if (!lead) {
         return { error: `No Lead found matching "${leadIdentifier}". Please check the phone number or Lead ID.` };
     }
 
-    const res = await upsertMatchStatus(lead.id, propertyId, 'verify');
+    // Save with status 'to_verify' (matching lead_property_matches check constraint)
+    const res = await upsertMatchStatus(lead.id, propertyId, 'to_verify');
     if (res.error) return { error: res.error };
 
     return { success: true, leadName: lead.name, leadId: lead.id };
