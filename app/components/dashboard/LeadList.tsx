@@ -142,6 +142,10 @@ export default function LeadList({
         rooms_min: '',
         surface_min: '',
         urgency: 'all',
+        move_in_date: '',
+        occupants_info: '',
+        has_kids: 'all',
+        has_pets: 'all',
         buying_reason: 'all',
         occupation: '',
         source: '',
@@ -168,6 +172,10 @@ export default function LeadList({
             rooms_min: '',
             surface_min: '',
             urgency: 'all',
+            move_in_date: '',
+            occupants_info: '',
+            has_kids: 'all',
+            has_pets: 'all',
             buying_reason: 'all',
             occupation: '',
             source: '',
@@ -194,6 +202,9 @@ export default function LeadList({
                 (displayName.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (isOwner && lead.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (isOwner && lead.phone?.includes(searchTerm)) ||
+                (isOwner && lead.occupants_info?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (isOwner && lead.liked_listings_links?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (isOwner && lead.move_in_date?.includes(searchTerm)) ||
                 (lead.preference_type?.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (lead.id?.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -225,6 +236,14 @@ export default function LeadList({
             const matchesRooms = !filters.rooms_min || (Number(lead.preference_rooms_min || 0) >= Number(filters.rooms_min));
             const matchesSurface = !filters.surface_min || (Number(lead.preference_surface_min || 0) >= Number(filters.surface_min));
             const matchesUrgency = filters.urgency === 'all' || lead.move_urgency === filters.urgency;
+            const matchesMoveInDate = !filters.move_in_date || (lead.move_in_date && lead.move_in_date >= filters.move_in_date);
+            const matchesOccupants = !filters.occupants_info || (isOwner && lead.occupants_info?.toLowerCase().includes(filters.occupants_info.toLowerCase()));
+            const matchesKids = (filters as any).has_kids === 'all' || !(filters as any).has_kids ||
+                ((filters as any).has_kids === 'yes' && !!lead.has_small_kids) ||
+                ((filters as any).has_kids === 'no' && !lead.has_small_kids);
+            const matchesPets = (filters as any).has_pets === 'all' || !(filters as any).has_pets ||
+                ((filters as any).has_pets === 'yes' && !!lead.has_pets) ||
+                ((filters as any).has_pets === 'no' && !lead.has_pets);
             const matchesBuyingReason = filters.buying_reason === 'all' || lead.buying_reason === filters.buying_reason;
             const matchesOccupation = !filters.occupation || (isOwner && lead.occupation?.toLowerCase().includes(filters.occupation.toLowerCase()));
             const matchesSource = !filters.source || (isOwner && lead.source?.toLowerCase().includes(filters.source.toLowerCase()));
@@ -239,7 +258,8 @@ export default function LeadList({
 
             return matchesSearch && matchesStatus && matchesType && matchesListingType && matchesCity &&
                 matchesArea && matchesBudgetMin && matchesBudgetMax && matchesRooms && matchesSurface &&
-                matchesUrgency && matchesBuyingReason && matchesOccupation && matchesSource &&
+                matchesUrgency && matchesMoveInDate && matchesOccupants && matchesKids && matchesPets &&
+                matchesBuyingReason && matchesOccupation && matchesSource &&
                 matchesPayment && matchesInterest && matchesAgentName && matchesLeadPhone && matchesPropertySource;
         });
 
@@ -428,6 +448,30 @@ export default function LeadList({
                                 <input type="number" name="budget_min" value={filters.budget_min} onChange={handleFilterChange} placeholder="Min" className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
                                 <input type="number" name="budget_max" value={filters.budget_max} onChange={handleFilterChange} placeholder="Max" className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
                             </div>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">De când doriți să vă mutați?</label>
+                            <input type="date" name="move_in_date" value={filters.move_in_date} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Cine va locui</label>
+                            <input type="text" name="occupants_info" value={filters.occupants_info} onChange={handleFilterChange} placeholder="ex. Eu și soția..." className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Copii mici</label>
+                            <select name="has_kids" value={(filters as any).has_kids || 'all'} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Toate</option>
+                                <option value="yes">Da (Copii mici)</option>
+                                <option value="no">Nu</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Animal companie</label>
+                            <select name="has_pets" value={(filters as any).has_pets || 'all'} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900">
+                                <option value="all">Toate</option>
+                                <option value="yes">Da (Animale)</option>
+                                <option value="no">Nu</option>
+                            </select>
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Urgency</label>

@@ -844,9 +844,14 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                 </div>
                             </div>
                             <div>
+                                <label className={labelClass}>De când doriți să vă mutați? (Move Date)</label>
+                                <input type="date" name="move_in_date" value={formData.move_in_date || ''} onChange={handleChange} className={inputClass} />
+                            </div>
+                            <div>
                                 <label className={labelClass}>Move Urgency</label>
                                 <div className="relative">
                                     <select name="move_urgency" value={formData.move_urgency || ''} onChange={handleChange} className={selectClass}>
+                                        <option value="">Select urgency</option>
                                         <option value="< 1 month (Urgent)">{'< 1 month (Urgent)'}</option>
                                         <option value="1-3 months (Moderate)">1-3 months (Moderate)</option>
                                         <option value="> 3 months (Low)">{'> 3 months (Low)'}</option>
@@ -855,7 +860,18 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            <div>
+                                <label className={labelClass}>Cine va locui în apartament?</label>
+                                <input type="text" name="occupants_info" value={formData.occupants_info || ''} onChange={handleChange} className={inputClass} placeholder="ex. Eu și soția" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
+                                <input type="text" name="liked_listings_links" value={formData.liked_listings_links || ''} onChange={handleChange} className={inputClass} placeholder="ex. https://imobum.com/properties/..." />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                             <div>
                                 <label className={labelClass}>Apartments Viewed (with me)</label>
                                 <input type="number" name="viewed_count_agent" value={formData.viewed_count_agent || 0} onChange={handleChange} className={inputClass} />

@@ -25,11 +25,12 @@ export default function LeadProfileDetails({ lead }: { lead: Partial<LeadData> }
                         <div className="text-sm font-bold text-slate-900">{lead.marital_status || 'N/A'}</div>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kids / Pets / Habits</label>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kids / Pets / Occupants</label>
                         <div className="text-sm font-bold text-slate-900">
-                            {lead.has_small_kids || (lead.kids_count && lead.kids_count > 0) ? 'Small Kids' : 'No Small Kids'}
-                            {lead.has_pets ? ' • Has Pets' : ''}
-                            {lead.is_smoker ? ' • Smoker' : ''}
+                            {lead.occupants_info && <span className="block text-slate-800">Locuiesc: {lead.occupants_info}</span>}
+                            {lead.has_small_kids || (lead.kids_count && lead.kids_count > 0) ? 'Copii mici' : 'Fără copii mici'}
+                            {lead.has_pets ? ' • Animal companie' : ''}
+                            {lead.is_smoker ? ' • Fumător' : ''}
                         </div>
                     </div>
                 </div>
@@ -92,8 +93,22 @@ export default function LeadProfileDetails({ lead }: { lead: Partial<LeadData> }
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                     <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-full text-[10px] font-bold border border-violet-100 uppercase tracking-wider">Payment: {lead.payment_method || 'N/A'}</span>
-                    <span className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-[10px] font-bold border border-orange-100 uppercase tracking-wider">Urgency: {lead.move_urgency || 'N/A'}</span>
+                    {lead.move_in_date && (
+                        <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">Mutare: {lead.move_in_date}</span>
+                    )}
+                    {lead.move_urgency && (
+                        <span className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-[10px] font-bold border border-orange-100 uppercase tracking-wider">Urgență: {lead.move_urgency}</span>
+                    )}
                 </div>
+
+                {lead.liked_listings_links && (
+                    <div className="bg-blue-50/70 p-3 rounded-xl border border-blue-100 mt-3">
+                        <label className="block text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1">Link-uri proprietăți plăcute</label>
+                        <a href={lead.liked_listings_links} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline break-all">
+                            {lead.liked_listings_links}
+                        </a>
+                    </div>
+                )}
             </div>
 
             {/* Intent & Interests Column */}

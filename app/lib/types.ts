@@ -47,6 +47,9 @@ export interface LeadData {
     search_duration?: string;
     viewed_count_total?: string;
     move_urgency?: string;
+    move_in_date?: string;
+    occupants_info?: string;
+    liked_listings_links?: string;
     payment_method?: string;
     cash_amount?: number;
     bank_status?: string;
