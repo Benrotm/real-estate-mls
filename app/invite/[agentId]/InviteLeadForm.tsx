@@ -440,7 +440,7 @@ export default function InviteLeadForm({ agentId }: Props) {
                 <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="ex. Balcon spațios, etaj intermediar, parcare..."
+                    placeholder="ex. Prețul e negociabil?, Zonă exactă, Balcon spațios, etaj intermediar, parcare, etc..."
                     rows={3}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
                 />
