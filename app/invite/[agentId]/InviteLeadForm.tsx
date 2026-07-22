@@ -376,7 +376,12 @@ export default function InviteLeadForm({ agentId }: Props) {
                     type="date"
                     value={moveInDate}
                     onChange={(e) => setMoveInDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
+                    onClick={(e) => {
+                        try {
+                            (e.currentTarget as any).showPicker?.();
+                        } catch {}
+                    }}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 cursor-pointer"
                 />
             </div>
 

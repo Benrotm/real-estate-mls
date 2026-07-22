@@ -451,7 +451,18 @@ export default function LeadList({
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">De când doriți să vă mutați?</label>
-                            <input type="date" name="move_in_date" value={filters.move_in_date} onChange={handleFilterChange} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900" />
+                            <input
+                                type="date"
+                                name="move_in_date"
+                                value={filters.move_in_date}
+                                onChange={handleFilterChange}
+                                onClick={(e) => {
+                                    try {
+                                        (e.currentTarget as any).showPicker?.();
+                                    } catch {}
+                                }}
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 cursor-pointer"
+                            />
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Cine va locui</label>

@@ -845,7 +845,18 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
                             <div>
                                 <label className={labelClass}>De când doriți să vă mutați? (Move Date)</label>
-                                <input type="date" name="move_in_date" value={formData.move_in_date || ''} onChange={handleChange} className={inputClass} />
+                                <input
+                                    type="date"
+                                    name="move_in_date"
+                                    value={formData.move_in_date || ''}
+                                    onChange={handleChange}
+                                    onClick={(e) => {
+                                        try {
+                                            (e.currentTarget as any).showPicker?.();
+                                        } catch {}
+                                    }}
+                                    className={`${inputClass} cursor-pointer`}
+                                />
                             </div>
                             <div>
                                 <label className={labelClass}>Move Urgency</label>
