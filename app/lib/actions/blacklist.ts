@@ -59,7 +59,7 @@ async function ensureBlacklistTable(adminClient: any) {
     try {
         const { error } = await adminClient.from('blacklisted_phones').select('id').limit(1);
         if (error && (error.code === 'PGRST204' || error.message?.includes('does not exist') || error.message?.includes('relation "public.blacklisted_phones" does not exist'))) {
-            // Attempt table creation via RPC or fallback schema query
+            // Attempt table creation via RPC
             await adminClient.rpc('exec_sql', {
                 sql_query: `
                     CREATE TABLE IF NOT EXISTS public.blacklisted_phones (
@@ -80,6 +80,58 @@ async function ensureBlacklistTable(adminClient: any) {
 }
 
 /**
+ * Synchronizes blacklisted status across properties in DB.
+ * Finds any property whose owner_phone matches any phone number in blacklisted_phones
+ * and updates status to 'blacklist'.
+ */
+export async function syncBlacklistedProperties(adminClient?: any) {
+    try {
+        const client = adminClient || createAdminClient();
+        await ensureBlacklistTable(client);
+
+        const { data: phones } = await client.from('blacklisted_phones').select('normalized_phone, phone_number');
+        if (!phones || phones.length === 0) return 0;
+
+        const normalizedList = phones.map((p: any) => p.normalized_phone || normalizePhoneSync(p.phone_number)).filter((n: string) => n && n.length >= 6);
+        if (normalizedList.length === 0) return 0;
+
+        const { data: props } = await client
+            .from('properties')
+            .select('id, owner_phone, status')
+            .neq('status', 'blacklist');
+
+        if (!props || props.length === 0) return 0;
+
+        const toBlacklistIds: string[] = [];
+        props.forEach((prop: any) => {
+            if (!prop.owner_phone) return;
+            const pNorm = normalizePhoneSync(prop.owner_phone);
+            if (!pNorm || pNorm.length < 6) return;
+
+            const isMatch = normalizedList.some((bNorm: string) =>
+                bNorm && (pNorm === bNorm || pNorm.includes(bNorm) || bNorm.includes(pNorm))
+            );
+
+            if (isMatch) {
+                toBlacklistIds.push(prop.id);
+            }
+        });
+
+        if (toBlacklistIds.length > 0) {
+            await client
+                .from('properties')
+                .update({ status: 'blacklist', updated_at: new Date().toISOString() })
+                .in('id', toBlacklistIds);
+        }
+
+        return toBlacklistIds.length;
+    } catch (e) {
+        console.error('Error syncing blacklisted properties:', e);
+        return 0;
+    }
+}
+
+/**
  * Fetch all blacklisted phone numbers with counts of affected properties
  */
 export async function getBlacklistedPhones(): Promise<{ success: boolean; data: BlacklistedPhone[]; error?: string }> {
@@ -90,6 +142,7 @@ export async function getBlacklistedPhones(): Promise<{ success: boolean; data: 
 
         const adminClient = createAdminClient();
         await ensureBlacklistTable(adminClient);
+        await syncBlacklistedProperties(adminClient);
 
         const { data: phones, error } = await adminClient
             .from('blacklisted_phones')
@@ -253,6 +306,8 @@ export async function getBlacklistedProperties(filters?: { query?: string; city?
         if (!user) return { success: false, error: 'Neautorizat', data: [] };
 
         const adminClient = createAdminClient();
+        await syncBlacklistedProperties(adminClient);
+
         let query = adminClient
             .from('properties')
             .select(`
