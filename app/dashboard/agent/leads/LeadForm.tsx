@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban, Baby, Building2, PieChart, TrendingUp, Sliders } from 'lucide-react';
+import { Save, X, User, ClipboardList, Eye, Check, ChevronDown, ChevronUp, Fingerprint, Briefcase, Users as UsersIcon, Home, Dog, Ban, Baby, Building2, PieChart, TrendingUp, Sliders, Plus, Trash2 } from 'lucide-react';
 import {
     PROPERTY_TYPES,
     TRANSACTION_TYPES,
@@ -867,7 +867,72 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
                             <div>
                                 <label className={labelClass}>Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
-                                <input type="text" name="liked_listings_links" value={formData.liked_listings_links || ''} onChange={handleChange} className={inputClass} placeholder="Link de pe Facebook, TikTok, sau alte site-uri..." />
+                                <div className="space-y-2">
+                                    {(() => {
+                                        const raw = formData.liked_listings_links;
+                                        let links: string[] = [''];
+                                        if (raw) {
+                                            try {
+                                                const parsed = JSON.parse(raw);
+                                                if (Array.isArray(parsed) && parsed.length > 0) links = parsed;
+                                                else if (typeof parsed === 'string') links = [parsed];
+                                            } catch {
+                                                const split = raw.split('\n').map(s => s.trim()).filter(Boolean);
+                                                if (split.length > 0) links = split;
+                                                else links = [raw];
+                                            }
+                                        }
+
+                                        const updateLinks = (newLinks: string[]) => {
+                                            const clean = newLinks.map(l => l.trim()).filter(Boolean);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                liked_listings_links: clean.length > 0 ? (clean.length === 1 ? clean[0] : JSON.stringify(clean)) : ''
+                                            }));
+                                        };
+
+                                        return (
+                                            <>
+                                                {links.map((linkVal, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={linkVal}
+                                                            onChange={(e) => {
+                                                                const copy = [...links];
+                                                                copy[idx] = e.target.value;
+                                                                updateLinks(copy);
+                                                            }}
+                                                            className={inputClass}
+                                                            placeholder="Link de pe Facebook, TikTok, sau alte site-uri..."
+                                                        />
+                                                        {links.length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const copy = links.filter((_, i) => i !== idx);
+                                                                    updateLinks(copy);
+                                                                }}
+                                                                className="p-2.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg border border-slate-200 transition-colors shrink-0"
+                                                                title="Șterge link"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateLinks([...links, ''])}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors mt-1"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5" /> Adaugă alt link
+                                                </button>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
                             </div>
                         </div>
 

@@ -15,7 +15,9 @@ import {
     Users,
     Baby,
     Dog,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Plus,
+    Trash2
 } from 'lucide-react';
 
 interface Props {
@@ -88,7 +90,24 @@ export default function InviteLeadForm({ agentId }: Props) {
     const [hasSmallKids, setHasSmallKids] = useState(false);
     const [hasPets, setHasPets] = useState(false);
     const [notes, setNotes] = useState('');
-    const [likedListingsLinks, setLikedListingsLinks] = useState('');
+    const [likedListingsLinks, setLikedListingsLinks] = useState<string[]>(['']);
+
+    const handleLinkChange = (index: number, value: string) => {
+        const updated = [...likedListingsLinks];
+        updated[index] = value;
+        setLikedListingsLinks(updated);
+    };
+
+    const handleAddLink = () => {
+        setLikedListingsLinks(prev => [...prev, '']);
+    };
+
+    const handleRemoveLink = (index: number) => {
+        setLikedListingsLinks(prev => {
+            const updated = prev.filter((_, i) => i !== index);
+            return updated.length > 0 ? updated : [''];
+        });
+    };
 
     // Interface State
     const [showMap, setShowMap] = useState(false);
@@ -113,6 +132,11 @@ export default function InviteLeadForm({ agentId }: Props) {
 
         setIsSubmitting(true);
 
+        const validLinks = likedListingsLinks.map(l => l.trim()).filter(Boolean);
+        const formattedLinks = validLinks.length > 0
+            ? (validLinks.length === 1 ? validLinks[0] : JSON.stringify(validLinks))
+            : undefined;
+
         const leadPayload: LeadData = {
             name: name.trim(),
             phone: phone.trim(),
@@ -133,7 +157,7 @@ export default function InviteLeadForm({ agentId }: Props) {
             has_pets: listingType === 'For Rent' ? hasPets : false,
             social_notes: notes.trim() || undefined,
             notes: notes.trim() || undefined,
-            liked_listings_links: likedListingsLinks.trim() || undefined,
+            liked_listings_links: formattedLinks,
             search_with_agent: searchWithAgent,
             search_direct_owner: searchDirectOwner
         };
@@ -418,18 +442,41 @@ export default function InviteLeadForm({ agentId }: Props) {
             </div>
 
             {/* Liked Listing Links */}
-            <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2 flex items-center gap-1.5">
+            <div className="space-y-2">
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-1 flex items-center gap-1.5">
                     <LinkIcon className="w-4 h-4" />
                     Lasă mai jos Link cu ce ai văzut și ți-a plăcut:
                 </label>
-                <input
-                    type="text"
-                    value={likedListingsLinks}
-                    onChange={(e) => setLikedListingsLinks(e.target.value)}
-                    placeholder="Link de pe Facebook, TikTok, sau alte site-uri..."
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
-                />
+
+                {likedListingsLinks.map((link, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={link}
+                            onChange={(e) => handleLinkChange(idx, e.target.value)}
+                            placeholder="Link de pe Facebook, TikTok, sau alte site-uri..."
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
+                        />
+                        {likedListingsLinks.length > 1 && (
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveLink(idx)}
+                                className="p-3 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl border border-slate-200 transition-colors shrink-0"
+                                title="Șterge link"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                ))}
+
+                <button
+                    type="button"
+                    onClick={handleAddLink}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-xl transition-colors mt-1"
+                >
+                    <Plus className="w-3.5 h-3.5" /> Adaugă alt link
+                </button>
             </div>
 
             {/* Name or Nickname */}

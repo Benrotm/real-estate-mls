@@ -102,11 +102,34 @@ export default function LeadProfileDetails({ lead }: { lead: Partial<LeadData> }
                 </div>
 
                 {lead.liked_listings_links && (
-                    <div className="bg-blue-50/70 p-3 rounded-xl border border-blue-100 mt-3">
+                    <div className="bg-blue-50/70 p-3 rounded-xl border border-blue-100 mt-3 space-y-1.5">
                         <label className="block text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1">Link-uri proprietăți plăcute</label>
-                        <a href={lead.liked_listings_links} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline break-all">
-                            {lead.liked_listings_links}
-                        </a>
+                        {(() => {
+                            const raw = lead.liked_listings_links;
+                            let links: string[] = [];
+                            try {
+                                const parsed = JSON.parse(raw);
+                                if (Array.isArray(parsed)) links = parsed.map(s => String(s).trim()).filter(Boolean);
+                                else if (typeof parsed === 'string') links = [parsed.trim()];
+                            } catch {
+                                links = raw.split('\n').map(s => s.trim()).filter(Boolean);
+                            }
+                            if (links.length === 0 && raw) links = [raw.trim()];
+
+                            return links.map((linkUrl, i) => (
+                                <div key={i} className="flex items-center gap-1.5">
+                                    <span className="text-[10px] text-blue-400 font-bold">•</span>
+                                    <a
+                                        href={linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs font-bold text-blue-600 hover:underline break-all block"
+                                    >
+                                        {linkUrl}
+                                    </a>
+                                </div>
+                            ));
+                        })()}
                     </div>
                 )}
             </div>
