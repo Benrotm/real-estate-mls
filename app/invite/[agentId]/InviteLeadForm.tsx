@@ -397,7 +397,7 @@ export default function InviteLeadForm({ agentId }: Props) {
                             type="text"
                             value={occupantsInfo}
                             onChange={(e) => setOccupantsInfo(e.target.value)}
-                            placeholder="ex. Eu și soția"
+                            placeholder="ex. Eu și soția, 2 studenți, 3 studente, cuplu, o persoană, etc..."
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm font-semibold transition-all outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
                         />
                     </div>

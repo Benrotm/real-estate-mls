@@ -874,7 +874,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                             <div>
                                 <label className={labelClass}>Cine va locui în apartament?</label>
-                                <input type="text" name="occupants_info" value={formData.occupants_info || ''} onChange={handleChange} className={inputClass} placeholder="ex. Eu și soția" />
+                                <input type="text" name="occupants_info" value={formData.occupants_info || ''} onChange={handleChange} className={inputClass} placeholder="ex. Eu și soția, 2 studenți, 3 studente, cuplu, o persoană, etc..." />
                             </div>
                             <div>
                                 <label className={labelClass}>Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
