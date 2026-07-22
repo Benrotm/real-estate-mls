@@ -22,11 +22,11 @@ export default async function InvitePage({ params }: Props) {
                 {/* Form Header */}
                 <div className="bg-gradient-to-r from-orange-500 to-rose-500 p-8 text-white text-center space-y-3">
                     <h1 className="text-xl sm:text-2xl font-normal tracking-tight leading-tight">
-                        Spune-mi ce proprietate cauți pentru a găsi potrivirea perfectă!
+                        Spune-mi ce proprietate cauți
                     </h1>
                     <div className="w-16 h-1 bg-white/30 mx-auto rounded-full" />
                     <p className="text-sm font-semibold text-orange-100">
-                        Vei primi înapoi un link cu toate proprietățile care se potrivesc cerințelor tale.
+                        Si primest înapoi un link cu toate detaliile si alte proprietăți care se potrivesc cerințelor tale.
                     </p>
                 </div>
 
