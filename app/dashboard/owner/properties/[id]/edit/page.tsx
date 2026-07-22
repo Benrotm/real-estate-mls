@@ -19,15 +19,21 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
         notFound();
     }
 
-    // Fetch user profile to check can_edit_all_properties
+    // Fetch user profile to check can_edit_all_properties or admin roles
     const { data: profile } = await supabase
         .from('profiles')
-        .select('can_edit_all_properties')
+        .select('role, can_edit_all_properties')
         .eq('id', user.id)
         .single();
 
+    const isAdmin =
+        profile?.role === 'admin' ||
+        profile?.role === 'superadmin' ||
+        profile?.role === 'super_admin' ||
+        Boolean(profile?.can_edit_all_properties);
+
     // Ownership Check
-    if (property.owner_id !== user.id && !profile?.can_edit_all_properties) {
+    if (property.owner_id !== user.id && !isAdmin) {
         // Redirect to dashboard if trying to edit someone else's property
         redirect('/dashboard/owner/properties');
     }

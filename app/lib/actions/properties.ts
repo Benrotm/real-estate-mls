@@ -862,9 +862,15 @@ export async function updateProperty(id: string, formData: FormData) {
         .eq('id', user.id)
         .single();
 
-    const isAdmin = profile?.role === 'super_admin' || profile?.can_edit_all_properties;
+    const isAdmin =
+        profile?.role === 'admin' ||
+        profile?.role === 'superadmin' ||
+        profile?.role === 'super_admin' ||
+        Boolean(profile?.can_edit_all_properties);
 
-    const { data: property } = await supabase
+    const dbClient = isAdmin ? createAdminClient() : supabase;
+
+    const { data: property } = await dbClient
         .from('properties')
         .select('owner_id, owner_phone, status, publish_imobiliare, publish_storia, publish_romimo, publish_homezz, publish_imobiliarepret, promoted, publish_whatsapp_groups, publish_facebook_groups, publish_facebook_page, publish_instagram, publish_tiktok')
         .eq('id', id)
@@ -1073,7 +1079,7 @@ export async function updateProperty(id: string, formData: FormData) {
         // Calculate property score
         const score = await calculatePropertyScore(propertyData as Partial<Property>);
 
-        const { data, error } = await supabase
+        const { data, error } = await dbClient
             .from('properties')
             .update({ ...updatePayload, score })
             .eq('id', id)
@@ -1155,9 +1161,15 @@ export async function togglePropertyStatus(id: string, currentStatus: 'active' |
         .eq('id', user.id)
         .single();
 
-    const isPrivileged = profile?.role === 'super_admin' || profile?.can_edit_all_properties;
+    const isPrivileged =
+        profile?.role === 'admin' ||
+        profile?.role === 'superadmin' ||
+        profile?.role === 'super_admin' ||
+        Boolean(profile?.can_edit_all_properties);
 
-    const { data: property } = await supabase
+    const dbClient = isPrivileged ? createAdminClient() : supabase;
+
+    const { data: property } = await dbClient
         .from('properties')
         .select('owner_id, owner_phone')
         .eq('id', id)
@@ -1384,9 +1396,15 @@ export async function deleteProperty(id: string) {
         .eq('id', user.id)
         .single();
 
-    const isAdmin = profile?.role === 'super_admin' || profile?.can_edit_all_properties;
+    const isAdmin =
+        profile?.role === 'admin' ||
+        profile?.role === 'superadmin' ||
+        profile?.role === 'super_admin' ||
+        Boolean(profile?.can_edit_all_properties);
 
-    const { data: property } = await supabase
+    const dbClient = isAdmin ? createAdminClient() : supabase;
+
+    const { data: property } = await dbClient
         .from('properties')
         .select('owner_id')
         .eq('id', id)
@@ -1396,7 +1414,7 @@ export async function deleteProperty(id: string) {
         return { error: 'Unauthorized: You do not own this property' };
     }
 
-    const { error } = await supabase
+    const { error } = await dbClient
         .from('properties')
         .delete()
         .eq('id', id);
