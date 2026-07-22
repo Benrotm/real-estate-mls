@@ -278,7 +278,11 @@ export async function updateLeadStatus(leadId: string, status: string) {
     });
 
     revalidatePath(`/dashboard/agent/leads/${leadId}`);
+    revalidatePath(`/dashboard/admin/leads/${leadId}`);
     revalidatePath('/dashboard/agent/leads');
+    revalidatePath('/dashboard/admin/leads');
+    revalidatePath('/dashboard/agent/pipeline');
+    revalidatePath('/dashboard/admin/pipeline');
     return { success: true };
 }
 

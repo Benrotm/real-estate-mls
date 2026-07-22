@@ -733,6 +733,100 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
                         </div>
 
+                        {/* Move Date, Occupants, & Liked Links (Moved to Classification tab) */}
+                        <div className="p-4 bg-orange-50/40 rounded-xl border border-orange-100 mb-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={labelClass}>De când doriți să vă mutați? (Move Date)</label>
+                                    <input
+                                        type="date"
+                                        name="move_in_date"
+                                        value={formData.move_in_date || ''}
+                                        onChange={handleChange}
+                                        onClick={(e) => {
+                                            try {
+                                                (e.currentTarget as any).showPicker?.();
+                                            } catch {}
+                                        }}
+                                        className={`${inputClass} cursor-pointer bg-white`}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Cine va locui în apartament?</label>
+                                    <input type="text" name="occupants_info" value={formData.occupants_info || ''} onChange={handleChange} className={`${inputClass} bg-white`} placeholder="ex. Eu și soția, 2 studenți, 3 studente, cuplu, o persoană, etc..." />
+                                </div>
+                            </div>
+                            <div>
+                                <label className={labelClass}>Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
+                                <div className="space-y-2">
+                                    {(() => {
+                                        const raw = formData.liked_listings_links;
+                                        let links: string[] = [''];
+                                        if (raw) {
+                                            try {
+                                                const parsed = JSON.parse(raw);
+                                                if (Array.isArray(parsed) && parsed.length > 0) links = parsed;
+                                                else if (typeof parsed === 'string') links = [parsed];
+                                            } catch {
+                                                const split = raw.split('\n').map(s => s.trim()).filter(Boolean);
+                                                if (split.length > 0) links = split;
+                                                else links = [raw];
+                                            }
+                                        }
+
+                                        const updateLinks = (newLinks: string[]) => {
+                                            const clean = newLinks.map(l => l.trim()).filter(Boolean);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                liked_listings_links: clean.length > 0 ? (clean.length === 1 ? clean[0] : JSON.stringify(clean)) : ''
+                                            }));
+                                        };
+
+                                        return (
+                                            <>
+                                                {links.map((linkVal, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={linkVal}
+                                                            onChange={(e) => {
+                                                                const copy = [...links];
+                                                                copy[idx] = e.target.value;
+                                                                updateLinks(copy);
+                                                            }}
+                                                            className={`${inputClass} bg-white`}
+                                                            placeholder="Link de pe Facebook, TikTok, sau alte site-uri..."
+                                                        />
+                                                        {links.length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const copy = links.filter((_, i) => i !== idx);
+                                                                    updateLinks(copy);
+                                                                }}
+                                                                className="p-2.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg border border-slate-200 transition-colors shrink-0 bg-white"
+                                                                title="Șterge link"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateLinks([...links, ''])}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors mt-1 border border-orange-200"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5" /> Adaugă alt link
+                                                </button>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Agent Interest Level (Moved below Social & Lifestyle, and styled) */}
                         <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 mb-3">
                             <label className={`${labelClass} !text-indigo-700`}>Agent Interest Level</label>
@@ -844,21 +938,6 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                 </div>
                             </div>
                             <div>
-                                <label className={labelClass}>De când doriți să vă mutați? (Move Date)</label>
-                                <input
-                                    type="date"
-                                    name="move_in_date"
-                                    value={formData.move_in_date || ''}
-                                    onChange={handleChange}
-                                    onClick={(e) => {
-                                        try {
-                                            (e.currentTarget as any).showPicker?.();
-                                        } catch {}
-                                    }}
-                                    className={`${inputClass} cursor-pointer`}
-                                />
-                            </div>
-                            <div>
                                 <label className={labelClass}>Move Urgency</label>
                                 <div className="relative">
                                     <select name="move_urgency" value={formData.move_urgency || ''} onChange={handleChange} className={selectClass}>
@@ -867,82 +946,6 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                                         <option value="1-3 months (Moderate)">1-3 months (Moderate)</option>
                                         <option value="> 3 months (Low)">{'> 3 months (Low)'}</option>
                                     </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                            <div>
-                                <label className={labelClass}>Cine va locui în apartament?</label>
-                                <input type="text" name="occupants_info" value={formData.occupants_info || ''} onChange={handleChange} className={inputClass} placeholder="ex. Eu și soția, 2 studenți, 3 studente, cuplu, o persoană, etc..." />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
-                                <div className="space-y-2">
-                                    {(() => {
-                                        const raw = formData.liked_listings_links;
-                                        let links: string[] = [''];
-                                        if (raw) {
-                                            try {
-                                                const parsed = JSON.parse(raw);
-                                                if (Array.isArray(parsed) && parsed.length > 0) links = parsed;
-                                                else if (typeof parsed === 'string') links = [parsed];
-                                            } catch {
-                                                const split = raw.split('\n').map(s => s.trim()).filter(Boolean);
-                                                if (split.length > 0) links = split;
-                                                else links = [raw];
-                                            }
-                                        }
-
-                                        const updateLinks = (newLinks: string[]) => {
-                                            const clean = newLinks.map(l => l.trim()).filter(Boolean);
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                liked_listings_links: clean.length > 0 ? (clean.length === 1 ? clean[0] : JSON.stringify(clean)) : ''
-                                            }));
-                                        };
-
-                                        return (
-                                            <>
-                                                {links.map((linkVal, idx) => (
-                                                    <div key={idx} className="flex items-center gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={linkVal}
-                                                            onChange={(e) => {
-                                                                const copy = [...links];
-                                                                copy[idx] = e.target.value;
-                                                                updateLinks(copy);
-                                                            }}
-                                                            className={inputClass}
-                                                            placeholder="Link de pe Facebook, TikTok, sau alte site-uri..."
-                                                        />
-                                                        {links.length > 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const copy = links.filter((_, i) => i !== idx);
-                                                                    updateLinks(copy);
-                                                                }}
-                                                                className="p-2.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg border border-slate-200 transition-colors shrink-0"
-                                                                title="Șterge link"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ))}
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateLinks([...links, ''])}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors mt-1"
-                                                >
-                                                    <Plus className="w-3.5 h-3.5" /> Adaugă alt link
-                                                </button>
-                                            </>
-                                        );
-                                    })()}
                                 </div>
                             </div>
                         </div>

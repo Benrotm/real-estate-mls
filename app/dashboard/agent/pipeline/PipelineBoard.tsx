@@ -2,7 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MoreHorizontal, BedDouble, Ruler, MapPin } from 'lucide-react';
+import { updateLeadStatus } from '@/app/lib/actions/leads';
 
 interface Lead {
     id: string;
@@ -40,6 +42,7 @@ const STAGES = [
 ];
 
 export default function PipelineBoard({ initialLeads }: PipelineBoardProps) {
+    const router = useRouter();
 
     // Helper to format currency
     const formatPrice = (amount?: number, currency?: string) => {
@@ -132,13 +135,24 @@ export default function PipelineBoard({ initialLeads }: PipelineBoardProps) {
                                                         </div>
                                                     )}
 
-                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 mt-auto">
-                                                        <div className="w-6 h-6 rounded-full bg-slate-100 text-xs flex items-center justify-center font-bold text-slate-500">
-                                                            {lead.name.charAt(0)}
-                                                        </div>
+                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 mt-auto gap-2">
+                                                        <select
+                                                            value={lead.status}
+                                                            onChange={async (e) => {
+                                                                const newStatus = e.target.value;
+                                                                await updateLeadStatus(lead.id, newStatus);
+                                                                router.refresh();
+                                                            }}
+                                                            className="text-[10px] font-extrabold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md px-2 py-1 outline-none cursor-pointer transition-colors max-w-[130px] truncate"
+                                                            title="Schimbă Stadiul / Coloana în Pipeline"
+                                                        >
+                                                            {STAGES.map(s => (
+                                                                <option key={s.id} value={s.id}>{s.title}</option>
+                                                            ))}
+                                                        </select>
                                                         <Link
                                                             href={`/dashboard/agent/leads/${lead.id}`}
-                                                            className="text-xs text-orange-600 font-bold hover:text-orange-700 hover:underline"
+                                                            className="text-xs text-orange-600 font-bold hover:text-orange-700 hover:underline shrink-0"
                                                         >
                                                             View Details
                                                         </Link>

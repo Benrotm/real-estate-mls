@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Clock, MessageSquare, List, Calendar, X, FileText, Printer, CheckCircle } from 'lucide-react';
-import { createNote, logLeadActivity } from '@/app/lib/actions/leads';
+import { createNote, logLeadActivity, updateLeadStatus } from '@/app/lib/actions/leads';
 import { getLeadPresentationContracts } from '@/app/lib/actions/presentation-contracts';
 import { LeadData } from '@/app/lib/types';
 
@@ -30,6 +30,20 @@ interface Props {
     initialNotes: Note[];
     initialActivities: Activity[];
 }
+
+const TAG_STATUS_MAP: Record<string, string> = {
+    'Calibration Call': 'contacted',
+    'To Recall': 'contacted',
+    'Not Responding': 'contacted',
+    'Propose Properties': 'properties_selection',
+    'Visit Scheduled': 'viewing',
+    'Visit Made': 'viewing',
+    'Not Interested': 'not_interested',
+    'Negotiations': 'negotiation',
+    'Closed': 'closed',
+    'Lost': 'lost',
+    'Trimite Fișă Vizionare': 'viewing'
+};
 
 export default function LeadActivityPanel({ leadId, lead, initialNotes, initialActivities }: Props) {
     const router = useRouter();
@@ -218,9 +232,14 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                 // Log activity
                 const activityDesc = selectedTag ? `Added note with tag: ${selectedTag}` : 'Added a note';
                 await logLeadActivity(leadId, 'note', activityDesc);
+
+                if (selectedTag && TAG_STATUS_MAP[selectedTag] && leadId) {
+                    await updateLeadStatus(leadId, TAG_STATUS_MAP[selectedTag]);
+                }
             }
             formRef.current?.reset();
             setSelectedTag(null);
+            router.refresh();
         } catch (error) {
             console.error('Failed to add note:', error);
         } finally {
@@ -254,6 +273,8 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
         try {
             await createNote(leadId, noteContent);
             await logLeadActivity(leadId, 'meeting', `Scheduled: ${calendarEventType}`);
+            const targetStatus = TAG_STATUS_MAP[calendarEventType] || 'viewing';
+            await updateLeadStatus(leadId, targetStatus);
         } catch (error) {
             console.error('Failed to log scheduled event:', error);
         }
@@ -261,6 +282,7 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
         setIsCalendarModalOpen(false);
         setEventDate('');
         setPropertyId('');
+        router.refresh();
         window.open(gcalUrl, '_blank', 'noopener,noreferrer');
     };
 
@@ -300,12 +322,14 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
         try {
             await logLeadActivity(leadId, 'contacted', message);
             await createNote(leadId, `[Propose Properties] ${message}`);
+            await updateLeadStatus(leadId, 'properties_selection');
         } catch (error) {
             console.error('Failed to log Propose Properties activity:', error);
         }
         
         setIsWhatsAppModalOpen(false);
         setPropertyId('');
+        router.refresh();
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
@@ -467,7 +491,12 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                             <button
                                 key={tag}
                                 type="button"
-                                onClick={() => {
+                                onClick={async () => {
+                                    const targetStatus = TAG_STATUS_MAP[tag];
+                                    if (targetStatus && leadId) {
+                                        await updateLeadStatus(leadId, targetStatus);
+                                    }
+
                                     if (tag === 'Visit Scheduled' || tag === 'To Recall') {
                                         setCalendarEventType(tag as 'Visit Scheduled' | 'To Recall');
                                         setIsCalendarModalOpen(true);
@@ -478,6 +507,7 @@ export default function LeadActivityPanel({ leadId, lead, initialNotes, initialA
                                     } else {
                                         setSelectedTag(selectedTag === tag ? null : tag);
                                     }
+                                    router.refresh();
                                 }}
                                 className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-all hover:brightness-95 ${TAG_STYLES[tag]} ${
                                     tag === 'Trimite Fișă Vizionare'
