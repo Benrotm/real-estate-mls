@@ -427,7 +427,7 @@ export default function InviteLeadForm({ agentId }: Props) {
                     type="text"
                     value={likedListingsLinks}
                     onChange={(e) => setLikedListingsLinks(e.target.value)}
-                    placeholder="ex. https://imobum.com/properties/..."
+                    placeholder="Link de pe Facebook, TikTok, sau alte site-uri..."
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
                 />
             </div>

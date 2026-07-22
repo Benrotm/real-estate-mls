@@ -867,7 +867,7 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
                             </div>
                             <div>
                                 <label className={labelClass}>Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
-                                <input type="text" name="liked_listings_links" value={formData.liked_listings_links || ''} onChange={handleChange} className={inputClass} placeholder="ex. https://imobum.com/properties/..." />
+                                <input type="text" name="liked_listings_links" value={formData.liked_listings_links || ''} onChange={handleChange} className={inputClass} placeholder="Link de pe Facebook, TikTok, sau alte site-uri..." />
                             </div>
                         </div>
 
