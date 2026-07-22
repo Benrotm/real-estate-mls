@@ -138,34 +138,44 @@ export default function Navbar({ user }: NavbarProps) {
                 onClick={() => setIsServicesOpen(!isServicesOpen)}
                 className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md flex items-center gap-1"
               >
-                Services <ChevronDown className="w-4 h-4 opacity-70" />
+                Services <ChevronDown className={`w-4 h-4 opacity-70 transition-transform duration-200 ${isServicesOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Dropdown Menu - Kept same logic, just styling tweaks if needed */}
+              {/* Dropdown Menu - Scrollable max-height */}
               {isServicesOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setIsServicesOpen(false)}></div>
                   <div
-                    className="absolute left-0 mt-0 w-64 bg-slate-800 rounded-xl shadow-2xl border border-white/10 py-2 z-20 grid grid-cols-1 overflow-hidden"
+                    className="absolute left-0 mt-1 w-72 bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700/60 z-20 flex flex-col max-h-[calc(100vh-90px)] overflow-hidden"
                   >
-                    {SERVICES.map((service) => (
-                      <Link
-                        key={service.slug}
-                        href={`/services/${service.slug}`}
-                        onClick={() => setIsServicesOpen(false)}
-                        className="px-4 py-3 text-sm text-gray-200 hover:bg-cyan-500/10 hover:text-cyan-300 flex items-center gap-3 transition-colors font-medium"
-                      >
-                        <service.icon className="w-4 h-4 text-cyan-400" />
-                        {service.title}
-                      </Link>
-                    ))}
-                    <div className="border-t border-white/10 mt-2 pt-2">
+                    <div className="px-4 py-2.5 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between shrink-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Servicii Imobiliare</span>
+                      <span className="text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">{SERVICES.length}</span>
+                    </div>
+
+                    <div className="overflow-y-auto py-1 divide-y divide-slate-800/40 flex-1">
+                      {SERVICES.map((service) => (
+                        <Link
+                          key={service.slug}
+                          href={`/services/${service.slug}`}
+                          onClick={() => setIsServicesOpen(false)}
+                          className="px-4 py-2.5 text-xs text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-300 flex items-center gap-3 transition-all font-semibold group/item"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-slate-800/80 border border-slate-700/50 flex items-center justify-center text-cyan-400 group-hover/item:scale-110 group-hover/item:border-cyan-500/40 transition-all shrink-0">
+                            <service.icon className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="truncate">{service.title}</span>
+                        </Link>
+                      ))}
+                    </div>
+
+                    <div className="border-t border-slate-800 p-2 bg-slate-950/80 shrink-0">
                       <Link
                         href="/services"
                         onClick={() => setIsServicesOpen(false)}
-                        className="px-4 py-2 text-xs font-bold text-center text-cyan-400 hover:text-cyan-300 block"
+                        className="w-full py-2 px-3 text-xs font-bold text-center text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-xl transition-all flex items-center justify-center gap-1.5 border border-cyan-500/20"
                       >
-                        View All Services
+                        Vezi Toate Serviciile ({SERVICES.length})
                       </Link>
                     </div>
                   </div>
