@@ -185,7 +185,22 @@ export async function getAIPipelineData() {
             return { error: uErr.message };
         }
 
-        // 2. Fetch all property restrictions
+        // 2. Fetch leads to map source and direct owner / agent help flags
+        const { data: leads } = await adminSupabase
+            .from('leads')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        const leadsMapByCreatedBy: Record<string, any> = {};
+        const leadsMapByEmail: Record<string, any> = {};
+        if (leads) {
+            leads.forEach(l => {
+                if (l.created_by && !leadsMapByCreatedBy[l.created_by]) leadsMapByCreatedBy[l.created_by] = l;
+                if (l.email && !leadsMapByEmail[l.email.toLowerCase()]) leadsMapByEmail[l.email.toLowerCase()] = l;
+            });
+        }
+
+        // 3. Fetch all property restrictions
         const { data: restrictions } = await adminSupabase
             .from('user_property_restrictions')
             .select('*');
@@ -197,14 +212,14 @@ export async function getAIPipelineData() {
             });
         }
 
-        // 3. Fetch recommendation settings
+        // 4. Fetch recommendation settings
         const { data: recSetting } = await adminSupabase
             .from('admin_settings')
             .select('value')
             .eq('key', 'ai_pipeline_recommendation')
             .single();
 
-        const defaultRecText = `Intra de mai multe ori pe zi si da refresh la AI Matching pentru a vedea ce apare nou si a avea prima sansa sa fie al tau! Ce trebuie sa sti despre piata Imobiliara: La Chirii - 1) Proprietarii solicita plata chiriei in avans cand te muti in chirie si de obicei inca o luna de garantie, dar sunt si proprietari care solicita mai multe 2 sau 3 luni de garantie la apartamente de Lux sau Vile si Spatii comerciale. 2) Proprietarii vor inchiria in maxim 2 saptamani de la momentul cand scot proprietatea pe piata, deoarece sunt cereri multe si nu vor sa astepte 1 luna pana vine un client ca asta ar insemna sa piarda o luna de chirie. 3) Chiriile se iau pe un an si daca anunti cu 30 de zile inainte sa vrei sa pleci iti primesti garantia inapoi, dar exista si proprietari care nu returneaza chiria daca pleci mai repede de un an -aici iti recomandam sa vorbesti cu un Agent/Broker imobiliar de la Real Estate Hub deoarece te poate ajuta-.`;
+        const defaultRecText = `Intra de mai multe ori pe zi si da refresh la AI Matching pentru a vedea ce apare nou si a avea prima sansa sa fie al tau! Ce trebuie sa sti despre piata Imobiliara: La Chirii - 1) Proprietarii solicita plata chiriei in avans cand te muti in chirie si de obicei inca o luna de garantie, dar sunt si proprietari care solicita mai multe 2 sau 3 luni de garantie la apartamente de Lux sau Vile si Spatii comerciale. 2) Proprietarii vor inchiria in maxim 2 saptamani de la momentul cand scot proprietatea pe piata, deoarece sunt cereri multe si nu vor sa astepte 1 luna pana vine un client ca asta ar insemna sa piarda una de chirie. 3) Chiriile se iau pe un an si daca anunti cu 30 de zile inainte sa vrei sa pleci iti primesti garantia inapoi, dar exista si proprietari care nu returneaza chiria daca pleci mai repede de un an -aici iti recomandam sa vorbesti cu un Agent/Broker imobiliar de la Real Estate Hub deoarece te poate ajuta-.`;
 
         let recommendationConfig = { text: defaultRecText, points: 50 };
         if (recSetting?.value) {
@@ -219,13 +234,18 @@ export async function getAIPipelineData() {
             }
         }
 
-        // Combine user profiles with restrictions & filter for find_self_from_owner
+        // Combine user profiles with lead details & restrictions
         const usersWithDetails = (users || [])
-            .filter(u => u.find_self_from_owner !== false || u.role === 'client_no_agency')
-            .map(u => ({
-                ...u,
-                restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
-            }));
+            .map(u => {
+                const matchedLead = leadsMapByCreatedBy[u.id] || (u.email ? leadsMapByEmail[u.email.toLowerCase()] : null);
+                return {
+                    ...u,
+                    source: matchedLead?.source || (u as any).source || 'Direct Signup',
+                    find_self_from_owner: u.find_self_from_owner ?? matchedLead?.find_self_from_owner ?? true,
+                    wants_agent_help: u.wants_agent_help ?? matchedLead?.wants_agent_help ?? true,
+                    restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
+                };
+            });
 
         return {
             success: true,

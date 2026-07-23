@@ -22,6 +22,7 @@ interface User {
     is_approved?: boolean;
     credits?: number;
     created_at: string;
+    source?: string;
     find_self_from_owner?: boolean;
     wants_agent_help?: boolean;
     restrictions?: {
@@ -170,7 +171,32 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
         }
     };
 
-    // Filtering users
+    const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+    // Helper classifier for the 4 Categories requested by admin
+    const classifyUserCategory = (u: User) => {
+        const source = (u.source || '').toLowerCase();
+        
+        // 4. CRM Invite Lead (Invite new lead button from Leads & CRM page)
+        if (source.includes('shared link') || source.includes('crm') || source.includes('invite')) {
+            return 'crm_invite';
+        }
+        
+        // 3. Property Page Signup (Poza 1 - modal/button on /properties page)
+        if (source.includes('property') || source.includes('proprietati') || source.includes('modal')) {
+            return 'property_page';
+        }
+        
+        // 1. Direct Owner Only (Only owner bifa checked, agent bifa unchecked)
+        if (u.find_self_from_owner !== false && u.wants_agent_help === false) {
+            return 'direct_owner_only';
+        }
+        
+        // 2. Both Options (Both owner & agent bife checked)
+        return 'both_options';
+    };
+
+    // Filtering users by search, role, status & category
     const filteredUsers = users.filter(u => {
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase().trim();
@@ -184,22 +210,49 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
         if (roleFilter !== 'all' && u.role !== roleFilter) return false;
         if (statusFilter === 'pending' && u.is_approved !== false) return false;
         if (statusFilter === 'active' && u.is_approved === false) return false;
+        if (categoryFilter !== 'all' && classifyUserCategory(u) !== categoryFilter) return false;
         return true;
     });
 
-    // Categorized Columns for Board View
-    const pendingAccessUsers = filteredUsers.filter(u => u.is_approved === false && u.role !== 'client_no_agency');
-    const clientNoAgencyUsers = filteredUsers.filter(u => u.role === 'client_no_agency');
-    const activeMarketClients = filteredUsers.filter(u => u.is_approved !== false && u.role !== 'client_no_agency' && (u.role === 'client' || u.role === 'owner'));
-    const activeAgentsAndDevs = filteredUsers.filter(u => u.is_approved !== false && u.role !== 'client_no_agency' && (u.role === 'agent' || u.role === 'developer' || u.role === 'admin' || u.role === 'super_admin'));
-    const suspendedUsers = filteredUsers.filter(u => u.is_approved === false && u.role !== 'client_no_agency');
+    // Categorized Board Groups & Paired Columns (Cereri Ne-aprobate & Acceptați)
+    const cat1Users = filteredUsers.filter(u => classifyUserCategory(u) === 'direct_owner_only');
+    const cat2Users = filteredUsers.filter(u => classifyUserCategory(u) === 'both_options');
+    const cat3Users = filteredUsers.filter(u => classifyUserCategory(u) === 'property_page');
+    const cat4Users = filteredUsers.filter(u => classifyUserCategory(u) === 'crm_invite');
 
-    const STAGES = [
-        { id: 'pending', title: 'Solicitări Acces Client (În Așteptare)', count: pendingAccessUsers.length, color: 'bg-amber-500', users: pendingAccessUsers },
-        { id: 'client_no_agency', title: 'Clienți Fără Agenție (Self-Service Market)', count: clientNoAgencyUsers.length, color: 'bg-orange-500', users: clientNoAgencyUsers },
-        { id: 'clients', title: 'Clienți Activi (Market)', count: activeMarketClients.length, color: 'bg-blue-500', users: activeMarketClients },
-        { id: 'agents', title: 'Agenți, Devoltatori & Admini', count: activeAgentsAndDevs.length, color: 'bg-purple-500', users: activeAgentsAndDevs },
-        { id: 'suspended', title: 'Acces Suspendat (Comportament Fraudulos)', count: suspendedUsers.length, color: 'bg-rose-500', users: suspendedUsers }
+    const CATEGORIES = [
+        {
+            id: 'direct_owner_only',
+            name: '1. Clienți Doar de la Proprietar',
+            desc: 'Fără agenție (Doar căutare direct de la proprietari)',
+            color: 'text-orange-600 border-orange-200 bg-orange-50',
+            pending: cat1Users.filter(u => u.is_approved === false),
+            approved: cat1Users.filter(u => u.is_approved !== false)
+        },
+        {
+            id: 'both_options',
+            name: '2. Clienți cu Ambele Opțiuni',
+            desc: 'Și direct de la proprietar și cu ajutor Broker/Agent',
+            color: 'text-blue-600 border-blue-200 bg-blue-50',
+            pending: cat2Users.filter(u => u.is_approved === false),
+            approved: cat2Users.filter(u => u.is_approved !== false)
+        },
+        {
+            id: 'property_page',
+            name: '3. Pagina Proprietăților (Poza 1)',
+            desc: 'Clienți înregistrați / autentificați din modalul paginii de proprietăți',
+            color: 'text-purple-600 border-purple-200 bg-purple-50',
+            pending: cat3Users.filter(u => u.is_approved === false),
+            approved: cat3Users.filter(u => u.is_approved !== false)
+        },
+        {
+            id: 'crm_invite',
+            name: '4. Formular CRM (Invite New Lead)',
+            desc: 'Lead-uri venite prin link-ul de invitare din pagina Leads & CRM',
+            color: 'text-emerald-600 border-emerald-200 bg-emerald-50',
+            pending: cat4Users.filter(u => u.is_approved === false),
+            approved: cat4Users.filter(u => u.is_approved !== false)
+        }
     ];
 
     return (
@@ -233,64 +286,107 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                 </div>
             </div>
 
-            {/* Filter Bar */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 shrink-0">
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-80">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Caută utilizator după nume, email sau telefon..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-orange-500 text-slate-900"
-                        />
+            {/* Filter Bar with Category Tabs */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-4 shrink-0">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <div className="relative flex-1 md:w-80">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Caută utilizator după nume, email sau telefon..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-orange-500 text-slate-900"
+                            />
+                        </div>
+                        <select
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                            className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl outline-none"
+                        >
+                            <option value="all">Toate rolurile</option>
+                            <option value="client">Client</option>
+                            <option value="client_no_agency">Client fără agenție</option>
+                            <option value="agent">Agent</option>
+                            <option value="owner">Proprietar</option>
+                            <option value="developer">Dezvoltator</option>
+                            <option value="admin">Admin</option>
+                        </select>
                     </div>
-                    <select
-                        value={roleFilter}
-                        onChange={(e) => setRoleFilter(e.target.value)}
-                        className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl outline-none"
-                    >
-                        <option value="all">Toate rolurile</option>
-                        <option value="client">Client</option>
-                        <option value="agent">Agent</option>
-                        <option value="owner">Proprietar</option>
-                        <option value="developer">Dezvoltator</option>
-                        <option value="admin">Admin</option>
-                    </select>
+
+                    <div className="text-xs text-slate-500 font-semibold">
+                        Afișare <span className="font-extrabold text-slate-900">{filteredUsers.length}</span> utilizatori din baza de date
+                    </div>
                 </div>
 
-                <div className="text-xs text-slate-500 font-semibold">
-                    Afișare <span className="font-extrabold text-slate-900">{filteredUsers.length}</span> utilizatori din baza de date
+                {/* Category Quick Filter Buttons */}
+                <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-slate-100">
+                    <button
+                        onClick={() => setCategoryFilter('all')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${categoryFilter === 'all' ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    >
+                        Toate Categoriile (4 Categorii)
+                    </button>
+                    {CATEGORIES.map(cat => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setCategoryFilter(cat.id)}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${categoryFilter === cat.id ? 'bg-orange-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                        >
+                            <span>{cat.name}</span>
+                            <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-black">
+                                {cat.pending.length + cat.approved.length}
+                            </span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Column Board View - Same design & column style as Sales Pipeline (Poza 1) */}
-            <div className="flex-1 min-h-[500px] overflow-hidden relative group border-b-4 border-slate-200 rounded-b-xl">
-                <div className="flex-1 overflow-x-auto snap-x snap-mandatory h-full">
-                    <div className="flex gap-4 px-2 min-w-max h-full pb-4">
-                        {STAGES.map(stage => (
-                            <div key={stage.id} className="w-[85vw] md:w-80 flex-shrink-0 snap-center flex flex-col bg-slate-50/70 rounded-2xl border border-slate-200 h-full max-h-full">
-                                {/* Column Header */}
-                                <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white rounded-t-2xl sticky top-0 z-10 shadow-sm">
+            {/* Category Groups View - Paired Pending & Approved Columns */}
+            <div className="flex-1 space-y-8 overflow-y-auto pr-1">
+                {CATEGORIES.filter(cat => categoryFilter === 'all' || categoryFilter === cat.id).map(cat => (
+                    <div key={cat.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                        {/* Category Section Header */}
+                        <div className={`p-4 rounded-xl border ${cat.color} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
+                            <div>
+                                <h3 className="text-base font-black tracking-tight">{cat.name}</h3>
+                                <p className="text-xs opacity-80 font-medium">{cat.desc}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <span className="px-3 py-1 bg-amber-500 text-slate-950 rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5" /> Cereri: {cat.pending.length}
+                                </span>
+                                <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Acceptați: {cat.approved.length}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Side-by-side Sub-Columns Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                            {/* Sub-Column 1: Cereri în așteptare (Ne-aprobați) */}
+                            <div className="bg-amber-50/50 rounded-xl border border-amber-200/80 p-4 space-y-3">
+                                <div className="flex items-center justify-between pb-3 border-b border-amber-200/60">
                                     <div className="flex items-center gap-2">
-                                        <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
-                                        <h3 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">{stage.title}</h3>
+                                        <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></div>
+                                        <h4 className="font-black text-xs text-amber-900 uppercase tracking-wider">
+                                            Cereri În Așteptare (Ne-aprobați)
+                                        </h4>
                                     </div>
-                                    <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full text-xs font-black">
-                                        {stage.count}
+                                    <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full text-xs font-black">
+                                        {cat.pending.length}
                                     </span>
                                 </div>
 
-                                {/* Cards List */}
-                                <div className="p-3 space-y-3 flex-1 overflow-y-auto min-h-[100px]">
-                                    {stage.users.length > 0 ? (
-                                        stage.users.map(user => (
-                                            <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all group flex flex-col justify-between">
+                                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                                    {cat.pending.length > 0 ? (
+                                        cat.pending.map(user => (
+                                            <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between space-y-3">
                                                 <div>
                                                     <div className="flex justify-between items-start mb-2">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 font-black text-xs flex items-center justify-center border border-orange-200 shrink-0">
+                                                            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 font-black text-xs flex items-center justify-center border border-amber-200 shrink-0">
                                                                 {(user.full_name || user.email || '?').charAt(0).toUpperCase()}
                                                             </div>
                                                             <div>
@@ -305,7 +401,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                                             {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role}
                                                         </span>
                                                         <span className="flex items-center gap-1 font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
-                                                            <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} credite
+                                                            <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} CR
                                                         </span>
                                                     </div>
 
@@ -317,72 +413,128 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                                         )}
                                                         {user.wants_agent_help !== false && (
                                                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/80">
-                                                                <Check className="w-3 h-3 shrink-0 text-indigo-600" /> Solicită și ajutor Agent / Broker Imobiliar
+                                                                <Check className="w-3 h-3 shrink-0 text-indigo-600" /> Solicită ajutor Broker / Agent
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                {/* Actions */}
-                                                <div className="space-y-1.5 mt-4 pt-3 border-t border-slate-100">
-                                                    {user.is_approved === false && (
-                                                        <button
-                                                            onClick={() => handleOpenRestrictionsModal(user)}
-                                                            className="w-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
-                                                        >
-                                                            <UserCheck className="w-3.5 h-3.5" /> Aprobă Acces & Filtre
-                                                        </button>
-                                                    )}
-
-                                                    {user.is_approved !== false && (
-                                                        <button
-                                                            onClick={() => handleOpenRestrictionsModal(user)}
-                                                            className="w-full py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border border-slate-200"
-                                                        >
-                                                            <Shield className="w-3.5 h-3.5 text-slate-500" /> Modifică Filtre Acces
-                                                        </button>
-                                                    )}
-
+                                                <div className="space-y-1.5 pt-3 border-t border-slate-100">
+                                                    <button
+                                                        onClick={() => handleOpenRestrictionsModal(user)}
+                                                        className="w-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                                                    >
+                                                        <UserCheck className="w-3.5 h-3.5" /> Aprobă Acces & Filtre
+                                                    </button>
                                                     <button
                                                         onClick={() => setPreviewUser(user)}
-                                                        className="w-full py-1.5 px-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border border-orange-200"
+                                                        className="w-full py-1.5 px-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-orange-200 cursor-pointer"
                                                     >
                                                         <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => handleOpenActivityMonitor(user)}
-                                                        className="w-full py-1.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border border-indigo-200"
-                                                    >
-                                                        <Activity className="w-3.5 h-3.5" /> Monitorizează Activitatea
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => handleApproveUser(user.id, user.is_approved)}
-                                                        className={`w-full py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border ${
-                                                            user.is_approved === false
-                                                                ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-200'
-                                                                : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
-                                                        }`}
-                                                    >
-                                                        <ShieldAlert className="w-3.5 h-3.5" />
-                                                        {user.is_approved === false ? 'Restabilește Accesul' : 'Suspendă Accesul'}
                                                     </button>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="text-center py-10 opacity-50">
-                                            <div className="text-xs font-medium text-slate-400 border-2 border-dashed border-slate-200 rounded-xl p-4">
-                                                Niciun utilizator în această coloană
-                                            </div>
+                                        <div className="py-8 text-center text-slate-400 text-xs font-semibold">
+                                            Nicio cerere în așteptare în această categorie.
                                         </div>
                                     )}
                                 </div>
                             </div>
-                        ))}
+
+                            {/* Sub-Column 2: Cei Acceptați / Activi (Aprobați) */}
+                            <div className="bg-emerald-50/40 rounded-xl border border-emerald-200/80 p-4 space-y-3">
+                                <div className="flex items-center justify-between pb-3 border-b border-emerald-200/60">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-emerald-600"></div>
+                                        <h4 className="font-black text-xs text-emerald-900 uppercase tracking-wider">
+                                            Acceptați & Activi (Aprobați)
+                                        </h4>
+                                    </div>
+                                    <span className="bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full text-xs font-black">
+                                        {cat.approved.length}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                                    {cat.approved.length > 0 ? (
+                                        cat.approved.map(user => (
+                                            <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between space-y-3">
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center border border-emerald-200 shrink-0">
+                                                                {(user.full_name || user.email || '?').charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{user.full_name || 'Utilizator Fără Nume'}</h4>
+                                                                <span className="text-[11px] text-slate-400 block line-clamp-1">{user.email}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 text-[11px]">
+                                                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                                                            {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role}
+                                                        </span>
+                                                        <span className="flex items-center gap-1 font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
+                                                            <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} CR
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex flex-col gap-1 mt-2">
+                                                        {user.find_self_from_owner && (
+                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
+                                                                <Check className="w-3 h-3 shrink-0 text-emerald-600" /> Găsește singur de la proprietar
+                                                            </div>
+                                                        )}
+                                                        {user.wants_agent_help !== false && (
+                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/80">
+                                                                <Check className="w-3 h-3 shrink-0 text-indigo-600" /> Solicită ajutor Broker / Agent
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-1.5 pt-3 border-t border-slate-100">
+                                                    <button
+                                                        onClick={() => handleOpenRestrictionsModal(user)}
+                                                        className="w-full py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-slate-200 cursor-pointer"
+                                                    >
+                                                        <Shield className="w-3.5 h-3.5 text-slate-500" /> Modifică Filtre Acces
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setPreviewUser(user)}
+                                                        className="w-full py-1.5 px-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-orange-200 cursor-pointer"
+                                                    >
+                                                        <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenActivityMonitor(user)}
+                                                        className="w-full py-1.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-indigo-200 cursor-pointer"
+                                                    >
+                                                        <Activity className="w-3.5 h-3.5" /> Monitorizează Activitatea
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleApproveUser(user.id, user.is_approved)}
+                                                        className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer"
+                                                    >
+                                                        <ShieldAlert className="w-3.5 h-3.5" /> Suspendă Acces
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-8 text-center text-slate-400 text-xs font-semibold">
+                                            Niciun utilizator acceptat în această categorie.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                ))}
             </div>
 
             {/* MODAL 1: ACCESS APPROVAL & PROPERTY FILTERS RESTRICTIONS (Matching Poza 3) */}
