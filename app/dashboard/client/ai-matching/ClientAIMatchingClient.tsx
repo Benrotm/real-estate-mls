@@ -65,8 +65,8 @@ const TABS = [
     },
     { 
         id: 'visit_scheduled', 
-        name: 'De vizionat', 
-        desc: 'Aici sunt cele care le-ai programat la Vizionare',
+        name: 'Vizionări Stabilite', 
+        desc: 'Aici sunt cele pe care le-ai programat la Vizionare',
         color: 'text-purple-600 border-purple-600 bg-purple-50',
         hasCalendar: true,
         hasFlag: true
@@ -119,6 +119,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [activeTab, setActiveTab] = useState<string>('curate');
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
     const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+    const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
 
     // Lead preferences editing - all fields from form
     const [prefType, setPrefType] = useState(lead.preference_type || 'Apartment');
@@ -395,39 +396,38 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                     href="/cont/plati"
                     className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
                 >
-                    <Coins className="w-4 h-4" /> Alimentează Credite
+                    <Coins className="w-4 h-4" /> Adaugă Credite
                 </Link>
             </div>
 
-            {/* Recommendation Message Header Box */}
-            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/20 pb-4 mb-4">
+            {/* Collapsible Recommendation Message Header Box */}
+            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden transition-all">
+                <div 
+                    onClick={() => setIsRecommendationOpen(!isRecommendationOpen)}
+                    className="flex items-center justify-between cursor-pointer select-none"
+                >
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                            <Sparkles className="w-6 h-6 text-yellow-300 fill-current" />
+                            <Sparkles className="w-5 h-5 text-yellow-300 fill-current" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
-                                Recomandări Imobiliare <span className="bg-yellow-400 text-slate-950 text-xs px-2.5 py-0.5 rounded-full font-black">{recommendation.points} Puncte</span>
+                            <h2 className="text-lg font-black tracking-tight flex items-center gap-2">
+                                Recomandări
                             </h2>
                             <p className="text-xs text-orange-100 font-medium">Sfaturi importante pentru căutarea ta pe piața imobiliară</p>
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => loadAISuggestions()}
-                        disabled={isLoadingAI || !isApproved}
-                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : "Refresh AI Matching"}
-                        className="px-4 py-2 bg-white text-orange-700 hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${isLoadingAI ? 'animate-spin' : ''}`} />
-                        {isLoadingAI ? 'Se caută...' : 'Refresh AI Matching'}
-                    </button>
+                    <div className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
+                        {isRecommendationOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </div>
                 </div>
 
-                <div className="text-xs leading-relaxed text-orange-50 font-medium bg-black/20 p-4 rounded-xl backdrop-blur-sm border border-white/10 whitespace-pre-line">
-                    {recommendation.text}
-                </div>
+                {isRecommendationOpen && (
+                    <div className="mt-4 pt-4 border-t border-white/20 text-xs leading-relaxed text-orange-50 font-medium bg-black/20 p-4 rounded-xl backdrop-blur-sm border border-white/10 whitespace-pre-line animate-in fade-in duration-200">
+                        {recommendation.text}
+                    </div>
+                )}
             </div>
 
             {/* Pending Approval Banner, Instant AI Activation & PWA Button */}
@@ -737,11 +737,24 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             </div>
 
             {/* Current Active Tab Explanatory Text Box */}
-            <div className={`p-4 rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm`}>
-                <span className="font-extrabold block mb-0.5 text-slate-900">
-                    Stadiul: {currentTabObj.name}
-                </span>
-                {currentTabObj.desc}
+            <div className={`p-4 rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3`}>
+                <div>
+                    <span className="font-extrabold block mb-0.5 text-slate-900">
+                        Stadiul: {currentTabObj.name}
+                    </span>
+                    {currentTabObj.desc}
+                </div>
+                {activeTab === 'curate' && (
+                    <button
+                        onClick={() => loadAISuggestions()}
+                        disabled={isLoadingAI || !isApproved}
+                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : "Refresh AI Matching"}
+                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer"
+                    >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAI ? 'animate-spin' : ''}`} />
+                        {isLoadingAI ? 'Se caută...' : 'Refresh AI Matching'}
+                    </button>
+                )}
             </div>
 
             {/* Properties Grid */}
