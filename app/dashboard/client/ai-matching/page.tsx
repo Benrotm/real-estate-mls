@@ -54,10 +54,10 @@ export default async function ClientAIMatchingPage() {
     const costsMap = (costsSetting?.setting_value as Record<string, number>) || {};
     const instantAiCost = costsMap['instant_ai_activation_cost'] !== undefined ? Number(costsMap['instant_ai_activation_cost']) : 5;
 
-    // Fetch user profile for approval check
+    // Fetch user profile for approval check & credits
     const { data: userProfile } = await adminSupabase
         .from('profiles')
-        .select('is_approved, find_self_from_owner, wants_agent_help')
+        .select('credits, is_approved, find_self_from_owner, wants_agent_help')
         .eq('id', lead.agent_id || lead.created_by)
         .single();
 
@@ -72,6 +72,7 @@ export default async function ClientAIMatchingPage() {
             initialMatches={matchesRes.matches || []}
             recommendation={recommendationConfig}
             instantAiCost={instantAiCost}
+            userCredits={userProfile?.credits || 0}
         />
     );
 }

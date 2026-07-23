@@ -249,6 +249,22 @@ export default function CreditSettingsPage() {
                                 <span className="text-yellow-500 font-bold text-sm">%</span>
                             </div>
                         </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800 col-span-1 md:col-span-2">
+                            <div>
+                                <span className="font-semibold block text-white">Credite Inițiale Alocate la Înregistrare Client Fără Agenție</span>
+                                <span className="text-xs text-slate-400">Numărul de credite cadou acordat automat la crearea contului unui client nou</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['client_no_agency_initial_credits'] !== undefined ? costs['client_no_agency_initial_credits'] : 15}
+                                    onChange={(e) => handleChange('client_no_agency_initial_credits', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
                     </div>
                 </section>
 

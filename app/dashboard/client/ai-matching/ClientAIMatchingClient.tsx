@@ -5,7 +5,7 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -19,6 +19,7 @@ interface Props {
     initialMatches: any[];
     recommendation: { text: string; points: number };
     instantAiCost?: number;
+    userCredits?: number;
 }
 
 const TABS = [
@@ -102,11 +103,12 @@ const TABS = [
     }
 ];
 
-export default function ClientAIMatchingClient({ lead, initialMatches, recommendation, instantAiCost = 5 }: Props) {
+export default function ClientAIMatchingClient({ lead, initialMatches, recommendation, instantAiCost = 5, userCredits = 0 }: Props) {
     const [matches, setMatches] = useState<any[]>(initialMatches);
     const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
     const [isLoadingAI, setIsLoadingAI] = useState(false);
     const [isApproved, setIsApproved] = useState<boolean>(lead.is_approved !== false);
+    const [credits, setCredits] = useState<number>(userCredits);
     const [isActivatingInstant, setIsActivatingInstant] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('curate');
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
@@ -164,6 +166,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             } else {
                 alert(`Felicitări! Potrivirile AI au fost activate instant. Cost: ${res.cost || instantAiCost} credite.`);
                 setIsApproved(true);
+                setCredits(prev => Math.max(0, prev - (res.cost || instantAiCost)));
                 // Load AI suggestions
                 setIsLoadingAI(true);
                 if (lead.id) {
@@ -349,6 +352,28 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 pb-24">
+            {/* User AI Credits Balance Top Bar */}
+            <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/30">
+                        <Coins className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Balanță Credite Disponibile</span>
+                        <div className="text-sm font-black text-white flex items-center gap-1.5 font-mono">
+                            Credite AI - CR: <span className="text-yellow-400 text-base">{credits}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <Link
+                    href="/cont/plati"
+                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
+                >
+                    <Coins className="w-4 h-4" /> Alimentează Credite
+                </Link>
+            </div>
+
             {/* Recommendation Message Header Box */}
             <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/20 pb-4 mb-4">
