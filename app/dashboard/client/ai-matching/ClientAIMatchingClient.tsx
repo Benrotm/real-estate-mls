@@ -11,6 +11,10 @@ import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matc
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
 import { updateLead } from '@/app/lib/actions/leads';
 import { saveClientCalendarEvent, updateMatchWantToSeeAgainFlag, logUserActivity, activateInstantAIMatching } from '@/app/lib/actions/user-activity';
+import DrawAreaSelector from '@/app/components/DrawAreaSelector';
+import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
+import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList, cleanCityName, normalizeText } from '@/app/lib/constants/locations';
+import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 import Link from 'next/link';
 import { decodeHtmlEntities } from '@/app/lib/utils/string';
 
@@ -144,6 +148,54 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [findSelfFromOwner, setFindSelfFromOwner] = useState<boolean>(lead.find_self_from_owner !== false);
     const [wantsAgentHelp, setWantsAgentHelp] = useState<boolean>(lead.wants_agent_help !== false);
 
+    // System locations state for multi-select & map draw
+    const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
+    const [citiesListFull, setCitiesListFull] = useState<{ id: string; name: string }[]>([]);
+    const [allRawAreas, setAllRawAreas] = useState<{ name: string; parent_id: string | null }[]>([]);
+    const [polygon, setPolygon] = useState<{ lat: number; lng: number }[] | undefined>(lead.preference_location_polygon || undefined);
+    const [showMap, setShowMap] = useState(false);
+
+    useEffect(() => {
+        getSystemLocations().then(res => {
+            if (res.cities?.length) {
+                setCitiesListFull(res.cities);
+                const formatted = formatCityList(res.cities, res.counties || []);
+                setCitiesList(formatted);
+            }
+            if (res.areas?.length) {
+                setAllRawAreas(res.areas);
+            }
+        });
+    }, []);
+
+    const filteredAreasList = React.useMemo(() => {
+        const selectedCityNames = prefCity
+            ? prefCity.split(',').map((c: string) => cleanCityName(c).trim()).filter(Boolean)
+            : [];
+
+        if (selectedCityNames.length === 0) {
+            return [];
+        }
+
+        const normalizedSelected = selectedCityNames.map((name: string) => normalizeText(name));
+
+        const selectedCityIds = citiesListFull
+            .filter((c: any) => normalizedSelected.includes(normalizeText(c.name)))
+            .map((c: any) => c.id);
+
+        const matchedAreas = allRawAreas.filter((a: any) => a.parent_id && selectedCityIds.includes(a.parent_id));
+        
+        if (matchedAreas.length > 0) {
+            return Array.from(new Set(matchedAreas.map((a: any) => a.name))).sort((a: string, b: string) => a.localeCompare(b, 'ro'));
+        }
+
+        if (normalizedSelected.some((n: string) => n.includes('timi'))) {
+            return TIMISOARA_AREAS;
+        }
+
+        return [];
+    }, [prefCity, citiesListFull, allRawAreas]);
+
     // PWA Install prompt state
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
@@ -251,6 +303,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 preference_type: prefType,
                 preference_location_city: prefCity,
                 preference_location_area: prefArea,
+                preference_location_polygon: polygon || null,
                 budget_max: budgetMax ? Number(budgetMax) : null,
                 preference_rooms_min: roomsMin ? Number(roomsMin) : null,
                 preference_rooms_max: roomsMax ? Number(roomsMax) : null,
@@ -519,26 +572,53 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Oraș Preferat</label>
-                                <input
-                                    type="text"
-                                    placeholder="ex. Timisoara"
-                                    value={prefCity}
-                                    onChange={(e) => setPrefCity(e.target.value)}
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Oraș</label>
+                                <MultiSearchableSelect
+                                    values={prefCity ? prefCity.split(',').map((c: string) => c.trim()).filter(Boolean) : []}
+                                    options={citiesList}
+                                    onChange={(vals) => setPrefCity(vals.join(', '))}
+                                    placeholder="Scrie sau selectează orașe..."
                                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Cartier / Zonă</label>
-                                <input
-                                    type="text"
-                                    placeholder="ex. Aradului, Lipovei"
-                                    value={prefArea}
-                                    onChange={(e) => setPrefArea(e.target.value)}
+                                <MultiSearchableSelect
+                                    values={prefArea ? prefArea.split(',').map((a: string) => a.trim()).filter(Boolean) : []}
+                                    options={filteredAreasList}
+                                    onChange={(vals) => setPrefArea(vals.join(', '))}
+                                    placeholder={filteredAreasList.length ? "Scrie sau selectează zone..." : "Selectează mai întâi orașul..."}
                                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
+
+                            <div className="col-span-full space-y-1.5 pt-1">
+                                <label className="block text-xs font-bold text-slate-700 uppercase">Desenează pe hartă zona exactă</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMap(true)}
+                                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-2.5 border rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer ${polygon?.length ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'}`}
+                                >
+                                    <MapPin className="w-4 h-4 text-violet-600 shrink-0" />
+                                    {polygon?.length ? 'Editează zona pe hartă' : 'Desenează zona pe hartă'}
+                                </button>
+                                {polygon?.length ? (
+                                    <div className="text-[10px] text-green-600 font-black flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                                        ✓ Zone specifice desenate pe hartă ({polygon.length} puncte)
+                                    </div>
+                                ) : null}
+                            </div>
+
+                            {/* Map Selector Modal */}
+                            {showMap && (
+                                <DrawAreaSelector
+                                    city={prefCity}
+                                    value={polygon}
+                                    onChange={(poly) => setPolygon(poly || undefined)}
+                                    onClose={() => setShowMap(false)}
+                                />
+                            )}
 
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Buget Maxim (€)</label>
