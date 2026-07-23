@@ -552,3 +552,115 @@ export async function getOrCreateClientSelfServiceLead() {
     return { success: true, lead: newLead };
 }
 
+export async function submitClientNoAgencyFromInvite(agentId: string, data: {
+    name: string;
+    phone: string;
+    email: string;
+    password?: string;
+    leadData: LeadData;
+}) {
+    const { createAdminClient } = await import('@/app/lib/supabase/admin');
+    const { createClient } = await import('@/app/lib/supabase/server');
+    const adminSupabase = createAdminClient();
+
+    const cleanEmail = data.email.trim().toLowerCase();
+    const password = data.password?.trim() || 'ImobumClient2026!';
+    const nameParts = data.name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Check if user profile with this email already exists
+    const { data: existingUsers } = await adminSupabase
+        .from('profiles')
+        .select('id, role')
+        .eq('email', cleanEmail)
+        .limit(1);
+
+    let userId: string;
+
+    if (existingUsers && existingUsers.length > 0) {
+        userId = existingUsers[0].id;
+        await adminSupabase.from('profiles').update({
+            referred_by: agentId,
+            find_self_from_owner: data.leadData.search_direct_owner !== false,
+            wants_agent_help: data.leadData.search_with_agent !== false
+        }).eq('id', userId);
+    } else {
+        // Create user in Auth
+        const { data: authUser, error: authErr } = await adminSupabase.auth.admin.createUser({
+            email: cleanEmail,
+            password: password,
+            email_confirm: true,
+            user_metadata: {
+                first_name: firstName,
+                last_name: lastName,
+                phone: data.phone.trim(),
+                role: 'client_no_agency',
+                referred_by: agentId,
+                find_self_from_owner: data.leadData.search_direct_owner !== false,
+                wants_agent_help: data.leadData.search_with_agent !== false
+            }
+        });
+
+        if (authErr && !authUser?.user) {
+            return { success: false, error: authErr.message };
+        }
+
+        userId = authUser.user!.id;
+
+        // Upsert profile for new client
+        await adminSupabase.from('profiles').upsert({
+            id: userId,
+            email: cleanEmail,
+            full_name: data.name.trim(),
+            phone: data.phone.trim(),
+            role: 'client_no_agency',
+            referred_by: agentId,
+            is_approved: false,
+            find_self_from_owner: data.leadData.search_direct_owner !== false,
+            wants_agent_help: data.leadData.search_with_agent !== false
+        });
+    }
+
+    // Insert lead preferences for AI Matching engine
+    const score = await calculateLeadScore(data.leadData);
+    const cleanLeadData = Object.fromEntries(
+        Object.entries(data.leadData).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null)
+    );
+
+    const { error: leadErr } = await adminSupabase.from('leads').insert({
+        ...cleanLeadData,
+        score,
+        name: data.name.trim(),
+        email: cleanEmail,
+        phone: data.phone.trim(),
+        agent_id: agentId,
+        created_by: userId,
+        status: 'new',
+        source: 'Client Self-Service Referral Form',
+        currency: data.leadData.currency || 'EUR',
+        find_self_from_owner: data.leadData.search_direct_owner !== false,
+        wants_agent_help: data.leadData.search_with_agent !== false
+    });
+
+    if (leadErr) {
+        console.error('Error creating lead from client referral invite:', leadErr);
+    }
+
+    // Auto sign-in user session
+    const supabase = await createClient();
+    const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: password
+    });
+
+    if (signInErr) {
+        console.warn('Auto sign-in warning:', signInErr.message);
+    }
+
+    return {
+        success: true,
+        redirectUrl: '/dashboard/client/ai-matching'
+    };
+}
+

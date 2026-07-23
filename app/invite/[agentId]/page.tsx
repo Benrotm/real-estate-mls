@@ -6,6 +6,9 @@ interface Props {
     params: Promise<{
         agentId: string;
     }>;
+    searchParams?: Promise<{
+        mode?: string;
+    }>;
 }
 
 export const metadata: Metadata = {
@@ -13,8 +16,10 @@ export const metadata: Metadata = {
     description: 'Spune-mi ce cauți și vei primi un link cu toate proprietățile care se potrivesc.',
 };
 
-export default async function InvitePage({ params }: Props) {
+export default async function InvitePage({ params, searchParams }: Props) {
     const { agentId } = await params;
+    const resolvedSearchParams = searchParams ? await searchParams : {};
+    const mode = resolvedSearchParams.mode;
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 -mt-16">
@@ -26,13 +31,16 @@ export default async function InvitePage({ params }: Props) {
                     </h1>
                     <div className="w-16 h-1 bg-white/30 mx-auto rounded-full" />
                     <p className="text-sm font-semibold text-orange-100">
-                        Si primest înapoi un link cu toate detaliile si alte proprietăți care se potrivesc cerințelor tale.
+                        {mode === 'client_no_agency'
+                            ? 'Completează criteriile tale de căutare pentru acces instant la potrivirile AI!'
+                            : 'Și primești înapoi un link cu toate detaliile și alte proprietăți care se potrivesc cerințelor tale.'
+                        }
                     </p>
                 </div>
 
                 {/* Form Wrapper */}
                 <div className="p-6 sm:p-8">
-                    <InviteLeadForm agentId={agentId} />
+                    <InviteLeadForm agentId={agentId} mode={mode} />
                 </div>
             </div>
         </div>

@@ -23,7 +23,7 @@ export default function RecommendClientButton({ userId }: Props) {
     const [isSavedNotice, setIsSavedNotice] = useState(false);
 
     const referralUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/auth/signup?ref=${userId}&role=client_no_agency`
+        ? `${window.location.origin}/invite/${userId}?mode=client_no_agency`
         : '';
 
     // Load custom text variants from localStorage on mount

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { createLeadPublic } from '@/app/lib/actions/leads';
+import { createLeadPublic, submitClientNoAgencyFromInvite } from '@/app/lib/actions/leads';
 import { LeadData } from '@/app/lib/types';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList, cleanCityName, normalizeText } from '@/app/lib/constants/locations';
@@ -17,17 +17,22 @@ import {
     Dog,
     Link as LinkIcon,
     Plus,
-    Trash2
+    Trash2,
+    Mail,
+    Lock
 } from 'lucide-react';
 
 interface Props {
     agentId: string;
+    mode?: string;
 }
 
-export default function InviteLeadForm({ agentId }: Props) {
+export default function InviteLeadForm({ agentId, mode }: Props) {
     // Form State
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [listingType, setListingType] = useState<'For Sale' | 'For Rent'>('For Sale');
     const [propertyType, setPropertyType] = useState<'Apartment' | 'House' | 'Land' | 'Commercial'>('Apartment');
     const [rooms, setRooms] = useState(2);
@@ -122,6 +127,16 @@ export default function InviteLeadForm({ agentId }: Props) {
         if (!budget.trim() || isNaN(Number(budget)) || Number(budget) <= 0) {
             newErrors.budget = 'Introduceți un buget maxim valid';
         }
+
+        if (mode === 'client_no_agency') {
+            if (!email.trim() || !email.includes('@')) {
+                newErrors.email = 'Introduceți o adresă de email validă pentru crearea contului';
+            }
+            if (!password.trim() || password.length < 6) {
+                newErrors.password = 'Parola trebuie să aibă cel puțin 6 caractere';
+            }
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -163,15 +178,32 @@ export default function InviteLeadForm({ agentId }: Props) {
         };
 
         try {
-            const res = await createLeadPublic(agentId, leadPayload);
-            if (res.success) {
-                setIsSuccess(true);
+            if (mode === 'client_no_agency') {
+                const res = await submitClientNoAgencyFromInvite(agentId, {
+                    name: name.trim(),
+                    phone: phone.trim(),
+                    email: email.trim(),
+                    password: password.trim(),
+                    leadData: leadPayload
+                });
+
+                if (res.success && res.redirectUrl) {
+                    window.location.href = res.redirectUrl;
+                    return;
+                } else {
+                    alert(res.error || 'A apărut o eroare la crearea contului tău.');
+                }
             } else {
-                alert(res.error || 'A apărut o eroare la trimiterea formularului.');
+                const res = await createLeadPublic(agentId, leadPayload);
+                if (res.success) {
+                    setIsSuccess(true);
+                } else {
+                    alert(res.error || 'A apărut o eroare la trimiterea formularului.');
+                }
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error submitting public lead', err);
-            alert('A apărut o eroare neașteptată. Vă rugăm să încercați din nou.');
+            alert('A apărut o eroare neașteptată: ' + (err.message || 'Vă rugăm să încercați din nou.'));
         } finally {
             setIsSubmitting(false);
         }
@@ -516,6 +548,47 @@ export default function InviteLeadForm({ agentId }: Props) {
                 />
                 {errors.phone && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.phone}</p>}
             </div>
+
+            {/* Email & Password (Required when mode === 'client_no_agency') */}
+            {mode === 'client_no_agency' && (
+                <>
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-1 flex items-center gap-1.5">
+                            <Mail className="w-4 h-4 text-orange-600" />
+                            ADRESĂ DE EMAIL <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-slate-400 font-medium text-[10px] md:text-xs block mb-2">
+                            (pentru autentificare și acces la noul tău dashboard AI Matching)
+                        </span>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="ex. ion.popescu@gmail.com"
+                            className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.email ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
+                        />
+                        {errors.email && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.email}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-1 flex items-center gap-1.5">
+                            <Lock className="w-4 h-4 text-orange-600" />
+                            PAROLĂ CONT <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-slate-400 font-medium text-[10px] md:text-xs block mb-2">
+                            (parola ta pentru conectare pe Imobum)
+                        </span>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Alege o parolă din minim 6 caractere"
+                            className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.password ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
+                        />
+                        {errors.password && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.password}</p>}
+                    </div>
+                </>
+            )}
 
             {/* Property Source / Checkboxes */}
             <div>
