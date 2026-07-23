@@ -330,6 +330,18 @@ export default function DashboardClient({
         );
     };
 
+    const isClientNoAgency = primaryRole === 'client_no_agency' || activeRole === 'client_no_agency' || (isClient && profile?.find_self_from_owner);
+
+    if (isClientNoAgency) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col">
+                <main className="flex-1 p-2 md:p-6 overflow-y-auto">
+                    {children}
+                </main>
+            </div>
+        );
+    }
+
     return (
         <div className="flex min-h-screen bg-slate-50">
             {/* Desktop Sidebar */}

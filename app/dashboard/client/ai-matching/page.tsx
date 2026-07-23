@@ -54,12 +54,17 @@ export default async function ClientAIMatchingPage() {
     const costsMap = (costsSetting?.setting_value as Record<string, number>) || {};
     const instantAiCost = costsMap['instant_ai_activation_cost'] !== undefined ? Number(costsMap['instant_ai_activation_cost']) : 5;
 
-    // Fetch user profile for approval check & credits
+    // Fetch logged-in user profile for approval check & credits
+    const { createClient } = await import('@/app/lib/supabase/server');
+    const serverSupabase = await createClient();
+    const { data: { user: currentUser } } = await serverSupabase.auth.getUser();
+    const targetUserId = currentUser?.id || lead.created_by || lead.agent_id;
+
     const { data: userProfile } = await adminSupabase
         .from('profiles')
         .select('credits, is_approved, find_self_from_owner, wants_agent_help')
-        .eq('id', lead.agent_id || lead.created_by)
-        .single();
+        .eq('id', targetUserId)
+        .maybeSingle();
 
     return (
         <ClientAIMatchingClient

@@ -498,32 +498,64 @@ export async function createLeadPublic(agentId: string, data: LeadData) {
 }
 
 export async function getOrCreateClientSelfServiceLead() {
+    const { createAdminClient } = await import('@/app/lib/supabase/admin');
+    const { createClient } = await import('@/app/lib/supabase/server');
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
         return { error: 'Unauthorized' };
     }
 
-    // Check if client already has a lead
-    const { data: existingLead } = await supabase
+    // Get user profile first
+    const { data: profile } = await adminSupabase
+        .from('profiles')
+        .select('full_name, email, phone')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    // Check if client already has a lead by created_by OR email OR phone
+    let existingLead: any = null;
+
+    const { data: leadsByCreatedBy } = await adminSupabase
         .from('leads')
         .select('*')
-        .or(`created_by.eq.${user.id},email.eq.${user.email}`)
+        .eq('created_by', user.id)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+
+    if (leadsByCreatedBy && leadsByCreatedBy.length > 0) {
+        existingLead = leadsByCreatedBy[0];
+    } else if (user.email) {
+        const { data: leadsByEmail } = await adminSupabase
+            .from('leads')
+            .select('*')
+            .eq('email', user.email)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (leadsByEmail && leadsByEmail.length > 0) {
+            existingLead = leadsByEmail[0];
+        }
+    }
+
+    if (!existingLead && profile?.phone) {
+        const { data: leadsByPhone } = await adminSupabase
+            .from('leads')
+            .select('*')
+            .eq('phone', profile.phone)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (leadsByPhone && leadsByPhone.length > 0) {
+            existingLead = leadsByPhone[0];
+        }
+    }
 
     if (existingLead) {
         return { success: true, lead: existingLead };
     }
-
-    // Get user profile name and phone
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, email, phone')
-        .eq('id', user.id)
-        .single();
 
     // Create a self-service lead profile for this client
     const defaultLead: any = {

@@ -84,6 +84,12 @@ const TABS = [
         color: 'text-orange-600 border-orange-600 bg-orange-50'
     },
     { 
+        id: 'offer_made', 
+        name: 'Oferte făcute', 
+        desc: 'Aici găsești proprietățile la care ai trimis o ofertă de preț sau ai negociat cu proprietarul',
+        color: 'text-emerald-700 border-emerald-600 bg-emerald-50 font-bold'
+    },
+    { 
         id: 'not_interested', 
         name: 'Nu ma intereseaza', 
         desc: 'aici sunt cele la care ai fost la vizionare si sigur nu le vrei, dar le gasesti aici daca te razgandesti',
@@ -114,14 +120,23 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
     const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
-    // Lead preferences editing
+    // Lead preferences editing - all fields from form
     const [prefType, setPrefType] = useState(lead.preference_type || 'Apartment');
+    const [prefListingType, setPrefListingType] = useState(lead.preference_listing_type || 'For Sale');
     const [prefCity, setPrefCity] = useState(lead.preference_location_city || '');
     const [prefArea, setPrefArea] = useState(lead.preference_location_area || '');
     const [budgetMax, setBudgetMax] = useState(lead.budget_max || '');
     const [roomsMin, setRoomsMin] = useState(lead.preference_rooms_min || '');
     const [roomsMax, setRoomsMax] = useState(lead.preference_rooms_max || '');
     const [surfaceMin, setSurfaceMin] = useState(lead.preference_surface_min || '');
+    const [moveInDate, setMoveInDate] = useState(lead.move_in_date || '');
+    const [occupantsInfo, setOccupantsInfo] = useState(lead.occupants_info || '');
+    const [hasSmallKids, setHasSmallKids] = useState<boolean>(lead.has_small_kids || false);
+    const [hasPets, setHasPets] = useState<boolean>(lead.has_pets || false);
+    const [notes, setNotes] = useState(lead.notes || lead.social_notes || '');
+    const [likedListingsLinks, setLikedListingsLinks] = useState(lead.liked_listings_links || '');
+    const [clientName, setClientName] = useState(lead.name || '');
+    const [clientPhone, setClientPhone] = useState(lead.phone || '');
     const [isSavingPref, setIsSavingPref] = useState(false);
 
     // Checkboxes (Both defaulted to true)
@@ -229,6 +244,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
         try {
             const updatedData = {
                 ...lead,
+                name: clientName.trim() || lead.name,
+                phone: clientPhone.trim() || lead.phone,
+                preference_listing_type: prefListingType,
                 preference_type: prefType,
                 preference_location_city: prefCity,
                 preference_location_area: prefArea,
@@ -236,6 +254,13 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 preference_rooms_min: roomsMin ? Number(roomsMin) : null,
                 preference_rooms_max: roomsMax ? Number(roomsMax) : null,
                 preference_surface_min: surfaceMin ? Number(surfaceMin) : null,
+                move_in_date: moveInDate || null,
+                occupants_info: occupantsInfo || null,
+                has_small_kids: hasSmallKids,
+                has_pets: hasPets,
+                notes: notes || null,
+                social_notes: notes || null,
+                liked_listings_links: likedListingsLinks || null,
                 find_self_from_owner: findSelfFromOwner,
                 wants_agent_help: wantsAgentHelp
             };
@@ -463,21 +488,33 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </div>
 
                 {isPreferencesOpen && (
-                    <div className="p-6 bg-white space-y-4 animate-in fade-in duration-200">
+                    <div className="p-6 bg-white space-y-5 animate-in fade-in duration-200">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Vreau Să</label>
+                                <select
+                                    value={prefListingType}
+                                    onChange={(e) => setPrefListingType(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                >
+                                    <option value="For Sale" className="bg-slate-900 text-white font-bold py-1">Cumpăr (De vânzare)</option>
+                                    <option value="For Rent" className="bg-slate-900 text-white font-bold py-1">Închiriez (De închiriat)</option>
+                                </select>
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tip Proprietate</label>
                                 <select
                                     value={prefType}
                                     onChange={(e) => setPrefType(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                 >
-                                    <option value="Apartment">Apartament</option>
-                                    <option value="House">Casă / Vilă</option>
-                                    <option value="Commercial">Spațiu Comercial</option>
-                                    <option value="Land">Teren</option>
-                                    <option value="Industrial">Industrial</option>
-                                    <option value="Business">Afacere</option>
+                                    <option value="Apartment" className="bg-slate-900 text-white font-bold py-1">Apartament</option>
+                                    <option value="House" className="bg-slate-900 text-white font-bold py-1">Casă / Vilă</option>
+                                    <option value="Commercial" className="bg-slate-900 text-white font-bold py-1">Spațiu Comercial</option>
+                                    <option value="Land" className="bg-slate-900 text-white font-bold py-1">Teren</option>
+                                    <option value="Industrial" className="bg-slate-900 text-white font-bold py-1">Industrial</option>
+                                    <option value="Business" className="bg-slate-900 text-white font-bold py-1">Afacere</option>
                                 </select>
                             </div>
 
@@ -488,7 +525,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     placeholder="ex. Timisoara"
                                     value={prefCity}
                                     onChange={(e) => setPrefCity(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
 
@@ -499,7 +536,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     placeholder="ex. Aradului, Lipovei"
                                     value={prefArea}
                                     onChange={(e) => setPrefArea(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
 
@@ -510,7 +547,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     placeholder="ex. 80000"
                                     value={budgetMax}
                                     onChange={(e) => setBudgetMax(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
 
@@ -522,14 +559,14 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                         placeholder="Min"
                                         value={roomsMin}
                                         onChange={(e) => setRoomsMin(e.target.value)}
-                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500"
+                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                     />
                                     <input
                                         type="number"
                                         placeholder="Max"
                                         value={roomsMax}
                                         onChange={(e) => setRoomsMax(e.target.value)}
-                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500"
+                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                     />
                                 </div>
                             </div>
@@ -541,7 +578,96 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     placeholder="ex. 50"
                                     value={surfaceMin}
                                     onChange={(e) => setSurfaceMin(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">De când doriți să vă mutați?</label>
+                                <input
+                                    type="date"
+                                    value={moveInDate}
+                                    onChange={(e) => setMoveInDate(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nickname / Nume</label>
+                                <input
+                                    type="text"
+                                    value={clientName}
+                                    onChange={(e) => setClientName(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Număr de Telefon</label>
+                                <input
+                                    type="tel"
+                                    value={clientPhone}
+                                    onChange={(e) => setClientPhone(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Rent-specific details & notes */}
+                        {prefListingType === 'For Rent' && (
+                            <div className="p-4 bg-orange-50/50 border border-orange-100 rounded-xl space-y-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-orange-900 uppercase mb-1">Cine va locui în apartament?</label>
+                                    <input
+                                        type="text"
+                                        placeholder="ex. Cuplu, o persoană, 2 studenți..."
+                                        value={occupantsInfo}
+                                        onChange={(e) => setOccupantsInfo(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={hasSmallKids}
+                                            onChange={(e) => setHasSmallKids(e.target.checked)}
+                                            className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                                        />
+                                        <span>Am copii mici</span>
+                                    </label>
+                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={hasPets}
+                                            onChange={(e) => setHasPets(e.target.checked)}
+                                            className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                                        />
+                                        <span>Am animal de companie</span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
+                                <textarea
+                                    rows={2}
+                                    placeholder="Link-uri de pe Facebook, TikTok, sau alte site-uri..."
+                                    value={likedListingsLinks}
+                                    onChange={(e) => setLikedListingsLinks(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Ce te interesează?</label>
+                                <textarea
+                                    rows={2}
+                                    placeholder="ex. Zonă liniștită, balcon mare, parcare..."
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
                         </div>
@@ -572,7 +698,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <button
                                 onClick={handleSavePreferences}
                                 disabled={isSavingPref}
-                                className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-md shadow-orange-600/20"
+                                className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-md shadow-orange-600/20 cursor-pointer"
                             >
                                 <Check className="w-4 h-4" />
                                 {isSavingPref ? 'Se salvează...' : 'Salvează Criteriile & Reîncarcă AI'}
@@ -721,7 +847,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                                 className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-extrabold px-2.5 py-1.5 rounded-lg outline-none cursor-pointer"
                                             >
                                                 {TABS.map(t => (
-                                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                                    <option key={t.id} value={t.id} className="bg-slate-900 text-white font-bold py-1">{t.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -770,9 +896,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     onChange={(e) => setCalendarEventType(e.target.value as any)}
                                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900"
                                 >
-                                    <option value="De Sunat">De Sunat proprietarul</option>
-                                    <option value="De Resunat">De Resunat (nu a răspuns)</option>
-                                    <option value="De Vizionat">De Vizionat (Vizionare stabilită)</option>
+                                    <option value="De Sunat" className="bg-slate-900 text-white font-bold py-1">De Sunat proprietarul</option>
+                                    <option value="De Resunat" className="bg-slate-900 text-white font-bold py-1">De Resunat (nu a răspuns)</option>
+                                    <option value="De Vizionat" className="bg-slate-900 text-white font-bold py-1">De Vizionat (Vizionare stabilită)</option>
                                 </select>
                             </div>
 
