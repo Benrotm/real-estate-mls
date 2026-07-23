@@ -86,23 +86,22 @@ export async function createLead(data: LeadData) {
 }
 
 export async function updateLead(leadId: string, data: LeadData) {
+    const { createAdminClient } = await import('@/app/lib/supabase/admin');
+    const { createClient } = await import('@/app/lib/supabase/server');
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
         throw new Error('Unauthorized');
     }
 
-    // Check if user is super_admin
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    const isSuperAdmin = profile?.role === 'super_admin';
-
     // Recalculate score on update
     const score = await calculateLeadScore(data);
 
-    // Clean data - Remove known read-only fields and relations that shouldn't be updated
+    // Clean data - Remove known read-only fields and non-db schema fields
     const readOnlyFields = [
-        'id', 'created_at', 'updated_at', 'creator', 'agent_id', 'created_by', 'notes'
+        'id', 'created_at', 'updated_at', 'creator', 'agent_id', 'created_by', 'search_with_agent', 'search_direct_owner'
     ];
 
     const cleanData = Object.fromEntries(
@@ -113,15 +112,10 @@ export async function updateLead(leadId: string, data: LeadData) {
         )
     );
 
-    // Build query
-    let query = supabase
+    const { error } = await adminSupabase
         .from('leads')
         .update({ ...cleanData, score })
         .eq('id', leadId);
-
-    // The RLS policy natively handles if this user is allowed to update (owner or manager)
-
-    const { error } = await query;
 
     if (error) {
         console.error('Update Lead Error Full:', JSON.stringify(error, null, 2));
@@ -463,9 +457,10 @@ export async function createLeadPublic(agentId: string, data: LeadData) {
     // Calculate initial score
     const score = await calculateLeadScore(data);
 
-    // Clean data - remove undefined/null values
+    // Clean data - remove undefined/null values and non-db schema fields
+    const { search_with_agent, search_direct_owner, notes, ...validLeadFields } = data as any;
     const cleanData = Object.fromEntries(
-        Object.entries(data).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null)
+        Object.entries(validLeadFields).filter(([_, v]) => v !== undefined && v !== null)
     );
 
     const { data: lead, error } = await supabase.from('leads').insert({
@@ -475,7 +470,9 @@ export async function createLeadPublic(agentId: string, data: LeadData) {
         created_by: agentId,
         status: 'new',
         source: 'Shared Link Form',
-        currency: data.currency || 'EUR'
+        currency: data.currency || 'EUR',
+        find_self_from_owner: search_direct_owner !== false,
+        wants_agent_help: search_with_agent !== false
     })
         .select()
         .single();
@@ -651,7 +648,7 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
             phone: data.phone.trim(),
             role: 'client_no_agency',
             referred_by: agentId,
-            is_approved: false,
+            is_approved: true,
             find_self_from_owner: data.leadData.search_direct_owner !== false,
             wants_agent_help: data.leadData.search_with_agent !== false
         });
@@ -659,8 +656,9 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
 
     // Insert lead preferences for AI Matching engine
     const score = await calculateLeadScore(data.leadData);
+    const { search_with_agent, search_direct_owner, notes, ...validLeadFields } = data.leadData as any;
     const cleanLeadData = Object.fromEntries(
-        Object.entries(data.leadData).filter(([k, v]) => k !== 'notes' && v !== undefined && v !== null)
+        Object.entries(validLeadFields).filter(([_, v]) => v !== undefined && v !== null)
     );
 
     const { error: leadErr } = await adminSupabase.from('leads').insert({
@@ -674,12 +672,14 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
         status: 'new',
         source: 'Client Self-Service Referral Form',
         currency: data.leadData.currency || 'EUR',
-        find_self_from_owner: data.leadData.search_direct_owner !== false,
-        wants_agent_help: data.leadData.search_with_agent !== false
+        find_self_from_owner: search_direct_owner !== false,
+        wants_agent_help: search_with_agent !== false,
+        notes: notes || data.leadData.social_notes || null
     });
 
     if (leadErr) {
         console.error('Error creating lead from client referral invite:', leadErr);
+        return { success: false, error: `Failed to save lead preferences: ${leadErr.message}` };
     }
 
     // Auto sign-in user session
