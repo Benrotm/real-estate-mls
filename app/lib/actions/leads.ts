@@ -112,10 +112,19 @@ export async function updateLead(leadId: string, data: LeadData) {
         )
     );
 
-    const { error } = await adminSupabase
+    let { error } = await adminSupabase
         .from('leads')
         .update({ ...cleanData, score })
         .eq('id', leadId);
+
+    if (error && error.message?.includes('find_self_from_owner')) {
+        const { find_self_from_owner, wants_agent_help, ...cleanDataNoFlags } = cleanData as any;
+        const { error: retryErr } = await adminSupabase
+            .from('leads')
+            .update({ ...cleanDataNoFlags, score })
+            .eq('id', leadId);
+        error = retryErr;
+    }
 
     if (error) {
         console.error('Update Lead Error Full:', JSON.stringify(error, null, 2));
@@ -463,19 +472,31 @@ export async function createLeadPublic(agentId: string, data: LeadData) {
         Object.entries(validLeadFields).filter(([_, v]) => v !== undefined && v !== null)
     );
 
-    const { data: lead, error } = await supabase.from('leads').insert({
+    const leadPayload: any = {
         ...cleanData,
         score,
         agent_id: agentId,
         created_by: agentId,
         status: 'new',
         source: 'Shared Link Form',
-        currency: data.currency || 'EUR',
+        currency: data.currency || 'EUR'
+    };
+
+    let { data: lead, error } = await supabase.from('leads').insert({
+        ...leadPayload,
         find_self_from_owner: search_direct_owner !== false,
         wants_agent_help: search_with_agent !== false
     })
         .select()
         .single();
+
+    if (error && error.message?.includes('find_self_from_owner')) {
+        const { data: retryLead, error: retryErr } = await supabase.from('leads').insert(leadPayload)
+            .select()
+            .single();
+        lead = retryLead;
+        error = retryErr;
+    }
 
     if (error) {
         console.error('Create Public Lead Error:', error);
@@ -656,12 +677,12 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
 
     // Insert lead preferences for AI Matching engine
     const score = await calculateLeadScore(data.leadData);
-    const { search_with_agent, search_direct_owner, notes, ...validLeadFields } = data.leadData as any;
+    const { search_with_agent, search_direct_owner, notes, find_self_from_owner, wants_agent_help, ...validLeadFields } = data.leadData as any;
     const cleanLeadData = Object.fromEntries(
         Object.entries(validLeadFields).filter(([_, v]) => v !== undefined && v !== null)
     );
 
-    const { error: leadErr } = await adminSupabase.from('leads').insert({
+    const leadPayload: any = {
         ...cleanLeadData,
         score,
         name: data.name.trim(),
@@ -672,10 +693,19 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
         status: 'new',
         source: 'Client Self-Service Referral Form',
         currency: data.leadData.currency || 'EUR',
-        find_self_from_owner: search_direct_owner !== false,
-        wants_agent_help: search_with_agent !== false,
         notes: notes || data.leadData.social_notes || null
+    };
+
+    let { error: leadErr } = await adminSupabase.from('leads').insert({
+        ...leadPayload,
+        find_self_from_owner: search_direct_owner !== false,
+        wants_agent_help: search_with_agent !== false
     });
+
+    if (leadErr && leadErr.message?.includes('find_self_from_owner')) {
+        const { error: retryErr } = await adminSupabase.from('leads').insert(leadPayload);
+        leadErr = retryErr;
+    }
 
     if (leadErr) {
         console.error('Error creating lead from client referral invite:', leadErr);
