@@ -122,19 +122,10 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
-        if (!name.trim()) newErrors.name = 'Numele sau prenumele este obligatoriu';
+        if (!name.trim()) newErrors.name = 'Numele sau nickname-ul este obligatoriu';
         if (!phone.trim()) newErrors.phone = 'Numărul de telefon este obligatoriu';
         if (!budget.trim() || isNaN(Number(budget)) || Number(budget) <= 0) {
             newErrors.budget = 'Introduceți un buget maxim valid';
-        }
-
-        if (mode === 'client_no_agency') {
-            if (!email.trim() || !email.includes('@')) {
-                newErrors.email = 'Introduceți o adresă de email validă pentru crearea contului';
-            }
-            if (!password.trim() || password.length < 6) {
-                newErrors.password = 'Parola trebuie să aibă cel puțin 6 caractere';
-            }
         }
 
         setErrors(newErrors);
@@ -182,8 +173,6 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                 const res = await submitClientNoAgencyFromInvite(agentId, {
                     name: name.trim(),
                     phone: phone.trim(),
-                    email: email.trim(),
-                    password: password.trim(),
                     leadData: leadPayload
                 });
 
@@ -516,16 +505,16 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                 </button>
             </div>
 
-            {/* Name or Nickname */}
+            {/* Nickname / Name */}
             <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
-                    NUME SAU PRENUME <span className="text-rose-500">*</span>
+                    NICKNAME / NUME <span className="text-rose-500">*</span>
                 </label>
                 <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="ex. Popescu Ion"
+                    placeholder="ex. Popescu Ion sau Ion123"
                     className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.name ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
                 />
                 {errors.name && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.name}</p>}
@@ -548,47 +537,6 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                 />
                 {errors.phone && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.phone}</p>}
             </div>
-
-            {/* Email & Password (Required when mode === 'client_no_agency') */}
-            {mode === 'client_no_agency' && (
-                <>
-                    <div>
-                        <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-1 flex items-center gap-1.5">
-                            <Mail className="w-4 h-4 text-orange-600" />
-                            ADRESĂ DE EMAIL <span className="text-rose-500">*</span>
-                        </label>
-                        <span className="text-slate-400 font-medium text-[10px] md:text-xs block mb-2">
-                            (pentru autentificare și acces la noul tău dashboard AI Matching)
-                        </span>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="ex. ion.popescu@gmail.com"
-                            className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.email ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
-                        />
-                        {errors.email && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.email}</p>}
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-1 flex items-center gap-1.5">
-                            <Lock className="w-4 h-4 text-orange-600" />
-                            PAROLĂ CONT <span className="text-rose-500">*</span>
-                        </label>
-                        <span className="text-slate-400 font-medium text-[10px] md:text-xs block mb-2">
-                            (parola ta pentru conectare pe Imobum)
-                        </span>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Alege o parolă din minim 6 caractere"
-                            className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.password ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
-                        />
-                        {errors.password && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.password}</p>}
-                    </div>
-                </>
-            )}
 
             {/* Property Source / Checkboxes */}
             <div>
@@ -632,10 +580,10 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
             >
                 {isSubmitting ? (
                     <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Se trimite...
+                        <Loader2 className="w-4 h-4 animate-spin" /> Se procesează...
                     </>
                 ) : (
-                    'Trimite'
+                    mode === 'client_no_agency' ? 'Caută cu AI' : 'Trimite'
                 )}
             </button>
         </form>

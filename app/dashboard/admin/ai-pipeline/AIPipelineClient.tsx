@@ -188,14 +188,16 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
     });
 
     // Categorized Columns for Board View
-    const pendingAccessUsers = filteredUsers.filter(u => u.is_approved === false);
-    const activeMarketClients = filteredUsers.filter(u => u.is_approved !== false && (u.role === 'client' || u.role === 'owner'));
-    const activeAgentsAndDevs = filteredUsers.filter(u => u.is_approved !== false && (u.role === 'agent' || u.role === 'developer' || u.role === 'admin' || u.role === 'super_admin'));
-    const suspendedUsers = filteredUsers.filter(u => u.is_approved === false);
+    const pendingAccessUsers = filteredUsers.filter(u => u.is_approved === false && u.role !== 'client_no_agency');
+    const clientNoAgencyUsers = filteredUsers.filter(u => u.role === 'client_no_agency');
+    const activeMarketClients = filteredUsers.filter(u => u.is_approved !== false && u.role !== 'client_no_agency' && (u.role === 'client' || u.role === 'owner'));
+    const activeAgentsAndDevs = filteredUsers.filter(u => u.is_approved !== false && u.role !== 'client_no_agency' && (u.role === 'agent' || u.role === 'developer' || u.role === 'admin' || u.role === 'super_admin'));
+    const suspendedUsers = filteredUsers.filter(u => u.is_approved === false && u.role !== 'client_no_agency');
 
     const STAGES = [
         { id: 'pending', title: 'Solicitări Acces Client (În Așteptare)', count: pendingAccessUsers.length, color: 'bg-amber-500', users: pendingAccessUsers },
-        { id: 'clients', title: 'Clienți Activi (Self-Service Market)', count: activeMarketClients.length, color: 'bg-blue-500', users: activeMarketClients },
+        { id: 'client_no_agency', title: 'Clienți Fără Agenție (Self-Service Market)', count: clientNoAgencyUsers.length, color: 'bg-orange-500', users: clientNoAgencyUsers },
+        { id: 'clients', title: 'Clienți Activi (Market)', count: activeMarketClients.length, color: 'bg-blue-500', users: activeMarketClients },
         { id: 'agents', title: 'Agenți, Devoltatori & Admini', count: activeAgentsAndDevs.length, color: 'bg-purple-500', users: activeAgentsAndDevs },
         { id: 'suspended', title: 'Acces Suspendat (Comportament Fraudulos)', count: suspendedUsers.length, color: 'bg-rose-500', users: suspendedUsers }
     ];

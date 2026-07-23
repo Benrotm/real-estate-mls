@@ -555,7 +555,7 @@ export async function getOrCreateClientSelfServiceLead() {
 export async function submitClientNoAgencyFromInvite(agentId: string, data: {
     name: string;
     phone: string;
-    email: string;
+    email?: string;
     password?: string;
     leadData: LeadData;
 }) {
@@ -563,7 +563,10 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
     const { createClient } = await import('@/app/lib/supabase/server');
     const adminSupabase = createAdminClient();
 
-    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanPhoneDigits = data.phone.replace(/\D/g, '') || Date.now().toString();
+    const cleanEmail = (data.email && data.email.trim().includes('@'))
+        ? data.email.trim().toLowerCase()
+        : `${cleanPhoneDigits}@client.imobum.com`;
     const password = data.password?.trim() || 'ImobumClient2026!';
     const nameParts = data.name.trim().split(' ');
     const firstName = nameParts[0] || '';
