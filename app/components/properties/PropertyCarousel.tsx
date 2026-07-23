@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, TouchEvent } from 'react';
+import { useState, useEffect, TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import FavoriteButton from '../property/FavoriteButton';
 
@@ -20,6 +20,20 @@ export default function PropertyCarousel({ images, title, propertyId }: Property
     const validImages = images.length > 0 ? images : ['/placeholder.jpg'];
 
     const minSwipeDistance = 50;
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') {
+                prevImage();
+            } else if (e.key === 'ArrowRight') {
+                nextImage();
+            } else if (e.key === 'Escape' && isFullScreen) {
+                setIsFullScreen(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFullScreen, validImages.length]);
 
     const onTouchStart = (e: TouchEvent) => {
         setTouchEnd(null); // otherwise the swipe is fired even with usual touch events
@@ -55,29 +69,36 @@ export default function PropertyCarousel({ images, title, propertyId }: Property
         setCurrentIndex(index);
     };
 
+    const slideWidthPercent = 100 / validImages.length;
+    const translateOffsetPercent = (currentIndex * 100) / validImages.length;
+
     return (
         <>
             <div
-                className="relative w-full h-[60vh] md:h-[75vh] bg-slate-900 overflow-hidden group touch-pan-y"
+                className="relative w-full h-[60vh] md:h-[75vh] bg-slate-950 overflow-hidden group touch-pan-y select-none"
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
             >
                 {/* Sliding Container */}
                 <div
-                    className="flex h-full w-full transition-transform duration-500 ease-out will-change-transform"
-                    style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+                    className="flex h-full transition-transform duration-500 ease-out will-change-transform"
+                    style={{
+                        width: `${validImages.length * 100}%`,
+                        transform: `translateX(-${translateOffsetPercent}%)`
+                    }}
                 >
                     {validImages.map((src, index) => (
                         <div
                             key={index}
-                            className="min-w-full h-full relative flex items-center justify-center bg-slate-950 shrink-0 cursor-zoom-in"
+                            className="h-full relative flex items-center justify-center bg-slate-950 shrink-0 cursor-zoom-in overflow-hidden p-2"
+                            style={{ width: `${slideWidthPercent}%` }}
                             onClick={() => setIsFullScreen(true)}
                         >
                             <img
                                 src={src}
                                 alt={`${title} - Image ${index + 1}`}
-                                className="max-w-full max-h-full w-auto h-auto object-contain select-none transition-opacity duration-300"
+                                className="max-w-full max-h-full w-auto h-auto object-contain select-none transition-opacity duration-300 pointer-events-none"
                                 draggable={false}
                                 loading={index === 0 ? "eager" : "lazy"}
                             />
