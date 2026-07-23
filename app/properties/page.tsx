@@ -16,6 +16,8 @@ import { createClient } from '@/app/lib/supabase/server';
 import Link from 'next/link';
 import { ShieldAlert, Key, Search, BarChart3, Building2, CheckCircle2, Home, Warehouse, Map, Landmark, Briefcase, HelpCircle, Users, Target, TrendingUp, Clock } from 'lucide-react';
 
+import { createAdminClient } from '@/app/lib/supabase/admin';
+
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<any> }) {
     const filters = await searchParams;
     const { properties, totalCount } = await getProperties(filters);
@@ -25,13 +27,13 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
 
     // If properties page is private and user is not logged in, display visitor dashboard
     if (adminSettings.properties_page_public === false && !profile) {
-        const supabase = await createClient();
+        const adminSupabase = createAdminClient();
 
         // Call the database RPC function to retrieve the complete inventory aggregate statistics
-        const { data: statsData } = await supabase.rpc('get_property_matrix_stats');
+        const { data: statsData } = await adminSupabase.rpc('get_property_matrix_stats');
 
-        // Fetch active leads count dynamically
-        const { count: leadsCount } = await supabase
+        // Fetch active leads count dynamically (bypassing RLS so total matches exact database leads)
+        const { count: leadsCount } = await adminSupabase
             .from('leads')
             .select('*', { count: 'exact', head: true });
 
@@ -256,7 +258,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                         </div>
                         <div className="bg-slate-950/40 border border-white/10 rounded-2xl px-8 py-5 flex flex-col items-center justify-center min-w-[160px] text-center relative z-10 shadow-inner group-hover:scale-105 transition-transform duration-300">
                             <span className="text-5xl font-mono font-bold text-white tracking-tight leading-none animate-pulse">
-                                {leadsCount || 63}
+                                {leadsCount ?? 0}
                             </span>
                             <span className="text-[10px] font-semibold uppercase tracking-widest text-orange-200 mt-2 font-mono">Clienți Activi</span>
                         </div>
