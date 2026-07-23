@@ -330,7 +330,7 @@ export default function DashboardClient({
         );
     };
 
-    const isClientNoAgency = primaryRole === 'client_no_agency' || activeRole === 'client_no_agency' || (isClient && profile?.find_self_from_owner);
+    const isClientNoAgency = primaryRole === 'client_no_agency' || activeRole === 'client_no_agency' || isClient || pathname.startsWith('/dashboard/client');
 
     if (isClientNoAgency) {
         return (
