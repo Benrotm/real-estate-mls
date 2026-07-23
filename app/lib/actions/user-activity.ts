@@ -219,11 +219,13 @@ export async function getAIPipelineData() {
             }
         }
 
-        // Combine user profiles with restrictions
-        const usersWithDetails = (users || []).map(u => ({
-            ...u,
-            restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
-        }));
+        // Combine user profiles with restrictions & filter for find_self_from_owner
+        const usersWithDetails = (users || [])
+            .filter(u => u.find_self_from_owner !== false || u.role === 'client_no_agency')
+            .map(u => ({
+                ...u,
+                restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
+            }));
 
         return {
             success: true,

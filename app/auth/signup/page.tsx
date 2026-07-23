@@ -11,12 +11,12 @@ import RoleSelector from '@/app/components/RoleSelector';
 export default function SignUpPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const initialRole = searchParams.get('role') as 'client' | 'agent' | 'owner' | 'developer' | null;
+    const initialRole = searchParams.get('role') as 'client' | 'client_no_agency' | 'agent' | 'owner' | 'developer' | null;
     const initialPlan = searchParams.get('plan');
     
     // Default to null to enable Step 1 (Role Selection) first
-    const [role, setRole] = useState<'client' | 'agent' | 'owner' | 'developer' | null>(
-        initialRole && ['client', 'agent', 'owner', 'developer'].includes(initialRole) ? initialRole : null
+    const [role, setRole] = useState<'client' | 'client_no_agency' | 'agent' | 'owner' | 'developer' | null>(
+        initialRole && ['client', 'client_no_agency', 'agent', 'owner', 'developer'].includes(initialRole) ? initialRole : null
     );
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -60,7 +60,9 @@ export default function SignUpPage() {
                         phone: phone,
                         role: role,
                         plan_tier: planTier,
-                        referred_by: refParam || undefined
+                        referred_by: refParam || undefined,
+                        find_self_from_owner: true,
+                        wants_agent_help: true
                     },
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
@@ -73,7 +75,7 @@ export default function SignUpPage() {
                 if (role === 'owner') targetPath = '/dashboard/owner';
                 else if (role === 'agent') targetPath = '/dashboard/agent';
                 else if (role === 'developer') targetPath = '/dashboard/developer';
-                else if (role === 'client') targetPath = '/dashboard/client';
+                else if (role === 'client' || role === 'client_no_agency') targetPath = '/dashboard/client/ai-matching';
 
                 // Force full reload to update Navbar auth state
                 window.location.href = targetPath;
@@ -134,8 +136,8 @@ export default function SignUpPage() {
                 <div className="-mx-4 sm:mx-0">
                     <RoleSelector
                         mode="selection"
-                        selectedRole={role || undefined}
-                        onSelect={setRole}
+                        selectedRole={role === 'client_no_agency' ? 'client' : (role || undefined)}
+                        onSelect={(r) => setRole(r)}
                         title="Choose Your Role"
                         verticalOnly={true}
                     />

@@ -23,10 +23,10 @@ export async function deductUserCredits(amount: number, description: string = 'C
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
 
-    // Get current balance and referrer
+    // Get current balance, referrer, role
     const { data: profile, error: readError } = await supabase
         .from('profiles')
-        .select('credits, referred_by, full_name')
+        .select('credits, referred_by, full_name, role')
         .eq('id', user.id)
         .single();
         
@@ -74,15 +74,19 @@ export async function deductUserCredits(amount: number, description: string = 'C
     if (profile.referred_by && amount > 0) {
         const referrerId = profile.referred_by;
 
-        // Fetch referral settings
-        const { data: settingsData } = await supabase
-            .from('platform_settings')
-            .select('setting_value')
-            .eq('setting_key', 'referral_settings')
-            .single();
+        // Fetch referral settings & feature costs
+        const [settingsRes, costsRes] = await Promise.all([
+            supabase.from('platform_settings').select('setting_value').eq('setting_key', 'referral_settings').single(),
+            supabase.from('platform_settings').select('setting_value').eq('setting_key', 'feature_costs').single()
+        ]);
 
-        const settings = (settingsData?.setting_value as any) || { commission_percentage: 10 };
-        const commissionPercentage = Number(settings.commission_percentage) || 0;
+        const settings = (settingsRes.data?.setting_value as any) || { commission_percentage: 10 };
+        const costsMap = (costsRes.data?.setting_value as Record<string, number>) || {};
+
+        let commissionPercentage = Number(settings.commission_percentage) || 10;
+        if (profile.role === 'client_no_agency' && costsMap['referral_client_no_agency_commission_percentage'] !== undefined) {
+            commissionPercentage = Number(costsMap['referral_client_no_agency_commission_percentage']);
+        }
 
         if (commissionPercentage > 0) {
             const commission = Math.floor(amount * (commissionPercentage / 100));

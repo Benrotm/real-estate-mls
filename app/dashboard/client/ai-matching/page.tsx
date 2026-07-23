@@ -44,9 +44,21 @@ export default async function ClientAIMatchingPage() {
         }
     }
 
+    // Fetch user profile for approval check
+    const { data: userProfile } = await adminSupabase
+        .from('profiles')
+        .select('is_approved, find_self_from_owner, wants_agent_help')
+        .eq('id', lead.agent_id || lead.created_by)
+        .single();
+
     return (
         <ClientAIMatchingClient
-            lead={lead}
+            lead={{
+                ...lead,
+                is_approved: userProfile?.is_approved !== false,
+                find_self_from_owner: userProfile?.find_self_from_owner !== false,
+                wants_agent_help: userProfile?.wants_agent_help !== false
+            }}
             initialMatches={matchesRes.matches || []}
             recommendation={recommendationConfig}
         />

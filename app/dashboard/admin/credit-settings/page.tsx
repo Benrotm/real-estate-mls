@@ -231,6 +231,23 @@ export default function CreditSettingsPage() {
                                 <Coins size={14} className="text-yellow-500" />
                             </div>
                         </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800 col-span-1 md:col-span-2">
+                            <div>
+                                <span className="font-semibold block text-white">Comision Referral Client Fără Agenție (%)</span>
+                                <span className="text-xs text-slate-400">Procentul din credite acordat ca comision referrer-ului pentru consumul clienților invitați</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={costs['referral_client_no_agency_commission_percentage'] !== undefined ? costs['referral_client_no_agency_commission_percentage'] : 15}
+                                    onChange={(e) => handleChange('referral_client_no_agency_commission_percentage', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <span className="text-yellow-500 font-bold text-sm">%</span>
+                            </div>
+                        </div>
                     </div>
                 </section>
 

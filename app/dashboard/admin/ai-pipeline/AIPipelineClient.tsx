@@ -22,6 +22,8 @@ interface User {
     is_approved?: boolean;
     credits?: number;
     created_at: string;
+    find_self_from_owner?: boolean;
+    wants_agent_help?: boolean;
     restrictions?: {
         allowed_types?: string[];
         allowed_transactions?: string[];
@@ -298,11 +300,24 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
 
                                                     <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 text-[11px]">
                                                         <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                                                            {user.role}
+                                                            {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role}
                                                         </span>
                                                         <span className="flex items-center gap-1 font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
                                                             <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} credite
                                                         </span>
+                                                    </div>
+
+                                                    <div className="flex flex-col gap-1 mt-2">
+                                                        {user.find_self_from_owner && (
+                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
+                                                                <Check className="w-3 h-3 shrink-0 text-emerald-600" /> Găsește singur de la proprietar
+                                                            </div>
+                                                        )}
+                                                        {user.wants_agent_help !== false && (
+                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/80">
+                                                                <Check className="w-3 h-3 shrink-0 text-indigo-600" /> Solicită și ajutor Agent / Broker Imobiliar
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 

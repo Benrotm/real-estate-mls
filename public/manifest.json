@@ -1,0 +1,16 @@
+{
+  "name": "Imobum AI Real Estate",
+  "short_name": "Imobum AI",
+  "description": "Căutare inteligentă proprietăți imobiliare direct de la proprietar",
+  "start_url": "/dashboard/client/ai-matching",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#ea580c",
+  "icons": [
+    {
+      "src": "/next.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

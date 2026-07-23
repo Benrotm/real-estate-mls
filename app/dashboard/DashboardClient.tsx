@@ -186,7 +186,7 @@ export default function DashboardClient({
         : isAgent ? 'agent'
         : isOwner ? 'owner'
         : isDeveloper ? 'developer'
-        : isClient ? 'client'
+        : (isClient || primaryRole === 'client_no_agency' || activeRole === 'client_no_agency') ? 'client'
         : '';
 
     const defaultList = roleKey ? DEFAULT_MENUS[roleKey] : [];

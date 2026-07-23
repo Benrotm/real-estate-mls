@@ -39,7 +39,7 @@ export async function GET(request: Request) {
                 let role = user.user_metadata?.role;
 
                 // Priority: Cookie Role > Metadata Role > Profile Role > 'client'
-                if (signupRole && ['client', 'agent', 'owner', 'developer'].includes(signupRole)) {
+                if (signupRole && ['client', 'client_no_agency', 'agent', 'owner', 'developer'].includes(signupRole)) {
                     // Update the user's metadata and profile with the selected role
                     // We do this because the trigger 'handle_new_user' might have already run with default 'client'
                     // or metadata was missing during social signup.

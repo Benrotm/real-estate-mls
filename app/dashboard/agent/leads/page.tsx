@@ -18,6 +18,7 @@ import { hasFeature, SYSTEM_FEATURES } from '@/app/lib/auth/features';
 import { redirect } from 'next/navigation';
 
 import InviteLeadButton from '@/app/components/dashboard/InviteLeadButton';
+import RecommendClientButton from '@/app/components/dashboard/RecommendClientButton';
 
 export default async function LeadsPage() {
     const supabase = await createClient();
@@ -78,6 +79,7 @@ export default async function LeadsPage() {
                             <button className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
                                 <ArrowUpRight className="w-4 h-4" /> Export
                             </button>
+                            <RecommendClientButton userId={user.id} />
                             <InviteLeadButton agentId={user.id} />
                             <Link href="/dashboard/agent/leads/add" className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-sm shadow-orange-600/20">
                                 <Plus className="w-4 h-4" /> Add New Lead

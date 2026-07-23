@@ -5,7 +5,7 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -119,6 +119,34 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [surfaceMin, setSurfaceMin] = useState(lead.preference_surface_min || '');
     const [isSavingPref, setIsSavingPref] = useState(false);
 
+    // Checkboxes (Both defaulted to true)
+    const [findSelfFromOwner, setFindSelfFromOwner] = useState<boolean>(lead.find_self_from_owner !== false);
+    const [wantsAgentHelp, setWantsAgentHelp] = useState<boolean>(lead.wants_agent_help !== false);
+
+    // PWA Install prompt state
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+    useEffect(() => {
+        const handleBeforeInstall = (e: any) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+        return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    }, []);
+
+    const handleInstallPWA = async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                setDeferredPrompt(null);
+            }
+        } else {
+            alert("Pentru a adăuga pe telefon: Apasă pe meniul browserului (⋮ sau Share) și alege 'Adaugă la ecranul de pornire' / 'Add to Home Screen'!");
+        }
+    };
+
     // Calendar Modal State
     const [calendarModalProperty, setCalendarModalProperty] = useState<any>(null);
     const [calendarEventType, setCalendarEventType] = useState<'De Sunat' | 'De Resunat' | 'De Vizionat'>('De Sunat');
@@ -138,12 +166,13 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     }, []);
 
     useEffect(() => {
-        if (activeTab === 'curate' && aiSuggestions.length === 0 && !isLoadingAI) {
+        if (activeTab === 'curate' && aiSuggestions.length === 0 && !isLoadingAI && lead.is_approved !== false) {
             loadAISuggestions();
         }
     }, [activeTab]);
 
     const loadAISuggestions = async () => {
+        if (lead.is_approved === false) return;
         setIsLoadingAI(true);
         try {
             if (!lead.id) return;
@@ -169,7 +198,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 budget_max: budgetMax ? Number(budgetMax) : null,
                 preference_rooms_min: roomsMin ? Number(roomsMin) : null,
                 preference_rooms_max: roomsMax ? Number(roomsMax) : null,
-                preference_surface_min: surfaceMin ? Number(surfaceMin) : null
+                preference_surface_min: surfaceMin ? Number(surfaceMin) : null,
+                find_self_from_owner: findSelfFromOwner,
+                wants_agent_help: wantsAgentHelp
             };
             const res = await updateLead(lead.id, updatedData);
             if (res?.error) {
@@ -177,7 +208,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             } else {
                 alert('Criteriile au fost actualizate! Se reîncarcă sugestiile AI...');
                 setIsPreferencesOpen(false);
-                loadAISuggestions();
+                if (lead.is_approved !== false) {
+                    loadAISuggestions();
+                }
             }
         } catch (err: any) {
             alert('Eroare la salvare: ' + err.message);
@@ -299,8 +332,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
                     <button
                         onClick={() => loadAISuggestions()}
-                        disabled={isLoadingAI}
-                        className="px-4 py-2 bg-white text-orange-700 hover:bg-orange-50 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer"
+                        disabled={isLoadingAI || lead.is_approved === false}
+                        title={lead.is_approved === false ? "Contul este în curs de aprobare de către administrator." : "Refresh AI Matching"}
+                        className="px-4 py-2 bg-white text-orange-700 hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer"
                     >
                         <RefreshCw className={`w-4 h-4 ${isLoadingAI ? 'animate-spin' : ''}`} />
                         {isLoadingAI ? 'Se caută...' : 'Refresh AI Matching'}
@@ -311,6 +345,30 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                     {recommendation.text}
                 </div>
             </div>
+
+            {/* Pending Approval Banner & PWA Button */}
+            {lead.is_approved === false && (
+                <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md animate-in fade-in">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-amber-500 text-slate-950 rounded-xl font-black shrink-0">
+                            <Clock className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h3 className="font-extrabold text-slate-900 text-base">Cont în Curs de Aprobare & Configurare AI</h3>
+                            <p className="text-sm font-semibold text-slate-700 mt-0.5">
+                                Imediat vei avea setările făcute de AI. Te rugăm să revii în cel mai scurt timp!
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleInstallPWA}
+                        className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-2.5 transition-all shadow-lg shrink-0 active:scale-95 cursor-pointer"
+                    >
+                        <Smartphone className="w-4 h-4 text-yellow-400" />
+                        Adaugă / Descarcă pe Telefon (PWA)
+                    </button>
+                </div>
+            )}
 
             {/* Dropdown / Collapsible Section: Lead Details & Preferences */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -416,6 +474,28 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-orange-500"
                                 />
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                            <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200 hover:bg-slate-100/70 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={findSelfFromOwner}
+                                    onChange={(e) => setFindSelfFromOwner(e.target.checked)}
+                                    className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                                />
+                                <span>Găsește singur de la proprietar</span>
+                            </label>
+
+                            <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200 hover:bg-slate-100/70 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={wantsAgentHelp}
+                                    onChange={(e) => setWantsAgentHelp(e.target.checked)}
+                                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span>Vreau ajutor de la un Agent / Broker Imobiliar</span>
+                            </label>
                         </div>
 
                         <div className="flex justify-end pt-2 border-t border-slate-100">
