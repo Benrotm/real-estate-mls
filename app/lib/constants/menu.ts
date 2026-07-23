@@ -28,6 +28,7 @@ export const DEFAULT_MENUS: Record<string, MenuItemDefinition[]> = {
         { name: 'ACP Market Insights', icon: 'Briefcase', href: '/dashboard/admin/market' },
         { name: 'Market Analytics', icon: 'TrendingUp', href: '/dashboard/admin/analytics' },
         { name: 'Pipeline', icon: 'BarChart2', href: '/dashboard/admin/pipeline' },
+        { name: 'AI Pipeline', icon: 'Zap', href: '/dashboard/admin/ai-pipeline' },
         { name: 'My Properties', icon: 'Home', href: '/dashboard/admin/my-properties' },
         { name: 'All Properties', icon: 'Building', href: '/dashboard/admin/properties' },
         { name: 'Contract Deletions', icon: 'ShieldAlert', href: '/dashboard/admin/contract-deletions' },
@@ -132,6 +133,7 @@ export const DEFAULT_MENUS: Record<string, MenuItemDefinition[]> = {
     ],
     client: [
         { name: 'Dashboard', icon: 'LayoutDashboard', href: '/dashboard/client' },
+        { name: 'AI Matching', icon: 'Zap', href: '/dashboard/client/ai-matching' },
         { name: 'Browse Properties', icon: 'Building', href: '/properties' },
         { name: 'My Favorites', icon: 'Heart', href: '/dashboard/client/favorites' },
         { name: 'My Offers', icon: 'DollarSign', href: '/dashboard/client/offers' },

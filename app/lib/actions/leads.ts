@@ -496,3 +496,59 @@ export async function createLeadPublic(agentId: string, data: LeadData) {
 
     return { success: true, lead };
 }
+
+export async function getOrCreateClientSelfServiceLead() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: 'Unauthorized' };
+    }
+
+    // Check if client already has a lead
+    const { data: existingLead } = await supabase
+        .from('leads')
+        .select('*')
+        .or(`created_by.eq.${user.id},email.eq.${user.email}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (existingLead) {
+        return { success: true, lead: existingLead };
+    }
+
+    // Get user profile name and phone
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone')
+        .eq('id', user.id)
+        .single();
+
+    // Create a self-service lead profile for this client
+    const defaultLead: any = {
+        name: profile?.full_name || user.email?.split('@')[0] || 'Client Market',
+        email: user.email,
+        phone: profile?.phone || '',
+        status: 'new',
+        source: 'Self-Service Market Client',
+        agent_id: user.id,
+        created_by: user.id,
+        preference_type: 'Apartment',
+        currency: 'EUR'
+    };
+
+    const { data: newLead, error } = await supabase
+        .from('leads')
+        .insert(defaultLead)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error creating self-service client lead:', error);
+        return { error: error.message };
+    }
+
+    return { success: true, lead: newLead };
+}
+
