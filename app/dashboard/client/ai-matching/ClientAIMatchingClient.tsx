@@ -10,7 +10,7 @@ import {
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
 import { updateLead } from '@/app/lib/actions/leads';
-import { saveClientCalendarEvent, updateMatchWantToSeeAgainFlag, logUserActivity } from '@/app/lib/actions/user-activity';
+import { saveClientCalendarEvent, updateMatchWantToSeeAgainFlag, logUserActivity, activateInstantAIMatching } from '@/app/lib/actions/user-activity';
 import Link from 'next/link';
 import { decodeHtmlEntities } from '@/app/lib/utils/string';
 
@@ -18,6 +18,7 @@ interface Props {
     lead: any;
     initialMatches: any[];
     recommendation: { text: string; points: number };
+    instantAiCost?: number;
 }
 
 const TABS = [
@@ -101,10 +102,12 @@ const TABS = [
     }
 ];
 
-export default function ClientAIMatchingClient({ lead, initialMatches, recommendation }: Props) {
+export default function ClientAIMatchingClient({ lead, initialMatches, recommendation, instantAiCost = 5 }: Props) {
     const [matches, setMatches] = useState<any[]>(initialMatches);
     const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
     const [isLoadingAI, setIsLoadingAI] = useState(false);
+    const [isApproved, setIsApproved] = useState<boolean>(lead.is_approved !== false);
+    const [isActivatingInstant, setIsActivatingInstant] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('curate');
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
     const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
@@ -147,6 +150,37 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
         }
     };
 
+    const handleInstantActivateAI = async () => {
+        if (!confirm(`Dorești să activezi instant potrivirile AI pentru ${instantAiCost} credite?`)) return;
+        setIsActivatingInstant(true);
+        try {
+            const res = await activateInstantAIMatching();
+            if (res.error) {
+                if (res.insufficient) {
+                    alert('Fonduri insuficiente! Te rugăm să îți alimentezi soldul de credite.');
+                } else {
+                    alert('Eroare la activare: ' + res.error);
+                }
+            } else {
+                alert(`Felicitări! Potrivirile AI au fost activate instant. Cost: ${res.cost || instantAiCost} credite.`);
+                setIsApproved(true);
+                // Load AI suggestions
+                setIsLoadingAI(true);
+                if (lead.id) {
+                    const results = await findMatchingProperties(lead.id);
+                    const existingIds = matches.map(m => m.property_id || m.property?.id);
+                    const newSuggestions = results.filter((p: any) => !existingIds.includes(p.id));
+                    setAiSuggestions(newSuggestions);
+                }
+                setIsLoadingAI(false);
+            }
+        } catch (err: any) {
+            alert('Eroare la activarea instantă: ' + err.message);
+        } finally {
+            setIsActivatingInstant(false);
+        }
+    };
+
     // Calendar Modal State
     const [calendarModalProperty, setCalendarModalProperty] = useState<any>(null);
     const [calendarEventType, setCalendarEventType] = useState<'De Sunat' | 'De Resunat' | 'De Vizionat'>('De Sunat');
@@ -166,13 +200,13 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     }, []);
 
     useEffect(() => {
-        if (activeTab === 'curate' && aiSuggestions.length === 0 && !isLoadingAI && lead.is_approved !== false) {
+        if (activeTab === 'curate' && aiSuggestions.length === 0 && !isLoadingAI && isApproved) {
             loadAISuggestions();
         }
-    }, [activeTab]);
+    }, [activeTab, isApproved]);
 
     const loadAISuggestions = async () => {
-        if (lead.is_approved === false) return;
+        if (!isApproved) return;
         setIsLoadingAI(true);
         try {
             if (!lead.id) return;
@@ -332,8 +366,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
                     <button
                         onClick={() => loadAISuggestions()}
-                        disabled={isLoadingAI || lead.is_approved === false}
-                        title={lead.is_approved === false ? "Contul este în curs de aprobare de către administrator." : "Refresh AI Matching"}
+                        disabled={isLoadingAI || !isApproved}
+                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : "Refresh AI Matching"}
                         className="px-4 py-2 bg-white text-orange-700 hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer"
                     >
                         <RefreshCw className={`w-4 h-4 ${isLoadingAI ? 'animate-spin' : ''}`} />
@@ -346,8 +380,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </div>
             </div>
 
-            {/* Pending Approval Banner & PWA Button */}
-            {lead.is_approved === false && (
+            {/* Pending Approval Banner, Instant AI Activation & PWA Button */}
+            {!isApproved && (
                 <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md animate-in fade-in">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-amber-500 text-slate-950 rounded-xl font-black shrink-0">
@@ -356,17 +390,28 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         <div>
                             <h3 className="font-extrabold text-slate-900 text-base">Cont în Curs de Aprobare & Configurare AI</h3>
                             <p className="text-sm font-semibold text-slate-700 mt-0.5">
-                                Imediat vei avea setările făcute de AI. Te rugăm să revii în cel mai scurt timp!
+                                Imediat vei avea setările făcute de un operator uman. Te rugăm să revii în cel mai scurt timp!
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleInstallPWA}
-                        className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-2.5 transition-all shadow-lg shrink-0 active:scale-95 cursor-pointer"
-                    >
-                        <Smartphone className="w-4 h-4 text-yellow-400" />
-                        Adaugă / Descarcă pe Telefon (PWA)
-                    </button>
+
+                    <div className="flex flex-wrap items-center gap-3 shrink-0">
+                        <button
+                            onClick={handleInstantActivateAI}
+                            disabled={isActivatingInstant}
+                            className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-lg transition-all shrink-0 active:scale-95 cursor-pointer"
+                        >
+                            <Zap className="w-4 h-4 text-yellow-300 fill-current" />
+                            {isActivatingInstant ? 'Se activează...' : `Activează instant cu AI (${instantAiCost} CR)`}
+                        </button>
+                        <button
+                            onClick={handleInstallPWA}
+                            className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-2.5 transition-all shadow-lg shrink-0 active:scale-95 cursor-pointer"
+                        >
+                            <Smartphone className="w-4 h-4 text-yellow-400" />
+                            Adaugă / Descarcă pe Telefon (PWA)
+                        </button>
+                    </div>
                 </div>
             )}
 

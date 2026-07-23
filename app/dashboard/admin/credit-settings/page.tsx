@@ -55,7 +55,8 @@ export default function CreditSettingsPage() {
         { key: 'ai_video_generator', title: 'Generator Video AI', icon: Wand2 },
         { key: 'ai_plan_3d', title: 'Plan 2D → 3D', icon: Wand2 },
         { key: 'ai_description', title: 'Generator Descrieri', icon: Wand2 },
-        { key: 'ai_room_builder', title: 'Room Builder — Animație', icon: Wand2 }
+        { key: 'ai_room_builder', title: 'Room Builder — Animație', icon: Wand2 },
+        { key: 'instant_ai_activation_cost', title: 'Cost Activare Instantă cu AI (Client Self-Service)', icon: Wand2 }
     ];
 
     if (isLoading) {

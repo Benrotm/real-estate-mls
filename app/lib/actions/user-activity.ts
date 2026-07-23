@@ -350,3 +350,50 @@ export async function updateMatchWantToSeeAgainFlag(matchId: string, flagState: 
         return { error: err.message };
     }
 }
+
+export async function activateInstantAIMatching() {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { error: 'Unauthorized' };
+
+        // Fetch cost setting
+        const { data: costsRes } = await supabase
+            .from('platform_settings')
+            .select('setting_value')
+            .eq('setting_key', 'feature_costs')
+            .single();
+
+        const costsMap = (costsRes?.setting_value as Record<string, number>) || {};
+        const cost = costsMap['instant_ai_activation_cost'] !== undefined ? Number(costsMap['instant_ai_activation_cost']) : 5;
+
+        // Deduct credits if cost > 0
+        if (cost > 0) {
+            const { deductUserCredits } = await import('@/app/lib/actions/credits');
+            const deductRes = await deductUserCredits(cost, 'Activare Instantă AI Matching', { feature: 'instant_ai_activation' });
+            if (deductRes.error) {
+                return { error: deductRes.error, insufficient: deductRes.insufficient };
+            }
+        }
+
+        // Approve user profile
+        const adminSupabase = createAdminClient();
+        const { error: appErr } = await adminSupabase
+            .from('profiles')
+            .update({ is_approved: true })
+            .eq('id', user.id);
+
+        if (appErr) {
+            return { error: appErr.message };
+        }
+
+        await logUserActivity({
+            event_type: 'instant_ai_activation',
+            description: `Client a activat instant potrivirile AI contra ${cost} credite`
+        });
+
+        return { success: true, cost };
+    } catch (err: any) {
+        return { error: err.message };
+    }
+}

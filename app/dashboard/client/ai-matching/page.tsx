@@ -44,6 +44,16 @@ export default async function ClientAIMatchingPage() {
         }
     }
 
+    // Fetch instant AI activation cost from feature_costs
+    const { data: costsSetting } = await adminSupabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'feature_costs')
+        .single();
+
+    const costsMap = (costsSetting?.setting_value as Record<string, number>) || {};
+    const instantAiCost = costsMap['instant_ai_activation_cost'] !== undefined ? Number(costsMap['instant_ai_activation_cost']) : 5;
+
     // Fetch user profile for approval check
     const { data: userProfile } = await adminSupabase
         .from('profiles')
@@ -61,6 +71,7 @@ export default async function ClientAIMatchingPage() {
             }}
             initialMatches={matchesRes.matches || []}
             recommendation={recommendationConfig}
+            instantAiCost={instantAiCost}
         />
     );
 }
