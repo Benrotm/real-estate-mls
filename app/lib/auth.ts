@@ -1,7 +1,7 @@
 import { createClient } from '@/app/lib/supabase/server';
 import { cookies } from 'next/headers';
 
-export type UserRole = 'owner' | 'client' | 'agent' | 'developer' | 'admin' | 'super_admin';
+export type UserRole = 'owner' | 'client' | 'client_no_agency' | 'agent' | 'developer' | 'admin' | 'super_admin';
 
 export interface UserProfile {
     id: string;

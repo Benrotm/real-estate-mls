@@ -10,7 +10,14 @@ export default async function DashboardHome() {
         redirect('/auth/login');
     }
 
-    if (profile && profile.is_approved === false && profile.role !== 'super_admin' && profile.role !== 'admin') {
+    if (
+        profile && 
+        profile.is_approved === false && 
+        profile.role !== 'super_admin' && 
+        profile.role !== 'admin' && 
+        profile.role !== 'client' && 
+        profile.role !== 'client_no_agency'
+    ) {
         redirect('/awaiting-approval');
     }
 
@@ -19,7 +26,7 @@ export default async function DashboardHome() {
     if (profile.role === 'agent') redirect('/dashboard/agent');
     if (profile.role === 'developer') redirect('/dashboard/developer');
     if (profile.role === 'super_admin' || profile.role === 'admin') redirect('/dashboard/admin');
-    if (profile.role === 'client') redirect('/dashboard/client');
+    if (profile.role === 'client' || profile.role === 'client_no_agency') redirect('/dashboard/client/ai-matching');
 
     // Fallback UI (e.g. if role is missing or invalid, though uncommon)
     // We keep the old UI as a fallback/debug view

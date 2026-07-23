@@ -10,7 +10,14 @@ export default async function DashboardLayout({
 }) {
     const [features, profile] = await Promise.all([getUserFeatures(), getUserProfile()]);
 
-    if (profile && profile.is_approved === false && profile.role !== 'super_admin' && profile.role !== 'admin') {
+    if (
+        profile && 
+        profile.is_approved === false && 
+        profile.role !== 'super_admin' && 
+        profile.role !== 'admin' && 
+        profile.role !== 'client' && 
+        profile.role !== 'client_no_agency'
+    ) {
         redirect('/awaiting-approval');
     }
 
