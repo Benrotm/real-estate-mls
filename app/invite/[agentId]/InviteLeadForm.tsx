@@ -453,20 +453,6 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                 </div>
             )}
 
-            {/* What interests you */}
-            <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
-                    Ce te interesează?
-                </label>
-                <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="ex. Prețul e negociabil?, Zonă exactă, Balcon spațios, etaj intermediar, parcare, etc..."
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
-                />
-            </div>
-
             {/* Liked Listing Links */}
             <div className="space-y-2">
                 <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-1 flex items-center gap-1.5">
@@ -503,6 +489,20 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                 >
                     <Plus className="w-3.5 h-3.5" /> Adaugă alt link
                 </button>
+            </div>
+
+            {/* What interests you */}
+            <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                    Ce te interesează?
+                </label>
+                <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="ex. Prețul e negociabil?, Zonă exactă, Balcon spațios, etaj intermediar, parcare, etc..."
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
+                />
             </div>
 
             {/* Nickname / Name */}
