@@ -1236,7 +1236,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 pt-28 pb-24 relative overflow-hidden selection:bg-violet-500/30 selection:text-white">
+        <div className="min-h-screen bg-slate-950 pt-20 sm:pt-28 pb-24 relative overflow-x-hidden selection:bg-violet-500/30 selection:text-white">
             {/* Ambient Background Effects */}
             <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[100px]" />
@@ -1244,17 +1244,21 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                 <div className="absolute top-[30%] left-[20%] w-[300px] h-[300px] bg-fuchsia-600/5 rounded-full blur-[80px]" />
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
                 {/* Header Section */}
-                <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="mb-6 sm:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Add New Property</h1>
-                        <p className="text-slate-400 text-lg">Create a premium listing for your real estate asset.</p>
+                        <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-3 tracking-tight">
+                            {initialData?.id ? 'Edit Property' : 'Add New Property'}
+                        </h1>
+                        <p className="text-slate-400 text-sm sm:text-lg">
+                            {initialData?.id ? 'Update listing details for your property.' : 'Create a premium listing for your real estate asset.'}
+                        </p>
                     </div>
                     <button
                         type="button"
                         onClick={() => setIsImportModalOpen(true)}
-                        className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg shadow-white/10"
+                        className="flex items-center justify-center gap-2 bg-white text-slate-900 px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg shadow-white/10 text-sm"
                     >
                         <Upload className="w-4 h-4" />
                         Import your listing
@@ -1268,25 +1272,25 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                 </div>
 
                 {/* Stepper Navigation */}
-                <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-2xl p-1 mb-10 shadow-xl flex items-center justify-between relative overflow-hidden">
+                <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-2xl p-1 mb-6 sm:mb-10 shadow-xl flex items-center justify-between relative overflow-x-auto no-scrollbar max-w-full min-w-0">
                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
                     {[1, 2, 3, 4, 5].map((s) => (
-                        <div key={s} className="flex-1 relative z-10">
+                        <div key={s} className="flex-1 min-w-[54px] sm:min-w-0 relative z-10 shrink-0 sm:shrink">
                             <button
                                 type="button"
                                 onClick={() => setStep(s)} // Allow skipping for now, or restrict if needed
-                                className={`flex items-center justify-center gap-3 w-full py-4 px-2 rounded-xl transition-all duration-300 ${step === s
+                                className={`flex items-center justify-center gap-2 sm:gap-3 w-full py-2.5 sm:py-4 px-1.5 sm:px-2 rounded-xl transition-all duration-300 ${step === s
                                     ? 'bg-slate-800/80 shadow-lg shadow-black/20 border border-slate-700/50'
                                     : 'hover:bg-slate-800/40'
                                     }`}
                             >
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-500 ${step === s
-                                    ? 'bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 scale-110'
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 transition-all duration-500 ${step === s
+                                    ? 'bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 scale-105 sm:scale-110'
                                     : step > s
                                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                         : 'bg-slate-800 text-slate-500 border border-slate-700'
                                     }`}>
-                                    {step > s ? <Check className="w-5 h-5" /> : s}
+                                    {step > s ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : s}
                                 </div>
                                 <div className="text-left hidden sm:block">
                                     <div className={`text-xs font-bold uppercase tracking-wider mb-0.5 ${step === s ? 'text-violet-400' : 'text-slate-500'}`}>Step {s}</div>
@@ -1304,13 +1308,13 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                     ))}
                 </div>
 
-                <form onSubmit={handleSubmit} onKeyDown={checkKeyDown} className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative group">
+                <form onSubmit={handleSubmit} onKeyDown={checkKeyDown} className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-x-auto relative group">
                     {/* Glass Shine Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
                     {/* Step 1: Basic Information */}
                     {step === 1 && (
-                        <div className="p-8 md:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-4 sm:p-8 md:p-10 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* Basic Information Section */}
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center border border-violet-500/30 shadow-inner">
@@ -1324,7 +1328,7 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
 
                             <div className="space-y-6">
                                 {/* Property Title */}
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                                     <label className="sm:w-40 text-sm font-medium text-slate-300 shrink-0">Property Title</label>
                                     <input
                                         type="text"
@@ -1352,9 +1356,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 </div>
 
                                 {/* Property Type & Listing Type */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex items-center gap-4">
-                                        <label className="w-28 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Property Type</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                        <label className="sm:w-28 text-sm font-medium text-slate-300 shrink-0 sm:text-right pr-2">Property Type</label>
                                         <div className="relative flex-1">
                                             <select
                                                 name="propertyType"
@@ -1369,8 +1373,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <label className="w-28 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Listing Type</label>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                        <label className="sm:w-28 text-sm font-medium text-slate-300 shrink-0 sm:text-right pr-2">Listing Type</label>
                                         <div className="relative flex-1">
                                             <select
                                                 name="listingType"
@@ -1388,9 +1392,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                 </div>
 
                                 {/* Price & Currency */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex items-center gap-4">
-                                        <label className="w-28 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Price</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                        <label className="sm:w-28 text-sm font-medium text-slate-300 shrink-0 sm:text-right pr-2">Price</label>
                                         <div className="relative flex-1">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-violet-400 font-bold">
                                                 <DollarSign className="w-5 h-5" />
@@ -1406,8 +1410,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                             />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <label className="w-28 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Currency</label>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                        <label className="sm:w-28 text-sm font-medium text-slate-300 shrink-0 sm:text-right pr-2">Currency</label>
                                         <div className="relative flex-1">
                                             <select
                                                 name="currency"
@@ -1616,9 +1620,9 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                     </div>
 
                                     {/* Partitioning & Comfort */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                                        <div className="flex items-center gap-4">
-                                            <label className="w-24 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Partitioning</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                            <label className="sm:w-24 text-sm font-medium text-slate-300 shrink-0 sm:text-right pr-2">Partitioning</label>
                                             <div className="relative flex-1">
                                                 <select name="partitioning" value={formData.partitioning} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                     <option value="" className="bg-slate-900">Select...</option>
@@ -1629,8 +1633,8 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <label className="w-24 text-sm font-medium text-slate-300 shrink-0 text-right pr-2">Comfort</label>
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                            <label className="sm:w-24 text-sm font-medium text-slate-300 shrink-0 sm:text-right pr-2">Comfort</label>
                                             <div className="relative flex-1">
                                                 <select name="comfort" value={formData.comfort} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 outline-none appearance-none text-white hover:border-slate-600">
                                                     <option value="" className="bg-slate-900">Select...</option>
@@ -2955,85 +2959,91 @@ export default function AddPropertyForm({ initialData, canUseVirtualTours = true
                         </div>
                     )}
 
-<div className="bg-slate-950/30 backdrop-blur-sm px-8 py-6 border-t border-slate-800 flex justify-between items-center relative z-20">
-                        <button
-                            type="button"
-                            onClick={() => step > 1 ? setStep(step - 1) : router.push('/properties')}
-                            className="flex items-center gap-2 bg-slate-900 border border-slate-700 text-slate-300 px-6 py-3 rounded-xl font-bold hover:bg-slate-800 hover:text-white hover:border-slate-600 transition-all shadow-lg"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            {step > 1 ? 'Previous Step' : 'Cancel'}
-                        </button>
+<div className="bg-slate-950/30 backdrop-blur-sm px-4 sm:px-8 py-4 sm:py-6 border-t border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center relative z-20">
+                        <div className="flex items-center justify-between w-full sm:w-auto gap-2 sm:gap-3">
+                            <button
+                                type="button"
+                                onClick={() => step > 1 ? setStep(step - 1) : router.push('/properties')}
+                                className="flex items-center justify-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-700 text-slate-300 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold hover:bg-slate-800 hover:text-white hover:border-slate-600 transition-all shadow-lg text-xs sm:text-sm"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                {step > 1 ? 'Previous' : 'Cancel'}
+                            </button>
 
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setIsImportModalOpen(true)}
-                                className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl transition-all border border-slate-700/50"
-                            >
-                                <Upload size={18} />
-                                <span>Import</span>
-                            </button>
-                            <ImportPropertiesModal
-                                showDefaultButton={false}
-                                forceOpen={isImportModalOpen}
-                                onClose={() => setIsImportModalOpen(false)}
-                                onScrapeSuccess={handleScrapeSuccess}
-                            />
-                            <button
-                                onClick={(e) => handleSaveDraft(e)} // Explicitly save draft
-                                disabled={submitting || savingDraft}
-                                className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-bold hover:text-violet-200 transition-all border border-violet-500/30"
-                            >
-                                {savingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={18} />}
-                                <span>{savingDraft ? 'Saving...' : 'Save Draft'}</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsImportModalOpen(true)}
+                                    className="flex items-center gap-1.5 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all border border-slate-700/50 text-xs sm:text-sm"
+                                >
+                                    <Upload size={16} />
+                                    <span>Import</span>
+                                </button>
+                                <ImportPropertiesModal
+                                    showDefaultButton={false}
+                                    forceOpen={isImportModalOpen}
+                                    onClose={() => setIsImportModalOpen(false)}
+                                    onScrapeSuccess={handleScrapeSuccess}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={(e) => handleSaveDraft(e)} // Explicitly save draft
+                                    disabled={submitting || savingDraft}
+                                    className="flex items-center gap-1.5 bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-bold hover:text-violet-200 transition-all border border-violet-500/30 text-xs sm:text-sm"
+                                >
+                                    {savingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
+                                    <span>{savingDraft ? 'Saving...' : 'Save Draft'}</span>
+                                </button>
+                            </div>
                         </div>
 
-                        {step < 5 ? (
-                            <button
-                                key="next-step-btn"
-                                type="button"
-                                onClick={nextStep}
-                                disabled={savingDraft}
-                                className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-500/25 transition-all shadow-lg shadow-violet-900/20 group relative overflow-hidden disabled:opacity-70"
-                            >
-                                <span className="relative z-10 flex items-center gap-2">
-                                    Next Step
-                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </span>
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                            </button>
-                        ) : (
-                            <div className="flex flex-col items-end">
+                        <div className="w-full sm:w-auto flex justify-end">
+                            {step < 5 ? (
                                 <button
-                                    key="submit-listing-btn"
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-10 py-3 rounded-xl font-bold hover:from-emerald-500 hover:to-teal-500 transition-all disabled:opacity-50 shadow-lg shadow-emerald-900/20 group relative overflow-hidden border border-emerald-500/20"
+                                    key="next-step-btn"
+                                    type="button"
+                                    onClick={nextStep}
+                                    disabled={savingDraft}
+                                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 sm:px-8 py-3 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 hover:shadow-violet-500/25 transition-all shadow-lg shadow-violet-900/20 group relative overflow-hidden disabled:opacity-70 text-sm"
                                 >
                                     <span className="relative z-10 flex items-center gap-2">
-                                        {submitting ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                Submitting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                Save Property
-                                                <Check className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                            </>
-                                        )}
+                                        Next Step
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </span>
                                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                 </button>
-                                {portalCosts.add_listing_reward > 0 && (
-                                    <p className="text-[10px] text-emerald-400 font-bold text-right mt-2 flex items-center justify-end gap-1">
-                                        <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
-                                        +{portalCosts.add_listing_reward} CR Recompensă Publicare Anunț Activ
-                                    </p>
-                                )}
-                            </div>
-                        )}
+                            ) : (
+                                <div className="flex flex-col items-center sm:items-end w-full sm:w-auto">
+                                    <button
+                                        key="submit-listing-btn"
+                                        type="submit"
+                                        disabled={submitting}
+                                        className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 sm:px-10 py-3 rounded-xl font-bold hover:from-emerald-500 hover:to-teal-500 transition-all disabled:opacity-50 shadow-lg shadow-emerald-900/20 group relative overflow-hidden border border-emerald-500/20 text-sm"
+                                    >
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            {submitting ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    Submitting...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Save Property
+                                                    <Check className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                                </>
+                                            )}
+                                        </span>
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                    </button>
+                                    {portalCosts.add_listing_reward > 0 && (
+                                        <p className="text-[10px] text-emerald-400 font-bold text-center sm:text-right mt-2 flex items-center justify-center sm:justify-end gap-1">
+                                            <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
+                                            +{portalCosts.add_listing_reward} CR Recompensă Publicare Anunț Activ
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </form >
             </div>
