@@ -387,10 +387,38 @@ export async function activateInstantAIMatching() {
             return { error: appErr.message };
         }
 
+        // Fetch user profile for notification
+        const { data: userProfile } = await adminSupabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', user.id)
+            .single();
+
+        // Trigger notification to all superadmin/admin users
+        const { data: adminProfiles } = await adminSupabase
+            .from('profiles')
+            .select('id')
+            .in('role', ['admin', 'super_admin', 'superadmin']);
+
+        if (adminProfiles && adminProfiles.length > 0) {
+            const displayName = userProfile?.full_name || userProfile?.email || 'Client Fără Nume';
+            const notifications = adminProfiles.map(adm => ({
+                user_id: adm.id,
+                type: 'system',
+                title: '⚡ Activare Instantă AI Matching',
+                content: `Clientul ${displayName} și-a activat instant potrivirile AI contra ${cost} credite. A fost mutat automat în tabul/coloana Clienți Activi din AI Pipeline.`,
+                link: '/dashboard/admin/ai-pipeline'
+            }));
+
+            await adminSupabase.from('notifications').insert(notifications);
+        }
+
         await logUserActivity({
             event_type: 'instant_ai_activation',
             description: `Client a activat instant potrivirile AI contra ${cost} credite`
         });
+
+        revalidatePath('/dashboard/admin/ai-pipeline');
 
         return { success: true, cost };
     } catch (err: any) {
