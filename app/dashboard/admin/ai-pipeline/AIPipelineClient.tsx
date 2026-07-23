@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 import { 
     Zap, Users, UserCheck, ShieldAlert, Activity, Search, Filter, 
     CheckCircle2, XCircle, Eye, Settings, Clock, Coins, MousePointer, 
-    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles
+    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2
 } from 'lucide-react';
 import { toggleUserApproval, saveUserPropertyRestrictions } from '@/app/lib/admin';
 import { 
     saveAIPipelineRecommendationSetting, 
-    getUserActivityDetails 
+    getUserActivityDetails,
+    deleteAIPipelineUserOrLead
 } from '@/app/lib/actions/user-activity';
 import Link from 'next/link';
 
@@ -86,6 +87,23 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             }
         } catch (err: any) {
             alert('Eroare la schimbarea stării de aprobare: ' + err.message);
+        }
+    };
+
+    // Handle user/lead card deletion
+    const handleDeleteUserCard = async (userId: string, userName?: string) => {
+        if (!confirm(`Sigur doriți să ștergeți definitiv cererea / utilizatorul "${userName || 'Fără Nume'}"? Această acțiune va elimina contul / lead-ul și toate datele asociate.`)) {
+            return;
+        }
+        try {
+            const res = await deleteAIPipelineUserOrLead(userId);
+            if (res.error) {
+                alert('Eroare la ștergerea cererii: ' + res.error);
+            } else {
+                setUsers(prev => prev.filter(u => u.id !== userId));
+            }
+        } catch (err: any) {
+            alert('Eroare la ștergere: ' + err.message);
         }
     };
 
@@ -392,6 +410,14 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                                             <div>
                                                                 <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{user.full_name || 'Utilizator Fără Nume'}</h4>
                                                                 <span className="text-[11px] text-slate-400 block line-clamp-1">{user.email}</span>
+                                                                {user.phone ? (
+                                                                    <span className="text-[11px] text-slate-700 font-bold flex items-center gap-1 mt-0.5">
+                                                                        <Phone className="w-3 h-3 text-orange-600 shrink-0" />
+                                                                        {user.phone}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[11px] text-slate-400 italic block mt-0.5">Fără telefon</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -432,6 +458,12 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                                     >
                                                         <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
                                                     </button>
+                                                    <button
+                                                        onClick={() => handleDeleteUserCard(user.id, user.full_name)}
+                                                        className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" /> Șterge Cerere / Card
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))
@@ -470,6 +502,14 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                                             <div>
                                                                 <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{user.full_name || 'Utilizator Fără Nume'}</h4>
                                                                 <span className="text-[11px] text-slate-400 block line-clamp-1">{user.email}</span>
+                                                                {user.phone ? (
+                                                                    <span className="text-[11px] text-slate-700 font-bold flex items-center gap-1 mt-0.5">
+                                                                        <Phone className="w-3 h-3 text-orange-600 shrink-0" />
+                                                                        {user.phone}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[11px] text-slate-400 italic block mt-0.5">Fără telefon</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -518,9 +558,15 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                                     </button>
                                                     <button
                                                         onClick={() => handleApproveUser(user.id, user.is_approved)}
-                                                        className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer"
+                                                        className="w-full py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-amber-200 cursor-pointer"
                                                     >
                                                         <ShieldAlert className="w-3.5 h-3.5" /> Suspendă Acces
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteUserCard(user.id, user.full_name)}
+                                                        className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" /> Șterge Cerere / Card
                                                     </button>
                                                 </div>
                                             </div>

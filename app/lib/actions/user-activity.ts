@@ -258,6 +258,25 @@ export async function getAIPipelineData() {
     }
 }
 
+export async function deleteAIPipelineUserOrLead(targetId: string) {
+    try {
+        const { deleteUser } = await import('@/app/lib/admin');
+        const res = await deleteUser(targetId);
+        if (!res.success) {
+            // Fallback for leads without auth profile
+            const { createAdminClient } = await import('@/app/lib/supabase/admin');
+            const adminSupabase = createAdminClient();
+            await adminSupabase.from('leads').delete().eq('id', targetId);
+            await adminSupabase.from('leads').delete().eq('created_by', targetId);
+        }
+        revalidatePath('/dashboard/admin/ai-pipeline');
+        return { success: true };
+    } catch (err: any) {
+        console.error('Error deleting AI Pipeline card:', err);
+        return { success: false, error: err.message || 'Failed to delete user' };
+    }
+}
+
 export async function saveAIPipelineRecommendationSetting(text: string, points: number = 50) {
     try {
         const supabase = await createClient();
