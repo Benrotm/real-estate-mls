@@ -54,6 +54,25 @@ export default async function ClientAIMatchingPage() {
     const costsMap = (costsSetting?.setting_value as Record<string, number>) || {};
     const instantAiCost = costsMap['instant_ai_activation_cost'] !== undefined ? Number(costsMap['instant_ai_activation_cost']) : 5;
 
+    // Fetch initial client credits setting from admin_settings
+    let initialCreditsSetting = 15;
+    try {
+        const { data: creditCostsRow } = await adminSupabase
+            .from('admin_settings')
+            .select('value')
+            .eq('key', 'credit_costs_config')
+            .single();
+
+        if (creditCostsRow?.value) {
+            const parsed = typeof creditCostsRow.value === 'string' ? JSON.parse(creditCostsRow.value) : creditCostsRow.value;
+            if (parsed.client_no_agency_initial_credits !== undefined) {
+                initialCreditsSetting = Number(parsed.client_no_agency_initial_credits);
+            }
+        }
+    } catch (e) {
+        console.error("Error reading credit_costs_config in page.tsx:", e);
+    }
+
     // Fetch logged-in user profile for approval check & credits
     const { createClient } = await import('@/app/lib/supabase/server');
     const serverSupabase = await createClient();
@@ -66,6 +85,15 @@ export default async function ClientAIMatchingPage() {
         .eq('id', targetUserId)
         .maybeSingle();
 
+    let effectiveCredits = userProfile?.credits ?? 0;
+    if ((effectiveCredits === 0 || userProfile?.credits === null || userProfile?.credits === undefined) && targetUserId) {
+        effectiveCredits = initialCreditsSetting;
+        await adminSupabase
+            .from('profiles')
+            .update({ credits: initialCreditsSetting })
+            .eq('id', targetUserId);
+    }
+
     return (
         <ClientAIMatchingClient
             lead={{
@@ -77,7 +105,7 @@ export default async function ClientAIMatchingPage() {
             initialMatches={matchesRes.matches || []}
             recommendation={recommendationConfig}
             instantAiCost={instantAiCost}
-            userCredits={userProfile?.credits || 0}
+            userCredits={effectiveCredits}
         />
     );
 }
