@@ -491,7 +491,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const currentProperties = getTabProperties(activeTab);
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 sm:pt-40 md:pt-6 pb-24 space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 md:pt-4 pb-24 space-y-6">
             {/* User AI Credits Balance Top Bar */}
             <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
                 <div className="flex items-center gap-3">
