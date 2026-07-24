@@ -544,7 +544,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 )}
             </div>
 
-            {/* PWA App Shortcut & Manual AI Search Button Box */}
+            {/* App Shortcut Banner Box */}
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xl border border-slate-700 space-y-4">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -552,30 +552,22 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <Smartphone className="w-6 h-6" />
                         </div>
                         <div>
-                            <h3 className="font-extrabold text-base text-white flex items-center gap-2">
-                                Adaugă Aplicația pe Ecranul Telefonului Tău <span className="text-[10px] bg-yellow-400 text-slate-950 px-2 py-0.5 rounded-full font-black uppercase">PWA Shortcut</span>
+                            <h3 className="font-extrabold text-base text-white">
+                                Adaugă Aplicația pe Ecranul Telefonului Tău
                             </h3>
                             <p className="text-xs text-slate-300 font-medium mt-1">
-                                Salvează shortcut-ul pe ecranul principal al telefonului pentru acces rapid, apoi apasă butonul <strong className="text-orange-400 font-bold">"Caută cu AI"</strong> pentru a vedea potrivirile instant pe piață.
+                                Salvează shortcut-ul pe ecranul principal al telefonului pentru acces rapid, apoi apasă butonul <strong className="text-orange-400 font-bold">"Caută cu AI"</strong>.
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0">
+                    <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
                         <button
                             onClick={handleInstallPWA}
                             className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer w-full sm:w-auto"
                         >
                             <Smartphone className="w-4 h-4 text-yellow-400" />
                             Adaugă Shortcut pe Ecran
-                        </button>
-                        <button
-                            onClick={() => loadAISuggestions()}
-                            disabled={isLoadingAI || !isApproved}
-                            className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer w-full sm:w-auto"
-                        >
-                            <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
-                            {isLoadingAI ? 'Se caută cu AI...' : `Caută cu AI (Cost: ${instantAiCost} CR)`}
                         </button>
                     </div>
                 </div>
