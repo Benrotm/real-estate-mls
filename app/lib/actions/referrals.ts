@@ -97,17 +97,32 @@ export async function getReferralStats() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
 
-    // Fetch referral settings to show user what the current rewards are
-    const { data: settingsData } = await supabase
-        .from('platform_settings')
-        .select('setting_value')
-        .eq('setting_key', 'referral_settings')
-        .single();
+    // Fetch referral settings from admin_settings
+    let referrerBonus = 15;
+    let inviteeBonus = 15;
+    let commissionPercentage = 15;
 
-    const settings = (settingsData?.setting_value as any) || {
-        referrer_bonus: 15,
-        invitee_bonus: 10,
-        commission_percentage: 10
+    try {
+        const { data: creditConfig } = await supabase
+            .from('admin_settings')
+            .select('value')
+            .eq('key', 'credit_costs_config')
+            .single();
+
+        if (creditConfig?.value) {
+            const parsed = typeof creditConfig.value === 'string' ? JSON.parse(creditConfig.value) : creditConfig.value;
+            if (parsed.referral_gift_credits_per_friend !== undefined) referrerBonus = Number(parsed.referral_gift_credits_per_friend);
+            if (parsed.client_no_agency_initial_credits !== undefined) inviteeBonus = Number(parsed.client_no_agency_initial_credits);
+            if (parsed.referral_client_no_agency_commission_percentage !== undefined) commissionPercentage = Number(parsed.referral_client_no_agency_commission_percentage);
+        }
+    } catch (e) {
+        console.error("Error reading credit_costs_config:", e);
+    }
+
+    const settings = {
+        referrer_bonus: referrerBonus,
+        invitee_bonus: inviteeBonus,
+        commission_percentage: commissionPercentage
     };
 
     // Get all invitees who registered using this user's link

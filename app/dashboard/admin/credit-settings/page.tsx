@@ -265,6 +265,22 @@ export default function CreditSettingsPage() {
                                 <Coins size={14} className="text-yellow-500" />
                             </div>
                         </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800 col-span-1 md:col-span-2">
+                            <div>
+                                <span className="font-semibold block text-white">Credite Cadou Acordate Referrer-ului la Înregistrare Client Nou</span>
+                                <span className="text-xs text-slate-400">Numărul de credite oferite cadou utilizatorului/agentului care trimite invitația când un prieten își creează cont</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['referral_gift_credits_per_friend'] !== undefined ? costs['referral_gift_credits_per_friend'] : 15}
+                                    onChange={(e) => handleChange('referral_gift_credits_per_friend', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
                     </div>
                 </section>
 

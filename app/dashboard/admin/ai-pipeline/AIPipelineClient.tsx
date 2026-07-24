@@ -196,6 +196,11 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
         const source = (u.source || '').toLowerCase();
         const role = (u.role || '').toLowerCase();
         
+        // 2. Both Options: If user checked BOTH wants_agent_help AND find_self_from_owner
+        if (u.wants_agent_help === true && u.find_self_from_owner !== false) {
+            return 'both_options';
+        }
+
         // 1. Direct Owner Only (Clienți Doar de la Proprietar)
         if (
             role === 'client_no_agency' || 
@@ -203,8 +208,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             source.includes('invite') ||
             source.includes('self-service') ||
             source.includes('referral') ||
-            u.wants_agent_help === false ||
-            (u.find_self_from_owner === true && u.wants_agent_help !== true)
+            u.wants_agent_help === false
         ) {
             return 'direct_owner_only';
         }
@@ -219,7 +223,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             return 'crm_invite';
         }
         
-        // 2. Both Options (Both owner & agent bife checked)
+        // Default: Both Options
         return 'both_options';
     };
 

@@ -237,7 +237,7 @@ export async function getAIPipelineData() {
         // Auto-fix self-service profiles in database so they are approved (is_approved = true)
         await adminSupabase
             .from('profiles')
-            .update({ is_approved: true, wants_agent_help: false, find_self_from_owner: true })
+            .update({ is_approved: true })
             .eq('role', 'client_no_agency')
             .or('is_approved.is.null,is_approved.eq.false');
 
@@ -258,10 +258,7 @@ export async function getAIPipelineData() {
                     (matchedLead?.source || '').toLowerCase().includes('self-service') ||
                     (u as any).source?.toLowerCase().includes('invite');
 
-                const wantsAgentHelp = isSelfService
-                    ? (u.wants_agent_help === true && matchedLead?.wants_agent_help === true)
-                    : (u.wants_agent_help ?? matchedLead?.wants_agent_help ?? true);
-
+                const wantsAgentHelp = u.wants_agent_help === true || matchedLead?.wants_agent_help === true;
                 const isApproved = isSelfService ? (u.is_approved !== false) : (u.is_approved ?? false);
 
                 return {

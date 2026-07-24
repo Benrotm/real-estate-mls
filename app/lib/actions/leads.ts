@@ -634,6 +634,29 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
     const findSelfFromOwner = data.leadData.search_direct_owner !== false;
     const wantsAgentHelp = data.leadData.search_with_agent === true;
 
+    // Fetch initial client credits & referral gift credits from admin_settings
+    let initialClientCredits = 15;
+    let referrerGiftCredits = 15;
+    try {
+        const { data: settingRow } = await adminSupabase
+            .from('admin_settings')
+            .select('value')
+            .eq('key', 'credit_costs_config')
+            .single();
+
+        if (settingRow?.value) {
+            const config = typeof settingRow.value === 'string' ? JSON.parse(settingRow.value) : settingRow.value;
+            if (config.client_no_agency_initial_credits !== undefined) {
+                initialClientCredits = Number(config.client_no_agency_initial_credits);
+            }
+            if (config.referral_gift_credits_per_friend !== undefined) {
+                referrerGiftCredits = Number(config.referral_gift_credits_per_friend);
+            }
+        }
+    } catch (e) {
+        console.error("Error fetching credit_costs_config:", e);
+    }
+
     if (existingUsers && existingUsers.length > 0) {
         userId = existingUsers[0].id;
         await adminSupabase.from('profiles').update({
@@ -655,7 +678,7 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
                 referred_by: agentId,
                 find_self_from_owner: findSelfFromOwner,
                 wants_agent_help: wantsAgentHelp,
-                credits: 50
+                credits: initialClientCredits
             }
         });
 
@@ -665,7 +688,7 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
 
         userId = authUser.user!.id;
 
-        // Upsert profile for new client with 50 default credits
+        // Upsert profile for new client with dynamic initial credits setting
         await adminSupabase.from('profiles').upsert({
             id: userId,
             email: cleanEmail,
@@ -674,13 +697,43 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
             role: 'client_no_agency',
             referred_by: agentId,
             is_approved: true,
-            credits: 50,
+            credits: initialClientCredits,
             find_self_from_owner: findSelfFromOwner,
             wants_agent_help: wantsAgentHelp
         });
+
+        // Award referral gift credits to referring agent/user if applicable
+        if (agentId && referrerGiftCredits > 0) {
+            try {
+                const { data: refProfile } = await adminSupabase
+                    .from('profiles')
+                    .select('credits')
+                    .eq('id', agentId)
+                    .single();
+
+                if (refProfile) {
+                    const currentCredits = refProfile.credits || 0;
+                    await adminSupabase
+                        .from('profiles')
+                        .update({ credits: currentCredits + referrerGiftCredits })
+                        .eq('id', agentId);
+
+                    await adminSupabase
+                        .from('credit_transactions')
+                        .insert({
+                            user_id: agentId,
+                            amount: referrerGiftCredits,
+                            description: 'Bonus invitare prieten client nou',
+                            metadata: { invitee_id: userId }
+                        });
+                }
+            } catch (refErr) {
+                console.error('Error awarding referral gift credits:', refErr);
+            }
+        }
     }
 
-    // Insert lead preferences for AI Matching engine
+    // Insert lead preferences for AI Matching engine & CRM Lead listing for Agent
     const score = await calculateLeadScore(data.leadData);
     const { search_with_agent, search_direct_owner, notes, find_self_from_owner, wants_agent_help, ...validLeadFields } = data.leadData as any;
     const cleanLeadData = Object.fromEntries(
@@ -696,18 +749,18 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
         agent_id: agentId,
         created_by: userId,
         status: 'new',
-        source: 'Client Self-Service Referral Form',
+        source: wantsAgentHelp ? 'Client Formular (Caută cu Agent & Proprietar)' : 'Client Self-Service Referral Form',
         currency: data.leadData.currency || 'EUR',
-        notes: notes || data.leadData.social_notes || null
+        notes: notes || data.leadData.social_notes || null,
+        find_self_from_owner: findSelfFromOwner,
+        wants_agent_help: wantsAgentHelp
     };
 
-    let { error: leadErr } = await adminSupabase.from('leads').insert({
-        ...leadPayload,
-        find_self_from_owner: search_direct_owner !== false,
-        wants_agent_help: search_with_agent !== false
-    });
+    let { error: leadErr } = await adminSupabase.from('leads').insert(leadPayload);
 
     if (leadErr && leadErr.message?.includes('find_self_from_owner')) {
+        delete leadPayload.find_self_from_owner;
+        delete leadPayload.wants_agent_help;
         const { error: retryErr } = await adminSupabase.from('leads').insert(leadPayload);
         leadErr = retryErr;
     }

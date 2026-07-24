@@ -491,7 +491,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const currentProperties = getTabProperties(activeTab);
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-24 md:pt-6 pb-24 space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 sm:pt-32 md:pt-6 pb-24 space-y-6">
             {/* User AI Credits Balance Top Bar */}
             <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
                 <div className="flex items-center gap-3">
@@ -500,15 +500,15 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                     </div>
                     <div>
                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Balanță Credite Disponibile</span>
-                        <div className="text-sm font-black text-white flex items-center gap-1.5 font-mono">
-                            Credite AI - CR: <span className="text-yellow-400 text-base">{credits}</span>
+                        <div className="text-sm font-bold text-white flex items-center gap-1.5 font-mono">
+                            Credite AI - CR: <span className="text-yellow-400 text-base font-extrabold">{credits}</span>
                         </div>
                     </div>
                 </div>
 
                 <Link
                     href="/cont/plati"
-                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
+                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
                 >
                     <Coins className="w-4 h-4" /> Adaugă Credite
                 </Link>
@@ -525,7 +525,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <Sparkles className="w-5 h-5 text-yellow-300 fill-current" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-black tracking-tight flex items-center gap-2">
+                            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
                                 Recomandări
                             </h2>
                             <p className="text-xs text-orange-100 font-medium">Sfaturi importante pentru căutarea ta pe piața imobiliară</p>
@@ -548,11 +548,11 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xl border border-slate-700 space-y-4">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-orange-600 text-white rounded-xl font-black shrink-0 shadow-lg shadow-orange-600/30">
+                        <div className="p-3 bg-orange-600 text-white rounded-xl font-bold shrink-0 shadow-lg shadow-orange-600/30">
                             <Smartphone className="w-6 h-6" />
                         </div>
                         <div>
-                            <h3 className="font-extrabold text-base text-white">
+                            <h3 className="font-bold text-base text-white">
                                 Adaugă Aplicația pe Ecranul Telefonului Tău
                             </h3>
                             <p className="text-xs text-slate-300 font-medium mt-1">
