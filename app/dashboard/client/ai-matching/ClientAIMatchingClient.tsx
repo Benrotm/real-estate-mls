@@ -337,12 +337,6 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
         });
     }, []);
 
-    useEffect(() => {
-        if (activeTab === 'curate' && aiSuggestions.length === 0 && !isLoadingAI && isApproved) {
-            loadAISuggestions();
-        }
-    }, [activeTab, isApproved]);
-
     const loadAISuggestions = async () => {
         if (!isApproved) return;
         setIsLoadingAI(true);
@@ -497,7 +491,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const currentProperties = getTabProperties(activeTab);
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-6 pb-24 space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-24 md:pt-6 pb-24 space-y-6">
             {/* User AI Credits Balance Top Bar */}
             <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
                 <div className="flex items-center gap-3">
@@ -997,16 +991,19 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             <span className="truncate">{prop.location_city || prop.city} {prop.location_area && `• ${prop.location_area}`}</span>
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-1 my-3">
-                                            <div className="p-2 bg-slate-50 rounded-lg text-center">
+                                        <div className="grid grid-cols-3 gap-1.5 my-3">
+                                            <div className="p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
+                                                <BedDouble className="w-3.5 h-3.5 text-slate-400 mx-auto mb-0.5" />
                                                 <span className="text-[9px] font-bold text-slate-400 uppercase block">Camere</span>
                                                 <span className="text-xs font-black text-slate-900">{prop.rooms || '-'}</span>
                                             </div>
-                                            <div className="p-2 bg-slate-50 rounded-lg text-center">
+                                            <div className="p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
+                                                <Ruler className="w-3.5 h-3.5 text-slate-400 mx-auto mb-0.5" />
                                                 <span className="text-[9px] font-bold text-slate-400 uppercase block">Suprafață</span>
                                                 <span className="text-xs font-black text-slate-900">{prop.area_usable ? `${prop.area_usable} m²` : '-'}</span>
                                             </div>
-                                            <div className="p-2 bg-slate-50 rounded-lg text-center">
+                                            <div className="p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
+                                                <Coins className="w-3.5 h-3.5 text-orange-500 mx-auto mb-0.5" />
                                                 <span className="text-[9px] font-bold text-slate-400 uppercase block">Preț</span>
                                                 <span className="text-xs font-black text-orange-600">€{prop.price?.toLocaleString()}</span>
                                             </div>
@@ -1014,40 +1011,66 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     </div>
 
                                     {/* Action Buttons per Tab */}
-                                    <div className="space-y-2 pt-2 border-t border-slate-100">
-                                        <div className="flex items-center justify-between gap-2">
+                                    <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
                                             <Link
                                                 href={`/properties/${prop.id}`}
                                                 target="_blank"
-                                                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1"
+                                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-sm transition-all"
                                             >
-                                                Detalii <ArrowUpRight className="w-3.5 h-3.5" />
+                                                Detalii <ArrowUpRight className="w-3.5 h-3.5 text-orange-400" />
                                             </Link>
 
-                                            {/* Calendar Button (for De Sunat, De Resunat, De Vizionat, Programate) */}
-                                            {currentTabObj.hasCalendar && (
+                                            <div className="flex items-center gap-1.5">
                                                 <button
-                                                    onClick={() => handleOpenCalendarModal(prop, activeTab === 'to_call' ? 'De Sunat' : activeTab === 'to_recall' ? 'De Resunat' : 'De Vizionat')}
-                                                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-sm cursor-pointer"
-                                                >
-                                                    <CalendarDays className="w-3.5 h-3.5" /> Calendar
-                                                </button>
-                                            )}
-
-                                            {/* Flag Button (for De Vizionat & Programate) */}
-                                            {currentTabObj.hasFlag && matchRecord && (
-                                                <button
-                                                    onClick={() => handleToggleWantToSeeAgain(matchRecord.id, isWantSeeAgain)}
-                                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg flex items-center gap-1 transition-colors ${
-                                                        isWantSeeAgain
-                                                            ? 'bg-purple-600 text-white'
-                                                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                                                    onClick={() => handleUpdateStatus(prop.id, 'saved')}
+                                                    className={`px-2.5 py-1.5 text-xs font-extrabold rounded-xl flex items-center gap-1 transition-all cursor-pointer ${
+                                                        item.status === 'saved'
+                                                            ? 'bg-amber-500 text-white shadow-sm'
+                                                            : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
                                                     }`}
-                                                    title="Marchează dacă mai dorești o vizionare suplimentară"
+                                                    title="Adaugă la Favorite"
                                                 >
-                                                    <Flag className="w-3.5 h-3.5" /> {isWantSeeAgain ? 'Bifat' : 'Mai vreau o dată'}
+                                                    <Heart className="w-3.5 h-3.5 fill-current" /> Favorite
                                                 </button>
-                                            )}
+
+                                                <button
+                                                    onClick={() => handleUpdateStatus(prop.id, 'dismissed')}
+                                                    className={`px-2.5 py-1.5 text-xs font-extrabold rounded-xl flex items-center gap-1 transition-all cursor-pointer ${
+                                                        item.status === 'dismissed'
+                                                            ? 'bg-rose-600 text-white shadow-sm'
+                                                            : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                                                    }`}
+                                                    title="Nu îmi place / Thumbs Down"
+                                                >
+                                                    <ThumbsDown className="w-3.5 h-3.5" /> Nu-mi place
+                                                </button>
+
+                                                {/* Calendar Button (for De Sunat, De Resunat, De Vizionat, Programate) */}
+                                                {currentTabObj.hasCalendar && (
+                                                    <button
+                                                        onClick={() => handleOpenCalendarModal(prop, activeTab === 'to_call' ? 'De Sunat' : activeTab === 'to_recall' ? 'De Resunat' : 'De Vizionat')}
+                                                        className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-sm cursor-pointer"
+                                                    >
+                                                        <CalendarDays className="w-3.5 h-3.5" /> Calendar
+                                                    </button>
+                                                )}
+
+                                                {/* Flag Button (for De Vizionat & Programate) */}
+                                                {currentTabObj.hasFlag && matchRecord && (
+                                                    <button
+                                                        onClick={() => handleToggleWantToSeeAgain(matchRecord.id, isWantSeeAgain)}
+                                                        className={`px-2.5 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1 transition-colors ${
+                                                            isWantSeeAgain
+                                                                ? 'bg-purple-600 text-white'
+                                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                                                        }`}
+                                                        title="Marchează dacă mai dorești o vizionare suplimentară"
+                                                    >
+                                                        <Flag className="w-3.5 h-3.5" /> {isWantSeeAgain ? 'Bifat' : 'Mai vreau'}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Status Transition Select Dropdown */}
@@ -1056,7 +1079,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             <select
                                                 value={item.status || 'curate'}
                                                 onChange={(e) => handleUpdateStatus(prop.id, e.target.value)}
-                                                className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-extrabold px-2.5 py-1.5 rounded-lg outline-none cursor-pointer"
+                                                className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-extrabold px-2.5 py-1.5 rounded-xl outline-none cursor-pointer"
                                             >
                                                 {TABS.map(t => (
                                                     <option key={t.id} value={t.id} className="bg-slate-900 text-white font-bold py-1">{t.name}</option>
@@ -1068,9 +1091,29 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             </div>
                         );
                     })
+                ) : activeTab === 'curate' ? (
+                    <div className="col-span-full bg-white rounded-2xl border-2 border-dashed border-orange-200 p-8 text-center space-y-4 shadow-sm">
+                        <div className="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+                            <Sparkles className="w-7 h-7 text-orange-600 fill-current" />
+                        </div>
+                        <div className="max-w-md mx-auto space-y-1">
+                            <h4 className="font-extrabold text-slate-900 text-base">Gata să cauți proprietăți cu AI?</h4>
+                            <p className="text-xs text-slate-600 font-semibold leading-relaxed">
+                                Apasă pe butonul de mai jos pentru a porni algoritmul AI care va analiza piața și va selecta cele mai potrivite oferte pentru tine.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => loadAISuggestions()}
+                            disabled={isLoadingAI || !isApproved}
+                            className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer inline-flex items-center gap-2"
+                        >
+                            <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
+                            {isLoadingAI ? 'Se caută cu AI...' : `Caută cu AI (Cost: ${instantAiCost} CR)`}
+                        </button>
+                    </div>
                 ) : (
                     <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200 shadow-sm opacity-60 space-y-2">
-                        <div className="text-sm font-bold text-slate-700">Nicio proprietate în acest stadiu ({currentTabObj.name})</div>
+                        <div className="text-sm font-bold text-slate-700">Nicio proprietate în stadiul "{currentTabObj.name}"</div>
                         <p className="text-xs text-slate-500">Vizitează tabul AI Matching sau schimbă criteriile din panoul de preferințe.</p>
                     </div>
                 )}
