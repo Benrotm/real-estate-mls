@@ -238,11 +238,20 @@ export async function getAIPipelineData() {
         const usersWithDetails = (users || [])
             .map(u => {
                 const matchedLead = leadsMapByCreatedBy[u.id] || (u.email ? leadsMapByEmail[u.email.toLowerCase()] : null);
+                const isSelfService = u.role === 'client_no_agency' || 
+                    (matchedLead?.source || '').toLowerCase().includes('invite') || 
+                    (matchedLead?.source || '').toLowerCase().includes('self-service') ||
+                    (u as any).source?.toLowerCase().includes('invite');
+
+                const wantsAgentHelp = isSelfService
+                    ? (u.wants_agent_help === true && matchedLead?.wants_agent_help === true)
+                    : (u.wants_agent_help ?? matchedLead?.wants_agent_help ?? true);
+
                 return {
                     ...u,
                     source: matchedLead?.source || (u as any).source || 'Direct Signup',
                     find_self_from_owner: u.find_self_from_owner ?? matchedLead?.find_self_from_owner ?? true,
-                    wants_agent_help: u.wants_agent_help ?? matchedLead?.wants_agent_help ?? true,
+                    wants_agent_help: wantsAgentHelp,
                     restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
                 };
             });

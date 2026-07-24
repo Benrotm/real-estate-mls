@@ -201,6 +201,8 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             role === 'client_no_agency' || 
             source.includes('client_no_agency') || 
             source.includes('invite') ||
+            source.includes('self-service') ||
+            source.includes('referral') ||
             u.wants_agent_help === false ||
             (u.find_self_from_owner === true && u.wants_agent_help !== true)
         ) {
