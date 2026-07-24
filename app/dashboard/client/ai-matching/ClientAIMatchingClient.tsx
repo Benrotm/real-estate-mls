@@ -5,7 +5,7 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -30,18 +30,21 @@ const TABS = [
     { 
         id: 'curate', 
         name: 'AI Matching', 
-        desc: 'Selectate de AI pentru tine dupa criteriile tale - Intra zilnic sau de mai multe ori aici si da refresh sa vezi ce a aparut nou intretimp',
+        icon: Sparkles,
+        desc: 'Selectate de AI pentru tine după criteriile tale - Intră zilnic sau de mai multe ori aici și dă refresh să vezi ce a apărut nou între timp. Important: Apasă pe icoana Thumb Down - Nu îmi plac sau Favorite pentru ca data viitoare când vrei să verifici ce a apărut nou pe piață să le vezi mai ușor.',
         color: 'text-orange-600 border-orange-600 bg-orange-50'
     },
     { 
         id: 'saved', 
         name: 'Favorite', 
+        icon: Heart,
         desc: 'Astea mi-ar putea place, verifica detaliile dupa ce le selectezi pe toate care ti se pare ca ar putea sa-ti placa',
         color: 'text-amber-600 border-amber-600 bg-amber-50'
     },
     { 
         id: 'to_call', 
         name: 'De Sunat', 
+        icon: PhoneCall,
         desc: 'Aici sunt cele pe care le-ai verificat in detaliile din descriere si vrei sa vorbesti cu proprietarul',
         color: 'text-blue-600 border-blue-600 bg-blue-50',
         hasCalendar: true
@@ -49,6 +52,7 @@ const TABS = [
     { 
         id: 'to_recall', 
         name: 'De resunat', 
+        icon: RefreshCw,
         desc: 'Aici sunt cele verificate la care nu a raspuns inca proprietarul la telefon ca sa nu uiti sa-l resuni daca nu te suna inapoi',
         color: 'text-cyan-600 border-cyan-600 bg-cyan-50',
         hasCalendar: true
@@ -56,12 +60,14 @@ const TABS = [
     { 
         id: 'interested', 
         name: 'De Interes', 
+        icon: Bookmark,
         desc: 'aici sunt cele care te intereseaza si ai reusit sa vorbesti deja cu proprietarul dar inca nu sti ce sa faci - adica le ti de backup daca nu gasesti ceva mai interesant',
         color: 'text-emerald-600 border-emerald-600 bg-emerald-50'
     },
     { 
         id: 'to_visit', 
         name: 'De Vizionat', 
+        icon: Eye,
         desc: 'aici le pui pe cele care sigur vrei sa le vezi dar inca nu ai stabilit vizionarea',
         color: 'text-indigo-600 border-indigo-600 bg-indigo-50',
         hasCalendar: true,
@@ -70,6 +76,7 @@ const TABS = [
     { 
         id: 'visit_scheduled', 
         name: 'Vizionări Stabilite', 
+        icon: CalendarDays,
         desc: 'Aici sunt cele pe care le-ai programat la Vizionare',
         color: 'text-purple-600 border-purple-600 bg-purple-50',
         hasCalendar: true,
@@ -77,41 +84,101 @@ const TABS = [
     },
     { 
         id: 'thinking', 
-        name: 'Ma mai gandesc', 
+        name: 'Mă mai gândesc', 
+        icon: Clock,
         desc: 'Aici le pui pe cele la care ai fost la vizionare dar inca te mai gandesti ca sa mai vezi si altele',
         color: 'text-slate-600 border-slate-600 bg-slate-50'
     },
     { 
         id: 'negotiation', 
         name: 'Negociere', 
+        icon: Handshake,
         desc: 'Aici le pui pe cele la care ai fost la vizionare si vrei sa negociezi cu proprietarul sau negociezi deja',
         color: 'text-orange-600 border-orange-600 bg-orange-50'
     },
     { 
         id: 'offer_made', 
         name: 'Oferte făcute', 
+        icon: Coins,
         desc: 'Aici găsești proprietățile la care ai trimis o ofertă de preț sau ai negociat cu proprietarul',
         color: 'text-emerald-700 border-emerald-600 bg-emerald-50 font-bold'
     },
     { 
         id: 'not_interested', 
-        name: 'Nu ma intereseaza', 
+        name: 'Nu mă interesează', 
+        icon: ThumbsDown,
         desc: 'aici sunt cele la care ai fost la vizionare si sigur nu le vrei, dar le gasesti aici daca te razgandesti',
         color: 'text-rose-600 border-rose-600 bg-rose-50'
     },
     { 
         id: 'dismissed', 
-        name: 'Nu imi plac', 
+        name: 'Nu îmi plac', 
+        icon: XCircle,
         desc: 'Aici sunt cele la care le-ai dat "Nu se potrivesc" din ce a selectat AI-ul initial',
         color: 'text-gray-600 border-gray-600 bg-gray-50'
     },
     { 
         id: 'winner', 
-        name: 'Castigator', 
+        name: 'Câștigător', 
+        icon: Award,
         desc: 'Felicitari !!! Aici e cel pe care l-ai luat, te rugam sa il pui aici pentru ca el sa fie sters din baza de date ca sa nu mai apara si la altii - ca si tu te-ai saturat sa auzi "S-a dat" :) - Iti Multumim :)',
         color: 'text-yellow-600 border-yellow-600 bg-yellow-50 font-bold'
     }
 ];
+
+function PropertyCardImageSlider({ images, title, matchScore }: { images?: string[]; title: string; matchScore?: number }) {
+    const [currentIdx, setCurrentIdx] = useState(0);
+    const imgList = (images && images.length > 0) ? images : ['/placeholder-property.jpg'];
+
+    const handlePrev = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCurrentIdx(prev => (prev === 0 ? imgList.length - 1 : prev - 1));
+    };
+
+    const handleNext = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCurrentIdx(prev => (prev === imgList.length - 1 ? 0 : prev + 1));
+    };
+
+    return (
+        <div className="h-48 w-full bg-slate-100 relative overflow-hidden shrink-0 group/img">
+            <img
+                src={imgList[currentIdx]}
+                alt={title}
+                className="w-full h-full object-cover transition-all duration-300"
+            />
+            {matchScore !== undefined && (
+                <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-900/85 text-white border border-slate-700 shadow-sm backdrop-blur-sm flex items-center gap-1 z-10">
+                    <Zap className="w-3 h-3 text-orange-500 fill-current" />
+                    <span>Match: {matchScore}</span>
+                </div>
+            )}
+            {imgList.length > 1 && (
+                <>
+                    <button
+                        onClick={handlePrev}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm opacity-90 sm:opacity-0 group-hover/img:opacity-100 transition-opacity z-10 cursor-pointer shadow-md"
+                        title="Poza anterioară"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={handleNext}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm opacity-90 sm:opacity-0 group-hover/img:opacity-100 transition-opacity z-10 cursor-pointer shadow-md"
+                        title="Poza următoare"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-black px-2 py-0.5 rounded-full z-10 border border-slate-700">
+                        {currentIdx + 1} / {imgList.length}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
 
 export default function ClientAIMatchingClient({ lead, initialMatches, recommendation, instantAiCost = 5, userCredits = 0 }: Props) {
     const [matches, setMatches] = useState<any[]>(initialMatches);
@@ -430,7 +497,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const currentProperties = getTabProperties(activeTab);
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 pb-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-6 pb-24 space-y-6">
             {/* User AI Credits Balance Top Bar */}
             <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
                 <div className="flex items-center gap-3">
@@ -483,7 +550,44 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 )}
             </div>
 
-            {/* Pending Approval Banner, Instant AI Activation & PWA Button */}
+            {/* PWA App Shortcut & Manual AI Search Button Box */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xl border border-slate-700 space-y-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-orange-600 text-white rounded-xl font-black shrink-0 shadow-lg shadow-orange-600/30">
+                            <Smartphone className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h3 className="font-extrabold text-base text-white flex items-center gap-2">
+                                Adaugă Aplicația pe Ecranul Telefonului Tău <span className="text-[10px] bg-yellow-400 text-slate-950 px-2 py-0.5 rounded-full font-black uppercase">PWA Shortcut</span>
+                            </h3>
+                            <p className="text-xs text-slate-300 font-medium mt-1">
+                                Salvează shortcut-ul pe ecranul principal al telefonului pentru acces rapid, apoi apasă butonul <strong className="text-orange-400 font-bold">"Caută cu AI"</strong> pentru a vedea potrivirile instant pe piață.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0">
+                        <button
+                            onClick={handleInstallPWA}
+                            className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer w-full sm:w-auto"
+                        >
+                            <Smartphone className="w-4 h-4 text-yellow-400" />
+                            Adaugă Shortcut pe Ecran
+                        </button>
+                        <button
+                            onClick={() => loadAISuggestions()}
+                            disabled={isLoadingAI || !isApproved}
+                            className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer w-full sm:w-auto"
+                        >
+                            <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
+                            {isLoadingAI ? 'Se caută cu AI...' : `Caută cu AI (Cost: ${instantAiCost} CR)`}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Pending Approval Banner */}
             {!isApproved && (
                 <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md animate-in fade-in">
                     <div className="flex items-center gap-3">
@@ -506,13 +610,6 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         >
                             <Zap className="w-4 h-4 text-yellow-300 fill-current" />
                             {isActivatingInstant ? 'Se activează...' : `Activează instant cu AI (${instantAiCost} CR)`}
-                        </button>
-                        <button
-                            onClick={handleInstallPWA}
-                            className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center gap-2.5 transition-all shadow-lg shrink-0 active:scale-95 cursor-pointer"
-                        >
-                            <Smartphone className="w-4 h-4 text-yellow-400" />
-                            Adaugă / Descarcă pe Telefon (PWA)
                         </button>
                     </div>
                 </div>
@@ -788,12 +885,14 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 )}
             </div>
 
-            {/* The 12 Tabs Navigation */}
+            {/* The 13 Tabs Navigation with Icons */}
             <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-                <div className="flex min-w-max gap-1">
+                <div className="flex min-w-max gap-1.5">
                     {TABS.map(tab => {
                         const count = getTabProperties(tab.id).length;
                         const isActive = activeTab === tab.id;
+                        const IconComponent = (tab as any).icon;
+
                         return (
                             <button
                                 key={tab.id}
@@ -804,6 +903,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                         : 'text-slate-600 hover:bg-slate-100'
                                 }`}
                             >
+                                {IconComponent && <IconComponent className={`w-4 h-4 ${isActive ? 'text-orange-400' : 'text-slate-500'}`} />}
                                 <span>{tab.name}</span>
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
                                     isActive ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-700'
@@ -817,22 +917,23 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             </div>
 
             {/* Current Active Tab Explanatory Text Box */}
-            <div className={`p-4 rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3`}>
+            <div className={`p-5 rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
                 <div>
-                    <span className="font-extrabold block mb-0.5 text-slate-900">
+                    <span className="font-extrabold block mb-1 text-slate-900 text-sm flex items-center gap-2">
+                        {React.createElement((currentTabObj as any).icon || Sparkles, { className: "w-4 h-4 text-orange-600" })}
                         Stadiul: {currentTabObj.name}
                     </span>
-                    {currentTabObj.desc}
+                    <p className="whitespace-pre-line">{currentTabObj.desc}</p>
                 </div>
                 {activeTab === 'curate' && (
                     <button
                         onClick={() => loadAISuggestions()}
                         disabled={isLoadingAI || !isApproved}
-                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : "Refresh AI Matching"}
-                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer"
+                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : "Refresh - Caută cu AI ce a apărut nou între timp"}
+                        className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer active:scale-95"
                     >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAI ? 'animate-spin' : ''}`} />
-                        {isLoadingAI ? 'Se caută...' : 'Refresh AI Matching'}
+                        <RefreshCw className={`w-4 h-4 ${isLoadingAI ? 'animate-spin' : ''}`} />
+                        {isLoadingAI ? 'Se caută...' : 'Refresh - Caută cu AI ce a apărut nou între timp'}
                     </button>
                 )}
             </div>
@@ -847,23 +948,41 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         const isWantSeeAgain = matchRecord?.is_want_to_see_again || false;
 
                         return (
-                            <div key={prop.id} className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
-                                {/* Image Container */}
-                                <div className="h-48 w-full bg-slate-100 relative overflow-hidden shrink-0">
-                                    <img
-                                        src={prop.images && prop.images[0] ? prop.images[0] : '/placeholder-property.jpg'}
-                                        alt={prop.title}
-                                        className="w-full h-full object-cover"
+                            <div key={prop.id} className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col relative group ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {/* Image Container with Photo Carousel */}
+                                <div className="relative">
+                                    <PropertyCardImageSlider
+                                        images={prop.images}
+                                        title={prop.title}
+                                        matchScore={prop.match_score}
                                     />
-                                    {prop.match_score !== undefined && (
-                                        <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-900/80 text-white border border-slate-700 shadow-sm backdrop-blur-sm flex items-center gap-1">
-                                            <Zap className="w-3 h-3 text-orange-500 fill-current" />
-                                            <span>Match: {prop.match_score}</span>
-                                        </div>
-                                    )}
+
+                                    {/* Quick Thumbs Down & Favorite Overlay Action Buttons */}
+                                    <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleUpdateStatus(prop.id, 'saved');
+                                            }}
+                                            className="p-2 bg-amber-500/90 hover:bg-amber-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-transform active:scale-90 cursor-pointer"
+                                            title="Favorite (Adaugă la favorite)"
+                                        >
+                                            <Heart className="w-3.5 h-3.5 fill-current" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleUpdateStatus(prop.id, 'dismissed');
+                                            }}
+                                            className="p-2 bg-slate-900/90 hover:bg-rose-600 text-white rounded-full shadow-lg backdrop-blur-sm transition-transform active:scale-90 cursor-pointer"
+                                            title="Thumbs Down (Nu îmi place)"
+                                        >
+                                            <ThumbsDown className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
 
                                     {isWantSeeAgain && (
-                                        <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-purple-600 text-white border border-purple-400 shadow-md backdrop-blur-sm flex items-center gap-1 animate-pulse">
+                                        <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-purple-600 text-white border border-purple-400 shadow-md backdrop-blur-sm flex items-center gap-1 animate-pulse z-10">
                                             <Flag className="w-3 h-3 fill-current" />
                                             <span>Mai vreau să-l văd o dată</span>
                                         </div>

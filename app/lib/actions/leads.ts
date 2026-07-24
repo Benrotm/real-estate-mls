@@ -631,12 +631,15 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
 
     let userId: string;
 
+    const findSelfFromOwner = data.leadData.search_direct_owner !== false;
+    const wantsAgentHelp = data.leadData.search_with_agent === true;
+
     if (existingUsers && existingUsers.length > 0) {
         userId = existingUsers[0].id;
         await adminSupabase.from('profiles').update({
             referred_by: agentId,
-            find_self_from_owner: data.leadData.search_direct_owner !== false,
-            wants_agent_help: data.leadData.search_with_agent !== false
+            find_self_from_owner: findSelfFromOwner,
+            wants_agent_help: wantsAgentHelp
         }).eq('id', userId);
     } else {
         // Create user in Auth
@@ -650,8 +653,9 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
                 phone: data.phone.trim(),
                 role: 'client_no_agency',
                 referred_by: agentId,
-                find_self_from_owner: data.leadData.search_direct_owner !== false,
-                wants_agent_help: data.leadData.search_with_agent !== false
+                find_self_from_owner: findSelfFromOwner,
+                wants_agent_help: wantsAgentHelp,
+                credits: 50
             }
         });
 
@@ -661,7 +665,7 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
 
         userId = authUser.user!.id;
 
-        // Upsert profile for new client
+        // Upsert profile for new client with 50 default credits
         await adminSupabase.from('profiles').upsert({
             id: userId,
             email: cleanEmail,
@@ -670,8 +674,9 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
             role: 'client_no_agency',
             referred_by: agentId,
             is_approved: true,
-            find_self_from_owner: data.leadData.search_direct_owner !== false,
-            wants_agent_help: data.leadData.search_with_agent !== false
+            credits: 50,
+            find_self_from_owner: findSelfFromOwner,
+            wants_agent_help: wantsAgentHelp
         });
     }
 

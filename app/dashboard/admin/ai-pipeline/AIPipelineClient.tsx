@@ -194,20 +194,21 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
     // Helper classifier for the 4 Categories requested by admin
     const classifyUserCategory = (u: User) => {
         const source = (u.source || '').toLowerCase();
+        const role = (u.role || '').toLowerCase();
         
-        // 4. CRM Invite Lead (Invite new lead button from Leads & CRM page)
-        if (source.includes('shared link') || source.includes('crm') || source.includes('invite')) {
-            return 'crm_invite';
+        // 1. Direct Owner Only (Only owner bifa checked, agent bifa unchecked)
+        if ((u.find_self_from_owner !== false && u.wants_agent_help === false) || (role === 'client_no_agency' && u.wants_agent_help === false)) {
+            return 'direct_owner_only';
         }
-        
+
         // 3. Property Page Signup (Poza 1 - modal/button on /properties page)
         if (source.includes('property') || source.includes('proprietati') || source.includes('modal')) {
             return 'property_page';
         }
-        
-        // 1. Direct Owner Only (Only owner bifa checked, agent bifa unchecked)
-        if (u.find_self_from_owner !== false && u.wants_agent_help === false) {
-            return 'direct_owner_only';
+
+        // 4. CRM Invite Lead (Invite new lead button from Leads & CRM page)
+        if (source.includes('shared link') || source.includes('crm') || source.includes('crm_invite')) {
+            return 'crm_invite';
         }
         
         // 2. Both Options (Both owner & agent bife checked)
