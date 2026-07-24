@@ -234,8 +234,23 @@ export async function getAIPipelineData() {
             }
         }
 
+        // Auto-fix self-service profiles in database so they are approved (is_approved = true)
+        await adminSupabase
+            .from('profiles')
+            .update({ is_approved: true, wants_agent_help: false, find_self_from_owner: true })
+            .eq('role', 'client_no_agency')
+            .or('is_approved.is.null,is_approved.eq.false');
+
+        // Re-fetch users to get updated status
+        const { data: updatedUsers } = await adminSupabase
+            .from('profiles')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        const activeUsersList = updatedUsers || users || [];
+
         // Combine user profiles with lead details & restrictions
-        const usersWithDetails = (users || [])
+        const usersWithDetails = activeUsersList
             .map(u => {
                 const matchedLead = leadsMapByCreatedBy[u.id] || (u.email ? leadsMapByEmail[u.email.toLowerCase()] : null);
                 const isSelfService = u.role === 'client_no_agency' || 
@@ -247,8 +262,11 @@ export async function getAIPipelineData() {
                     ? (u.wants_agent_help === true && matchedLead?.wants_agent_help === true)
                     : (u.wants_agent_help ?? matchedLead?.wants_agent_help ?? true);
 
+                const isApproved = isSelfService ? (u.is_approved !== false) : (u.is_approved ?? false);
+
                 return {
                     ...u,
+                    is_approved: isApproved,
                     source: matchedLead?.source || (u as any).source || 'Direct Signup',
                     find_self_from_owner: u.find_self_from_owner ?? matchedLead?.find_self_from_owner ?? true,
                     wants_agent_help: wantsAgentHelp,
