@@ -334,8 +334,8 @@ export default function DashboardClient({
 
     if (isClientNoAgency) {
         return (
-            <div className="min-h-screen bg-slate-50 flex flex-col">
-                <main className="flex-1 p-2 md:p-6 overflow-y-auto">
+            <div className="min-h-screen bg-slate-50 flex flex-col pt-14 md:pt-0">
+                <main className="flex-1 p-2 sm:p-4 md:p-6">
                     {children}
                 </main>
             </div>
@@ -343,7 +343,7 @@ export default function DashboardClient({
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-50">
+        <div className="flex min-h-screen bg-slate-50 pt-14 md:pt-0">
             {/* Desktop Sidebar */}
             <aside className={`bg-slate-900 border-r border-slate-800 hidden md:flex flex-col shadow-xl z-20 transition-all duration-300 relative ${isCollapsed ? 'w-20' : 'w-64'}`}>
                 {/* Floating Expand/Collapse Button */}
