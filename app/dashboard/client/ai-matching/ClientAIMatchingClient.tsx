@@ -492,28 +492,6 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
     return (
         <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-1 md:pt-2 pb-24 space-y-6">
-            {/* User AI Credits Balance Top Bar */}
-            <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/30">
-                        <Coins className="w-5 h-5 animate-pulse" />
-                    </div>
-                    <div>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Balanță Credite Disponibile</span>
-                        <div className="text-sm font-bold text-white flex items-center gap-1.5 font-mono">
-                            Credite AI - CR: <span className="text-yellow-400 text-base font-extrabold">{credits}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <Link
-                    href="/cont/plati"
-                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
-                >
-                    <Coins className="w-4 h-4" /> Adaugă Credite
-                </Link>
-            </div>
-
             {/* Collapsible Recommendation Message Header Box */}
             <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden transition-all">
                 <div 
@@ -542,6 +520,28 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         {recommendation.text}
                     </div>
                 )}
+            </div>
+
+            {/* User AI Credits Balance Top Bar */}
+            <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/30">
+                        <Coins className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Balanță Credite Disponibile</span>
+                        <div className="text-sm font-bold text-white flex items-center gap-1.5 font-mono">
+                            Credite AI - CR: <span className="text-yellow-400 text-base font-extrabold">{credits}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <Link
+                    href="/cont/plati"
+                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
+                >
+                    <Coins className="w-4 h-4" /> Adaugă Credite
+                </Link>
             </div>
 
             {/* App Shortcut Banner Box */}
