@@ -364,7 +364,7 @@ export default function DashboardClient({
             {/* Mobile Header & Overlay */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Mobile Top Bar */}
-                <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 md:hidden text-white shadow-md z-40 sticky top-14">
+                <header className="bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 py-3 md:hidden text-white shadow-md rounded-b-xl mb-2">
                     <div className="flex items-center gap-2">
                         <span className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center text-sm font-bold">D</span>
                         <span className="font-bold text-lg">Dashboard</span>
@@ -386,15 +386,15 @@ export default function DashboardClient({
 
                 {/* Mobile Full Screen Menu Overlay */}
                 {isMobileMenuOpen && (
-                    <div className="fixed inset-0 top-30 z-30 bg-slate-900 md:hidden flex flex-col animate-in fade-in slide-in-from-top-4 duration-200">
-                        <div className="flex-1 overflow-y-auto">
+                    <div className="fixed inset-0 top-16 z-50 bg-slate-900 md:hidden flex flex-col animate-in fade-in slide-in-from-top-4 duration-200">
+                        <div className="flex-1 overflow-y-auto pt-4">
                             <NavContent forceOpen={true} />
                         </div>
                     </div>
                 )}
 
                 {/* Main page content */}
-                <main className="flex-1 px-3 sm:px-6 md:px-8 pt-32 md:pt-4 pb-12 overflow-y-auto">
+                <main className="flex-1 px-3 sm:px-6 md:px-8 py-2 md:py-4 overflow-y-auto">
                     {children}
                 </main>
             </div>
