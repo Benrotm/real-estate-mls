@@ -491,7 +491,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const currentProperties = getTabProperties(activeTab);
 
     return (
-        <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-14 md:pt-2 pb-24 space-y-6">
+        <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-2 md:pt-4 pb-24 space-y-6">
             {/* Collapsible Recommendation Message Header Box */}
             <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden transition-all">
                 <div 

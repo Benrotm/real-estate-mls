@@ -394,7 +394,7 @@ export default function DashboardClient({
                 )}
 
                 {/* Main page content */}
-                <main className="flex-1 px-3 sm:px-6 md:px-8 py-2 md:py-4 overflow-y-auto">
+                <main className="flex-1 px-3 sm:px-6 md:px-8 py-4">
                     {children}
                 </main>
             </div>
