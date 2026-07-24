@@ -265,8 +265,15 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
     // PWA Install prompt state
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [showPWAInstructions, setShowPWAInstructions] = useState(false);
 
     useEffect(() => {
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(err => {
+                console.log('SW registration:', err);
+            });
+        }
+
         const handleBeforeInstall = (e: any) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -277,14 +284,18 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
     const handleInstallPWA = async () => {
         if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                setDeferredPrompt(null);
+            try {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    setDeferredPrompt(null);
+                }
+                return;
+            } catch (e) {
+                console.error("PWA Install prompt error:", e);
             }
-        } else {
-            alert("Pentru a adăuga pe telefon: Apasă pe meniul browserului (⋮ sau Share) și alege 'Adaugă la ecranul de pornire' / 'Add to Home Screen'!");
         }
+        setShowPWAInstructions(prev => !prev);
     };
 
     const handleInstantActivateAI = async () => {
@@ -571,6 +582,20 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         </button>
                     </div>
                 </div>
+
+                {showPWAInstructions && (
+                    <div className="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-300 space-y-2 bg-slate-950/60 p-4 rounded-xl border border-slate-800 animate-in fade-in duration-200">
+                        <p className="font-bold text-white flex items-center gap-1.5 text-sm">
+                            <Sparkles className="w-4 h-4 text-yellow-400" />
+                            Cum adaugi aplicația pe ecranul principal:
+                        </p>
+                        <ol className="list-decimal list-inside space-y-1.5 text-slate-300">
+                            <li>Apasă pe meniul browserului din colțul ecranului (iconița <strong className="text-white">⋮</strong> sau <strong className="text-white">Share</strong>).</li>
+                            <li>Selectează opțiunea <strong className="text-orange-400 font-bold">"Install and create shortcut"</strong> sau <strong className="text-orange-400 font-bold">"Adaugă la ecranul de pornire" / "Add to Home Screen"</strong>.</li>
+                            <li>Confirmă adăugarea pentru acces instant pe ecranul telefonului.</li>
+                        </ol>
+                    </div>
+                )}
             </div>
 
             {/* Pending Approval Banner */}

@@ -20,6 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Imobum | Premium Real Estate & Valuation",
   description: "Platformă imobiliară inteligentă. Găsește proprietăți premium și evaluează-le folosind inteligența artificială.",
+  manifest: "/manifest.json",
   metadataBase: new URL("https://www.imobum.com"),
   openGraph: {
     title: "Imobum | Premium Real Estate & Valuation",
