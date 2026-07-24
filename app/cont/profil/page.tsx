@@ -513,7 +513,7 @@ export default function ProfilPage() {
                                 </div>
                                 <div className="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs text-emerald-400 font-bold">
                                     <Award className="w-4 h-4 animate-bounce" />
-                                    {totalCommissions} CR câștigate din comisioane
+                                    {totalCommissions} CR câștigate din recomandări
                                 </div>
                             </header>
 

@@ -157,17 +157,20 @@ export async function getReferralStats() {
 
             const creditsConsumed = (consumedData || []).reduce((acc, curr) => acc + Math.abs(curr.amount), 0);
 
-            // Find commissions earned by current user from this invitee
-            // We filter user's credit_transactions where metadata->>'invitee_id' = invitee.id and amount > 0 (excluding initial referral bonus)
-            const { data: commissionData } = await supabase
+            // Find all referral bonuses and commissions earned by current user from this invitee
+            const { data: earnedData } = await supabase
                 .from('credit_transactions')
                 .select('amount')
                 .eq('user_id', user.id)
                 .eq('metadata->>invitee_id', invitee.id)
-                .ilike('description', 'Comision%');
+                .gt('amount', 0);
 
-            const commissionEarned = (commissionData || []).reduce((acc, curr) => acc + curr.amount, 0);
-            totalCommissionsEarned += commissionEarned;
+            const totalEarnedFromInvitee = (earnedData || []).reduce((acc, curr) => acc + curr.amount, 0);
+            
+            // Fallback for invitees where metadata wasn't set: attribute initial referrerBonus
+            const finalEarnedFromInvitee = totalEarnedFromInvitee > 0 ? totalEarnedFromInvitee : referrerBonus;
+
+            totalCommissionsEarned += finalEarnedFromInvitee;
 
             processedInvitees.push({
                 id: invitee.id,
@@ -175,7 +178,7 @@ export async function getReferralStats() {
                 email: invitee.email || 'Fără email',
                 registeredAt: invitee.created_at,
                 creditsConsumed,
-                commissionEarned
+                commissionEarned: finalEarnedFromInvitee
             });
         }
     } catch (e) {
