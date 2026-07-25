@@ -86,7 +86,7 @@ export default async function ClientAIMatchingPage() {
         .maybeSingle();
 
     let effectiveCredits = userProfile?.credits ?? 0;
-    if ((effectiveCredits === 0 || userProfile?.credits === null || userProfile?.credits === undefined) && targetUserId) {
+    if ((userProfile?.credits === null || userProfile?.credits === undefined) && targetUserId) {
         effectiveCredits = initialCreditsSetting;
         await adminSupabase
             .from('profiles')

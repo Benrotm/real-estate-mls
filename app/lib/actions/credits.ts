@@ -8,14 +8,15 @@ export async function getUserCredits() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
 
-    const { data, error } = await supabase
+    const supabaseAdmin = createAdminClient();
+    const { data, error } = await supabaseAdmin
         .from('profiles')
         .select('credits')
         .eq('id', user.id)
         .single();
         
     if (error) return { error: error.message };
-    return { credits: data.credits as number };
+    return { credits: (data?.credits ?? 0) as number };
 }
 
 export async function deductUserCredits(amount: number, description: string = 'Consum servicii', metadata: Record<string, any> = {}) {
@@ -23,8 +24,10 @@ export async function deductUserCredits(amount: number, description: string = 'C
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
 
-    // Get current balance, referrer, role
-    const { data: profile, error: readError } = await supabase
+    const supabaseAdmin = createAdminClient();
+
+    // Get current balance, referrer, role using admin client to bypass RLS
+    const { data: profile, error: readError } = await supabaseAdmin
         .from('profiles')
         .select('credits, referred_by, full_name, role')
         .eq('id', user.id)
@@ -39,16 +42,15 @@ export async function deductUserCredits(amount: number, description: string = 'C
 
     const newBalance = currentCredits - amount;
     
-    // Update balance
-    const { error: updateError } = await supabase
+    // Update balance using admin client to ensure database state is ALWAYS updated!
+    const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({ credits: newBalance })
         .eq('id', user.id);
 
     if (updateError) return { error: updateError.message };
 
-    // Create transaction log for deduction (using admin client to bypass RLS restrictions)
-    const supabaseAdmin = createAdminClient();
+    // Create transaction log for deduction
     const { data: txn, error: logTxError } = await supabaseAdmin
         .from('credit_transactions')
         .insert({
@@ -63,7 +65,7 @@ export async function deductUserCredits(amount: number, description: string = 'C
     if (logTxError) {
         console.error('Error inserting credit transaction log:', logTxError);
         // Rollback balance update
-        await supabase
+        await supabaseAdmin
             .from('profiles')
             .update({ credits: currentCredits })
             .eq('id', user.id);
@@ -76,8 +78,8 @@ export async function deductUserCredits(amount: number, description: string = 'C
 
         // Fetch referral settings & feature costs
         const [settingsRes, costsRes] = await Promise.all([
-            supabase.from('platform_settings').select('setting_value').eq('setting_key', 'referral_settings').single(),
-            supabase.from('platform_settings').select('setting_value').eq('setting_key', 'feature_costs').single()
+            supabaseAdmin.from('platform_settings').select('setting_value').eq('setting_key', 'referral_settings').single(),
+            supabaseAdmin.from('platform_settings').select('setting_value').eq('setting_key', 'feature_costs').single()
         ]);
 
         const settings = (settingsRes.data?.setting_value as any) || { commission_percentage: 10 };
@@ -93,7 +95,7 @@ export async function deductUserCredits(amount: number, description: string = 'C
 
             if (commission > 0) {
                 // Fetch referrer's current balance
-                const { data: referrerProfile } = await supabase
+                const { data: referrerProfile } = await supabaseAdmin
                     .from('profiles')
                     .select('credits')
                     .eq('id', referrerId)
@@ -103,7 +105,7 @@ export async function deductUserCredits(amount: number, description: string = 'C
                     const referrerNewBalance = (referrerProfile.credits || 0) + commission;
 
                     // Update referrer's credits
-                    await supabase
+                    await supabaseAdmin
                         .from('profiles')
                         .update({ credits: referrerNewBalance })
                         .eq('id', referrerId);
