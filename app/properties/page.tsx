@@ -350,7 +350,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
                                 </div>
                                 
                                 <div className="p-6 bg-white text-left">
-                                    <InviteLeadForm agentId="430ed9f0-3164-4346-a7e3-8124f35b5053" />
+                                    <InviteLeadForm agentId="430ed9f0-3164-4346-a7e3-8124f35b5053" mode="client_no_agency" />
                                 </div>
                             </div>
                         </div>

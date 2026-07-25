@@ -352,7 +352,7 @@ export default async function Home({
             </div>
             
             <div className="p-6 sm:p-8 bg-white">
-              <InviteLeadForm agentId="430ed9f0-3164-4346-a7e3-8124f35b5053" />
+              <InviteLeadForm agentId="430ed9f0-3164-4346-a7e3-8124f35b5053" mode="client_no_agency" />
             </div>
           </div>
         </div>

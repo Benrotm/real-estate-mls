@@ -36,7 +36,8 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
     const [listingType, setListingType] = useState<'For Sale' | 'For Rent'>('For Sale');
     const [propertyType, setPropertyType] = useState<'Apartment' | 'House' | 'Land' | 'Commercial'>('Apartment');
     const [rooms, setRooms] = useState(2);
-    const [budget, setBudget] = useState('');
+    const [budgetMin, setBudgetMin] = useState('');
+    const [budgetMax, setBudgetMax] = useState('');
     const [city, setCity] = useState('Timișoara');
     const [area, setArea] = useState('');
     const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
@@ -124,7 +125,7 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
         const newErrors: { [key: string]: string } = {};
         if (!name.trim()) newErrors.name = 'Numele sau nickname-ul este obligatoriu';
         if (!phone.trim()) newErrors.phone = 'Numărul de telefon este obligatoriu';
-        if (!budget.trim() || isNaN(Number(budget)) || Number(budget) <= 0) {
+        if (!budgetMax.trim() || isNaN(Number(budgetMax)) || Number(budgetMax) <= 0) {
             newErrors.budget = 'Introduceți un buget maxim valid';
         }
 
@@ -151,7 +152,8 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
             preference_type: propertyType,
             preference_rooms_min: rooms,
             preference_rooms_max: rooms === 4 ? undefined : rooms,
-            budget_max: Number(budget),
+            budget_min: budgetMin ? Number(budgetMin) : undefined,
+            budget_max: Number(budgetMax),
             currency: 'EUR',
             preference_location_city: city.trim(),
             preference_location_area: area.trim() || undefined,
@@ -297,37 +299,51 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                 </div>
             )}
 
-            {/* Budget & Min Surface if apartment/house */}
-            <div className={`grid ${propertyType === 'Apartment' || propertyType === 'House' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-4`}>
+            {/* Budget Min & Max */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                        BUGET MINIM (EUR)
+                    </label>
+                    <input
+                        type="number"
+                        value={budgetMin}
+                        onChange={(e) => setBudgetMin(e.target.value)}
+                        placeholder="ex. 50000"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
+                    />
+                </div>
+
                 <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
                         BUGET MAXIM (EUR) <span className="text-rose-500">*</span>
                     </label>
                     <input
                         type="number"
-                        value={budget}
-                        onChange={(e) => setBudget(e.target.value)}
+                        value={budgetMax}
+                        onChange={(e) => setBudgetMax(e.target.value)}
                         placeholder="ex. 120000"
                         className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.budget ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
                     />
                     {errors.budget && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.budget}</p>}
                 </div>
-
-                {(propertyType === 'Apartment' || propertyType === 'House') && (
-                    <div>
-                        <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
-                            Suprafață Minimă (mp)
-                        </label>
-                        <input
-                            type="number"
-                            value={surfaceMin}
-                            onChange={(e) => setSurfaceMin(e.target.value)}
-                            placeholder="ex. 50"
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
-                        />
-                    </div>
-                )}
             </div>
+
+            {/* Min Surface if apartment/house */}
+            {(propertyType === 'Apartment' || propertyType === 'House') && (
+                <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                        SUPRAFAȚĂ MINIMĂ (MP)
+                    </label>
+                    <input
+                        type="number"
+                        value={surfaceMin}
+                        onChange={(e) => setSurfaceMin(e.target.value)}
+                        placeholder="ex. 50"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
+                    />
+                </div>
+            )}
 
             {/* Area of Interest (City, Area & Map Draw) */}
             <div className="space-y-3">
