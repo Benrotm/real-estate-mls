@@ -126,6 +126,113 @@ const TABS = [
     }
 ];
 
+const TAB_COLORS: Record<string, { active: string; inactive: string; badgeActive: string; badgeInactive: string; iconActive: string; iconInactive: string }> = {
+    curate: {
+        active: 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-600/30 border-orange-500',
+        inactive: 'bg-orange-50 hover:bg-orange-100/80 text-orange-950 border-orange-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-orange-200 text-orange-950 font-black',
+        iconActive: 'text-yellow-300 fill-current',
+        iconInactive: 'text-orange-600'
+    },
+    saved: {
+        active: 'bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-md shadow-amber-500/30 border-amber-400',
+        inactive: 'bg-amber-50 hover:bg-amber-100/80 text-amber-950 border-amber-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-amber-200 text-amber-950 font-black',
+        iconActive: 'text-amber-100 fill-current',
+        iconInactive: 'text-amber-600'
+    },
+    to_call: {
+        active: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 border-blue-500',
+        inactive: 'bg-blue-50 hover:bg-blue-100/80 text-blue-950 border-blue-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-blue-200 text-blue-950 font-black',
+        iconActive: 'text-blue-100',
+        iconInactive: 'text-blue-600'
+    },
+    to_recall: {
+        active: 'bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-md shadow-cyan-600/30 border-cyan-500',
+        inactive: 'bg-cyan-50 hover:bg-cyan-100/80 text-cyan-950 border-cyan-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-cyan-200 text-cyan-950 font-black',
+        iconActive: 'text-cyan-100',
+        iconInactive: 'text-cyan-600'
+    },
+    interested: {
+        active: 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-md shadow-emerald-600/30 border-emerald-500',
+        inactive: 'bg-emerald-50 hover:bg-emerald-100/80 text-emerald-950 border-emerald-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-emerald-200 text-emerald-950 font-black',
+        iconActive: 'text-emerald-100',
+        iconInactive: 'text-emerald-600'
+    },
+    to_visit: {
+        active: 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-600/30 border-violet-500',
+        inactive: 'bg-violet-50 hover:bg-violet-100/80 text-violet-950 border-violet-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-violet-200 text-violet-950 font-black',
+        iconActive: 'text-violet-100',
+        iconInactive: 'text-violet-600'
+    },
+    visit_scheduled: {
+        active: 'bg-gradient-to-r from-purple-700 to-fuchsia-700 text-white shadow-md shadow-purple-700/30 border-purple-600',
+        inactive: 'bg-purple-50 hover:bg-purple-100/80 text-purple-950 border-purple-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-purple-200 text-purple-950 font-black',
+        iconActive: 'text-purple-100',
+        iconInactive: 'text-purple-600'
+    },
+    thinking: {
+        active: 'bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-md border-slate-600',
+        inactive: 'bg-slate-100 hover:bg-slate-200/80 text-slate-900 border-slate-300 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-slate-300 text-slate-950 font-black',
+        iconActive: 'text-slate-200',
+        iconInactive: 'text-slate-600'
+    },
+    negotiation: {
+        active: 'bg-gradient-to-r from-orange-700 to-red-700 text-white shadow-md border-orange-600',
+        inactive: 'bg-orange-100/80 hover:bg-orange-200/80 text-orange-950 border-orange-300 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-orange-300 text-orange-950 font-black',
+        iconActive: 'text-orange-100',
+        iconInactive: 'text-orange-700'
+    },
+    offer_made: {
+        active: 'bg-gradient-to-r from-teal-700 to-emerald-800 text-white shadow-md border-teal-600',
+        inactive: 'bg-teal-50 hover:bg-teal-100/80 text-teal-950 border-teal-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-teal-200 text-teal-950 font-black',
+        iconActive: 'text-teal-100',
+        iconInactive: 'text-teal-700'
+    },
+    not_interested: {
+        active: 'bg-gradient-to-r from-rose-700 to-red-800 text-white shadow-md border-rose-600',
+        inactive: 'bg-rose-50 hover:bg-rose-100/80 text-rose-950 border-rose-200 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-rose-200 text-rose-950 font-black',
+        iconActive: 'text-rose-100',
+        iconInactive: 'text-rose-700'
+    },
+    dismissed: {
+        active: 'bg-gradient-to-r from-gray-700 to-zinc-800 text-white shadow-md border-gray-600',
+        inactive: 'bg-gray-100 hover:bg-gray-200/80 text-gray-900 border-gray-300 font-bold',
+        badgeActive: 'bg-white/30 text-white font-black',
+        badgeInactive: 'bg-gray-300 text-gray-950 font-black',
+        iconActive: 'text-gray-200',
+        iconInactive: 'text-gray-600'
+    },
+    winner: {
+        active: 'bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600 text-slate-950 shadow-md shadow-yellow-500/30 border-yellow-400 font-black',
+        inactive: 'bg-yellow-50 hover:bg-yellow-100/80 text-yellow-950 border-yellow-300 font-bold',
+        badgeActive: 'bg-slate-950/20 text-slate-950 font-black',
+        badgeInactive: 'bg-yellow-300 text-yellow-950 font-black',
+        iconActive: 'text-slate-950 fill-current',
+        iconInactive: 'text-yellow-600'
+    }
+};
+
 function PropertyCardImageSlider({ images, title, matchScore }: { images?: string[]; title: string; matchScore?: number }) {
     const [currentIdx, setCurrentIdx] = useState(0);
     const imgList = (images && images.length > 0) ? images : ['/placeholder-property.jpg'];
@@ -353,6 +460,27 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
         setIsLoadingAI(true);
         try {
             if (!lead.id) return;
+
+            // Perform credit deduction for AI Matching Search
+            const { deductUserCredits } = await import('@/app/lib/actions/credits');
+            const deductRes = await deductUserCredits(instantAiCost, 'Consum Căutare cu AI (Matching)', { feature: 'ai_matching_search' });
+
+            if (deductRes.error) {
+                if (deductRes.insufficient) {
+                    alert('Fonduri insuficiente! Te rugăm să îți alimentezi soldul de credite.');
+                } else {
+                    alert('Eroare la procesare credite: ' + deductRes.error);
+                }
+                return;
+            }
+
+            // Deduct credits immediately in UI state
+            if (typeof deductRes.remaining === 'number') {
+                setCredits(deductRes.remaining);
+            } else {
+                setCredits(prev => Math.max(0, prev - instantAiCost));
+            }
+
             const results = await findMatchingProperties(lead.id);
             const existingIds = matches.map(m => m.property_id || m.property?.id);
             const newSuggestions = results.filter((p: any) => !existingIds.includes(p.id));
@@ -896,28 +1024,42 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 )}
             </div>
 
-            {/* The 13 Tabs Navigation with Icons */}
-            <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-                <div className="flex min-w-max gap-1.5">
+            {/* Section Header & Explanatory Text for Tabs */}
+            <div className="px-1 mb-1 space-y-1">
+                <p className="text-xs font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4 text-orange-500 shrink-0 fill-current" />
+                    Pașii pe care ar trebui să-i urmezi ca să-ți găsești proprietatea rapid și organizat:
+                </p>
+            </div>
+
+            {/* The 13 Tabs Navigation with Icons & Custom Colored Badges */}
+            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+                <div className="flex min-w-max gap-2">
                     {TABS.map(tab => {
                         const count = getTabProperties(tab.id).length;
                         const isActive = activeTab === tab.id;
                         const IconComponent = (tab as any).icon;
+                        const colors = TAB_COLORS[tab.id] || {
+                            active: 'bg-slate-900 text-white border-slate-800 shadow-md',
+                            inactive: 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200',
+                            badgeActive: 'bg-orange-500 text-white font-black',
+                            badgeInactive: 'bg-slate-200 text-slate-700 font-bold',
+                            iconActive: 'text-orange-400',
+                            iconInactive: 'text-slate-500'
+                        };
 
                         return (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
-                                    isActive
-                                        ? 'bg-slate-900 text-white shadow-md'
-                                        : 'text-slate-600 hover:bg-slate-100'
+                                className={`px-4 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer border ${
+                                    isActive ? colors.active : colors.inactive
                                 }`}
                             >
-                                {IconComponent && <IconComponent className={`w-4 h-4 ${isActive ? 'text-orange-400' : 'text-slate-500'}`} />}
+                                {IconComponent && <IconComponent className={`w-4 h-4 ${isActive ? colors.iconActive : colors.iconInactive}`} />}
                                 <span>{tab.name}</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                                    isActive ? 'bg-orange-500 text-white' : 'bg-slate-200 text-slate-700'
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] ${
+                                    isActive ? colors.badgeActive : colors.badgeInactive
                                 }`}>
                                     {count}
                                 </span>
@@ -940,11 +1082,11 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                     <button
                         onClick={() => loadAISuggestions()}
                         disabled={isLoadingAI || !isApproved}
-                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : "Refresh - Caută cu AI ce a apărut nou între timp"}
-                        className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50 rounded-xl text-xs font-black flex items-center gap-2 shadow-md transition-all shrink-0 cursor-pointer active:scale-95"
+                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : `Caută cu AI (Cost: ${instantAiCost} CR)`}
+                        className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50 rounded-xl text-xs font-black flex items-center gap-2 shadow-lg shadow-orange-600/30 transition-all shrink-0 cursor-pointer active:scale-95 border border-orange-400/40"
                     >
-                        <RefreshCw className={`w-4 h-4 ${isLoadingAI ? 'animate-spin' : ''}`} />
-                        {isLoadingAI ? 'Se caută...' : 'Refresh - Caută cu AI ce a apărut nou între timp'}
+                        <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
+                        {isLoadingAI ? 'Se caută cu AI...' : `Caută cu AI (Cost: ${instantAiCost} CR)`}
                     </button>
                 )}
             </div>
@@ -1113,20 +1255,12 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         <div className="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
                             <Sparkles className="w-7 h-7 text-orange-600 fill-current" />
                         </div>
-                        <div className="max-w-md mx-auto space-y-1">
+                        <div className="max-w-md mx-auto space-y-2">
                             <h4 className="font-extrabold text-slate-900 text-base">Gata să cauți proprietăți cu AI?</h4>
                             <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-                                Apasă pe butonul de mai jos pentru a porni algoritmul AI care va analiza piața și va selecta cele mai potrivite oferte pentru tine.
+                                Apasă pe butonul <strong className="text-orange-600 font-bold">"Caută cu AI (Cost: {instantAiCost} CR)"</strong> din caseta portocalie de mai sus pentru a porni algoritmul AI care va analiza piața și va selecta cele mai potrivite oferte pentru tine.
                             </p>
                         </div>
-                        <button
-                            onClick={() => loadAISuggestions()}
-                            disabled={isLoadingAI || !isApproved}
-                            className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer inline-flex items-center gap-2"
-                        >
-                            <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
-                            {isLoadingAI ? 'Se caută cu AI...' : `Caută cu AI (Cost: ${instantAiCost} CR)`}
-                        </button>
                     </div>
                 ) : (
                     <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200 shadow-sm opacity-60 space-y-2">
