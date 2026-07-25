@@ -305,6 +305,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [prefListingType, setPrefListingType] = useState(lead.preference_listing_type || 'For Sale');
     const [prefCity, setPrefCity] = useState(lead.preference_location_city || '');
     const [prefArea, setPrefArea] = useState(lead.preference_location_area || '');
+    const [budgetMin, setBudgetMin] = useState(lead.budget_min || '');
     const [budgetMax, setBudgetMax] = useState(lead.budget_max || '');
     const [roomsMin, setRoomsMin] = useState(lead.preference_rooms_min || '');
     const [roomsMax, setRoomsMax] = useState(lead.preference_rooms_max || '');
@@ -507,6 +508,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 preference_location_city: prefCity,
                 preference_location_area: prefArea,
                 preference_location_polygon: polygon || null,
+                budget_min: budgetMin ? Number(budgetMin) : null,
                 budget_max: budgetMax ? Number(budgetMax) : null,
                 preference_rooms_min: roomsMin ? Number(roomsMin) : null,
                 preference_rooms_max: roomsMax ? Number(roomsMax) : null,
@@ -885,14 +887,23 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             )}
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Buget Maxim (€)</label>
-                                <input
-                                    type="number"
-                                    placeholder="ex. 80000"
-                                    value={budgetMax}
-                                    onChange={(e) => setBudgetMax(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
-                                />
+                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Buget (Min - Max €)</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        placeholder="Min (€)"
+                                        value={budgetMin}
+                                        onChange={(e) => setBudgetMin(e.target.value)}
+                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Max (€)"
+                                        value={budgetMax}
+                                        onChange={(e) => setBudgetMax(e.target.value)}
+                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    />
+                                </div>
                             </div>
 
                             <div>
