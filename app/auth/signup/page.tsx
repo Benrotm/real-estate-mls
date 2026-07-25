@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { Mail, Phone, Lock, Loader2 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import RoleSelector from '@/app/components/RoleSelector';
+import InviteLeadForm from '@/app/invite/[agentId]/InviteLeadForm';
 
 export default function SignUpPage() {
     const router = useRouter();
@@ -143,9 +144,14 @@ export default function SignUpPage() {
                     />
                 </div>
 
-                {/* Step 2: Sign Up Methods (Google / Email) - Only shows up after a role is selected */}
+                {/* Step 2: Sign Up Methods (Google / Email / Client Invite Form) */}
                 {role ? (
-                    <div className="space-y-6 animate-fade-in">
+                    role === 'client' || role === 'client_no_agency' ? (
+                        <div className="mt-6 border-t border-slate-100 pt-6 animate-fade-in text-left">
+                            <InviteLeadForm agentId="430ed9f0-3164-4346-a7e3-8124f35b5053" mode="client_no_agency" />
+                        </div>
+                    ) : (
+                    <div className="space-y-6 animate-fade-in text-left">
                         {/* Social Login - Google Only */}
                         <div className="mt-6">
                             <button
@@ -289,6 +295,7 @@ export default function SignUpPage() {
                             </div>
                         </form>
                     </div>
+                    )
                 ) : null}
 
                 <div className="text-center mt-4">

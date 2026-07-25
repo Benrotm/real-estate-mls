@@ -5,7 +5,7 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -712,6 +712,42 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                     </Link>
                 </div>
             )}
+
+            {/* Credentials & Screenshot Notice Box */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-indigo-500/30 text-white rounded-2xl p-5 shadow-lg space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-indigo-500/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+                            <Key className="w-5 h-5 text-yellow-400" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-sm text-white flex items-center gap-2">
+                                Datele Tale de Autentificare
+                            </h4>
+                            <p className="text-xs text-slate-300 font-medium">Păstrează aceste date pentru a te reconecta oricând pe Imobum.com</p>
+                        </div>
+                    </div>
+                    <div className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shrink-0">
+                        📸 Fă Screenshot
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/40 p-3.5 rounded-xl border border-white/10 font-mono text-xs">
+                    <div>
+                        <span className="text-[10px] text-slate-400 block font-sans font-semibold uppercase">User / Email Autentificare</span>
+                        <span className="text-white font-bold select-all">{lead.email || `${lead.phone?.replace(/\D/g, '')}@client.imobum.com`}</span>
+                    </div>
+                    <div>
+                        <span className="text-[10px] text-slate-400 block font-sans font-semibold uppercase">Parolă Autentificare</span>
+                        <span className="text-yellow-400 font-bold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-amber-200/90 font-medium bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
+                    <span>💡</span>
+                    <span>Recomandare: Salvează o captură de ecran (Screenshot) pe telefon și adaugă shortcut-ul pe ecranul principal pentru a nu pierde accesul! Poți schimba parola oricând din profilul tău.</span>
+                </div>
+            </div>
 
             {/* App Shortcut Banner Box */}
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xl border border-slate-700 space-y-4">

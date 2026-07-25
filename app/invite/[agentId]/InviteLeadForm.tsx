@@ -554,39 +554,41 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                 {errors.phone && <p className="text-xs text-rose-500 mt-1 font-bold">{errors.phone}</p>}
             </div>
 
-            {/* Property Source / Checkboxes */}
-            <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
-                    GĂSEȘTE PROPRIETĂȚI DE LA
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchWithAgent ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
-                        <input
-                            type="checkbox"
-                            checked={searchWithAgent}
-                            onChange={(e) => setSearchWithAgent(e.target.checked)}
-                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
-                        />
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-extrabold">Vreau ajutor de la un Agent / Broker Imobiliar</span>
-                            <span className="text-[10px] text-slate-400 font-medium">Proprietăți listate de agenții și brokeri</span>
-                        </div>
+            {/* Property Source / Checkboxes - Hidden on crm_invite flow */}
+            {mode !== 'crm_invite' && (
+                <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
+                        GĂSEȘTE PROPRIETĂȚI DE LA
                     </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchWithAgent ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                            <input
+                                type="checkbox"
+                                checked={searchWithAgent}
+                                onChange={(e) => setSearchWithAgent(e.target.checked)}
+                                className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
+                            />
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-extrabold">Vreau ajutor de la un Agent / Broker Imobiliar</span>
+                                <span className="text-[10px] text-slate-400 font-medium">Proprietăți listate de agenții și brokeri</span>
+                            </div>
+                        </label>
 
-                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchDirectOwner ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
-                        <input
-                            type="checkbox"
-                            checked={searchDirectOwner}
-                            onChange={(e) => setSearchDirectOwner(e.target.checked)}
-                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
-                        />
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-extrabold">Găsește singur de la Proprietari</span>
-                            <span className="text-[10px] text-slate-400 font-medium">Direct de la proprietari, fără intermediari</span>
-                        </div>
-                    </label>
+                        <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchDirectOwner ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                            <input
+                                type="checkbox"
+                                checked={searchDirectOwner}
+                                onChange={(e) => setSearchDirectOwner(e.target.checked)}
+                                className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
+                            />
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-extrabold">Găsește singur de la Proprietari</span>
+                                <span className="text-[10px] text-slate-400 font-medium">Direct de la proprietari, fără intermediari</span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Submit Button */}
             <button

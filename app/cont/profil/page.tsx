@@ -28,7 +28,8 @@ import {
     Gift,
     Award,
     Key,
-    Globe
+    Globe,
+    Lock
 } from 'lucide-react';
 import { getCurrentProfile, updateUserProfile } from '@/app/lib/actions/user';
 import { getReferralStats, checkAndProcessReferral } from '@/app/lib/actions/referrals';
@@ -52,6 +53,45 @@ export default function ProfilPage() {
     const [phone, setPhone] = useState('');
     const [updateStatus, setUpdateStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
+
+    // Password management state
+    const [newPassword, setNewPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [pwdStatus, setPwdStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [pwdMessage, setPwdMessage] = useState('');
+    const [isUpdatingPwd, setIsUpdatingPwd] = useState(false);
+
+    const handleUpdatePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newPassword.trim() || newPassword.length < 6) {
+            setPwdStatus('error');
+            setPwdMessage('Parola trebuie să conțină cel puțin 6 caractere.');
+            return;
+        }
+
+        setIsUpdatingPwd(true);
+        setPwdStatus('idle');
+
+        try {
+            const { supabase } = await import('@/app/lib/supabase/client');
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+            if (error) {
+                setPwdStatus('error');
+                setPwdMessage(error.message);
+            } else {
+                setPwdStatus('success');
+                setPwdMessage('Parola ta a fost schimbată cu succes! Folosește noua parolă la următoarea autentificare.');
+                setNewPassword('');
+                setTimeout(() => setPwdStatus('idle'), 4000);
+            }
+        } catch (err: any) {
+            setPwdStatus('error');
+            setPwdMessage(err.message || 'Eroare la schimbarea parolei.');
+        } finally {
+            setIsUpdatingPwd(false);
+        }
+    };
 
     // Storia integration state
     const [storiaStatus, setStoriaStatus] = useState<any>(null);
@@ -440,6 +480,59 @@ export default function ProfilPage() {
                                 )}
                             </div>
                         </form>
+
+                        {/* Password & Security Card */}
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+                            <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center gap-2">
+                                <Key className="w-4 h-4 text-orange-500" />
+                                Securitate & Parolă Cont
+                            </h3>
+
+                            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5 font-mono text-xs">
+                                <span className="text-[10px] text-slate-400 font-sans uppercase font-semibold block">User Autentificare</span>
+                                <div className="text-white font-bold select-all break-all">{profile.email}</div>
+                                <span className="text-[10px] text-slate-400 font-sans block pt-1">
+                                    💡 Parola inițială implicită este numărul tău de telefon ({profile.phone || 'sau ImobumClient2026!'}).
+                                </span>
+                            </div>
+
+                            <form onSubmit={handleUpdatePassword} className="space-y-3 pt-1">
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Setează o Parolă Nouă</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                                    <input 
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="Minim 6 caractere"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-xs text-white focus:border-orange-500 outline-none"
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-white"
+                                    >
+                                        {showPassword ? 'Ascunde' : 'Arată'}
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isUpdatingPwd}
+                                    className="w-full py-2.5 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+                                >
+                                    {isUpdatingPwd ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                                    Actualizează Parola
+                                </button>
+
+                                {pwdStatus === 'success' && (
+                                    <p className="text-xs text-emerald-400 font-medium bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20">{pwdMessage}</p>
+                                )}
+                                {pwdStatus === 'error' && (
+                                    <p className="text-xs text-rose-400 font-medium bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">{pwdMessage}</p>
+                                )}
+                            </form>
+                        </div>
 
                         {/* Portal Integrations */}
                         {storiaStatus && storiaStatus.active && (

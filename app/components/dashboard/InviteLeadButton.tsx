@@ -12,7 +12,7 @@ export default function InviteLeadButton({ agentId }: Props) {
     const [copied, setCopied] = useState(false);
 
     const inviteUrl = typeof window !== 'undefined' 
-        ? `${window.location.origin}/invite/${agentId}` 
+        ? `${window.location.origin}/invite/${agentId}?mode=crm_invite` 
         : '';
 
     const handleCopy = async () => {
