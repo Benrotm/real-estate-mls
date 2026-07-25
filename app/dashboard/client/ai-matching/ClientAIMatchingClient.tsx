@@ -784,24 +784,24 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </div>
             )}
 
-            {/* Dropdown / Collapsible Section: Lead Details & Preferences */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* Dropdown / Collapsible Section: Criteriile Tale de Căutare */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
                 <div 
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
-                    className="px-6 py-4 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between cursor-pointer select-none hover:bg-slate-100/60 transition-colors"
+                    className="px-6 py-4.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-800 flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/90 transition-all"
                 >
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-900 text-white rounded-lg">
-                            <SlidersHorizontal className="w-4 h-4" />
+                    <div className="flex items-center gap-3.5">
+                        <div className="p-2.5 bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 rounded-xl shadow-md shadow-orange-500/20 font-bold shrink-0">
+                            <SlidersHorizontal className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                                Lead Details & Preferences (Criteriile Tale de Căutare)
+                            <h3 className="font-bold text-white text-base flex items-center gap-2 tracking-tight">
+                                Criteriile Tale de Căutare
                             </h3>
-                            <p className="text-xs text-slate-500">Modifică-ți preferințele pentru ca AI-ul să-ți găsească exact ce cauți</p>
+                            <p className="text-xs text-slate-400 font-medium">Modifică-ți preferințele pentru ca AI-ul să-ți găsească exact proprietatea dorită</p>
                         </div>
                     </div>
-                    <div className="text-slate-400">
+                    <div className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
                         {isPreferencesOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </div>
                 </div>
