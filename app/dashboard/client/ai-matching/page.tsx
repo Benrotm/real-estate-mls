@@ -53,6 +53,7 @@ export default async function ClientAIMatchingPage() {
 
     const costsMap = (costsSetting?.setting_value as Record<string, number>) || {};
     const instantAiCost = costsMap['instant_ai_activation_cost'] !== undefined ? Number(costsMap['instant_ai_activation_cost']) : 5;
+    const lowCreditThreshold = costsMap['low_credit_warning_threshold'] !== undefined ? Number(costsMap['low_credit_warning_threshold']) : 5;
 
     // Fetch initial client credits setting from admin_settings
     let initialCreditsSetting = 15;
@@ -105,6 +106,7 @@ export default async function ClientAIMatchingPage() {
             initialMatches={matchesRes.matches || []}
             recommendation={recommendationConfig}
             instantAiCost={instantAiCost}
+            lowCreditThreshold={lowCreditThreshold}
             userCredits={effectiveCredits}
         />
     );

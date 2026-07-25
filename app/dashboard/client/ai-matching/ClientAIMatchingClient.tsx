@@ -23,6 +23,7 @@ interface Props {
     initialMatches: any[];
     recommendation: { text: string; points: number };
     instantAiCost?: number;
+    lowCreditThreshold?: number;
     userCredits?: number;
 }
 
@@ -287,7 +288,7 @@ function PropertyCardImageSlider({ images, title, matchScore }: { images?: strin
     );
 }
 
-export default function ClientAIMatchingClient({ lead, initialMatches, recommendation, instantAiCost = 5, userCredits = 0 }: Props) {
+export default function ClientAIMatchingClient({ lead, initialMatches, recommendation, instantAiCost = 5, lowCreditThreshold = 5, userCredits = 0 }: Props) {
     const [matches, setMatches] = useState<any[]>(initialMatches);
     const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
     const [isLoadingAI, setIsLoadingAI] = useState(false);
@@ -684,6 +685,31 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                     <Coins className="w-4 h-4" /> Adaugă Credite
                 </Link>
             </div>
+
+            {/* Low Credit Warning Banner */}
+            {credits <= lowCreditThreshold && (
+                <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-in fade-in">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-amber-500 text-slate-950 rounded-xl font-black shrink-0">
+                            <AlertCircle className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h4 className="font-extrabold text-amber-950 text-xs sm:text-sm">
+                                Atenție: Sold scăzut de credite! (Mai ai doar {credits} {credits === 1 ? 'credit' : 'credite'})
+                            </h4>
+                            <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                                Reîncarcă soldul pentru a continua să folosești toate instrumentele AI fără întrerupere.
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/cont/plati"
+                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black shrink-0 shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+                    >
+                        <Coins className="w-4 h-4" /> Cumpără Credite
+                    </Link>
+                </div>
+            )}
 
             {/* App Shortcut Banner Box */}
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xl border border-slate-700 space-y-4">

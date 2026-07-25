@@ -281,6 +281,22 @@ export default function CreditSettingsPage() {
                                 <Coins size={14} className="text-yellow-500" />
                             </div>
                         </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-950 rounded-lg border border-slate-800 col-span-1 md:col-span-2">
+                            <div>
+                                <span className="font-semibold block text-white">Prag Număr Credite pentru Avertisment Sold Scăzut</span>
+                                <span className="text-xs text-slate-400">Numărul minim de credite la care utilizatorul primește notificare/avertisment vizual că soldul este pe sfârșite</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <input 
+                                    type="number"
+                                    min="0"
+                                    value={costs['low_credit_warning_threshold'] !== undefined ? costs['low_credit_warning_threshold'] : 5}
+                                    onChange={(e) => handleChange('low_credit_warning_threshold', e.target.value)}
+                                    className="w-20 bg-slate-900 border border-slate-700 text-center rounded py-1 outline-none focus:border-yellow-500 transition-colors font-mono"
+                                />
+                                <Coins size={14} className="text-yellow-500" />
+                            </div>
+                        </div>
                     </div>
                 </section>
 
