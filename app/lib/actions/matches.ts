@@ -120,6 +120,7 @@ export async function bulkUpsertMatchStatus(leadId: string, propertyIds: string[
 
 export async function getLeadMatches(leadId: string) {
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
         .from('lead_property_matches')
@@ -139,7 +140,52 @@ export async function getLeadMatches(leadId: string) {
         return { matches: [] };
     }
 
-    return { matches: data || [] };
+    let matches = data || [];
+
+    // Sync property_favorites for current user to lead_property_matches with status 'saved'
+    if (user) {
+        try {
+            const { data: userFavs } = await supabase
+                .from('property_favorites')
+                .select('property_id, property:properties (*)')
+                .eq('user_id', user.id);
+
+            if (userFavs && userFavs.length > 0) {
+                const existingPropIds = new Set(matches.map((m: any) => m.property_id || m.property?.id));
+                const adminSupabase = createAdminClient();
+
+                for (const fav of userFavs) {
+                    if (fav.property && fav.property_id && !existingPropIds.has(fav.property_id)) {
+                        const { data: newMatch } = await adminSupabase
+                            .from('lead_property_matches')
+                            .upsert({
+                                lead_id: leadId,
+                                property_id: fav.property_id,
+                                status: 'saved',
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'lead_id,property_id' })
+                            .select(`
+                                id,
+                                status,
+                                agent_notes,
+                                created_at,
+                                updated_at,
+                                property:properties (*)
+                            `)
+                            .maybeSingle();
+
+                        if (newMatch) {
+                            matches.unshift(newMatch);
+                        }
+                    }
+                }
+            }
+        } catch (favErr) {
+            console.error('Error syncing user favorites to matches:', favErr);
+        }
+    }
+
+    return { matches };
 }
 
 export async function getPublicMatchesByToken(token: string) {

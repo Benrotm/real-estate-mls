@@ -167,6 +167,9 @@ export async function togglePropertyFavorite(propertyId: string) {
     }
 
     try {
+        const { createAdminClient } = await import('@/app/lib/supabase/admin');
+        const adminSupabase = createAdminClient();
+
         // Check if already favorited - Use maybeSingle to avoid unnecessary error logs
         const { data: existing, error: checkError } = await supabase
             .from('property_favorites')
@@ -180,6 +183,11 @@ export async function togglePropertyFavorite(propertyId: string) {
             return { success: false, error: 'Database error checking status' };
         }
 
+        // Get client lead ID if user has a client self-service lead
+        const { getOrCreateClientSelfServiceLead } = await import('@/app/lib/actions/leads');
+        const leadRes = await getOrCreateClientSelfServiceLead();
+        const clientLeadId = (leadRes && 'lead' in leadRes && leadRes.lead) ? leadRes.lead.id : null;
+
         if (existing) {
             // Remove favorite
             const { error: deleteError } = await supabase
@@ -192,7 +200,18 @@ export async function togglePropertyFavorite(propertyId: string) {
                 return { success: false, error: 'Failed to remove favorite' };
             }
 
+            if (clientLeadId) {
+                await adminSupabase
+                    .from('lead_property_matches')
+                    .delete()
+                    .eq('lead_id', clientLeadId)
+                    .eq('property_id', propertyId)
+                    .eq('status', 'saved');
+            }
+
             revalidatePath(`/properties/${propertyId}`);
+            revalidatePath('/dashboard/client/ai-matching');
+            revalidatePath('/dashboard/client/favorites');
             return { success: true, isFavorited: false };
         } else {
             // Add favorite
@@ -203,14 +222,26 @@ export async function togglePropertyFavorite(propertyId: string) {
 
             if (insertError) {
                 console.error('Error adding favorite:', insertError);
-                // Check for RLS violation
                 if (insertError.code === '42501') {
                     return { success: false, error: 'Permission denied. Please refresh and try again.' };
                 }
                 return { success: false, error: 'Failed to add favorite' };
             }
 
+            if (clientLeadId) {
+                await adminSupabase
+                    .from('lead_property_matches')
+                    .upsert({
+                        lead_id: clientLeadId,
+                        property_id: propertyId,
+                        status: 'saved',
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'lead_id,property_id' });
+            }
+
             revalidatePath(`/properties/${propertyId}`);
+            revalidatePath('/dashboard/client/ai-matching');
+            revalidatePath('/dashboard/client/favorites');
             return { success: true, isFavorited: true };
         }
     } catch (e) {

@@ -51,14 +51,6 @@ const TABS = [
         hasCalendar: true
     },
     { 
-        id: 'to_recall', 
-        name: 'De resunat', 
-        icon: RefreshCw,
-        desc: 'Aici sunt cele verificate la care nu a raspuns inca proprietarul la telefon ca sa nu uiti sa-l resuni daca nu te suna inapoi',
-        color: 'text-cyan-600 border-cyan-600 bg-cyan-50',
-        hasCalendar: true
-    },
-    { 
         id: 'interested', 
         name: 'De Interes', 
         icon: Bookmark,
@@ -84,13 +76,6 @@ const TABS = [
         hasFlag: true
     },
     { 
-        id: 'thinking', 
-        name: 'Mă mai gândesc', 
-        icon: Clock,
-        desc: 'Aici le pui pe cele la care ai fost la vizionare dar inca te mai gandesti ca sa mai vezi si altele',
-        color: 'text-slate-600 border-slate-600 bg-slate-50'
-    },
-    { 
         id: 'negotiation', 
         name: 'Negociere', 
         icon: Handshake,
@@ -106,9 +91,9 @@ const TABS = [
     },
     { 
         id: 'not_interested', 
-        name: 'Nu mă interesează', 
-        icon: ThumbsDown,
-        desc: 'aici sunt cele la care ai fost la vizionare si sigur nu le vrei, dar le gasesti aici daca te razgandesti',
+        name: 'Mă mai gândesc', 
+        icon: Clock,
+        desc: 'aici sunt cele la care ai fost la vizionare si inca te mai gandesti ca sa mai vezi si altele, dar le gasesti aici daca te razgandesti',
         color: 'text-rose-600 border-rose-600 bg-rose-50'
     },
     { 
@@ -152,14 +137,6 @@ const TAB_COLORS: Record<string, { active: string; inactive: string; badgeActive
         iconActive: 'text-blue-100',
         iconInactive: 'text-blue-600'
     },
-    to_recall: {
-        active: 'bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-md shadow-cyan-600/30 border-cyan-500',
-        inactive: 'bg-cyan-50 hover:bg-cyan-100/80 text-cyan-950 border-cyan-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-cyan-200 text-cyan-950 font-black',
-        iconActive: 'text-cyan-100',
-        iconInactive: 'text-cyan-600'
-    },
     interested: {
         active: 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-md shadow-emerald-600/30 border-emerald-500',
         inactive: 'bg-emerald-50 hover:bg-emerald-100/80 text-emerald-950 border-emerald-200 font-bold',
@@ -183,14 +160,6 @@ const TAB_COLORS: Record<string, { active: string; inactive: string; badgeActive
         badgeInactive: 'bg-purple-200 text-purple-950 font-black',
         iconActive: 'text-purple-100',
         iconInactive: 'text-purple-600'
-    },
-    thinking: {
-        active: 'bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-md border-slate-600',
-        inactive: 'bg-slate-100 hover:bg-slate-200/80 text-slate-900 border-slate-300 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-slate-300 text-slate-950 font-black',
-        iconActive: 'text-slate-200',
-        iconInactive: 'text-slate-600'
     },
     negotiation: {
         active: 'bg-gradient-to-r from-orange-700 to-red-700 text-white shadow-md border-orange-600',
@@ -1202,10 +1171,10 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                                     <ThumbsDown className="w-3.5 h-3.5" /> Nu-mi place
                                                 </button>
 
-                                                {/* Calendar Button (for De Sunat, De Resunat, De Vizionat, Programate) */}
+                                                {/* Calendar Button (for De Sunat, De Vizionat, Programate) */}
                                                 {currentTabObj.hasCalendar && (
                                                     <button
-                                                        onClick={() => handleOpenCalendarModal(prop, activeTab === 'to_call' ? 'De Sunat' : activeTab === 'to_recall' ? 'De Resunat' : 'De Vizionat')}
+                                                        onClick={() => handleOpenCalendarModal(prop, activeTab === 'to_call' ? 'De Sunat' : 'De Vizionat')}
                                                         className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-sm cursor-pointer"
                                                     >
                                                         <CalendarDays className="w-3.5 h-3.5" /> Calendar
