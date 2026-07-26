@@ -10,15 +10,15 @@ import { getSystemLocations } from '@/app/lib/actions/admin-settings';
 import { TIMISOARA_AREAS, formatCityList, cleanCityName } from '@/app/lib/constants/locations';
 import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 
-export default function PropertySearchFilters({ basePath = '/properties', isAdmin = false }: { basePath?: string; isAdmin?: boolean }) {
+export default function PropertySearchFilters({ basePath = '/properties', isAdmin = false, defaultCollapsed = true }: { basePath?: string; isAdmin?: boolean; defaultCollapsed?: boolean }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Collapsible sections state
+    // Collapsible state
+    const [isMainExpanded, setIsMainExpanded] = useState(!defaultCollapsed);
     const [showMoreDetails, setShowMoreDetails] = useState(false);
     const [showAmenities, setShowAmenities] = useState(false);
     const [showAreaMap, setShowAreaMap] = useState(false);
-    const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
     // System locations state
     const [systemCities, setSystemCities] = useState<any[]>([]);
@@ -74,6 +74,22 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
         owner_phone: searchParams.get('owner_phone') || '',
         features: initialFeatures
     });
+
+    const activeFilterPills = useMemo(() => {
+        const pills: string[] = [];
+        if (filters.keywords) pills.push(`"${filters.keywords}"`);
+        if (filters.type) pills.push(filters.type);
+        if (filters.listing_type) pills.push(filters.listing_type);
+        if (filters.location_city) pills.push(filters.location_city);
+        if (filters.location_area) pills.push(filters.location_area);
+        if (filters.minPrice && filters.maxPrice) pills.push(`€${filters.minPrice} - €${filters.maxPrice}`);
+        else if (filters.minPrice) pills.push(`Min €${filters.minPrice}`);
+        else if (filters.maxPrice) pills.push(`Max €${filters.maxPrice}`);
+        if (filters.rooms) pills.push(`${filters.rooms}+ Rooms`);
+        if (filters.area) pills.push(`Min ${filters.area} m²`);
+        if (filters.features && filters.features.length > 0) pills.push(`${filters.features.length} features`);
+        return pills;
+    }, [filters]);
 
     const citiesOptions = useMemo(() => {
         if (!systemCities.length) return ['Timișoara', 'Arad', 'Cluj-Napoca', 'București', 'Oradea'];
@@ -260,20 +276,69 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
             </div>
 
             {/* Inner Content Card */}
-            <div className="relative bg-white rounded-2xl h-full z-10">
+            <div className="relative bg-white rounded-2xl h-full z-10 overflow-hidden shadow-sm">
 
-                {/* Mobile Filter Toggle Header */}
-                <button
-                    type="button"
-                    onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
-                    className="w-full px-5 py-4 flex items-center justify-between text-sm font-black text-slate-800 md:hidden transition-colors rounded-t-2xl hover:bg-slate-50 border-b border-slate-100"
+                {/* 1-Row Collapsible Header Card */}
+                <div
+                    onClick={() => setIsMainExpanded(!isMainExpanded)}
+                    className="w-full px-5 py-3.5 flex items-center justify-between cursor-pointer select-none transition-colors hover:bg-slate-50 rounded-2xl group"
                 >
-                    <span className="flex items-center gap-2">
-                        <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
-                        Choose Filters
-                    </span>
-                    {isMobileFiltersOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                </button>
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                            <SlidersHorizontal className="w-4.5 h-4.5" />
+                        </div>
+                        <div className="flex items-center gap-3 flex-wrap min-w-0">
+                            <span className="font-extrabold text-base text-slate-800 tracking-tight group-hover:text-indigo-600 transition-colors">
+                                Apply More Filters
+                            </span>
+
+                            {/* Active filter count / chips */}
+                            {activeFilterPills.length > 0 ? (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-indigo-200 shadow-sm">
+                                        {activeFilterPills.length} {activeFilterPills.length === 1 ? 'Filter' : 'Filters'} Active
+                                    </span>
+                                    <div className="hidden lg:flex items-center gap-1.5 overflow-hidden">
+                                        {activeFilterPills.slice(0, 3).map((pill, i) => (
+                                            <span key={i} className="bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded-md border border-slate-200/80 truncate max-w-[150px]">
+                                                {pill}
+                                            </span>
+                                        ))}
+                                        {activeFilterPills.length > 3 && (
+                                            <span className="text-slate-400 text-xs font-medium">+{activeFilterPills.length - 3} more</span>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <span className="text-xs font-semibold text-slate-400 hidden sm:inline-block">
+                                    Click to customize search options
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                        {activeFilterPills.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    clearFilters();
+                                }}
+                                className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200 transition-all mr-1"
+                            >
+                                Clear
+                            </button>
+                        )}
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-indigo-50 text-slate-500 group-hover:text-indigo-600 flex items-center justify-center transition-colors">
+                            {isMainExpanded ? (
+                                <ChevronUp className="w-5 h-5 transition-transform duration-300" />
+                            ) : (
+                                <ChevronDown className="w-5 h-5 transition-transform duration-300" />
+                            )}
+                        </div>
+                    </div>
+                </div>
 
                 {/* Save Search Modal */}
                 {isSaveModalOpen && (
@@ -320,8 +385,11 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                     />
                 )}
 
-                {/* HEADER / KEY FILTERS SECTION - "Always Visible" */}
-                <div className={`p-5 ${isMobileFiltersOpen ? 'block' : 'hidden md:block'}`}>
+                {/* EXPANDABLE FILTER CONTENT */}
+                {isMainExpanded && (
+                    <div className="border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                        {/* HEADER / KEY FILTERS SECTION */}
+                        <div className="p-5">
                     <div className="space-y-4">
 
                         {/* Grid of Main Inputs - Row 1 */}
@@ -510,7 +578,7 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                 </div>
 
                 {/* COLLAPSIBLE: More Details */}
-                <div className={`border-t border-slate-100 ${isMobileFiltersOpen ? 'block' : 'hidden md:block'}`}>
+                <div className="border-t border-slate-100">
                     <button
                         onClick={() => setShowMoreDetails(!showMoreDetails)}
                         className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-teal-600 hover:bg-teal-50 transition-colors group"
@@ -654,7 +722,7 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                 </div>
 
                 {/* COLLAPSIBLE: Amenities */}
-                <div className={`border-t border-slate-100 ${isMobileFiltersOpen ? 'block' : 'hidden md:block'}`}>
+                <div className="border-t border-slate-100">
                     <button
                         onClick={() => setShowAmenities(!showAmenities)}
                         className="w-full px-5 py-3 flex items-center justify-between text-sm font-bold text-amber-600 hover:bg-amber-50 transition-colors group"
@@ -702,6 +770,8 @@ export default function PropertySearchFilters({ basePath = '/properties', isAdmi
                         </div>
                     )}
                 </div>
+                    </div>
+                )}
             </div>
         </div>
     );
