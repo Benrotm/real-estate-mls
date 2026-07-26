@@ -450,13 +450,42 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [isSavingCalendar, setIsSavingCalendar] = useState(false);
     const [gcalExportUrl, setGcalExportUrl] = useState<string>('');
 
-    // Log client page visit
+    // Log client page visit and sync live credit balance from database
     useEffect(() => {
+        let isMounted = true;
+
+        const syncLiveCredits = async () => {
+            try {
+                const { getUserCredits } = await import('@/app/lib/actions/credits');
+                const res = await getUserCredits();
+                if (isMounted && res && 'credits' in res && typeof res.credits === 'number') {
+                    setCredits(res.credits);
+                }
+            } catch (err) {
+                console.error("Error syncing live credits:", err);
+            }
+        };
+
+        syncLiveCredits();
+
+        const handleFocus = () => {
+            syncLiveCredits();
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleFocus);
+
         logUserActivity({
             event_type: 'page_view',
             page_path: '/dashboard/client/ai-matching',
             description: 'Client a accesat tabul de AI Matching Self-Service'
         });
+
+        return () => {
+            isMounted = false;
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleFocus);
+        };
     }, []);
 
     const loadAISuggestions = async () => {

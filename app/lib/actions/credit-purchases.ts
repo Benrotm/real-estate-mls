@@ -194,7 +194,9 @@ export async function approvePurchase(purchaseId: string) {
     if (logTxError) return { error: logTxError.message };
 
     revalidatePath('/cont/plati');
+    revalidatePath('/dashboard/client/ai-matching');
     revalidatePath('/dashboard/admin/validare-plati');
+    revalidatePath('/dashboard');
     return { success: true };
 }
 

@@ -2,6 +2,7 @@
 
 import { createClient } from '../supabase/server';
 import { createAdminClient } from '../supabase/admin';
+import { revalidatePath } from 'next/cache';
 
 export async function getUserCredits() {
     const supabase = await createClient();
@@ -130,6 +131,11 @@ export async function deductUserCredits(amount: number, description: string = 'C
         }
     }
 
+    revalidatePath('/dashboard/client/ai-matching');
+    revalidatePath('/cont/plati');
+    revalidatePath('/cont/profil');
+    revalidatePath('/dashboard');
+
     return { success: true, remaining: newBalance };
 }
 
@@ -172,6 +178,11 @@ export async function grantUserCredits(userId: string, amount: number) {
             description: 'Credite acordate de admin',
             metadata: { approved_by: user.id }
         });
+
+    revalidatePath('/dashboard/client/ai-matching');
+    revalidatePath('/cont/plati');
+    revalidatePath('/cont/profil');
+    revalidatePath('/dashboard');
 
     return { success: true, newBalance };
 }
