@@ -341,10 +341,36 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
         return [];
     }, [prefCity, citiesListFull, allRawAreas]);
 
-    // PWA Install prompt state
+    // PWA Install prompt & Device states
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [showPWAInstructions, setShowPWAInstructions] = useState(false);
     const [showPWAModal, setShowPWAModal] = useState(false);
+    const [isIOSDevice, setIsIOSDevice] = useState(false);
+    const [isStandaloneApp, setIsStandaloneApp] = useState(false);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
+            setIsIOSDevice(isIOS);
+            setIsStandaloneApp(isStandalone);
+
+            const storageKey = `seen_imobum_welcome_${lead.id || lead.phone || 'client'}`;
+            const seen = localStorage.getItem(storageKey);
+            if (!seen) {
+                setShowWelcomeModal(true);
+            }
+        }
+    }, [lead.id, lead.phone]);
+
+    const handleDismissWelcomeModal = () => {
+        if (typeof window !== 'undefined') {
+            const storageKey = `seen_imobum_welcome_${lead.id || lead.phone || 'client'}`;
+            localStorage.setItem(storageKey, 'true');
+        }
+        setShowWelcomeModal(false);
+    };
 
     useEffect(() => {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -634,8 +660,97 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
     return (
         <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-2 md:pt-4 pb-24 space-y-6">
+            {/* First Time Welcome Pop-up Modal for Client Login */}
+            {showWelcomeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-slate-900 border-2 border-amber-500/50 text-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 relative overflow-hidden text-left">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl pointer-events-none" />
+                        
+                        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 rounded-2xl font-black shadow-lg shrink-0">
+                                    <Sparkles className="w-6 h-6 fill-current" />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-base sm:text-lg text-white">
+                                        Bine ai venit pe Imobum.com!
+                                    </h3>
+                                    <p className="text-xs text-slate-300 font-medium">Salvează datele și adaugă aplicația pe telefon pentru acces rapid</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleDismissWelcomeModal}
+                                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition-colors shrink-0"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Credentials Card inside Modal */}
+                        <div className="bg-slate-950 border border-indigo-500/30 rounded-2xl p-4 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
+                                    <Key className="w-4 h-4 text-yellow-400" />
+                                    <span>Datele Tale de Conectare</span>
+                                </div>
+                                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-[10px] font-black rounded uppercase">
+                                    📸 Fă Screenshot
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-black/60 p-3 rounded-xl border border-white/10 font-mono text-xs">
+                                <div>
+                                    <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Utilizator / Email</span>
+                                    <span className="text-white font-bold select-all">{lead.email || `${lead.phone?.replace(/\D/g, '')}@client.imobum.com`}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Parolă Autentificare</span>
+                                    <span className="text-yellow-400 font-bold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* App Shortcut Instructions inside Modal */}
+                        <div className="bg-slate-950 border border-orange-500/30 rounded-2xl p-4 space-y-2.5">
+                            <h4 className="font-extrabold text-xs text-orange-400 flex items-center gap-2">
+                                <Smartphone className="w-4 h-4" /> Cum revii pe site (Adaugă pe Ecran)
+                            </h4>
+
+                            {isStandaloneApp ? (
+                                <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+                                    <Check className="w-4 h-4" /> Aplicația este deja adăugată pe ecranul principal al telefonului tău!
+                                </p>
+                            ) : isIOSDevice ? (
+                                <div className="space-y-1.5 text-xs text-slate-200 bg-indigo-950/60 p-3 rounded-xl border border-indigo-500/20">
+                                    <p className="font-bold text-amber-300">📱 Pași pentru iPhone (Safari):</p>
+                                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
+                                        <li>Apasă pe butonul <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-bold">Partajare / Share ⎋</strong> din Safari.</li>
+                                        <li>Alege opțiunea <strong className="text-amber-300 font-bold">„Add to Home Screen / Adaugă la ecranul de pornire ⊕”</strong>.</li>
+                                        <li>Apasă pe <strong className="text-white font-bold">„Adaugă”</strong> în dreapta sus.</li>
+                                    </ol>
+                                </div>
+                            ) : (
+                                <div className="space-y-1.5 text-xs text-slate-200 bg-slate-900 p-3 rounded-xl border border-slate-800">
+                                    <p className="font-bold text-amber-300">📱 Pași pentru Android (Chrome):</p>
+                                    <p className="text-[11px] text-slate-300">
+                                        Apasă pe cele <strong className="text-white font-bold">3 puncte (⋮)</strong> din colțul dreapta sus și selectează <strong className="text-orange-400 font-bold">"Add to Home Screen / Adaugă pe ecranul principal"</strong>.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Action Dismiss Button */}
+                        <button
+                            onClick={handleDismissWelcomeModal}
+                            className="w-full py-3.5 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
+                        >
+                            <Check className="w-4.5 h-4.5" /> Am înțeles & Am salvat datele
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Collapsible Recommendation Message Header Box */}
-            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden transition-all">
+            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden transition-all space-y-4">
                 <div 
                     onClick={() => setIsRecommendationOpen(!isRecommendationOpen)}
                     className="flex items-center justify-between cursor-pointer select-none"
@@ -646,9 +761,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         </div>
                         <div>
                             <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
-                                Recomandări
+                                Recomandări & Acces Rapid Cont
                             </h2>
-                            <p className="text-xs text-orange-100 font-medium">Sfaturi importante pentru căutarea ta pe piața imobiliară</p>
+                            <p className="text-xs text-orange-100 font-medium">Datele de autentificare, shortcut-ul aplicației și sfaturile AI pentru căutarea ta</p>
                         </div>
                     </div>
 
@@ -658,8 +773,94 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </div>
 
                 {isRecommendationOpen && (
-                    <div className="mt-4 pt-4 border-t border-white/20 text-xs leading-relaxed text-orange-50 font-medium bg-black/20 p-4 rounded-xl backdrop-blur-sm border border-white/10 whitespace-pre-line animate-in fade-in duration-200">
-                        {recommendation.text}
+                    <div className="space-y-4 pt-2 animate-in fade-in duration-200">
+                        {/* Upper Section 1: Datele Tale de Autentificare */}
+                        <div className="bg-slate-950/80 border border-amber-400/30 text-white rounded-xl p-4 shadow-md space-y-2.5">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 bg-amber-500/20 text-yellow-400 rounded-lg border border-amber-500/30">
+                                        <Key className="w-4 h-4 text-yellow-300" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-extrabold text-xs sm:text-sm text-white">
+                                            Datele Tale de Autentificare
+                                        </h4>
+                                        <p className="text-[11px] text-slate-300">Păstrează aceste date pentru a te reconecta oricând pe Imobum.com</p>
+                                    </div>
+                                </div>
+                                <div className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[10px] font-extrabold uppercase shrink-0">
+                                    📸 Fă Screenshot
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-black/50 p-3 rounded-lg border border-white/10 font-mono text-xs">
+                                <div>
+                                    <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">User / Email Autentificare</span>
+                                    <span className="text-white font-bold select-all">{lead.email || `${lead.phone?.replace(/\D/g, '')}@client.imobum.com`}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Parolă Autentificare</span>
+                                    <span className="text-yellow-400 font-bold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Upper Section 2: Adaugă Aplicația pe Ecranul Telefonului Tău */}
+                        <div className="bg-slate-950/80 border border-orange-500/30 text-white rounded-xl p-4 shadow-md space-y-3">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 bg-orange-600/30 text-orange-400 rounded-lg border border-orange-500/30">
+                                        <Smartphone className="w-4 h-4 text-orange-300" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-extrabold text-xs sm:text-sm text-white">
+                                            Adaugă Aplicația pe Ecranul Telefonului
+                                        </h4>
+                                        <p className="text-[11px] text-slate-300">Acces instant cu o singură atingere pentru a verifica noile potriviri AI</p>
+                                    </div>
+                                </div>
+
+                                {!isStandaloneApp && (
+                                    <button
+                                        onClick={handleInstallPWA}
+                                        className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 rounded-lg text-xs font-extrabold flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer shrink-0"
+                                    >
+                                        <Smartphone className="w-4 h-4 fill-current" /> Adaugă Shortcut pe Ecran
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Device specific instruction text inside section */}
+                            {isStandaloneApp ? (
+                                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-xs text-emerald-300 flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                                    <span>Aplicația este deja adăugată pe ecranul principal al telefonului tău!</span>
+                                </div>
+                            ) : isIOSDevice ? (
+                                <div className="p-3 bg-indigo-950/80 border border-indigo-500/30 rounded-lg text-xs text-indigo-100 space-y-1.5">
+                                    <p className="font-extrabold text-amber-300 text-xs flex items-center gap-1.5">
+                                        📱 Instrucțiuni pentru iPhone (Safari):
+                                    </p>
+                                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-200">
+                                        <li>Apasă pe butonul <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-bold">Partajare / Share ⎋</strong> din josul ecranului Safari.</li>
+                                        <li>Selectează opțiunea <strong className="text-amber-300 font-bold">„Add to Home Screen / Adaugă la ecranul de pornire ⊕”</strong>.</li>
+                                        <li>Apasă pe <strong className="text-white font-bold">„Adaugă”</strong> în dreapta sus.</li>
+                                    </ol>
+                                </div>
+                            ) : (
+                                <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 space-y-1.5">
+                                    <p className="font-bold text-amber-300">📱 Pași pentru Android (Chrome / Browser):</p>
+                                    <p className="text-[11px] text-slate-300">
+                                        Apasă pe cele <strong className="text-white">3 puncte (⋮)</strong> din colțul dreapta sus al browserului și alege <strong className="text-orange-400 font-bold">"Add to Home Screen / Install app"</strong>.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Lower Section 3: Recomandări imobiliare */}
+                        <div className="text-xs leading-relaxed text-orange-50 font-medium bg-black/30 p-4 rounded-xl backdrop-blur-sm border border-white/10 whitespace-pre-line">
+                            {recommendation.text}
+                        </div>
                     </div>
                 )}
             </div>
