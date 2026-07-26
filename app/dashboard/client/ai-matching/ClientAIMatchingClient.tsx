@@ -666,6 +666,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 )}
             </div>
 
+            {/* Dropdown / Collapsible Section: Criteriile Tale de Căutare */}
             {/* User AI Credits Balance Top Bar */}
             <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
                 <div className="flex items-center gap-3">
@@ -713,114 +714,6 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </div>
             )}
 
-            {/* Credentials & Screenshot Notice Box */}
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-indigo-500/30 text-white rounded-2xl p-5 shadow-lg space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-indigo-500/20 text-indigo-400 rounded-xl border border-indigo-500/30">
-                            <Key className="w-5 h-5 text-yellow-400" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                                Datele Tale de Autentificare
-                            </h4>
-                            <p className="text-xs text-slate-300 font-medium">Păstrează aceste date pentru a te reconecta oricând pe Imobum.com</p>
-                        </div>
-                    </div>
-                    <div className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shrink-0">
-                        📸 Fă Screenshot
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/40 p-3.5 rounded-xl border border-white/10 font-mono text-xs">
-                    <div>
-                        <span className="text-[10px] text-slate-400 block font-sans font-semibold uppercase">User / Email Autentificare</span>
-                        <span className="text-white font-bold select-all">{lead.email || `${lead.phone?.replace(/\D/g, '')}@client.imobum.com`}</span>
-                    </div>
-                    <div>
-                        <span className="text-[10px] text-slate-400 block font-sans font-semibold uppercase">Parolă Autentificare</span>
-                        <span className="text-yellow-400 font-bold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-amber-200/90 font-medium bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
-                    <span>💡</span>
-                    <span>Recomandare: Salvează o captură de ecran (Screenshot) pe telefon și adaugă shortcut-ul pe ecranul principal pentru a nu pierde accesul! Poți schimba parola oricând din profilul tău.</span>
-                </div>
-            </div>
-
-            {/* App Shortcut Banner Box */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xl border border-slate-700 space-y-4">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-orange-600 text-white rounded-xl font-bold shrink-0 shadow-lg shadow-orange-600/30">
-                            <Smartphone className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-base text-white">
-                                Adaugă Aplicația pe Ecranul Telefonului Tău
-                            </h3>
-                            <p className="text-xs text-slate-300 font-medium mt-1">
-                                Salvează shortcut-ul pe ecranul principal al telefonului pentru acces rapid, apoi apasă butonul <strong className="text-orange-400 font-bold">"Caută cu AI"</strong>.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-                        <button
-                            onClick={handleInstallPWA}
-                            className="px-6 py-3.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/30 border border-yellow-300/80 active:scale-95 cursor-pointer w-full sm:w-auto animate-pulse"
-                        >
-                            <Smartphone className="w-4.5 h-4.5 text-slate-950 fill-current" />
-                            Adaugă Shortcut pe Ecran
-                        </button>
-                    </div>
-                </div>
-
-                {showPWAInstructions && (
-                    <div className="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-300 space-y-2 bg-slate-950/60 p-4 rounded-xl border border-slate-800 animate-in fade-in duration-200">
-                        <p className="font-bold text-white flex items-center gap-1.5 text-sm">
-                            <Sparkles className="w-4 h-4 text-yellow-400" />
-                            Cum adaugi aplicația pe ecranul principal:
-                        </p>
-                        <ol className="list-decimal list-inside space-y-1.5 text-slate-300">
-                            <li>Apasă pe meniul browserului din colțul ecranului (iconița <strong className="text-white">⋮</strong> sau <strong className="text-white">Share</strong>).</li>
-                            <li>Selectează opțiunea <strong className="text-orange-400 font-bold">"Install and create shortcut"</strong> sau <strong className="text-orange-400 font-bold">"Adaugă la ecranul de pornire" / "Add to Home Screen"</strong>.</li>
-                            <li>Confirmă adăugarea pentru acces instant pe ecranul telefonului.</li>
-                        </ol>
-                    </div>
-                )}
-            </div>
-
-            {/* Pending Approval Banner */}
-            {!isApproved && (
-                <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md animate-in fade-in">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-amber-500 text-slate-950 rounded-xl font-black shrink-0">
-                            <Clock className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h3 className="font-extrabold text-slate-900 text-base">Cont în Curs de Aprobare & Configurare AI</h3>
-                            <p className="text-sm font-semibold text-slate-700 mt-0.5">
-                                Imediat vei avea setările făcute de un operator uman. Te rugăm să revii în cel mai scurt timp!
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 shrink-0">
-                        <button
-                            onClick={handleInstantActivateAI}
-                            disabled={isActivatingInstant}
-                            className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-lg transition-all shrink-0 active:scale-95 cursor-pointer"
-                        >
-                            <Zap className="w-4 h-4 text-yellow-300 fill-current" />
-                            {isActivatingInstant ? 'Se activează...' : `Activează instant cu AI (${instantAiCost} CR)`}
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Dropdown / Collapsible Section: Criteriile Tale de Căutare */}
             <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
                 <div 
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
