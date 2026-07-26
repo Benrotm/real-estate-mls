@@ -5,7 +5,7 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -687,7 +687,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         </div>
 
                         {/* Credentials Card inside Modal */}
-                        <div className="bg-slate-950 border border-indigo-500/30 rounded-2xl p-4 space-y-2.5">
+                        <div className="bg-slate-950 border border-indigo-500/30 rounded-2xl p-4 space-y-3 text-left">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
                                     <Key className="w-4 h-4 text-yellow-400" />
@@ -697,6 +697,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     📸 Fă Screenshot
                                 </span>
                             </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-black/60 p-3 rounded-xl border border-white/10 font-mono text-xs">
                                 <div>
                                     <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Utilizator / Email</span>
@@ -706,6 +707,21 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Parolă Autentificare</span>
                                     <span className="text-yellow-400 font-bold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
                                 </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-slate-300 font-sans">
+                                <p className="text-[11px] leading-relaxed text-slate-300">
+                                    💡 <strong>Schimbare Parolă:</strong> Îți poți schimba sau vedea parola oricând accesând profilul tău din meniul superior (dreapta sus).
+                                </p>
+                                <Link
+                                    href="/cont/profil"
+                                    className="px-3 py-1.5 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white rounded-xl border border-slate-700/80 font-bold text-[11px] flex items-center gap-2 shadow-sm transition-all shrink-0 cursor-pointer"
+                                >
+                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black border border-orange-400">
+                                        <User className="w-3 h-3" />
+                                    </div>
+                                    <span>Dreapta sus ➔ Profilul Tău</span>
+                                </Link>
                             </div>
                         </div>
 
@@ -802,6 +818,21 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Parolă Autentificare</span>
                                     <span className="text-yellow-400 font-bold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
                                 </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-slate-300 font-sans">
+                                <p className="text-[11px] leading-relaxed text-slate-300">
+                                    💡 <strong>Schimbare Parolă:</strong> Îți poți schimba sau vedea parola oricând accesând profilul tău din meniul superior (dreapta sus).
+                                </p>
+                                <Link
+                                    href="/cont/profil"
+                                    className="px-3 py-1.5 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white rounded-xl border border-slate-700/80 font-bold text-[11px] flex items-center gap-2 shadow-sm transition-all shrink-0 cursor-pointer"
+                                >
+                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black border border-orange-400">
+                                        <User className="w-3 h-3" />
+                                    </div>
+                                    <span>Dreapta sus ➔ Profilul Tău</span>
+                                </Link>
                             </div>
                         </div>
 
