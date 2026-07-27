@@ -5,7 +5,7 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck, Scan
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -661,50 +661,63 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     return (
         <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-2 md:pt-4 pb-24 space-y-6">
             {/* First Time Welcome Pop-up Modal for Client Login */}
+            {/* First Time Welcome Pop-up Modal for Client Login */}
             {showWelcomeModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-slate-900 border-2 border-amber-500/50 text-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 relative overflow-hidden text-left">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl pointer-events-none" />
                         
-                        <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 rounded-2xl font-black shadow-lg shrink-0">
-                                    <Sparkles className="w-6 h-6 fill-current" />
-                                </div>
-                                <div>
-                                    <h3 className="font-extrabold text-base sm:text-lg text-white">
-                                        Bine ai venit pe Imobum.com!
-                                    </h3>
-                                    <p className="text-xs text-slate-300 font-medium">Salvează datele și adaugă aplicația pe telefon pentru acces rapid</p>
-                                </div>
-                            </div>
+                        <div className="relative border-b border-slate-800 pb-4">
                             <button
                                 onClick={handleDismissWelcomeModal}
-                                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition-colors shrink-0"
+                                className="absolute top-0 right-0 p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition-colors shrink-0 cursor-pointer"
                             >
                                 <X className="w-5 h-5" />
                             </button>
+                            
+                            <div className="text-center space-y-2 pr-8">
+                                <div className="flex items-center justify-center gap-2">
+                                    <div className="p-2 bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 rounded-xl font-black shadow-lg">
+                                        <Sparkles className="w-5 h-5 fill-current" />
+                                    </div>
+                                    <h3 className="font-extrabold text-base sm:text-lg text-white">
+                                        Bine ai venit pe Imobum.com!
+                                    </h3>
+                                </div>
+                                <p className="text-xs text-slate-300 font-medium max-w-sm mx-auto">
+                                    Salvează datele și adaugă aplicația pe telefon pentru acces rapid
+                                </p>
+                                
+                                {/* 1) Centered larger Fă Screenshot Acum button with Scan icon */}
+                                <div className="pt-2 flex justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            alert('Fă o captură de ecran (screenshot) pe telefonul tău pentru a salva aceste date!');
+                                        }}
+                                        className="px-5 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 border border-amber-300/80 transition-all cursor-pointer transform hover:scale-105 active:scale-95"
+                                    >
+                                        <Scan className="w-4 h-4 text-slate-950" />
+                                        <span>Fă Screenshot Acum</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Credentials Card inside Modal */}
+                        {/* 2) Credentials Card inside Modal (Username : & Parolă : in 2 columns) */}
                         <div className="bg-slate-950 border border-indigo-500/30 rounded-2xl p-4 space-y-3 text-left">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
-                                    <Key className="w-4 h-4 text-yellow-400" />
-                                    <span>Datele Tale de Conectare</span>
-                                </div>
-                                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-[10px] font-black rounded uppercase">
-                                    📸 Fă Screenshot
-                                </span>
+                            <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
+                                <Key className="w-4 h-4 text-yellow-400" />
+                                <span>Datele Tale de Conectare</span>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-black/60 p-3 rounded-xl border border-white/10 font-mono text-xs">
+                            <div className="grid grid-cols-2 gap-3 bg-black/60 p-3 rounded-xl border border-white/10 font-mono text-xs">
                                 <div>
-                                    <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Utilizator / Email</span>
-                                    <span className="text-white font-bold select-all">{lead.email || `${lead.phone?.replace(/\D/g, '')}@client.imobum.com`}</span>
+                                    <span className="text-[10px] text-slate-400 block font-sans font-bold uppercase mb-0.5">Username :</span>
+                                    <span className="text-white font-bold select-all break-all">{lead.email || `${lead.phone?.replace(/\D/g, '')}@client.imobum.com`}</span>
                                 </div>
                                 <div>
-                                    <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Parolă Autentificare</span>
+                                    <span className="text-[10px] text-slate-400 block font-sans font-bold uppercase mb-0.5">Parolă :</span>
                                     <span className="text-yellow-400 font-bold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
                                 </div>
                             </div>
@@ -725,31 +738,59 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             </div>
                         </div>
 
-                        {/* App Shortcut Instructions inside Modal */}
-                        <div className="bg-slate-950 border border-orange-500/30 rounded-2xl p-4 space-y-2.5">
+                        {/* 3) & 4) App Shortcut Instructions (Title: Adaugă Pe Ecranul Telefonului Aplicatia) */}
+                        <div className="bg-slate-950 border border-orange-500/30 rounded-2xl p-4 space-y-3 text-left">
                             <h4 className="font-extrabold text-xs text-orange-400 flex items-center gap-2">
-                                <Smartphone className="w-4 h-4" /> Cum revii pe site (Adaugă pe Ecran)
+                                <Smartphone className="w-4 h-4 text-orange-400" /> Adaugă Pe Ecranul Telefonului Aplicatia
                             </h4>
 
                             {isStandaloneApp ? (
-                                <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
-                                    <Check className="w-4 h-4" /> Aplicația este deja adăugată pe ecranul principal al telefonului tău!
+                                <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5 bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/20">
+                                    <Check className="w-4 h-4 text-emerald-400" /> Aplicația este deja adăugată pe ecranul principal al telefonului tău!
                                 </p>
-                            ) : isIOSDevice ? (
-                                <div className="space-y-1.5 text-xs text-slate-200 bg-indigo-950/60 p-3 rounded-xl border border-indigo-500/20">
-                                    <p className="font-bold text-amber-300">📱 Pași pentru iPhone (Safari):</p>
-                                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
-                                        <li>Apasă pe butonul <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-bold">Partajare / Share ⎋</strong> din Safari.</li>
-                                        <li>Alege opțiunea <strong className="text-amber-300 font-bold">„Add to Home Screen / Adaugă la ecranul de pornire ⊕”</strong>.</li>
-                                        <li>Apasă pe <strong className="text-white font-bold">„Adaugă”</strong> în dreapta sus.</li>
-                                    </ol>
-                                </div>
                             ) : (
-                                <div className="space-y-1.5 text-xs text-slate-200 bg-slate-900 p-3 rounded-xl border border-slate-800">
-                                    <p className="font-bold text-amber-300">📱 Pași pentru Android (Chrome):</p>
-                                    <p className="text-[11px] text-slate-300">
-                                        Apasă pe cele <strong className="text-white font-bold">3 puncte (⋮)</strong> din colțul dreapta sus și selectează <strong className="text-orange-400 font-bold">"Add to Home Screen / Adaugă pe ecranul principal"</strong>.
-                                    </p>
+                                <div className="space-y-2 text-xs text-slate-200">
+                                    {deferredPrompt && (
+                                        <button
+                                            type="button"
+                                            onClick={handleInstallPWA}
+                                            className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-500 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md mb-2 transition-all cursor-pointer"
+                                        >
+                                            <Smartphone className="w-4 h-4" /> Adaugă Pe Ecran Cu Un Click
+                                        </button>
+                                    )}
+
+                                    <div className="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                                        <p className="font-bold text-amber-300 text-xs">Cum adaugi pe Ecran?</p>
+                                        
+                                        {isIOSDevice ? (
+                                            <ol className="space-y-1.5 text-[11px] text-slate-300 font-medium">
+                                                <li className="flex items-start gap-1.5">
+                                                    <span className="font-bold text-amber-400 shrink-0">1)</span>
+                                                    <span>Apasă pe meniul browserului — butonul <strong className="text-white bg-slate-800 px-1 py-0.5 rounded border border-slate-700">Partajare / Share ⎋</strong> din Safari.</span>
+                                                </li>
+                                                <li className="flex items-start gap-1.5">
+                                                    <span className="font-bold text-amber-400 shrink-0">2)</span>
+                                                    <span>Derulează și selectează <strong className="text-amber-300 font-bold">„Add to Home Screen / Adaugă la ecranul de pornire ⊕”</strong>.</span>
+                                                </li>
+                                                <li className="flex items-start gap-1.5">
+                                                    <span className="font-bold text-amber-400 shrink-0">3)</span>
+                                                    <span>Apasă pe <strong className="text-white font-bold">„Adaugă”</strong> în colțul dreapta sus.</span>
+                                                </li>
+                                            </ol>
+                                        ) : (
+                                            <ol className="space-y-1.5 text-[11px] text-slate-300 font-medium">
+                                                <li className="flex items-start gap-1.5">
+                                                    <span className="font-bold text-amber-400 shrink-0">1)</span>
+                                                    <span>Apasă pe meniul browserului — cele <strong className="text-white font-bold">3 puncte (⋮)</strong> din colțul dreapta sus.</span>
+                                                </li>
+                                                <li className="flex items-start gap-1.5">
+                                                    <span className="font-bold text-amber-400 shrink-0">2)</span>
+                                                    <span>Selectează: <strong className="text-orange-400 font-bold">Adaugă pe ecranul principal / Add to Home Screen</strong>.</span>
+                                                </li>
+                                            </ol>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
