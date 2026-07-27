@@ -761,25 +761,25 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             )}
 
             {/* Collapsible Recommendation Message Header Box */}
-            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-3.5 sm:p-4 shadow-md relative overflow-hidden transition-all space-y-3">
+            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl px-5 py-3 shadow-md relative overflow-hidden transition-all space-y-3">
                 <div 
                     onClick={() => setIsRecommendationOpen(!isRecommendationOpen)}
                     className="flex items-center justify-between cursor-pointer select-none"
                 >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                         <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                            <Sparkles className="w-4 h-4 text-yellow-300 fill-current" />
+                            <Sparkles className="w-5 h-5 text-yellow-300 fill-current" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold tracking-tight flex items-center gap-2">
+                            <h2 className="text-sm sm:text-base font-semibold tracking-tight flex items-center gap-2">
                                 Recomandări & Acces Rapid Cont
                             </h2>
-                            <p className="text-xs text-orange-100 font-medium">Datele de autentificare, shortcut-ul aplicației și sfaturile AI</p>
+                            <p className="text-[11px] text-orange-100 font-medium">Datele de autentificare, shortcut-ul aplicației și sfaturile AI</p>
                         </div>
                     </div>
 
-                    <div className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
-                        {isRecommendationOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    <div className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
+                        {isRecommendationOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </div>
                 </div>
 
@@ -892,20 +892,20 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             </div>
 
             {/* Collapsible Section: Criteriile Tale de Căutare */}
-            <div className="bg-white rounded-2xl shadow-md border border-indigo-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
                 <div 
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
-                    className="px-6 py-4.5 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 border-b border-indigo-900/50 flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/90 transition-all"
+                    className="px-5 py-3 bg-slate-900 text-white flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/90 transition-all border-b border-slate-800"
                 >
-                    <div className="flex items-center gap-3.5">
-                        <div className="p-2.5 bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 rounded-xl shadow-md shadow-orange-500/20 font-semibold shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/30 font-semibold shrink-0">
                             <SlidersHorizontal className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-white text-base flex items-center gap-2 tracking-tight">
+                            <h3 className="font-semibold text-white text-sm sm:text-base flex items-center gap-2 tracking-tight">
                                 Criteriile Tale de Căutare
                             </h3>
-                            <p className="text-xs text-indigo-200/80 font-medium">De aici modifici criteriile tale de cautare pentru AI</p>
+                            <p className="text-[11px] text-slate-400 font-medium">De aici modifici criteriile tale de cautare pentru AI</p>
                         </div>
                     </div>
                     <div className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
