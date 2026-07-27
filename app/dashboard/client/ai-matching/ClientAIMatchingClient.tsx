@@ -1211,7 +1211,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
             {/* The Tabs Navigation with Icons & Custom Colored Badges (Wrapped on 2 rows) */}
             <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center justify-start">
+                <div className="flex flex-wrap gap-1 sm:gap-1.5 items-center justify-start">
                     {TABS.map(tab => {
                         const count = getTabProperties(tab.id).length;
                         const isActive = activeTab === tab.id;
@@ -1229,13 +1229,13 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-2.5 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                                className={`px-2 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer border ${
                                     isActive ? colors.active : colors.inactive
                                 }`}
                             >
                                 {IconComponent && <IconComponent className={`w-3.5 h-3.5 ${isActive ? colors.iconActive : colors.iconInactive}`} />}
                                 <span>{tab.name}</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] ${
+                                <span className={`px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] ${
                                     isActive ? colors.badgeActive : colors.badgeInactive
                                 }`}>
                                     {count}
