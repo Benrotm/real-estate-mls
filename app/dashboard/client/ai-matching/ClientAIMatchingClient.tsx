@@ -33,173 +33,126 @@ const TABS = [
         name: 'AI Matching', 
         icon: Sparkles,
         desc: 'Selectate de AI pentru tine după criteriile tale - Intră zilnic sau de mai multe ori aici și dă refresh să vezi ce a apărut nou între timp. Important: Apasă pe icoana Thumb Down - Nu îmi plac sau Favorite pentru ca data viitoare când vrei să verifici ce a apărut nou pe piață să le vezi mai ușor.',
-        color: 'text-orange-600 border-orange-600 bg-orange-50'
+        color: 'text-orange-600 border-orange-600 bg-orange-50 font-semibold'
     },
     { 
         id: 'saved', 
         name: 'Favorite', 
         icon: Heart,
-        desc: 'Astea mi-ar putea place, verifica detaliile dupa ce le selectezi pe toate care ti se pare ca ar putea sa-ti placa',
-        color: 'text-amber-600 border-amber-600 bg-amber-50'
+        desc: 'Astea mi-ar putea plăcea, verifică detaliile după ce le selectezi pe toate care ți se par interesante.',
+        color: 'text-amber-600 border-amber-600 bg-amber-50 font-semibold'
     },
     { 
-        id: 'to_call', 
-        name: 'De Sunat', 
-        icon: PhoneCall,
-        desc: 'Aici sunt cele pe care le-ai verificat in detaliile din descriere si vrei sa vorbesti cu proprietarul',
-        color: 'text-blue-600 border-blue-600 bg-blue-50',
-        hasCalendar: true
-    },
-    { 
-        id: 'interested', 
-        name: 'De Interes', 
+        id: 'de_verificat', 
+        name: 'De Verificat', 
         icon: Bookmark,
-        desc: 'aici sunt cele care te intereseaza si ai reusit sa vorbesti deja cu proprietarul dar inca nu sti ce sa faci - adica le ti de backup daca nu gasesti ceva mai interesant',
-        color: 'text-emerald-600 border-emerald-600 bg-emerald-50'
+        desc: 'Aici sunt proprietățile pe care le-ai verificat în detalii și dorești să vorbești cu proprietarul sau să le ții de interes.',
+        color: 'text-blue-600 border-blue-600 bg-blue-50 font-semibold',
+        hasCalendar: true
     },
     { 
         id: 'to_visit', 
         name: 'De Vizionat', 
         icon: Eye,
-        desc: 'aici le pui pe cele care sigur vrei sa le vezi dar inca nu ai stabilit vizionarea',
-        color: 'text-indigo-600 border-indigo-600 bg-indigo-50',
+        desc: 'Aici le pui pe cele care sigur vrei să le vezi.',
+        color: 'text-indigo-600 border-indigo-600 bg-indigo-50 font-semibold',
         hasCalendar: true,
         hasFlag: true
-    },
-    { 
-        id: 'visit_scheduled', 
-        name: 'Vizionări Stabilite', 
-        icon: CalendarDays,
-        desc: 'Aici sunt cele pe care le-ai programat la Vizionare',
-        color: 'text-purple-600 border-purple-600 bg-purple-50',
-        hasCalendar: true,
-        hasFlag: true
-    },
-    { 
-        id: 'negotiation', 
-        name: 'Negociere', 
-        icon: Handshake,
-        desc: 'Aici le pui pe cele la care ai fost la vizionare si vrei sa negociezi cu proprietarul sau negociezi deja',
-        color: 'text-orange-600 border-orange-600 bg-orange-50'
     },
     { 
         id: 'offer_made', 
         name: 'Oferte făcute', 
         icon: Coins,
-        desc: 'Aici găsești proprietățile la care ai trimis o ofertă de preț sau ai negociat cu proprietarul',
-        color: 'text-emerald-700 border-emerald-600 bg-emerald-50 font-bold'
+        desc: 'Aici găsești proprietățile la care ai trimis o ofertă de preț sau ai negociat cu proprietarul.',
+        color: 'text-emerald-700 border-emerald-600 bg-emerald-50 font-semibold'
     },
     { 
         id: 'not_interested', 
         name: 'Mă mai gândesc', 
         icon: Clock,
-        desc: 'aici sunt cele la care ai fost la vizionare si inca te mai gandesti ca sa mai vezi si altele, dar le gasesti aici daca te razgandesti',
-        color: 'text-rose-600 border-rose-600 bg-rose-50'
+        desc: 'Aici sunt cele la care ai fost la vizionare și încă te mai gândești, dar le găsești aici dacă te răzgândești.',
+        color: 'text-rose-600 border-rose-600 bg-rose-50 font-semibold'
     },
     { 
         id: 'dismissed', 
         name: 'Nu îmi plac', 
         icon: XCircle,
-        desc: 'Aici sunt cele la care le-ai dat "Nu se potrivesc" din ce a selectat AI-ul initial',
-        color: 'text-gray-600 border-gray-600 bg-gray-50'
+        desc: 'Aici sunt cele la care le-ai dat "Nu se potrivesc" din ce a selectat AI-ul inițial.',
+        color: 'text-gray-600 border-gray-600 bg-gray-50 font-semibold'
     },
     { 
         id: 'winner', 
         name: 'Câștigător', 
         icon: Award,
-        desc: 'Felicitari !!! Aici e cel pe care l-ai luat, te rugam sa il pui aici pentru ca el sa fie sters din baza de date ca sa nu mai apara si la altii - ca si tu te-ai saturat sa auzi "S-a dat" :) - Iti Multumim :)',
-        color: 'text-yellow-600 border-yellow-600 bg-yellow-50 font-bold'
+        desc: 'Felicitări! Aici este proprietatea pe care ai ales-o.',
+        color: 'text-amber-600 border-amber-600 bg-amber-50 font-semibold'
     }
 ];
 
 const TAB_COLORS: Record<string, { active: string; inactive: string; badgeActive: string; badgeInactive: string; iconActive: string; iconInactive: string }> = {
     curate: {
-        active: 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-600/30 border-orange-500',
-        inactive: 'bg-orange-50 hover:bg-orange-100/80 text-orange-950 border-orange-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-orange-200 text-orange-950 font-black',
+        active: 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-600/30 border-orange-500 font-semibold',
+        inactive: 'bg-orange-50 hover:bg-orange-100/80 text-orange-950 border-orange-200 font-semibold',
+        badgeActive: 'bg-white/30 text-white font-semibold',
+        badgeInactive: 'bg-orange-200 text-orange-950 font-semibold',
         iconActive: 'text-yellow-300 fill-current',
         iconInactive: 'text-orange-600'
     },
     saved: {
-        active: 'bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-md shadow-amber-500/30 border-amber-400',
-        inactive: 'bg-amber-50 hover:bg-amber-100/80 text-amber-950 border-amber-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-amber-200 text-amber-950 font-black',
+        active: 'bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-md shadow-amber-500/30 border-amber-400 font-semibold',
+        inactive: 'bg-amber-50 hover:bg-amber-100/80 text-amber-950 border-amber-200 font-semibold',
+        badgeActive: 'bg-white/30 text-white font-semibold',
+        badgeInactive: 'bg-amber-200 text-amber-950 font-semibold',
         iconActive: 'text-amber-100 fill-current',
         iconInactive: 'text-amber-600'
     },
-    to_call: {
-        active: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 border-blue-500',
-        inactive: 'bg-blue-50 hover:bg-blue-100/80 text-blue-950 border-blue-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-blue-200 text-blue-950 font-black',
+    de_verificat: {
+        active: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 border-blue-500 font-semibold',
+        inactive: 'bg-blue-50 hover:bg-blue-100/80 text-blue-950 border-blue-200 font-semibold',
+        badgeActive: 'bg-white/30 text-white font-semibold',
+        badgeInactive: 'bg-blue-200 text-blue-950 font-semibold',
         iconActive: 'text-blue-100',
         iconInactive: 'text-blue-600'
     },
-    interested: {
-        active: 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-md shadow-emerald-600/30 border-emerald-500',
-        inactive: 'bg-emerald-50 hover:bg-emerald-100/80 text-emerald-950 border-emerald-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-emerald-200 text-emerald-950 font-black',
-        iconActive: 'text-emerald-100',
-        iconInactive: 'text-emerald-600'
-    },
     to_visit: {
-        active: 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-600/30 border-violet-500',
-        inactive: 'bg-violet-50 hover:bg-violet-100/80 text-violet-950 border-violet-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-violet-200 text-violet-950 font-black',
+        active: 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-600/30 border-violet-500 font-semibold',
+        inactive: 'bg-violet-50 hover:bg-violet-100/80 text-violet-950 border-violet-200 font-semibold',
+        badgeActive: 'bg-white/30 text-white font-semibold',
+        badgeInactive: 'bg-violet-200 text-violet-950 font-semibold',
         iconActive: 'text-violet-100',
         iconInactive: 'text-violet-600'
     },
-    visit_scheduled: {
-        active: 'bg-gradient-to-r from-purple-700 to-fuchsia-700 text-white shadow-md shadow-purple-700/30 border-purple-600',
-        inactive: 'bg-purple-50 hover:bg-purple-100/80 text-purple-950 border-purple-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-purple-200 text-purple-950 font-black',
-        iconActive: 'text-purple-100',
-        iconInactive: 'text-purple-600'
-    },
-    negotiation: {
-        active: 'bg-gradient-to-r from-orange-700 to-red-700 text-white shadow-md border-orange-600',
-        inactive: 'bg-orange-100/80 hover:bg-orange-200/80 text-orange-950 border-orange-300 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-orange-300 text-orange-950 font-black',
-        iconActive: 'text-orange-100',
-        iconInactive: 'text-orange-700'
-    },
     offer_made: {
-        active: 'bg-gradient-to-r from-teal-700 to-emerald-800 text-white shadow-md border-teal-600',
-        inactive: 'bg-teal-50 hover:bg-teal-100/80 text-teal-950 border-teal-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-teal-200 text-teal-950 font-black',
+        active: 'bg-gradient-to-r from-teal-700 to-emerald-800 text-white shadow-md border-teal-600 font-semibold',
+        inactive: 'bg-teal-50 hover:bg-teal-100/80 text-teal-950 border-teal-200 font-semibold',
+        badgeActive: 'bg-white/30 text-white font-semibold',
+        badgeInactive: 'bg-teal-200 text-teal-950 font-semibold',
         iconActive: 'text-teal-100',
         iconInactive: 'text-teal-700'
     },
     not_interested: {
-        active: 'bg-gradient-to-r from-rose-700 to-red-800 text-white shadow-md border-rose-600',
-        inactive: 'bg-rose-50 hover:bg-rose-100/80 text-rose-950 border-rose-200 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-rose-200 text-rose-950 font-black',
+        active: 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30 border-rose-500 font-semibold',
+        inactive: 'bg-rose-50 hover:bg-rose-100/80 text-rose-950 border-rose-200 font-semibold',
+        badgeActive: 'bg-white/30 text-white font-semibold',
+        badgeInactive: 'bg-rose-200 text-rose-950 font-semibold',
         iconActive: 'text-rose-100',
-        iconInactive: 'text-rose-700'
+        iconInactive: 'text-rose-600'
     },
     dismissed: {
-        active: 'bg-gradient-to-r from-gray-700 to-zinc-800 text-white shadow-md border-gray-600',
-        inactive: 'bg-gray-100 hover:bg-gray-200/80 text-gray-900 border-gray-300 font-bold',
-        badgeActive: 'bg-white/30 text-white font-black',
-        badgeInactive: 'bg-gray-300 text-gray-950 font-black',
-        iconActive: 'text-gray-200',
+        active: 'bg-gradient-to-r from-gray-700 to-slate-800 text-white shadow-md border-gray-600 font-semibold',
+        inactive: 'bg-gray-100 hover:bg-gray-200/80 text-gray-800 border-gray-200 font-semibold',
+        badgeActive: 'bg-white/30 text-white font-semibold',
+        badgeInactive: 'bg-gray-300 text-gray-900 font-semibold',
+        iconActive: 'text-gray-100',
         iconInactive: 'text-gray-600'
     },
     winner: {
-        active: 'bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-600 text-slate-950 shadow-md shadow-yellow-500/30 border-yellow-400 font-black',
-        inactive: 'bg-yellow-50 hover:bg-yellow-100/80 text-yellow-950 border-yellow-300 font-bold',
-        badgeActive: 'bg-slate-950/20 text-slate-950 font-black',
-        badgeInactive: 'bg-yellow-300 text-yellow-950 font-black',
-        iconActive: 'text-slate-950 fill-current',
-        iconInactive: 'text-yellow-600'
+        active: 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg shadow-amber-500/40 border-amber-400 font-semibold',
+        inactive: 'bg-amber-100 hover:bg-amber-200/80 text-amber-950 border-amber-300 font-semibold',
+        badgeActive: 'bg-white/30 text-white font-semibold',
+        badgeInactive: 'bg-amber-300 text-amber-950 font-semibold',
+        iconActive: 'text-yellow-200 fill-current',
+        iconInactive: 'text-amber-600'
     }
 };
 
@@ -653,13 +606,14 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const getTabProperties = (tabId: string) => {
         if (tabId === 'curate') return aiSuggestions;
         if (tabId === 'winner') return matches.filter(m => m.status === 'winner' || m.status === 'sold');
+        if (tabId === 'de_verificat') return matches.filter(m => m.status === 'de_verificat' || m.status === 'to_call' || m.status === 'interested');
         return matches.filter(m => m.status === tabId);
     };
 
     const currentProperties = getTabProperties(activeTab);
 
     return (
-        <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-2 md:pt-4 pb-24 space-y-6">
+        <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-2 md:pt-4 pb-24 space-y-3.5">
             {/* First Time Welcome Pop-up Modal for Client Login */}
             {/* First Time Welcome Pop-up Modal for Client Login */}
             {showWelcomeModal && (
@@ -807,70 +761,70 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             )}
 
             {/* Collapsible Recommendation Message Header Box */}
-            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden transition-all space-y-4">
+            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 text-white rounded-2xl p-3.5 sm:p-4 shadow-md relative overflow-hidden transition-all space-y-3">
                 <div 
                     onClick={() => setIsRecommendationOpen(!isRecommendationOpen)}
                     className="flex items-center justify-between cursor-pointer select-none"
                 >
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                            <Sparkles className="w-5 h-5 text-yellow-300 fill-current" />
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+                            <Sparkles className="w-4 h-4 text-yellow-300 fill-current" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
+                            <h2 className="text-base font-semibold tracking-tight flex items-center gap-2">
                                 Recomandări & Acces Rapid Cont
                             </h2>
                             <p className="text-xs text-orange-100 font-medium">Datele de autentificare, shortcut-ul aplicației și sfaturile AI</p>
                         </div>
                     </div>
 
-                    <div className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
-                        {isRecommendationOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    <div className="p-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
+                        {isRecommendationOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </div>
                 </div>
 
                 {isRecommendationOpen && (
-                    <div className="space-y-4 pt-2 animate-in fade-in duration-200">
+                    <div className="space-y-2.5 pt-1 animate-in fade-in duration-200">
                         {/* Upper Section 1: Datele Tale de Autentificare */}
-                        <div className="bg-slate-950/80 border border-amber-400/30 text-white rounded-xl p-4 shadow-md space-y-2.5">
+                        <div className="bg-slate-950/80 border border-amber-400/30 text-white rounded-xl p-3 shadow-md space-y-2">
                             <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="p-2 bg-amber-500/20 text-yellow-400 rounded-lg border border-amber-500/30">
-                                        <Key className="w-4 h-4 text-yellow-300" />
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-amber-500/20 text-yellow-400 rounded-lg border border-amber-500/30">
+                                        <Key className="w-3.5 h-3.5 text-yellow-300" />
                                     </div>
                                     <div>
-                                        <h4 className="font-extrabold text-xs sm:text-sm text-white">
+                                        <h4 className="font-semibold text-xs sm:text-sm text-white">
                                             Datele Tale de Autentificare
                                         </h4>
-                                        <p className="text-[11px] text-slate-300">Păstrează aceste date pentru a te reconecta oricând pe Imobum.com</p>
+                                        <p className="text-[10px] text-slate-300">Păstrează aceste date pentru a te reconecta oricând pe Imobum.com</p>
                                     </div>
                                 </div>
-                                <div className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[10px] font-extrabold uppercase shrink-0">
+                                <div className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[9px] font-semibold uppercase shrink-0">
                                     📸 Fă Screenshot
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-black/50 p-3 rounded-lg border border-white/10 font-mono text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-black/50 p-2.5 rounded-lg border border-white/10 font-mono text-xs">
                                 <div>
-                                    <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">User / Email Autentificare</span>
-                                    <span className="text-white font-bold select-all">{lead.email || `${lead.phone?.replace(/\D/g, '')}@client.imobum.com`}</span>
+                                    <span className="text-[9px] text-slate-400 block font-sans font-semibold uppercase">User / Email Autentificare</span>
+                                    <span className="text-white font-semibold select-all">{lead.email || `${lead.phone?.replace(/\D/g, '')}@client.imobum.com`}</span>
                                 </div>
                                 <div>
-                                    <span className="text-[9px] text-slate-400 block font-sans font-bold uppercase">Parolă Autentificare</span>
-                                    <span className="text-yellow-400 font-bold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
+                                    <span className="text-[9px] text-slate-400 block font-sans font-semibold uppercase">Parolă Autentificare</span>
+                                    <span className="text-yellow-400 font-semibold select-all">{lead.phone || 'Numărul tău de telefon'}</span>
                                 </div>
                             </div>
 
-                            <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-slate-300 font-sans">
-                                <p className="text-[11px] leading-relaxed text-slate-300">
+                            <div className="pt-1.5 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-300 font-sans">
+                                <p className="text-[10px] leading-relaxed text-slate-300">
                                     💡 <strong>Schimbare Parolă:</strong> Îți poți schimba sau vedea parola oricând accesând profilul tău din meniul superior (dreapta sus).
                                 </p>
                                 <Link
                                     href="/cont/profil"
-                                    className="px-3 py-1.5 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white rounded-xl border border-slate-700/80 font-bold text-[11px] flex items-center gap-2 shadow-sm transition-all shrink-0 cursor-pointer"
+                                    className="px-2.5 py-1 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white rounded-xl border border-slate-700/80 font-semibold text-[10px] flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer"
                                 >
-                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black border border-orange-400">
-                                        <User className="w-3 h-3" />
+                                    <div className="w-4 h-4 rounded-full bg-orange-500 text-white flex items-center justify-center text-[9px] font-semibold border border-orange-400">
+                                        <User className="w-2.5 h-2.5" />
                                     </div>
                                     <span>Dreapta sus ➔ Profilul Tău</span>
                                 </Link>
@@ -878,124 +832,77 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         </div>
 
                         {/* Upper Section 2: Adaugă Aplicația pe Ecranul Telefonului Tău */}
-                        <div className="bg-slate-950/80 border border-orange-500/30 text-white rounded-xl p-4 shadow-md space-y-3">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="p-2 bg-orange-600/30 text-orange-400 rounded-lg border border-orange-500/30">
-                                        <Smartphone className="w-4 h-4 text-orange-300" />
+                        <div className="bg-slate-950/80 border border-orange-500/30 text-white rounded-xl p-3 shadow-md space-y-2">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-orange-600/30 text-orange-400 rounded-lg border border-orange-500/30">
+                                        <Smartphone className="w-3.5 h-3.5 text-orange-300" />
                                     </div>
                                     <div>
-                                        <h4 className="font-extrabold text-xs sm:text-sm text-white">
+                                        <h4 className="font-semibold text-xs sm:text-sm text-white">
                                             Adaugă Aplicația pe Ecranul Telefonului
                                         </h4>
-                                        <p className="text-[11px] text-slate-300">Acces instant cu o singură atingere pentru a verifica noile potriviri AI</p>
+                                        <p className="text-[10px] text-slate-300">Acces instant cu o singură atingere pentru a verifica noile potriviri AI</p>
                                     </div>
                                 </div>
 
                                 {!isStandaloneApp && (
                                     <button
                                         onClick={handleInstallPWA}
-                                        className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 rounded-lg text-xs font-extrabold flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer shrink-0"
+                                        className="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-md active:scale-95 cursor-pointer shrink-0"
                                     >
-                                        <Smartphone className="w-4 h-4 fill-current" /> Adaugă Shortcut pe Ecran
+                                        <Smartphone className="w-3.5 h-3.5 fill-current" /> Adaugă Shortcut pe Ecran
                                     </button>
                                 )}
                             </div>
 
                             {/* Device specific instruction text inside section */}
                             {isStandaloneApp ? (
-                                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-xs text-emerald-300 flex items-center gap-2">
-                                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                                <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-xs text-emerald-300 flex items-center gap-2">
+                                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                                     <span>Aplicația este deja adăugată pe ecranul principal al telefonului tău!</span>
                                 </div>
                             ) : isIOSDevice ? (
-                                <div className="p-3 bg-indigo-950/80 border border-indigo-500/30 rounded-lg text-xs text-indigo-100 space-y-1.5">
-                                    <p className="font-extrabold text-amber-300 text-xs flex items-center gap-1.5">
+                                <div className="p-2.5 bg-indigo-950/80 border border-indigo-500/30 rounded-lg text-xs text-indigo-100 space-y-1">
+                                    <p className="font-semibold text-amber-300 text-[11px] flex items-center gap-1">
                                         📱 Instrucțiuni pentru iPhone (Safari):
                                     </p>
-                                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-200">
-                                        <li>Apasă pe butonul <strong className="text-white bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-bold">Partajare / Share ⎋</strong> din josul ecranului Safari.</li>
-                                        <li>Selectează opțiunea <strong className="text-amber-300 font-bold">„Add to Home Screen / Adaugă la ecranul de pornire ⊕”</strong>.</li>
-                                        <li>Apasă pe <strong className="text-white font-bold">„Adaugă”</strong> în dreapta sus.</li>
+                                    <ol className="list-decimal list-inside space-y-0.5 text-[10px] text-slate-200">
+                                        <li>Apasă pe butonul <strong className="text-white bg-slate-800 px-1 py-0.5 rounded border border-slate-700 font-semibold">Partajare / Share ⎋</strong> din josul ecranului Safari.</li>
+                                        <li>Selectează opțiunea <strong className="text-amber-300 font-semibold">„Add to Home Screen / Adaugă la ecranul de pornire ⊕”</strong>.</li>
+                                        <li>Apasă pe <strong className="text-white font-semibold">„Adaugă”</strong> în dreapta sus.</li>
                                     </ol>
                                 </div>
                             ) : (
-                                <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 space-y-1.5">
-                                    <p className="font-bold text-amber-300">📱 Pași pentru Android (Chrome / Browser):</p>
-                                    <p className="text-[11px] text-slate-300">
-                                        Apasă pe cele <strong className="text-white">3 puncte (⋮)</strong> din colțul dreapta sus al browserului și alege <strong className="text-orange-400 font-bold">"Add to Home Screen / Install app"</strong>.
+                                <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 space-y-1">
+                                    <p className="font-semibold text-amber-300 text-[11px]">📱 Pași pentru Android (Chrome / Browser):</p>
+                                    <p className="text-[10px] text-slate-300">
+                                        Apasă pe cele <strong className="text-white">3 puncte (⋮)</strong> din colțul dreapta sus al browserului și alege <strong className="text-orange-400 font-semibold">"Add to Home Screen / Install app"</strong>.
                                     </p>
                                 </div>
                             )}
                         </div>
 
                         {/* Lower Section 3: Recomandări imobiliare */}
-                        <div className="text-xs leading-relaxed text-orange-50 font-medium bg-black/30 p-4 rounded-xl backdrop-blur-sm border border-white/10 whitespace-pre-line">
+                        <div className="text-[11px] leading-relaxed text-orange-50 font-medium bg-black/30 p-3 rounded-xl backdrop-blur-sm border border-white/10 whitespace-pre-line">
                             {recommendation.text}
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Dropdown / Collapsible Section: Criteriile Tale de Căutare */}
-            {/* User AI Credits Balance Top Bar */}
-            <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/30">
-                        <Coins className="w-5 h-5 animate-pulse" />
-                    </div>
-                    <div>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Balanță Credite Disponibile</span>
-                        <div className="text-sm font-bold text-white flex items-center gap-1.5 font-mono">
-                            Credite AI - CR: <span className="text-yellow-400 text-base font-extrabold">{credits}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <Link
-                    href="/cont/plati"
-                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
-                >
-                    <Coins className="w-4 h-4" /> Adaugă Credite
-                </Link>
-            </div>
-
-            {/* Low Credit Warning Banner */}
-            {credits <= lowCreditThreshold && (
-                <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-in fade-in">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-amber-500 text-slate-950 rounded-xl font-black shrink-0">
-                            <AlertCircle className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h4 className="font-extrabold text-amber-950 text-xs sm:text-sm">
-                                Atenție: Sold scăzut de credite! (Mai ai doar {credits} {credits === 1 ? 'credit' : 'credite'})
-                            </h4>
-                            <p className="text-xs font-semibold text-slate-700 mt-0.5">
-                                Reîncarcă soldul pentru a continua să folosești toate instrumentele AI fără întrerupere.
-                            </p>
-                        </div>
-                    </div>
-                    <Link
-                        href="/cont/plati"
-                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black shrink-0 shadow-md transition-all active:scale-95 flex items-center gap-1.5"
-                    >
-                        <Coins className="w-4 h-4" /> Cumpără Credite
-                    </Link>
-                </div>
-            )}
-
+            {/* Collapsible Section: Criteriile Tale de Căutare */}
             <div className="bg-white rounded-2xl shadow-md border border-indigo-100 overflow-hidden">
                 <div 
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
                     className="px-6 py-4.5 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 border-b border-indigo-900/50 flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/90 transition-all"
                 >
                     <div className="flex items-center gap-3.5">
-                        <div className="p-2.5 bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 rounded-xl shadow-md shadow-orange-500/20 font-bold shrink-0">
+                        <div className="p-2.5 bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 rounded-xl shadow-md shadow-orange-500/20 font-semibold shrink-0">
                             <SlidersHorizontal className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-white text-base flex items-center gap-2 tracking-tight">
+                            <h3 className="font-semibold text-white text-base flex items-center gap-2 tracking-tight">
                                 Criteriile Tale de Căutare
                             </h3>
                             <p className="text-xs text-indigo-200/80 font-medium">De aici modifici criteriile tale de cautare pentru AI</p>
@@ -1010,67 +917,67 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                     <div className="p-6 bg-white space-y-5 animate-in fade-in duration-200">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Vreau Să</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Vreau Să</label>
                                 <select
                                     value={prefListingType}
                                     onChange={(e) => setPrefListingType(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 >
-                                    <option value="For Sale" className="bg-slate-900 text-white font-bold py-1">Cumpăr (De vânzare)</option>
-                                    <option value="For Rent" className="bg-slate-900 text-white font-bold py-1">Închiriez (De închiriat)</option>
+                                    <option value="For Sale" className="bg-slate-900 text-white font-semibold py-1">Cumpăr (De vânzare)</option>
+                                    <option value="For Rent" className="bg-slate-900 text-white font-semibold py-1">Închiriez (De închiriat)</option>
                                 </select>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tip Proprietate</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Tip Proprietate</label>
                                 <select
                                     value={prefType}
                                     onChange={(e) => setPrefType(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 >
-                                    <option value="Apartment" className="bg-slate-900 text-white font-bold py-1">Apartament</option>
-                                    <option value="House" className="bg-slate-900 text-white font-bold py-1">Casă / Vilă</option>
-                                    <option value="Commercial" className="bg-slate-900 text-white font-bold py-1">Spațiu Comercial</option>
-                                    <option value="Land" className="bg-slate-900 text-white font-bold py-1">Teren</option>
-                                    <option value="Industrial" className="bg-slate-900 text-white font-bold py-1">Industrial</option>
-                                    <option value="Business" className="bg-slate-900 text-white font-bold py-1">Afacere</option>
+                                    <option value="Apartment" className="bg-slate-900 text-white font-semibold py-1">Apartament</option>
+                                    <option value="House" className="bg-slate-900 text-white font-semibold py-1">Casă / Vilă</option>
+                                    <option value="Commercial" className="bg-slate-900 text-white font-semibold py-1">Spațiu Comercial</option>
+                                    <option value="Land" className="bg-slate-900 text-white font-semibold py-1">Teren</option>
+                                    <option value="Industrial" className="bg-slate-900 text-white font-semibold py-1">Industrial</option>
+                                    <option value="Business" className="bg-slate-900 text-white font-semibold py-1">Afacere</option>
                                 </select>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Oraș</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Oraș</label>
                                 <MultiSearchableSelect
                                     values={prefCity ? prefCity.split(',').map((c: string) => c.trim()).filter(Boolean) : []}
                                     options={citiesList}
                                     onChange={(vals) => setPrefCity(vals.join(', '))}
                                     placeholder="Scrie sau selectează orașe..."
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Cartier / Zonă</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Cartier / Zonă</label>
                                 <MultiSearchableSelect
                                     values={prefArea ? prefArea.split(',').map((a: string) => a.trim()).filter(Boolean) : []}
                                     options={filteredAreasList}
                                     onChange={(vals) => setPrefArea(vals.join(', '))}
                                     placeholder={filteredAreasList.length ? "Scrie sau selectează zone..." : "Selectează mai întâi orașul..."}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
 
                             <div className="col-span-full space-y-1.5 pt-1">
-                                <label className="block text-xs font-bold text-slate-700 uppercase">Desenează pe hartă zona exactă</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase">Desenează pe hartă zona exactă</label>
                                 <button
                                     type="button"
                                     onClick={() => setShowMap(true)}
-                                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-2.5 border rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer ${polygon?.length ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'}`}
+                                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-2.5 border rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer ${polygon?.length ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'}`}
                                 >
                                     <MapPin className="w-4 h-4 text-violet-600 shrink-0" />
                                     {polygon?.length ? 'Editează zona pe hartă' : 'Desenează zona pe hartă'}
                                 </button>
                                 {polygon?.length ? (
-                                    <div className="text-[10px] text-green-600 font-black flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                                    <div className="text-[10px] text-green-600 font-semibold flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
                                         ✓ Zone specifice desenate pe hartă ({polygon.length} puncte)
                                     </div>
                                 ) : null}
@@ -1087,83 +994,83 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             )}
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Buget (Min - Max €)</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Buget (Min - Max €)</label>
                                 <div className="flex gap-2">
                                     <input
                                         type="number"
                                         placeholder="Min (€)"
                                         value={budgetMin}
                                         onChange={(e) => setBudgetMin(e.target.value)}
-                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                     />
                                     <input
                                         type="number"
                                         placeholder="Max (€)"
                                         value={budgetMax}
                                         onChange={(e) => setBudgetMax(e.target.value)}
-                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Camere (Min - Max)</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Camere (Min - Max)</label>
                                 <div className="flex gap-2">
                                     <input
                                         type="number"
                                         placeholder="Min"
                                         value={roomsMin}
                                         onChange={(e) => setRoomsMin(e.target.value)}
-                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                     />
                                     <input
                                         type="number"
                                         placeholder="Max"
                                         value={roomsMax}
                                         onChange={(e) => setRoomsMax(e.target.value)}
-                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                        className="w-1/2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Suprafață Utilă Min (m²)</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Suprafață Utilă Min (m²)</label>
                                 <input
                                     type="number"
                                     placeholder="ex. 50"
                                     value={surfaceMin}
                                     onChange={(e) => setSurfaceMin(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">De când doriți să vă mutați?</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">De când doriți să vă mutați?</label>
                                 <input
                                     type="date"
                                     value={moveInDate}
                                     onChange={(e) => setMoveInDate(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500 cursor-pointer"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nickname / Nume</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Nickname / Nume</label>
                                 <input
                                     type="text"
                                     value={clientName}
                                     onChange={(e) => setClientName(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Număr de Telefon</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Număr de Telefon</label>
                                 <input
                                     type="tel"
                                     value={clientPhone}
                                     onChange={(e) => setClientPhone(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
                         </div>
@@ -1172,17 +1079,17 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         {prefListingType === 'For Rent' && (
                             <div className="p-4 bg-orange-50/50 border border-orange-100 rounded-xl space-y-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-orange-900 uppercase mb-1">Cine va locui în apartament?</label>
+                                    <label className="block text-xs font-semibold text-orange-900 uppercase mb-1">Cine va locui în apartament?</label>
                                     <input
                                         type="text"
                                         placeholder="ex. Cuplu, o persoană, 2 studenți..."
                                         value={occupantsInfo}
                                         onChange={(e) => setOccupantsInfo(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
                                         <input
                                             type="checkbox"
                                             checked={hasSmallKids}
@@ -1191,7 +1098,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                         />
                                         <span>Am copii mici</span>
                                     </label>
-                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
                                         <input
                                             type="checkbox"
                                             checked={hasPets}
@@ -1206,29 +1113,29 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Lasă mai jos Link cu ce ai văzut și ți-a plăcut:</label>
                                 <textarea
                                     rows={2}
                                     placeholder="Link-uri de pe Facebook, TikTok, sau alte site-uri..."
                                     value={likedListingsLinks}
                                     onChange={(e) => setLikedListingsLinks(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Ce te interesează?</label>
+                                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ce te interesează?</label>
                                 <textarea
                                     rows={2}
                                     placeholder="ex. Zonă liniștită, balcon mare, parcare..."
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
                                 />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                            <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200 hover:bg-slate-100/70 transition-colors">
+                            <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200 hover:bg-slate-100/70 transition-colors">
                                 <input
                                     type="checkbox"
                                     checked={findSelfFromOwner}
@@ -1238,7 +1145,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                 <span>Găsește singur de la proprietar</span>
                             </label>
 
-                            <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200 hover:bg-slate-100/70 transition-colors">
+                            <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-800 bg-slate-50 p-3 rounded-xl border border-slate-200 hover:bg-slate-100/70 transition-colors">
                                 <input
                                     type="checkbox"
                                     checked={wantsAgentHelp}
@@ -1253,7 +1160,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <button
                                 onClick={handleSavePreferences}
                                 disabled={isSavingPref}
-                                className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-xl text-xs font-extrabold flex items-center gap-2 shadow-md shadow-orange-600/20 cursor-pointer"
+                                className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-md shadow-orange-600/20 cursor-pointer"
                             >
                                 <Check className="w-4 h-4" />
                                 {isSavingPref ? 'Se salvează...' : 'Salvează Criteriile & Reîncarcă AI'}
@@ -1263,11 +1170,58 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 )}
             </div>
 
+            {/* User AI Credits Balance Bar - Positioned AFTER Criteriile Tale de Căutare */}
+            <div className="flex items-center justify-between bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 shadow-md">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/30">
+                        <Coins className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Balanță Credite Disponibile</span>
+                        <div className="text-sm font-semibold text-white flex items-center gap-1.5 font-mono">
+                            Credite AI - CR: <span className="text-yellow-400 text-base font-semibold">{credits}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <Link
+                    href="/cont/plati"
+                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-semibold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95 shrink-0"
+                >
+                    <Coins className="w-4 h-4" /> Adaugă Credite
+                </Link>
+            </div>
+
+            {/* Low Credit Warning Banner */}
+            {credits <= lowCreditThreshold && (
+                <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-in fade-in">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-amber-500 text-slate-950 rounded-xl font-semibold shrink-0">
+                            <AlertCircle className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h4 className="font-semibold text-amber-950 text-xs sm:text-sm">
+                                Atenție: Sold scăzut de credite! (Mai ai doar {credits} {credits === 1 ? 'credit' : 'credite'})
+                            </h4>
+                            <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                                Reîncarcă soldul pentru a continua să folosești toate instrumentele AI fără întrerupere.
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/cont/plati"
+                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-semibold shrink-0 shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+                    >
+                        <Coins className="w-4 h-4" /> Cumpără Credite
+                    </Link>
+                </div>
+            )}
+
             {/* Section Header & Explanatory Text for Tabs */}
             <div className="px-1 mb-1 space-y-1">
-                <p className="text-xs font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5 tracking-wide">
                     <Sparkles className="w-4 h-4 text-orange-500 shrink-0 fill-current" />
-                    Pașii pe care ar trebui să-i urmezi ca să-ți găsești proprietatea rapid și organizat:
+                    Cauta cu AI si apoi salveaza proprietatile in categoriile de mai jos in functie de interes:
                 </p>
             </div>
 
@@ -1291,7 +1245,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-4 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer border ${
+                                className={`px-4 py-2.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer border ${
                                     isActive ? colors.active : colors.inactive
                                 }`}
                             >
@@ -1311,7 +1265,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             {/* Current Active Tab Explanatory Text Box */}
             <div className={`p-5 rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
                 <div>
-                    <span className="font-extrabold block mb-1 text-slate-900 text-sm flex items-center gap-2">
+                    <span className="font-semibold block mb-1 text-slate-900 text-sm flex items-center gap-2">
                         {React.createElement((currentTabObj as any).icon || Sparkles, { className: "w-4 h-4 text-orange-600" })}
                         Stadiul: {currentTabObj.name}
                     </span>
@@ -1322,7 +1276,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         onClick={() => loadAISuggestions()}
                         disabled={isLoadingAI || !isApproved}
                         title={!isApproved ? "Contul este în curs de aprobare de către un operator." : `Caută cu AI (Cost: ${instantAiCost} CR)`}
-                        className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50 rounded-xl text-xs font-black flex items-center gap-2 shadow-lg shadow-orange-600/30 transition-all shrink-0 cursor-pointer active:scale-95 border border-orange-400/40"
+                        className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/30 transition-all shrink-0 cursor-pointer active:scale-95 border border-orange-400/40"
                     >
                         <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
                         {isLoadingAI ? 'Se caută cu AI...' : `Caută cu AI (Cost: ${instantAiCost} CR)`}
