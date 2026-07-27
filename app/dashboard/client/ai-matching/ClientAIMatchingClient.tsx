@@ -1246,26 +1246,12 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </div>
             </div>
 
-            {/* Current Active Tab Explanatory Text Box (Collapsible Dropdown) */}
-            <div className={`p-4 rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm transition-all space-y-3`}>
-                <div 
-                    onClick={() => setIsAiStepOpen(!isAiStepOpen)}
-                    className="flex items-center justify-between cursor-pointer select-none"
-                >
-                    <span className="font-semibold text-slate-900 text-sm flex items-center gap-2">
-                        {React.createElement((currentTabObj as any).icon || Sparkles, { className: "w-4 h-4 text-orange-600" })}
-                        {activeTab === 'curate' ? 'Primul pas: Cauta cu AI' : `Stadiul: ${currentTabObj.name}`}
-                    </span>
-                    <div className="p-1 bg-white/60 hover:bg-white rounded-lg transition-colors text-slate-700 shrink-0">
-                        {isAiStepOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </div>
-                </div>
-
-                {isAiStepOpen && (
-                    <div className="pt-1 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-200">
-                        <p className="whitespace-pre-line leading-relaxed">{currentTabObj.desc}</p>
-
-                        {activeTab === 'curate' && (
+            {/* Current Active Tab Explanatory Text Box (Collapsible Dropdown with Header Button) */}
+            <div className={`rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm transition-all overflow-hidden`}>
+                {/* Always-visible Header Bar with Action Button */}
+                <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-white/40">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {activeTab === 'curate' ? (
                             <button
                                 onClick={async () => {
                                     setIsAiStepOpen(false);
@@ -1273,12 +1259,39 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                 }}
                                 disabled={isLoadingAI || !isApproved}
                                 title={!isApproved ? "Contul este în curs de aprobare de către un operator." : `Cauta cu AI (${instantAiCost} CR)`}
-                                className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/30 transition-all shrink-0 cursor-pointer active:scale-95 border border-orange-400/40"
+                                className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-md shadow-orange-600/30 transition-all shrink-0 cursor-pointer active:scale-95 border border-orange-400/40"
                             >
                                 <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
-                                {isLoadingAI ? 'Se caută cu AI...' : `Cauta cu AI (${instantAiCost} CR)`}
+                                <span>{isLoadingAI ? 'Se caută cu AI...' : `Cauta cu AI (${instantAiCost} CR)`}</span>
                             </button>
+                        ) : (
+                            <span className="font-semibold text-slate-900 text-sm flex items-center gap-2">
+                                {React.createElement((currentTabObj as any).icon || Sparkles, { className: "w-4 h-4 text-orange-600" })}
+                                Stadiul: {currentTabObj.name}
+                            </span>
                         )}
+                    </div>
+
+                    {/* Instructions Toggle Chevron */}
+                    <button
+                        onClick={() => setIsAiStepOpen(!isAiStepOpen)}
+                        className="p-1.5 bg-white/80 hover:bg-white rounded-lg transition-colors text-slate-700 shrink-0 flex items-center gap-1 cursor-pointer border border-slate-200"
+                        title={isAiStepOpen ? "Ascunde instrucțiunile" : "Vezi instrucțiunile"}
+                    >
+                        <span className="text-[10px] text-slate-600 font-semibold hidden sm:inline">Instrucțiuni</span>
+                        {isAiStepOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                </div>
+
+                {/* Collapsible Instructions Content */}
+                {isAiStepOpen && (
+                    <div className="p-3.5 pt-1.5 border-t border-orange-200/60 animate-in fade-in duration-200 space-y-1.5">
+                        {activeTab === 'curate' && (
+                            <span className="font-semibold text-slate-900 text-xs block mb-1">
+                                Primul pas: Cauta cu AI
+                            </span>
+                        )}
+                        <p className="whitespace-pre-line leading-relaxed text-slate-800">{currentTabObj.desc}</p>
                     </div>
                 )}
             </div>
