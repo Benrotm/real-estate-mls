@@ -43,15 +43,8 @@ const TABS = [
         color: 'text-rose-600 border-rose-600 bg-rose-50 font-semibold'
     },
     { 
-        id: 'winner', 
-        name: 'Câștigător', 
-        icon: Award,
-        desc: 'Felicitări! Aici este proprietatea pe care ai ales-o.',
-        color: 'text-amber-600 border-amber-600 bg-amber-50 font-semibold'
-    },
-    { 
         id: 'to_visit', 
-        name: 'De Vizionat', 
+        name: 'De Văzut', 
         icon: Eye,
         desc: 'Aici le pui pe cele care sigur vrei să le vezi.',
         color: 'text-indigo-600 border-indigo-600 bg-indigo-50 font-semibold',
@@ -78,6 +71,13 @@ const TABS = [
         icon: ThumbsDown,
         desc: 'Aici sunt cele la care le-ai dat "Nu se potrivesc" din ce a selectat AI-ul inițial.',
         color: 'text-gray-600 border-gray-600 bg-gray-50 font-semibold'
+    },
+    { 
+        id: 'winner', 
+        name: 'Câștigător', 
+        icon: Award,
+        desc: 'Felicitări! Aici este proprietatea pe care ai ales-o.',
+        color: 'text-yellow-700 border-yellow-500 bg-yellow-50 font-semibold'
     }
 ];
 
@@ -131,12 +131,12 @@ const TAB_COLORS: Record<string, { active: string; inactive: string; badgeActive
         iconInactive: 'text-gray-600'
     },
     winner: {
-        active: 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg shadow-amber-500/40 border-amber-400 font-semibold',
-        inactive: 'bg-amber-100 hover:bg-amber-200/80 text-amber-950 border-amber-300 font-semibold',
-        badgeActive: 'bg-white/30 text-white font-semibold',
-        badgeInactive: 'bg-amber-300 text-amber-950 font-semibold',
-        iconActive: 'text-yellow-200 fill-current',
-        iconInactive: 'text-amber-600'
+        active: 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-yellow-400/40 border-yellow-300 font-semibold',
+        inactive: 'bg-yellow-50 hover:bg-yellow-100/80 text-yellow-950 border-yellow-300 font-semibold',
+        badgeActive: 'bg-slate-950/20 text-slate-950 font-semibold',
+        badgeInactive: 'bg-yellow-300 text-yellow-950 font-semibold',
+        iconActive: 'text-slate-950 fill-current',
+        iconInactive: 'text-yellow-600'
     }
 };
 
@@ -376,7 +376,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
     // Calendar Modal State
     const [calendarModalProperty, setCalendarModalProperty] = useState<any>(null);
-    const [calendarEventType, setCalendarEventType] = useState<'De Sunat' | 'De Resunat' | 'De Vizionat'>('De Sunat');
+    const [calendarEventType, setCalendarEventType] = useState<'De Sunat' | 'De Resunat' | 'De Vizionat' | 'De Văzut'>('De Sunat');
     const [calendarDate, setCalendarDate] = useState<string>(new Date().toISOString().slice(0, 10));
     const [calendarTime, setCalendarTime] = useState<string>('12:00');
     const [calendarDetails, setCalendarDetails] = useState<string>('');
@@ -541,7 +541,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     };
 
     // Open Calendar Modal
-    const handleOpenCalendarModal = (property: any, defaultType: 'De Sunat' | 'De Resunat' | 'De Vizionat' = 'De Sunat') => {
+    const handleOpenCalendarModal = (property: any, defaultType: 'De Sunat' | 'De Resunat' | 'De Vizionat' | 'De Văzut' = 'De Sunat') => {
         setCalendarModalProperty(property);
         setCalendarEventType(defaultType);
         setCalendarDate(new Date().toISOString().slice(0, 10));
@@ -1355,7 +1355,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             <span className="truncate">{prop.location_city || prop.city} {prop.location_area && `• ${prop.location_area}`}</span>
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-1.5 my-3">
+                                        <div className="grid grid-cols-3 gap-1.5 mt-3 mb-2">
                                             <div className="p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
                                                 <BedDouble className="w-3.5 h-3.5 text-slate-400 mx-auto mb-0.5" />
                                                 <span className="text-[9px] font-bold text-slate-400 uppercase block">Camere</span>
@@ -1372,48 +1372,47 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                                 <span className="text-xs font-semibold text-orange-600">€{prop.price?.toLocaleString()}</span>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* Action Buttons & Stage Action Pills per Card */}
-                                    <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                        {/* Vezi Detalii & Calendar/Flag Action Buttons directly under metrics */}
+                                        <div className="flex items-center justify-between gap-1.5 pt-1">
                                             <Link
                                                 href={`/properties/${prop.id}`}
                                                 target="_blank"
-                                                className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-semibold rounded-xl flex items-center gap-1 shadow-sm transition-all cursor-pointer shrink-0"
+                                                className="w-full py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-semibold rounded-xl flex items-center justify-center gap-1 shadow-sm transition-all cursor-pointer"
                                             >
                                                 Vezi Detalii <ArrowUpRight className="w-3.5 h-3.5 text-slate-950" />
                                             </Link>
 
                                             {/* Calendar & Flag buttons if applicable */}
-                                            <div className="flex items-center gap-1.5">
-                                                {currentTabObj.hasCalendar && (
-                                                    <button
-                                                        onClick={() => handleOpenCalendarModal(prop, 'De Vizionat')}
-                                                        className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-sm cursor-pointer"
-                                                    >
-                                                        <CalendarDays className="w-3.5 h-3.5" /> Calendar
-                                                    </button>
-                                                )}
+                                            {currentTabObj.hasCalendar && (
+                                                <button
+                                                    onClick={() => handleOpenCalendarModal(prop, 'De Văzut')}
+                                                    className="px-2 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-sm cursor-pointer shrink-0"
+                                                >
+                                                    <CalendarDays className="w-3.5 h-3.5" /> Calendar
+                                                </button>
+                                            )}
 
-                                                {currentTabObj.hasFlag && matchRecord && (
-                                                    <button
-                                                        onClick={() => handleToggleWantToSeeAgain(matchRecord.id, isWantSeeAgain)}
-                                                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1 transition-colors ${
-                                                            isWantSeeAgain
-                                                                ? 'bg-purple-600 text-white'
-                                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                                                        }`}
-                                                        title="Marchează dacă mai dorești o vizionare suplimentară"
-                                                    >
-                                                        <Flag className="w-3.5 h-3.5" /> {isWantSeeAgain ? 'Bifat' : 'Mai vreau'}
-                                                    </button>
-                                                )}
-                                            </div>
+                                            {currentTabObj.hasFlag && matchRecord && (
+                                                <button
+                                                    onClick={() => handleToggleWantToSeeAgain(matchRecord.id, isWantSeeAgain)}
+                                                    className={`px-2 py-2 text-xs font-semibold rounded-xl flex items-center gap-1 transition-colors shrink-0 ${
+                                                        isWantSeeAgain
+                                                            ? 'bg-purple-600 text-white'
+                                                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                                                    }`}
+                                                    title="Marchează dacă mai dorești o vizionare suplimentară"
+                                                >
+                                                    <Flag className="w-3.5 h-3.5" /> {isWantSeeAgain ? 'Bifat' : 'Mai vreau'}
+                                                </button>
+                                            )}
                                         </div>
+                                    </div>
 
-                                        {/* Stage Action Pill Buttons (2 per row, no icons, non-bold font) */}
-                                        <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100/80">
+                                    {/* Stage Action Pill Buttons with "Salvează în :" Label */}
+                                    <div className="space-y-1.5 pt-2.5 border-t border-slate-100">
+                                        <span className="text-xs font-semibold text-slate-700 block">Salvează în :</span>
+                                        <div className="grid grid-cols-2 gap-1.5">
                                             {TABS.filter(t => t.id !== 'curate').map(tab => {
                                                 const isCurrentStatus = (item.status || 'curate') === tab.id;
                                                 const colors = TAB_COLORS[tab.id];
