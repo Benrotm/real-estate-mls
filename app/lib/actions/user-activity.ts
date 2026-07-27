@@ -249,31 +249,69 @@ export async function getAIPipelineData() {
 
         const activeUsersList = updatedUsers || users || [];
 
+        // Filter profiles to ONLY include client role users (client & client_no_agency)
+        const clientUsersOnly = activeUsersList.filter(u => u.role === 'client' || u.role === 'client_no_agency');
+
         // Combine user profiles with lead details & restrictions
-        const usersWithDetails = activeUsersList
-            .map(u => {
-                const matchedLead = leadsMapByCreatedBy[u.id] || (u.email ? leadsMapByEmail[u.email.toLowerCase()] : null);
-                const isSelfService = u.role === 'client_no_agency' || 
-                    (matchedLead?.source || '').toLowerCase().includes('invite') || 
-                    (matchedLead?.source || '').toLowerCase().includes('self-service') ||
-                    (u as any).source?.toLowerCase().includes('invite');
+        const usersWithDetails = clientUsersOnly.map(u => {
+            const matchedLead = leadsMapByCreatedBy[u.id] || (u.email ? leadsMapByEmail[u.email.toLowerCase()] : null);
+            const isSelfService = u.role === 'client_no_agency' || 
+                (matchedLead?.source || '').toLowerCase().includes('invite') || 
+                (matchedLead?.source || '').toLowerCase().includes('self-service') ||
+                (u as any).source?.toLowerCase().includes('invite');
 
-                const wantsAgentHelp = u.wants_agent_help === true || matchedLead?.wants_agent_help === true;
-                const isApproved = isSelfService ? (u.is_approved !== false) : (u.is_approved ?? false);
+            const wantsAgentHelp = u.wants_agent_help !== undefined
+                ? u.wants_agent_help
+                : (matchedLead?.wants_agent_help !== undefined
+                    ? matchedLead.wants_agent_help
+                    : (matchedLead?.search_with_agent !== undefined ? matchedLead.search_with_agent : false));
 
-                return {
-                    ...u,
-                    is_approved: isApproved,
-                    source: matchedLead?.source || (u as any).source || 'Direct Signup',
-                    find_self_from_owner: u.find_self_from_owner ?? matchedLead?.find_self_from_owner ?? true,
-                    wants_agent_help: wantsAgentHelp,
-                    restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
-                };
-            });
+            const findSelfFromOwner = u.find_self_from_owner !== undefined
+                ? u.find_self_from_owner
+                : (matchedLead?.find_self_from_owner !== undefined
+                    ? matchedLead.find_self_from_owner
+                    : (matchedLead?.search_direct_owner !== undefined ? matchedLead.search_direct_owner : true));
+
+            const isApproved = isSelfService ? (u.is_approved !== false) : (u.is_approved ?? false);
+
+            return {
+                ...u,
+                is_approved: isApproved,
+                source: matchedLead?.source || (u as any).source || 'Direct Signup',
+                find_self_from_owner: findSelfFromOwner,
+                wants_agent_help: wantsAgentHelp,
+                restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
+            };
+        });
+
+        // Identify un-accounted CRM leads (leads without a matching auth user profile) for Category 4
+        const crmOnlyLeads = (leads || [])
+            .filter(l => {
+                const hasCreatedByProfile = l.created_by && activeUsersList.some(u => u.id === l.created_by);
+                const hasEmailProfile = l.email && activeUsersList.some(u => u.email && u.email.toLowerCase() === l.email.toLowerCase());
+                return !hasCreatedByProfile && !hasEmailProfile;
+            })
+            .map(l => ({
+                id: l.id,
+                full_name: l.name || 'Lead CRM (Fără Cont)',
+                email: l.email || '',
+                phone: l.phone || '',
+                role: 'crm_lead',
+                is_crm_only_lead: true,
+                is_approved: false,
+                source: l.source || 'Formular CRM (Invite New Lead)',
+                find_self_from_owner: l.find_self_from_owner ?? l.search_direct_owner ?? true,
+                wants_agent_help: l.wants_agent_help ?? l.search_with_agent ?? true,
+                credits: 0,
+                created_at: l.created_at,
+                restrictions: { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
+            }));
+
+        const allPipelineItems = [...usersWithDetails, ...crmOnlyLeads];
 
         return {
             success: true,
-            users: usersWithDetails,
+            users: allPipelineItems,
             recommendationConfig
         };
     } catch (err: any) {

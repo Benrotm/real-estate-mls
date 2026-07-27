@@ -132,9 +132,19 @@ export default function LeadForm({ initialData, isEditing = false, onCancel, rea
     const [isSuccess, setIsSuccess] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('contact');
     const [showAreaMap, setShowAreaMap] = useState(false);
+    const searchWithAgentVal = initialData?.search_with_agent !== undefined
+        ? Boolean(initialData.search_with_agent)
+        : ((initialData as any)?.wants_agent_help !== undefined ? Boolean((initialData as any).wants_agent_help) : false);
+
+    const searchDirectOwnerVal = initialData?.search_direct_owner !== undefined
+        ? Boolean(initialData.search_direct_owner)
+        : ((initialData as any)?.find_self_from_owner !== undefined ? Boolean((initialData as any).find_self_from_owner) : true);
+
     const [formData, setFormData] = useState<LeadData>({
         ...DEFAULT_FORM_DATA,
-        ...initialData
+        ...initialData,
+        search_with_agent: searchWithAgentVal,
+        search_direct_owner: searchDirectOwnerVal
     });
 
     const [citiesListFull, setCitiesListFull] = useState<{ id: string; name: string }[]>([]);

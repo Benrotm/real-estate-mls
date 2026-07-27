@@ -43,7 +43,7 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
     const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
     const [citiesListFull, setCitiesListFull] = useState<{ id: string; name: string }[]>([]);
     const [allRawAreas, setAllRawAreas] = useState<{ name: string; parent_id: string | null }[]>([]);
-    const [searchWithAgent, setSearchWithAgent] = useState(true);
+    const [searchWithAgent, setSearchWithAgent] = useState(mode === 'crm_invite');
     const [searchDirectOwner, setSearchDirectOwner] = useState(true);
 
     useEffect(() => {

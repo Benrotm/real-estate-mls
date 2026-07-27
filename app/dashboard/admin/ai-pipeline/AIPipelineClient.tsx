@@ -196,35 +196,23 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
         const source = (u.source || '').toLowerCase();
         const role = (u.role || '').toLowerCase();
         
-        // 2. Both Options: If user checked BOTH wants_agent_help AND find_self_from_owner
+        // 4. CRM Lead (added via Invite New Lead from Leads & CRM, no user profile account)
+        if ((u as any).is_crm_only_lead || role === 'crm_lead' || source.includes('crm_invite') || source.includes('formular crm')) {
+            return 'crm_invite';
+        }
+
+        // 3. Property Page Signup (Poza 1 - modal/button on /properties page)
+        if (source.includes('property_page') || source.includes('pagina proprietati') || source.includes('pagina proprietăților')) {
+            return 'property_page';
+        }
+
+        // 2. Both Options: Client with BOTH wants_agent_help === true AND find_self_from_owner !== false
         if (u.wants_agent_help === true && u.find_self_from_owner !== false) {
             return 'both_options';
         }
 
-        // 1. Direct Owner Only (Clienți Doar de la Proprietar)
-        if (
-            role === 'client_no_agency' || 
-            source.includes('client_no_agency') || 
-            source.includes('invite') ||
-            source.includes('self-service') ||
-            source.includes('referral') ||
-            u.wants_agent_help === false
-        ) {
-            return 'direct_owner_only';
-        }
-
-        // 3. Property Page Signup (Poza 1 - modal/button on /properties page)
-        if (source.includes('property') || source.includes('proprietati') || source.includes('modal')) {
-            return 'property_page';
-        }
-
-        // 4. CRM Invite Lead (Invite new lead button from Leads & CRM page)
-        if (source.includes('shared link') || source.includes('crm') || source.includes('crm_invite')) {
-            return 'crm_invite';
-        }
-        
-        // Default: Both Options
-        return 'both_options';
+        // 1. Direct Owner Only: Client with find_self_from_owner === true AND wants_agent_help === false
+        return 'direct_owner_only';
     };
 
     // Filtering users by search, role, status & category
