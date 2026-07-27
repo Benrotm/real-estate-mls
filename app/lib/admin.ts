@@ -691,4 +691,36 @@ export async function saveUserPropertyRestrictions(
     if (error) throw new Error(error.message);
 }
 
+export async function toggleUserArchived(targetId: string, isArchived: boolean) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    let { error: err1 } = await supabase
+        .from('profiles')
+        .update({ is_archived: isArchived })
+        .eq('id', targetId);
+
+    if (err1 && err1.message?.includes('is_archived')) {
+        await supabase
+            .from('profiles')
+            .update({ status: isArchived ? 'archived' : 'active' })
+            .eq('id', targetId);
+    }
+
+    let { error: err2 } = await supabase
+        .from('leads')
+        .update({ is_archived: isArchived })
+        .or(`id.eq.${targetId},created_by.eq.${targetId}`);
+
+    if (err2 && err2.message?.includes('is_archived')) {
+        await supabase
+            .from('leads')
+            .update({ status: isArchived ? 'archived' : 'new' })
+            .or(`id.eq.${targetId},created_by.eq.${targetId}`);
+    }
+
+    revalidatePath('/dashboard/admin/ai-pipeline');
+    return { success: true };
+}
+
 

@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import { 
     Zap, Users, UserCheck, ShieldAlert, Activity, Search, Filter, 
     CheckCircle2, XCircle, Eye, Settings, Clock, Coins, MousePointer, 
-    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2
+    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2, Archive, ArchiveRestore, FolderArchive
 } from 'lucide-react';
-import { toggleUserApproval, saveUserPropertyRestrictions } from '@/app/lib/admin';
+import { toggleUserApproval, saveUserPropertyRestrictions, toggleUserArchived } from '@/app/lib/admin';
 import { 
     saveAIPipelineRecommendationSetting, 
     getUserActivityDetails,
@@ -21,6 +21,8 @@ interface User {
     phone?: string;
     role: string;
     is_approved?: boolean;
+    is_archived?: boolean;
+    is_crm_only_lead?: boolean;
     credits?: number;
     created_at: string;
     source?: string;
@@ -87,6 +89,16 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             }
         } catch (err: any) {
             alert('Eroare la schimbarea stării de aprobare: ' + err.message);
+        }
+    };
+
+    // Handle user archiving toggle
+    const handleArchiveUser = async (userId: string, currentArchived: boolean | undefined) => {
+        try {
+            await toggleUserArchived(userId, !currentArchived);
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_archived: !currentArchived } : u));
+        } catch (err: any) {
+            alert('Eroare la schimbarea stării de arhivare: ' + err.message);
         }
     };
 
@@ -228,10 +240,11 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
         return true;
     });
 
-    // Categorized Board Groups & Paired Columns (Cereri Ne-aprobate & Acceptați)
+    // Categorized Board Groups & Paired Columns (Activi, Suspendați & Arhivați)
     const cat1Users = filteredUsers.filter(u => classifyUserCategory(u) === 'direct_owner_only');
     const cat2Users = filteredUsers.filter(u => classifyUserCategory(u) === 'both_options');
     const cat3Users = filteredUsers.filter(u => classifyUserCategory(u) === 'crm_invite');
+    const cat4ArchivedUsers = filteredUsers.filter(u => u.is_archived === true);
 
     const CATEGORIES = [
         {
@@ -239,26 +252,198 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             name: '1. Clienți Doar de la Proprietar',
             desc: 'Fără agenție (Doar căutare direct de la proprietari)',
             color: 'text-orange-600 border-orange-200 bg-orange-50',
-            pending: cat1Users.filter(u => u.is_approved === false),
-            approved: cat1Users.filter(u => u.is_approved !== false)
+            col1Title: 'Clienți Activi (Aprobați)',
+            col2Title: 'Clienți cu Acces Suspendat',
+            col3Title: 'Clienți Arhivați',
+            active: cat1Users.filter(u => u.is_approved !== false && u.is_archived !== true),
+            suspended: cat1Users.filter(u => u.is_approved === false && u.is_archived !== true),
+            archived: cat1Users.filter(u => u.is_archived === true)
         },
         {
             id: 'both_options',
             name: '2. Clienți cu Ambele Opțiuni',
             desc: 'Și direct de la proprietar și cu ajutor Broker/Agent',
             color: 'text-blue-600 border-blue-200 bg-blue-50',
-            pending: cat2Users.filter(u => u.is_approved === false),
-            approved: cat2Users.filter(u => u.is_approved !== false)
+            col1Title: 'Acceptați & Activi (Aprobați)',
+            col2Title: 'Cereri În Așteptare / Suspendate',
+            col3Title: 'Clienți Arhivați',
+            active: cat2Users.filter(u => u.is_approved !== false && u.is_archived !== true),
+            suspended: cat2Users.filter(u => u.is_approved === false && u.is_archived !== true),
+            archived: cat2Users.filter(u => u.is_archived === true)
         },
         {
             id: 'crm_invite',
             name: '3. Formular CRM (Invite New Lead)',
             desc: 'Lead-uri venite prin link-ul de invitare din pagina Leads & CRM',
             color: 'text-emerald-600 border-emerald-200 bg-emerald-50',
-            pending: cat3Users.filter(u => u.is_approved === false),
-            approved: cat3Users.filter(u => u.is_approved !== false)
+            col1Title: 'Acceptați & Activi (Aprobați)',
+            col2Title: 'Cereri În Așteptare / Suspendate',
+            col3Title: 'Clienți Arhivați',
+            active: cat3Users.filter(u => u.is_approved !== false && u.is_archived !== true),
+            suspended: cat3Users.filter(u => u.is_approved === false && u.is_archived !== true),
+            archived: cat3Users.filter(u => u.is_archived === true)
+        },
+        {
+            id: 'archived_all',
+            name: '4. Clienți Arhivați (Toate Categoriile)',
+            desc: 'Toți clienții arhivați / inactivi pentru a menține secțiunile active curate',
+            color: 'text-slate-700 border-slate-300 bg-slate-100',
+            col1Title: 'Toți Clienții Arhivați',
+            col2Title: 'Clienți Suspendați',
+            col3Title: 'Arhivă Definitivă',
+            active: cat4ArchivedUsers.filter(u => u.is_approved !== false),
+            suspended: cat4ArchivedUsers.filter(u => u.is_approved === false),
+            archived: cat4ArchivedUsers
         }
     ];
+
+    const renderCard = (user: User, colType: 'active' | 'suspended' | 'archived') => (
+        <div key={user.id} className={`bg-white p-4 rounded-xl shadow-sm border ${colType === 'suspended' ? 'border-amber-200 bg-amber-50/20' : colType === 'archived' ? 'border-slate-300 bg-slate-50/50 opacity-90' : 'border-slate-200'} hover:shadow-md transition-all flex flex-col justify-between space-y-3`}>
+            <div>
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-lg ${colType === 'suspended' ? 'bg-amber-100 text-amber-800 border-amber-200' : colType === 'archived' ? 'bg-slate-200 text-slate-700 border-slate-300' : 'bg-emerald-100 text-emerald-800 border-emerald-200'} font-black text-xs flex items-center justify-center border shrink-0`}>
+                            {(user.full_name || user.email || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{user.full_name || 'Utilizator Fără Nume'}</h4>
+                            <span className="text-[11px] text-slate-400 block line-clamp-1">{user.email}</span>
+                            {user.phone ? (
+                                <span className="text-[11px] text-slate-700 font-bold flex items-center gap-1 mt-0.5">
+                                    <Phone className="w-3 h-3 text-orange-600 shrink-0" />
+                                    {user.phone}
+                                </span>
+                            ) : (
+                                <span className="text-[11px] text-slate-400 italic block mt-0.5">Fără telefon</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 text-[11px]">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                        {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role === 'crm_lead' ? 'Lead CRM' : user.role}
+                    </span>
+                    <span className="flex items-center gap-1 font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
+                        <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} CR
+                    </span>
+                </div>
+
+                <div className="flex flex-col gap-1 mt-2">
+                    {user.find_self_from_owner && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
+                            <Check className="w-3 h-3 shrink-0 text-emerald-600" /> Găsește singur de la proprietar
+                        </div>
+                    )}
+                    {user.wants_agent_help !== false && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/80">
+                            <Check className="w-3 h-3 shrink-0 text-indigo-600" /> Solicită ajutor Broker / Agent
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Card Action Buttons */}
+            <div className="space-y-1.5 pt-3 border-t border-slate-100">
+                {colType === 'active' && (
+                    <>
+                        <button
+                            onClick={() => handleOpenRestrictionsModal(user)}
+                            className="w-full py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-slate-200 cursor-pointer"
+                        >
+                            <Shield className="w-3.5 h-3.5 text-slate-500" /> Modifică Filtre Acces
+                        </button>
+                        <button
+                            onClick={() => setPreviewUser(user)}
+                            className="w-full py-1.5 px-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-orange-200 cursor-pointer"
+                        >
+                            <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
+                        </button>
+                        <button
+                            onClick={() => handleOpenActivityMonitor(user)}
+                            className="w-full py-1.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-indigo-200 cursor-pointer"
+                        >
+                            <Activity className="w-3.5 h-3.5" /> Monitorizează Activitatea
+                        </button>
+                        <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                                onClick={() => handleApproveUser(user.id, user.is_approved)}
+                                className="py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 border border-amber-200 cursor-pointer"
+                            >
+                                <ShieldAlert className="w-3.5 h-3.5" /> Suspendă
+                            </button>
+                            <button
+                                onClick={() => handleArchiveUser(user.id, user.is_archived)}
+                                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 border border-slate-300 cursor-pointer"
+                            >
+                                <Archive className="w-3.5 h-3.5 text-slate-600" /> Arhivează
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => handleDeleteUserCard(user.id, user.full_name)}
+                            className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" /> Șterge Cerere / Card
+                        </button>
+                    </>
+                )}
+
+                {colType === 'suspended' && (
+                    <>
+                        <button
+                            onClick={() => handleApproveUser(user.id, user.is_approved)}
+                            className="w-full py-2 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                        >
+                            <UserCheck className="w-3.5 h-3.5" /> Restabilește Acces / Reactivează
+                        </button>
+                        <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                                onClick={() => setPreviewUser(user)}
+                                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 border border-slate-200 cursor-pointer"
+                            >
+                                <Eye className="w-3.5 h-3.5" /> Dashboard
+                            </button>
+                            <button
+                                onClick={() => handleArchiveUser(user.id, user.is_archived)}
+                                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 border border-slate-300 cursor-pointer"
+                            >
+                                <Archive className="w-3.5 h-3.5 text-slate-600" /> Arhivează
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => handleDeleteUserCard(user.id, user.full_name)}
+                            className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" /> Șterge Cerere / Card
+                        </button>
+                    </>
+                )}
+
+                {colType === 'archived' && (
+                    <>
+                        <button
+                            onClick={() => handleArchiveUser(user.id, true)}
+                            className="w-full py-2 px-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-black flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                        >
+                            <ArchiveRestore className="w-3.5 h-3.5 text-emerald-400" /> Dezarhivează / Restabilește
+                        </button>
+                        <button
+                            onClick={() => setPreviewUser(user)}
+                            className="w-full py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-slate-200 cursor-pointer"
+                        >
+                            <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
+                        </button>
+                        <button
+                            onClick={() => handleDeleteUserCard(user.id, user.full_name)}
+                            className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" /> Șterge Definitiv Card
+                        </button>
+                    </>
+                )}
+            </div>
+        </div>
+    );
 
     return (
         <div className="flex flex-col h-full space-y-6">
@@ -331,7 +516,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                         onClick={() => setCategoryFilter('all')}
                         className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${categoryFilter === 'all' ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                     >
-                        Toate Categoriile (3 Categorii)
+                        Toate Categoriile (4 Secțiuni)
                     </button>
                     {CATEGORIES.map(cat => (
                         <button
@@ -341,14 +526,14 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                         >
                             <span>{cat.name}</span>
                             <span className="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-black">
-                                {cat.pending.length + cat.approved.length}
+                                {cat.active.length + cat.suspended.length + cat.archived.length}
                             </span>
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Category Groups View - Paired Pending & Approved Columns */}
+            {/* Category Groups View - 3 Sub-Columns Grid (Activi, Suspendați, Arhivați) */}
             <div className="flex-1 space-y-8 overflow-y-auto pr-1">
                 {CATEGORIES.filter(cat => categoryFilter === 'all' || categoryFilter === cat.id).map(cat => (
                     <div key={cat.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
@@ -359,422 +544,94 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                 <p className="text-xs opacity-80 font-medium">{cat.desc}</p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                                {cat.id === 'direct_owner_only' ? (
-                                    <>
-                                        <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> Activi: {cat.approved.length}
-                                        </span>
-                                        <span className="px-3 py-1 bg-slate-700 text-white rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
-                                            <ShieldAlert className="w-3.5 h-3.5 text-amber-400" /> Arhivați: {cat.pending.length}
-                                        </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="px-3 py-1 bg-amber-500 text-slate-950 rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
-                                            <Clock className="w-3.5 h-3.5" /> Cereri: {cat.pending.length}
-                                        </span>
-                                        <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> Acceptați: {cat.approved.length}
-                                        </span>
-                                    </>
-                                )}
+                                <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Activi: {cat.active.length}
+                                </span>
+                                <span className="px-3 py-1 bg-amber-500 text-slate-950 rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
+                                    <ShieldAlert className="w-3.5 h-3.5" /> Suspendați: {cat.suspended.length}
+                                </span>
+                                <span className="px-3 py-1 bg-slate-700 text-white rounded-lg text-xs font-black shadow-sm flex items-center gap-1">
+                                    <Archive className="w-3.5 h-3.5 text-slate-300" /> Arhivați: {cat.archived.length}
+                                </span>
                             </div>
                         </div>
 
-                        {/* Side-by-side Sub-Columns Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                            {/* Sub-Column 1 */}
-                            {cat.id === 'direct_owner_only' ? (
-                                /* Section 1: Sub-Column 1 = Clienți Activi (Aprobați) */
-                                <div className="bg-emerald-50/40 rounded-xl border border-emerald-200/80 p-4 space-y-3">
-                                    <div className="flex items-center justify-between pb-3 border-b border-emerald-200/60">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-full bg-emerald-600"></div>
-                                            <h4 className="font-black text-xs text-emerald-900 uppercase tracking-wider">
-                                                Clienți Activi (Aprobați)
-                                            </h4>
-                                        </div>
-                                        <span className="bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full text-xs font-black">
-                                            {cat.approved.length}
-                                        </span>
+                        {/* 3 Sub-Columns Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            {/* Column 1: Activi / Aprobați */}
+                            <div className="bg-emerald-50/40 rounded-xl border border-emerald-200/80 p-4 space-y-3">
+                                <div className="flex items-center justify-between pb-3 border-b border-emerald-200/60">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-emerald-600"></div>
+                                        <h4 className="font-black text-xs text-emerald-900 uppercase tracking-wider">
+                                            {cat.col1Title}
+                                        </h4>
                                     </div>
-
-                                    <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                                        {cat.approved.length > 0 ? (
-                                            cat.approved.map(user => (
-                                                <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between space-y-3">
-                                                    <div>
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center border border-emerald-200 shrink-0">
-                                                                    {(user.full_name || user.email || '?').charAt(0).toUpperCase()}
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{user.full_name || 'Utilizator Fără Nume'}</h4>
-                                                                    <span className="text-[11px] text-slate-400 block line-clamp-1">{user.email}</span>
-                                                                    {user.phone ? (
-                                                                        <span className="text-[11px] text-slate-700 font-bold flex items-center gap-1 mt-0.5">
-                                                                            <Phone className="w-3 h-3 text-orange-600 shrink-0" />
-                                                                            {user.phone}
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-[11px] text-slate-400 italic block mt-0.5">Fără telefon</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 text-[11px]">
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                                                                {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role}
-                                                            </span>
-                                                            <span className="flex items-center gap-1 font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
-                                                                <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} CR
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="flex flex-col gap-1 mt-2">
-                                                            {user.find_self_from_owner && (
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
-                                                                    <Check className="w-3 h-3 shrink-0 text-emerald-600" /> Găsește singur de la proprietar
-                                                                </div>
-                                                            )}
-                                                            {user.wants_agent_help !== false && (
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/80">
-                                                                    <Check className="w-3 h-3 shrink-0 text-indigo-600" /> Solicită ajutor Broker / Agent
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                                                        <button
-                                                            onClick={() => handleOpenRestrictionsModal(user)}
-                                                            className="w-full py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-slate-200 cursor-pointer"
-                                                        >
-                                                            <Shield className="w-3.5 h-3.5 text-slate-500" /> Modifică Filtre Acces
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setPreviewUser(user)}
-                                                            className="w-full py-1.5 px-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-orange-200 cursor-pointer"
-                                                        >
-                                                            <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleOpenActivityMonitor(user)}
-                                                            className="w-full py-1.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-indigo-200 cursor-pointer"
-                                                        >
-                                                            <Activity className="w-3.5 h-3.5" /> Monitorizează Activitatea
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleApproveUser(user.id, user.is_approved)}
-                                                            className="w-full py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-amber-200 cursor-pointer"
-                                                        >
-                                                            <ShieldAlert className="w-3.5 h-3.5" /> Suspendă Acces / Arhivează
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteUserCard(user.id, user.full_name)}
-                                                            className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" /> Șterge Cerere / Card
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="py-8 text-center text-slate-400 text-xs font-semibold">
-                                                Niciun client activ în această categorie.
-                                            </div>
-                                        )}
-                                    </div>
+                                    <span className="bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full text-xs font-black">
+                                        {cat.active.length}
+                                    </span>
                                 </div>
-                            ) : (
-                                /* Sections 2-4: Sub-Column 1 = Cereri În Așteptare (Ne-aprobați) */
-                                <div className="bg-amber-50/50 rounded-xl border border-amber-200/80 p-4 space-y-3">
-                                    <div className="flex items-center justify-between pb-3 border-b border-amber-200/60">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></div>
-                                            <h4 className="font-black text-xs text-amber-900 uppercase tracking-wider">
-                                                Cereri În Așteptare (Ne-aprobați)
-                                            </h4>
+
+                                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                                    {cat.active.length > 0 ? (
+                                        cat.active.map(user => renderCard(user, 'active'))
+                                    ) : (
+                                        <div className="py-8 text-center text-slate-400 text-xs font-semibold italic">
+                                            Niciun client activ în această secțiune.
                                         </div>
-                                        <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full text-xs font-black">
-                                            {cat.pending.length}
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                                        {cat.pending.length > 0 ? (
-                                            cat.pending.map(user => (
-                                                <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between space-y-3">
-                                                    <div>
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 font-black text-xs flex items-center justify-center border border-amber-200 shrink-0">
-                                                                    {(user.full_name || user.email || '?').charAt(0).toUpperCase()}
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{user.full_name || 'Utilizator Fără Nume'}</h4>
-                                                                    <span className="text-[11px] text-slate-400 block line-clamp-1">{user.email}</span>
-                                                                    {user.phone ? (
-                                                                        <span className="text-[11px] text-slate-700 font-bold flex items-center gap-1 mt-0.5">
-                                                                            <Phone className="w-3 h-3 text-orange-600 shrink-0" />
-                                                                            {user.phone}
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-[11px] text-slate-400 italic block mt-0.5">Fără telefon</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 text-[11px]">
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                                                                {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role}
-                                                            </span>
-                                                            <span className="flex items-center gap-1 font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
-                                                                <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} CR
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="flex flex-col gap-1 mt-2">
-                                                            {user.find_self_from_owner && (
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
-                                                                    <Check className="w-3 h-3 shrink-0 text-emerald-600" /> Găsește singur de la proprietar
-                                                                </div>
-                                                            )}
-                                                            {user.wants_agent_help !== false && (
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/80">
-                                                                    <Check className="w-3 h-3 shrink-0 text-indigo-600" /> Solicită ajutor Broker / Agent
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                                                        <button
-                                                            onClick={() => handleOpenRestrictionsModal(user)}
-                                                            className="w-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-                                                        >
-                                                            <UserCheck className="w-3.5 h-3.5" /> Aprobă Acces & Filtre
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setPreviewUser(user)}
-                                                            className="w-full py-1.5 px-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-orange-200 cursor-pointer"
-                                                        >
-                                                            <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteUserCard(user.id, user.full_name)}
-                                                            className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" /> Șterge Cerere / Card
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="py-8 text-center text-slate-400 text-xs font-semibold">
-                                                Nicio cerere în așteptare în această categorie.
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
 
-                            {/* Sub-Column 2 */}
-                            {cat.id === 'direct_owner_only' ? (
-                                /* Section 1: Sub-Column 2 = Clienți Arhivați (Acces Suspendat) */
-                                <div className="bg-slate-100/80 rounded-xl border border-slate-300 p-4 space-y-3">
-                                    <div className="flex items-center justify-between pb-3 border-b border-slate-300">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-full bg-slate-600"></div>
-                                            <h4 className="font-black text-xs text-slate-800 uppercase tracking-wider">
-                                                Clienți Arhivați (Acces Suspendat)
-                                            </h4>
+                            {/* Column 2: Suspendați / Acces Suspendat */}
+                            <div className="bg-amber-50/50 rounded-xl border border-amber-200/80 p-4 space-y-3">
+                                <div className="flex items-center justify-between pb-3 border-b border-amber-200/60">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                                        <h4 className="font-black text-xs text-amber-900 uppercase tracking-wider">
+                                            {cat.col2Title}
+                                        </h4>
+                                    </div>
+                                    <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full text-xs font-black">
+                                        {cat.suspended.length}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                                    {cat.suspended.length > 0 ? (
+                                        cat.suspended.map(user => renderCard(user, 'suspended'))
+                                    ) : (
+                                        <div className="py-8 text-center text-slate-400 text-xs font-semibold italic">
+                                            Niciun client suspendat în această secțiune.
                                         </div>
-                                        <span className="bg-slate-300 text-slate-900 px-2 py-0.5 rounded-full text-xs font-black">
-                                            {cat.pending.length}
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                                        {cat.pending.length > 0 ? (
-                                            cat.pending.map(user => (
-                                                <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between space-y-3 opacity-80">
-                                                    <div>
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 font-black text-xs flex items-center justify-center border border-slate-300 shrink-0">
-                                                                    {(user.full_name || user.email || '?').charAt(0).toUpperCase()}
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{user.full_name || 'Utilizator Fără Nume'}</h4>
-                                                                    <span className="text-[11px] text-slate-400 block line-clamp-1">{user.email}</span>
-                                                                    {user.phone ? (
-                                                                        <span className="text-[11px] text-slate-700 font-bold flex items-center gap-1 mt-0.5">
-                                                                            <Phone className="w-3 h-3 text-slate-500 shrink-0" />
-                                                                            {user.phone}
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-[11px] text-slate-400 italic block mt-0.5">Fără telefon</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 text-[11px]">
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                                                                {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role}
-                                                            </span>
-                                                            <span className="flex items-center gap-1 font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                                                                <Coins className="w-3 h-3 text-slate-500" /> {user.credits || 0} CR
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="flex flex-col gap-1 mt-2">
-                                                            {user.find_self_from_owner && (
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                                                                    <Check className="w-3 h-3 shrink-0 text-slate-500" /> Găsește singur de la proprietar
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                                                        <button
-                                                            onClick={() => handleApproveUser(user.id, user.is_approved)}
-                                                            className="w-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-                                                        >
-                                                            <UserCheck className="w-3.5 h-3.5" /> Restabilește Acces / Reactivează
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setPreviewUser(user)}
-                                                            className="w-full py-1.5 px-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-orange-200 cursor-pointer"
-                                                        >
-                                                            <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteUserCard(user.id, user.full_name)}
-                                                            className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" /> Șterge Cerere / Card
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="py-8 text-center text-slate-400 text-xs font-semibold">
-                                                Niciun client arhivat / suspendat în această categorie.
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
-                            ) : (
-                                /* Sections 2-4: Sub-Column 2 = Acceptați & Activi (Aprobați) */
-                                <div className="bg-emerald-50/40 rounded-xl border border-emerald-200/80 p-4 space-y-3">
-                                    <div className="flex items-center justify-between pb-3 border-b border-emerald-200/60">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-full bg-emerald-600"></div>
-                                            <h4 className="font-black text-xs text-emerald-900 uppercase tracking-wider">
-                                                Acceptați & Activi (Aprobați)
-                                            </h4>
+                            </div>
+
+                            {/* Column 3: Clienți Arhivați */}
+                            <div className="bg-slate-100/70 rounded-xl border border-slate-300/80 p-4 space-y-3">
+                                <div className="flex items-center justify-between pb-3 border-b border-slate-300/60">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-slate-600"></div>
+                                        <h4 className="font-black text-xs text-slate-800 uppercase tracking-wider">
+                                            {cat.col3Title}
+                                        </h4>
+                                    </div>
+                                    <span className="bg-slate-300 text-slate-900 px-2 py-0.5 rounded-full text-xs font-black">
+                                        {cat.archived.length}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                                    {cat.archived.length > 0 ? (
+                                        cat.archived.map(user => renderCard(user, 'archived'))
+                                    ) : (
+                                        <div className="py-8 text-center text-slate-400 text-xs font-semibold italic">
+                                            Niciun client arhivat în această secțiune.
                                         </div>
-                                        <span className="bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full text-xs font-black">
-                                            {cat.approved.length}
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                                        {cat.approved.length > 0 ? (
-                                            cat.approved.map(user => (
-                                                <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between space-y-3">
-                                                    <div>
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center border border-emerald-200 shrink-0">
-                                                                    {(user.full_name || user.email || '?').charAt(0).toUpperCase()}
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{user.full_name || 'Utilizator Fără Nume'}</h4>
-                                                                    <span className="text-[11px] text-slate-400 block line-clamp-1">{user.email}</span>
-                                                                    {user.phone ? (
-                                                                        <span className="text-[11px] text-slate-700 font-bold flex items-center gap-1 mt-0.5">
-                                                                            <Phone className="w-3 h-3 text-orange-600 shrink-0" />
-                                                                            {user.phone}
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-[11px] text-slate-400 italic block mt-0.5">Fără telefon</span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100 text-[11px]">
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                                                                {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role}
-                                                            </span>
-                                                            <span className="flex items-center gap-1 font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
-                                                                <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} CR
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="flex flex-col gap-1 mt-2">
-                                                            {user.find_self_from_owner && (
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80">
-                                                                    <Check className="w-3 h-3 shrink-0 text-emerald-600" /> Găsește singur de la proprietar
-                                                                </div>
-                                                            )}
-                                                            {user.wants_agent_help !== false && (
-                                                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/80">
-                                                                    <Check className="w-3 h-3 shrink-0 text-indigo-600" /> Solicită ajutor Broker / Agent
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-1.5 pt-3 border-t border-slate-100">
-                                                        <button
-                                                            onClick={() => handleOpenRestrictionsModal(user)}
-                                                            className="w-full py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-slate-200 cursor-pointer"
-                                                        >
-                                                            <Shield className="w-3.5 h-3.5 text-slate-500" /> Modifică Filtre Acces
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setPreviewUser(user)}
-                                                            className="w-full py-1.5 px-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-orange-200 cursor-pointer"
-                                                        >
-                                                            <Eye className="w-3.5 h-3.5" /> Vezi Dashboard Client
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleOpenActivityMonitor(user)}
-                                                            className="w-full py-1.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-indigo-200 cursor-pointer"
-                                                        >
-                                                            <Activity className="w-3.5 h-3.5" /> Monitorizează Activitatea
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleApproveUser(user.id, user.is_approved)}
-                                                            className="w-full py-1.5 px-2 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-amber-200 cursor-pointer"
-                                                        >
-                                                            <ShieldAlert className="w-3.5 h-3.5" /> Suspendă Acces
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteUserCard(user.id, user.full_name)}
-                                                            className="w-full py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-rose-200 cursor-pointer transition-colors"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" /> Șterge Cerere / Card
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="py-8 text-center text-slate-400 text-xs font-semibold">
-                                                Niciun utilizator acceptat în această categorie.
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 ))}

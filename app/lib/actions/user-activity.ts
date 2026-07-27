@@ -277,6 +277,7 @@ export async function getAIPipelineData() {
             return {
                 ...u,
                 is_approved: isApproved,
+                is_archived: u.is_archived === true || u.status === 'archived' || matchedLead?.is_archived === true || matchedLead?.status === 'archived',
                 source: matchedLead?.source || (u as any).source || 'Direct Signup',
                 find_self_from_owner: findSelfFromOwner,
                 wants_agent_help: wantsAgentHelp,
@@ -299,6 +300,7 @@ export async function getAIPipelineData() {
                 role: 'crm_lead',
                 is_crm_only_lead: true,
                 is_approved: false,
+                is_archived: l.is_archived === true || l.status === 'archived',
                 source: l.source || 'Formular CRM (Invite New Lead)',
                 find_self_from_owner: l.find_self_from_owner ?? l.search_direct_owner ?? true,
                 wants_agent_help: l.wants_agent_help ?? l.search_with_agent ?? true,
