@@ -77,6 +77,7 @@ export default function LeadList({
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
     const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'my' | 'partner'>('all');
+    const [showArchived, setShowArchived] = useState(false);
 
     const handleUnlockClick = async (leadId: string) => {
         if (userCredits < leadUnlockCost) {
@@ -210,18 +211,19 @@ export default function LeadList({
 
             // Status Matching & Archiving Logic
             const isSearchingPhoneOrTerm = !!searchTerm.trim() || !!filters.lead_phone.trim();
+            const isLeadArchived = lead.status === 'closed' || lead.status === 'lost' || lead.status === 'archived' || lead.is_archived === true;
             let matchesStatus = false;
 
             if (activeStatus === 'all') {
-                if (isSearchingPhoneOrTerm) {
-                    // Include closed/lost leads if specifically searching by phone or search term
+                if (showArchived || isSearchingPhoneOrTerm) {
+                    // Include archived leads if explicitly enabled by checkbox or searching
                     matchesStatus = true;
                 } else {
-                    // Hide closed & lost (archived) leads by default from main CRM list view
-                    matchesStatus = lead.status !== 'closed' && lead.status !== 'lost' && lead.status !== 'archived';
+                    // Hide closed, lost & archived leads by default from main CRM list view
+                    matchesStatus = !isLeadArchived;
                 }
             } else if (activeStatus === 'archived') {
-                matchesStatus = lead.status === 'closed' || lead.status === 'lost' || lead.status === 'archived';
+                matchesStatus = isLeadArchived;
             } else {
                 matchesStatus = lead.status === activeStatus;
             }
@@ -362,25 +364,37 @@ export default function LeadList({
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        onClick={() => setOwnershipFilter('my')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'my' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
-                    >
-                        My Leads
-                    </button>
-                    <button
-                        onClick={() => setOwnershipFilter('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'all' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
-                    >
-                        All Leads
-                    </button>
-                    <button
-                        onClick={() => setOwnershipFilter('partner')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'partner' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
-                    >
-                        Partner Leads
-                    </button>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={() => setOwnershipFilter('my')}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'my' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                        >
+                            My Leads
+                        </button>
+                        <button
+                            onClick={() => setOwnershipFilter('all')}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'all' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                        >
+                            All Leads
+                        </button>
+                        <button
+                            onClick={() => setOwnershipFilter('partner')}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${ownershipFilter === 'partner' ? 'bg-orange-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                        >
+                            Partner Leads
+                        </button>
+                    </div>
+
+                    <label className="flex items-center gap-2.5 px-3.5 py-2 bg-slate-100/90 hover:bg-slate-200/90 rounded-xl border border-slate-300/80 cursor-pointer select-none text-xs font-bold text-slate-700 transition-all shadow-sm">
+                        <input
+                            type="checkbox"
+                            checked={showArchived}
+                            onChange={(e) => setShowArchived(e.target.checked)}
+                            className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer"
+                        />
+                        <span>Afișează și Lead-urile Arhivațe</span>
+                    </label>
                 </div>
 
                 <div className="h-px bg-slate-100 my-2" />
