@@ -985,10 +985,10 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-md border border-indigo-100 overflow-hidden">
                 <div 
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
-                    className="px-6 py-4.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-800 flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/90 transition-all"
+                    className="px-6 py-4.5 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 border-b border-indigo-900/50 flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/90 transition-all"
                 >
                     <div className="flex items-center gap-3.5">
                         <div className="p-2.5 bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 rounded-xl shadow-md shadow-orange-500/20 font-bold shrink-0">
@@ -998,7 +998,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <h3 className="font-bold text-white text-base flex items-center gap-2 tracking-tight">
                                 Criteriile Tale de Căutare
                             </h3>
-                            <p className="text-xs text-slate-400 font-medium">Modifică-ți preferințele pentru ca AI-ul să-ți găsească exact proprietatea dorită</p>
+                            <p className="text-xs text-indigo-200/80 font-medium">De aici modifici criteriile tale de cautare pentru AI</p>
                         </div>
                     </div>
                     <div className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
