@@ -43,6 +43,13 @@ const TABS = [
         color: 'text-rose-600 border-rose-600 bg-rose-50 font-semibold'
     },
     { 
+        id: 'winner', 
+        name: 'Câștigător', 
+        icon: Award,
+        desc: 'Felicitări! Aici este proprietatea pe care ai ales-o.',
+        color: 'text-amber-600 border-amber-600 bg-amber-50 font-semibold'
+    },
+    { 
         id: 'to_visit', 
         name: 'De Vizionat', 
         icon: Eye,
@@ -68,16 +75,9 @@ const TABS = [
     { 
         id: 'dismissed', 
         name: 'Nu îmi plac', 
-        icon: XCircle,
+        icon: ThumbsDown,
         desc: 'Aici sunt cele la care le-ai dat "Nu se potrivesc" din ce a selectat AI-ul inițial.',
         color: 'text-gray-600 border-gray-600 bg-gray-50 font-semibold'
-    },
-    { 
-        id: 'winner', 
-        name: 'Câștigător', 
-        icon: Award,
-        desc: 'Felicitări! Aici este proprietatea pe care ai ales-o.',
-        color: 'text-amber-600 border-amber-600 bg-amber-50 font-semibold'
     }
 ];
 
@@ -1399,26 +1399,24 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             </div>
                                         </div>
 
-                                        {/* Stage Action Pill Buttons with Rich Active Gradient Colors */}
-                                        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100/80">
+                                        {/* Stage Action Pill Buttons (2 per row, no icons, non-bold font) */}
+                                        <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100/80">
                                             {TABS.filter(t => t.id !== 'curate').map(tab => {
                                                 const isCurrentStatus = (item.status || 'curate') === tab.id;
-                                                const IconComponent = (tab as any).icon;
                                                 const colors = TAB_COLORS[tab.id];
 
                                                 return (
                                                     <button
                                                         key={tab.id}
                                                         onClick={() => handleUpdateStatus(prop.id, tab.id)}
-                                                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border ${colors.active} ${
+                                                        className={`py-1.5 px-2 text-xs font-medium rounded-xl text-center justify-center transition-all cursor-pointer border truncate ${colors.active} ${
                                                             isCurrentStatus
-                                                                ? 'ring-2 ring-slate-900/40 scale-105 shadow-md'
+                                                                ? 'ring-2 ring-slate-900/50 shadow-md font-semibold scale-[1.02]'
                                                                 : 'opacity-85 hover:opacity-100 active:scale-95'
                                                         }`}
                                                         title={`Mută în stadiul ${tab.name}`}
                                                     >
-                                                        {IconComponent && <IconComponent className="w-3.5 h-3.5 text-white fill-current" />}
-                                                        <span>{tab.name}</span>
+                                                        <span className="truncate">{tab.name}</span>
                                                     </button>
                                                 );
                                             })}
