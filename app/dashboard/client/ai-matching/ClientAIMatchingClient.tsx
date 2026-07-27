@@ -892,20 +892,20 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             </div>
 
             {/* Collapsible Section: Criteriile Tale de Căutare */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-md border border-indigo-200 overflow-hidden">
                 <div 
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
-                    className="px-5 py-3 bg-slate-900 text-white flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/90 transition-all border-b border-slate-800"
+                    className="px-5 py-3 bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-800 text-white flex items-center justify-between cursor-pointer select-none hover:from-indigo-600 hover:to-blue-700 transition-all"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/30 font-semibold shrink-0">
+                        <div className="p-2 bg-white/10 backdrop-blur-md text-yellow-300 rounded-xl border border-white/20 font-semibold shrink-0">
                             <SlidersHorizontal className="w-5 h-5" />
                         </div>
                         <div>
                             <h3 className="font-semibold text-white text-sm sm:text-base flex items-center gap-2 tracking-tight">
                                 Criteriile Tale de Căutare
                             </h3>
-                            <p className="text-[11px] text-slate-400 font-medium">De aici modifici criteriile tale de cautare pentru AI</p>
+                            <p className="text-[11px] text-blue-100 font-medium">De aici modifici criteriile tale de cautare pentru AI</p>
                         </div>
                     </div>
                     <div className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white shrink-0">
