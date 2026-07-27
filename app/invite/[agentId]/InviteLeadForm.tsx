@@ -43,8 +43,8 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
     const [citiesList, setCitiesList] = useState<string[]>(ROMANIAN_CITIES);
     const [citiesListFull, setCitiesListFull] = useState<{ id: string; name: string }[]>([]);
     const [allRawAreas, setAllRawAreas] = useState<{ name: string; parent_id: string | null }[]>([]);
-    const [searchWithAgent, setSearchWithAgent] = useState(mode === 'crm_invite');
-    const [searchDirectOwner, setSearchDirectOwner] = useState(true);
+    const [searchWithAgent, setSearchWithAgent] = useState(false);
+    const [searchDirectOwner, setSearchDirectOwner] = useState(false);
 
     useEffect(() => {
         getSystemLocations().then(res => {
@@ -127,6 +127,9 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
         if (!phone.trim()) newErrors.phone = 'Numărul de telefon este obligatoriu';
         if (!budgetMax.trim() || isNaN(Number(budgetMax)) || Number(budgetMax) <= 0) {
             newErrors.budget = 'Introduceți un buget maxim valid';
+        }
+        if (mode !== 'crm_invite' && !searchWithAgent && !searchDirectOwner) {
+            newErrors.propertySource = 'Selectați cel puțin o opțiune pentru a continua';
         }
 
         setErrors(newErrors);
@@ -558,14 +561,17 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
             {mode !== 'crm_invite' && (
                 <div>
                     <label className="block text-xs font-black uppercase tracking-wider text-orange-600 mb-2">
-                        GĂSEȘTE PROPRIETĂȚI DE LA
+                        GĂSEȘTE PROPRIETĂȚI DE LA <span className="text-rose-500">*</span>
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchWithAgent ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                        <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchWithAgent ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : errors.propertySource ? 'border-rose-400 bg-rose-50/20 text-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
                             <input
                                 type="checkbox"
                                 checked={searchWithAgent}
-                                onChange={(e) => setSearchWithAgent(e.target.checked)}
+                                onChange={(e) => {
+                                    setSearchWithAgent(e.target.checked);
+                                    if (errors.propertySource) setErrors(prev => ({ ...prev, propertySource: '' }));
+                                }}
                                 className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
                             />
                             <div className="flex flex-col min-w-0">
@@ -574,11 +580,14 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                             </div>
                         </label>
 
-                        <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchDirectOwner ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                        <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${searchDirectOwner ? 'border-orange-500 bg-orange-50/50 text-orange-900 shadow-sm' : errors.propertySource ? 'border-rose-400 bg-rose-50/20 text-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
                             <input
                                 type="checkbox"
                                 checked={searchDirectOwner}
-                                onChange={(e) => setSearchDirectOwner(e.target.checked)}
+                                onChange={(e) => {
+                                    setSearchDirectOwner(e.target.checked);
+                                    if (errors.propertySource) setErrors(prev => ({ ...prev, propertySource: '' }));
+                                }}
                                 className="rounded border-slate-300 text-orange-600 focus:ring-orange-500/20 w-4 h-4 cursor-pointer shrink-0"
                             />
                             <div className="flex flex-col min-w-0">
@@ -587,6 +596,11 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                             </div>
                         </label>
                     </div>
+                    {errors.propertySource && (
+                        <p className="text-xs text-rose-500 font-bold mt-1.5 animate-in fade-in">
+                            {errors.propertySource}
+                        </p>
+                    )}
                 </div>
             )}
 

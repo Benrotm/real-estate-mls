@@ -191,19 +191,14 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
 
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-    // Helper classifier for the 4 Categories requested by admin
+    // Helper classifier for the 3 Categories requested by admin
     const classifyUserCategory = (u: User) => {
         const source = (u.source || '').toLowerCase();
         const role = (u.role || '').toLowerCase();
         
-        // 4. CRM Lead (added via Invite New Lead from Leads & CRM, no user profile account)
+        // 3. CRM Lead (added via Invite New Lead from Leads & CRM, no user profile account)
         if ((u as any).is_crm_only_lead || role === 'crm_lead' || source.includes('crm_invite') || source.includes('formular crm')) {
             return 'crm_invite';
-        }
-
-        // 3. Property Page Signup (Poza 1 - modal/button on /properties page)
-        if (source.includes('property_page') || source.includes('pagina proprietati') || source.includes('pagina proprietăților')) {
-            return 'property_page';
         }
 
         // 2. Both Options: Client with BOTH wants_agent_help === true AND find_self_from_owner !== false
@@ -236,8 +231,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
     // Categorized Board Groups & Paired Columns (Cereri Ne-aprobate & Acceptați)
     const cat1Users = filteredUsers.filter(u => classifyUserCategory(u) === 'direct_owner_only');
     const cat2Users = filteredUsers.filter(u => classifyUserCategory(u) === 'both_options');
-    const cat3Users = filteredUsers.filter(u => classifyUserCategory(u) === 'property_page');
-    const cat4Users = filteredUsers.filter(u => classifyUserCategory(u) === 'crm_invite');
+    const cat3Users = filteredUsers.filter(u => classifyUserCategory(u) === 'crm_invite');
 
     const CATEGORIES = [
         {
@@ -257,20 +251,12 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             approved: cat2Users.filter(u => u.is_approved !== false)
         },
         {
-            id: 'property_page',
-            name: '3. Pagina Proprietăților (Poza 1)',
-            desc: 'Clienți înregistrați / autentificați din modalul paginii de proprietăți',
-            color: 'text-purple-600 border-purple-200 bg-purple-50',
-            pending: cat3Users.filter(u => u.is_approved === false),
-            approved: cat3Users.filter(u => u.is_approved !== false)
-        },
-        {
             id: 'crm_invite',
-            name: '4. Formular CRM (Invite New Lead)',
+            name: '3. Formular CRM (Invite New Lead)',
             desc: 'Lead-uri venite prin link-ul de invitare din pagina Leads & CRM',
             color: 'text-emerald-600 border-emerald-200 bg-emerald-50',
-            pending: cat4Users.filter(u => u.is_approved === false),
-            approved: cat4Users.filter(u => u.is_approved !== false)
+            pending: cat3Users.filter(u => u.is_approved === false),
+            approved: cat3Users.filter(u => u.is_approved !== false)
         }
     ];
 
@@ -345,7 +331,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                         onClick={() => setCategoryFilter('all')}
                         className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${categoryFilter === 'all' ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                     >
-                        Toate Categoriile (4 Categorii)
+                        Toate Categoriile (3 Categorii)
                     </button>
                     {CATEGORIES.map(cat => (
                         <button
