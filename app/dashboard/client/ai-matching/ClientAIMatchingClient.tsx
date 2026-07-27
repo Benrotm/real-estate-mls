@@ -43,14 +43,6 @@ const TABS = [
         color: 'text-amber-600 border-amber-600 bg-amber-50 font-semibold'
     },
     { 
-        id: 'de_verificat', 
-        name: 'De Verificat', 
-        icon: Bookmark,
-        desc: 'Aici sunt proprietățile pe care le-ai verificat în detalii și dorești să vorbești cu proprietarul sau să le ții de interes.',
-        color: 'text-blue-600 border-blue-600 bg-blue-50 font-semibold',
-        hasCalendar: true
-    },
-    { 
         id: 'to_visit', 
         name: 'De Vizionat', 
         icon: Eye,
@@ -105,14 +97,6 @@ const TAB_COLORS: Record<string, { active: string; inactive: string; badgeActive
         badgeInactive: 'bg-amber-200 text-amber-950 font-semibold',
         iconActive: 'text-amber-100 fill-current',
         iconInactive: 'text-amber-600'
-    },
-    de_verificat: {
-        active: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 border-blue-500 font-semibold',
-        inactive: 'bg-blue-50 hover:bg-blue-100/80 text-blue-950 border-blue-200 font-semibold',
-        badgeActive: 'bg-white/30 text-white font-semibold',
-        badgeInactive: 'bg-blue-200 text-blue-950 font-semibold',
-        iconActive: 'text-blue-100',
-        iconInactive: 'text-blue-600'
     },
     to_visit: {
         active: 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-600/30 border-violet-500 font-semibold',
@@ -607,7 +591,6 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const getTabProperties = (tabId: string) => {
         if (tabId === 'curate') return aiSuggestions;
         if (tabId === 'winner') return matches.filter(m => m.status === 'winner' || m.status === 'sold');
-        if (tabId === 'de_verificat') return matches.filter(m => m.status === 'de_verificat' || m.status === 'to_call' || m.status === 'interested');
         return matches.filter(m => m.status === tabId);
     };
 
@@ -1367,68 +1350,43 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             </div>
                                             <div className="p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
                                                 <Ruler className="w-3.5 h-3.5 text-slate-400 mx-auto mb-0.5" />
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase block">Suprafață</span>
-                                                <span className="text-xs font-black text-slate-900">{prop.area_usable ? `${prop.area_usable} m²` : '-'}</span>
+                                                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Suprafață</span>
+                                                <span className="text-xs font-semibold text-slate-900">{prop.area_usable ? `${prop.area_usable} m²` : '-'}</span>
                                             </div>
                                             <div className="p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
                                                 <Coins className="w-3.5 h-3.5 text-orange-500 mx-auto mb-0.5" />
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase block">Preț</span>
-                                                <span className="text-xs font-black text-orange-600">€{prop.price?.toLocaleString()}</span>
+                                                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Preț</span>
+                                                <span className="text-xs font-semibold text-orange-600">€{prop.price?.toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Action Buttons per Tab */}
+                                    {/* Action Buttons & Stage Action Pills per Card */}
                                     <div className="space-y-2.5 pt-2 border-t border-slate-100">
                                         <div className="flex flex-wrap items-center justify-between gap-2">
                                             <Link
                                                 href={`/properties/${prop.id}`}
                                                 target="_blank"
-                                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-sm transition-all"
+                                                className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-semibold rounded-xl flex items-center gap-1 shadow-sm transition-all cursor-pointer shrink-0"
                                             >
-                                                Detalii <ArrowUpRight className="w-3.5 h-3.5 text-orange-400" />
+                                                Vezi Detalii <ArrowUpRight className="w-3.5 h-3.5 text-slate-950" />
                                             </Link>
 
+                                            {/* Calendar & Flag buttons if applicable */}
                                             <div className="flex items-center gap-1.5">
-                                                <button
-                                                    onClick={() => handleUpdateStatus(prop.id, 'saved')}
-                                                    className={`px-2.5 py-1.5 text-xs font-extrabold rounded-xl flex items-center gap-1 transition-all cursor-pointer ${
-                                                        item.status === 'saved'
-                                                            ? 'bg-amber-500 text-white shadow-sm'
-                                                            : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
-                                                    }`}
-                                                    title="Adaugă la Favorite"
-                                                >
-                                                    <Heart className="w-3.5 h-3.5 fill-current" /> Favorite
-                                                </button>
-
-                                                <button
-                                                    onClick={() => handleUpdateStatus(prop.id, 'dismissed')}
-                                                    className={`px-2.5 py-1.5 text-xs font-extrabold rounded-xl flex items-center gap-1 transition-all cursor-pointer ${
-                                                        item.status === 'dismissed'
-                                                            ? 'bg-rose-600 text-white shadow-sm'
-                                                            : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
-                                                    }`}
-                                                    title="Nu îmi place / Thumbs Down"
-                                                >
-                                                    <ThumbsDown className="w-3.5 h-3.5" /> Nu-mi place
-                                                </button>
-
-                                                {/* Calendar Button (for De Sunat, De Vizionat, Programate) */}
                                                 {currentTabObj.hasCalendar && (
                                                     <button
-                                                        onClick={() => handleOpenCalendarModal(prop, activeTab === 'to_call' ? 'De Sunat' : 'De Vizionat')}
-                                                        className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-sm cursor-pointer"
+                                                        onClick={() => handleOpenCalendarModal(prop, 'De Vizionat')}
+                                                        className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-sm cursor-pointer"
                                                     >
                                                         <CalendarDays className="w-3.5 h-3.5" /> Calendar
                                                     </button>
                                                 )}
 
-                                                {/* Flag Button (for De Vizionat & Programate) */}
                                                 {currentTabObj.hasFlag && matchRecord && (
                                                     <button
                                                         onClick={() => handleToggleWantToSeeAgain(matchRecord.id, isWantSeeAgain)}
-                                                        className={`px-2.5 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1 transition-colors ${
+                                                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1 transition-colors ${
                                                             isWantSeeAgain
                                                                 ? 'bg-purple-600 text-white'
                                                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
@@ -1441,18 +1399,29 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             </div>
                                         </div>
 
-                                        {/* Status Transition Select Dropdown */}
-                                        <div className="pt-1">
-                                            <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Mută în Stadiul:</label>
-                                            <select
-                                                value={item.status || 'curate'}
-                                                onChange={(e) => handleUpdateStatus(prop.id, e.target.value)}
-                                                className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-extrabold px-2.5 py-1.5 rounded-xl outline-none cursor-pointer"
-                                            >
-                                                {TABS.map(t => (
-                                                    <option key={t.id} value={t.id} className="bg-slate-900 text-white font-bold py-1">{t.name}</option>
-                                                ))}
-                                            </select>
+                                        {/* Stage Action Pill Buttons (Favorite, De Vizionat, Oferte făcute, Mă mai gândesc, Nu îmi plac, Câștigător) */}
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100/80">
+                                            {TABS.filter(t => t.id !== 'curate').map(tab => {
+                                                const isCurrentStatus = (item.status || 'curate') === tab.id;
+                                                const IconComponent = (tab as any).icon;
+                                                const colors = TAB_COLORS[tab.id];
+
+                                                return (
+                                                    <button
+                                                        key={tab.id}
+                                                        onClick={() => handleUpdateStatus(prop.id, tab.id)}
+                                                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1 transition-all cursor-pointer border ${
+                                                            isCurrentStatus
+                                                                ? `${colors.active} shadow-sm`
+                                                                : `${colors.inactive}`
+                                                        }`}
+                                                        title={`Mută în stadiul ${tab.name}`}
+                                                    >
+                                                        {IconComponent && <IconComponent className={`w-3.5 h-3.5 ${isCurrentStatus ? 'fill-current' : ''}`} />}
+                                                        <span>{tab.name}</span>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
