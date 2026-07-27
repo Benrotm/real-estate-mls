@@ -1161,7 +1161,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         <Coins className="w-5 h-5 animate-pulse" />
                     </div>
                     <div>
-                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Balanță Credite Disponibile</span>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Credite Disponibile</span>
                         <div className="text-sm font-semibold text-white flex items-center gap-1.5 font-mono">
                             Credite AI - CR: <span className="text-yellow-400 text-base font-semibold">{credits}</span>
                         </div>

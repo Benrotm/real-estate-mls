@@ -225,20 +225,20 @@ export default function PlatiPage() {
         <div className="min-h-screen bg-slate-950 text-white p-6 sm:p-8">
             <div className="max-w-4xl mx-auto space-y-8">
                 
-                {/* Back Navigation */}
-                <div className="flex items-center justify-between">
+                {/* Back Navigation & Dashboard Button */}
+                <div className="flex items-center justify-between gap-4">
                     <Link 
-                        href="/cont/profil" 
-                        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                        href="/dashboard/client/ai-matching" 
+                        className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-orange-600/30 transition-all cursor-pointer border border-orange-400/40 active:scale-95"
                     >
                         <ArrowLeft className="w-4 h-4" />
-                        Înapoi la Profil
+                        Înapoi la Dashboard
                     </Link>
-                    <Link
-                        href="/dashboard"
-                        className="text-xs bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 px-3 py-1.5 rounded-lg transition-colors"
+                    <Link 
+                        href="/cont/profil" 
+                        className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
                     >
-                        Panou de Control
+                        Înapoi la Profil
                     </Link>
                 </div>
 
