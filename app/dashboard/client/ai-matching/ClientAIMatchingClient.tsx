@@ -32,7 +32,7 @@ const TABS = [
         id: 'curate', 
         name: 'AI Matching', 
         icon: Sparkles,
-        desc: 'Selectate de AI pentru tine după criteriile tale - Intră zilnic sau de mai multe ori aici și dă refresh să vezi ce a apărut nou între timp. Important: Apasă pe icoana Thumb Down - Nu îmi plac sau Favorite pentru ca data viitoare când vrei să verifici ce a apărut nou pe piață să le vezi mai ușor.',
+        desc: `1. AI cauta pentru tine. - Intră zilnic de mai multe ori aici și vezi ce a apărut nou între timp.\n2. Apasă pe icoana Nu îmi Plac sau Favorite (pentru ca data viitoare când vrei să verifici ce a apărut nou pe piață să le vezi mai ușor.)\n3. Important ! Poti adauga link-ul de pe orice alt website de la alte proprietati de pe butonul ADAUGA MANUAL, ca sa gestionezi totul dintr-un singur loc.`,
         color: 'text-orange-600 border-orange-600 bg-orange-50 font-semibold'
     },
     { 
@@ -1267,7 +1267,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 <div>
                     <span className="font-semibold block mb-1 text-slate-900 text-sm flex items-center gap-2">
                         {React.createElement((currentTabObj as any).icon || Sparkles, { className: "w-4 h-4 text-orange-600" })}
-                        Stadiul: {currentTabObj.name}
+                        {activeTab === 'curate' ? 'Primul pas: Cauta cu AI' : `Stadiul: ${currentTabObj.name}`}
                     </span>
                     <p className="whitespace-pre-line">{currentTabObj.desc}</p>
                 </div>
@@ -1275,11 +1275,11 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                     <button
                         onClick={() => loadAISuggestions()}
                         disabled={isLoadingAI || !isApproved}
-                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : `Caută cu AI (Cost: ${instantAiCost} CR)`}
+                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : `Cauta cu AI (${instantAiCost} CR)`}
                         className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/30 transition-all shrink-0 cursor-pointer active:scale-95 border border-orange-400/40"
                     >
                         <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
-                        {isLoadingAI ? 'Se caută cu AI...' : `Caută cu AI (Cost: ${instantAiCost} CR)`}
+                        {isLoadingAI ? 'Se caută cu AI...' : `Cauta cu AI (${instantAiCost} CR)`}
                     </button>
                 )}
             </div>
@@ -1449,9 +1449,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <Sparkles className="w-7 h-7 text-orange-600 fill-current" />
                         </div>
                         <div className="max-w-md mx-auto space-y-2">
-                            <h4 className="font-extrabold text-slate-900 text-base">Gata să cauți proprietăți cu AI?</h4>
+                            <h4 className="font-semibold text-slate-900 text-base">Caută proprietăți cu AI?</h4>
                             <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-                                Apasă pe butonul <strong className="text-orange-600 font-bold">"Caută cu AI (Cost: {instantAiCost} CR)"</strong> din caseta portocalie de mai sus pentru a porni algoritmul AI care va analiza piața și va selecta cele mai potrivite oferte pentru tine.
+                                Apasă pe butonul <strong className="text-orange-600 font-semibold">"Cauta cu AI ({instantAiCost} CR)"</strong> din caseta portocalie de mai sus pentru a porni algoritmul AI care va analiza piața și va selecta cele mai potrivite oferte pentru tine.
                             </p>
                         </div>
                     </div>
