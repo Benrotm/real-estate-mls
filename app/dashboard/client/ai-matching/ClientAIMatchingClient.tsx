@@ -40,7 +40,7 @@ const TABS = [
         name: 'Favorite', 
         icon: Heart,
         desc: 'Astea mi-ar putea plăcea, verifică detaliile după ce le selectezi pe toate care ți se par interesante.',
-        color: 'text-amber-600 border-amber-600 bg-amber-50 font-semibold'
+        color: 'text-rose-600 border-rose-600 bg-rose-50 font-semibold'
     },
     { 
         id: 'to_visit', 
@@ -63,7 +63,7 @@ const TABS = [
         name: 'Mă mai gândesc', 
         icon: Clock,
         desc: 'Aici sunt cele la care ai fost la vizionare și încă te mai gândești, dar le găsești aici dacă te răzgândești.',
-        color: 'text-rose-600 border-rose-600 bg-rose-50 font-semibold'
+        color: 'text-purple-600 border-purple-600 bg-purple-50 font-semibold'
     },
     { 
         id: 'dismissed', 
@@ -91,12 +91,12 @@ const TAB_COLORS: Record<string, { active: string; inactive: string; badgeActive
         iconInactive: 'text-orange-600'
     },
     saved: {
-        active: 'bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-md shadow-amber-500/30 border-amber-400 font-semibold',
-        inactive: 'bg-amber-50 hover:bg-amber-100/80 text-amber-950 border-amber-200 font-semibold',
+        active: 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30 border-rose-500 font-semibold',
+        inactive: 'bg-rose-50 hover:bg-rose-100/80 text-rose-950 border-rose-200 font-semibold',
         badgeActive: 'bg-white/30 text-white font-semibold',
-        badgeInactive: 'bg-amber-200 text-amber-950 font-semibold',
-        iconActive: 'text-amber-100 fill-current',
-        iconInactive: 'text-amber-600'
+        badgeInactive: 'bg-rose-200 text-rose-950 font-semibold',
+        iconActive: 'text-rose-100 fill-current',
+        iconInactive: 'text-rose-600'
     },
     to_visit: {
         active: 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-600/30 border-violet-500 font-semibold',
@@ -1209,9 +1209,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </p>
             </div>
 
-            {/* The 13 Tabs Navigation with Icons & Custom Colored Badges */}
-            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-                <div className="flex min-w-max gap-2">
+            {/* The Tabs Navigation with Icons & Custom Colored Badges (Wrapped on 2 rows) */}
+            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex flex-wrap gap-2.5 items-center justify-start">
                     {TABS.map(tab => {
                         const count = getTabProperties(tab.id).length;
                         const isActive = activeTab === tab.id;
@@ -1229,7 +1229,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-4 py-2.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer border ${
+                                className={`px-4 py-2.5 rounded-full text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer border ${
                                     isActive ? colors.active : colors.inactive
                                 }`}
                             >
@@ -1283,8 +1283,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 )}
             </div>
 
-            {/* Properties Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Properties Grid (2-Column Layout) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {currentProperties.length > 0 ? (
                     currentProperties.map((item: any) => {
                         const prop = item.property || item;
@@ -1309,7 +1309,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                                 e.stopPropagation();
                                                 handleUpdateStatus(prop.id, 'saved');
                                             }}
-                                            className="p-2 bg-amber-500/90 hover:bg-amber-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-transform active:scale-90 cursor-pointer"
+                                            className="p-2 bg-rose-600/90 hover:bg-rose-600 text-white rounded-full shadow-lg backdrop-blur-sm transition-transform active:scale-90 cursor-pointer"
                                             title="Favorite (Adaugă la favorite)"
                                         >
                                             <Heart className="w-3.5 h-3.5 fill-current" />
@@ -1399,7 +1399,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             </div>
                                         </div>
 
-                                        {/* Stage Action Pill Buttons (Favorite, De Vizionat, Oferte făcute, Mă mai gândesc, Nu îmi plac, Câștigător) */}
+                                        {/* Stage Action Pill Buttons with Rich Active Gradient Colors */}
                                         <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100/80">
                                             {TABS.filter(t => t.id !== 'curate').map(tab => {
                                                 const isCurrentStatus = (item.status || 'curate') === tab.id;
@@ -1410,14 +1410,14 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                                     <button
                                                         key={tab.id}
                                                         onClick={() => handleUpdateStatus(prop.id, tab.id)}
-                                                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1 transition-all cursor-pointer border ${
+                                                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border ${colors.active} ${
                                                             isCurrentStatus
-                                                                ? `${colors.active} shadow-sm`
-                                                                : `${colors.inactive}`
+                                                                ? 'ring-2 ring-slate-900/40 scale-105 shadow-md'
+                                                                : 'opacity-85 hover:opacity-100 active:scale-95'
                                                         }`}
                                                         title={`Mută în stadiul ${tab.name}`}
                                                     >
-                                                        {IconComponent && <IconComponent className={`w-3.5 h-3.5 ${isCurrentStatus ? 'fill-current' : ''}`} />}
+                                                        {IconComponent && <IconComponent className="w-3.5 h-3.5 text-white fill-current" />}
                                                         <span>{tab.name}</span>
                                                     </button>
                                                 );
