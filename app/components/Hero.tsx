@@ -36,7 +36,7 @@ export default function Hero() {
                 </div>
 
                 <div className="mb-0">
-                    <RoleSelector mode="navigation" title="This is for:" />
+                    <RoleSelector mode="navigation" title="This is for :" />
                 </div>
 
             </div>
