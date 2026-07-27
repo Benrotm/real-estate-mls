@@ -221,6 +221,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
     const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
     const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
+    const [isAiStepOpen, setIsAiStepOpen] = useState(true);
 
     // Lead preferences editing - all fields from form
     const [prefType, setPrefType] = useState(lead.preference_type || 'Apartment');
@@ -1221,7 +1222,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             <div className="px-1 mb-1 space-y-1">
                 <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5 tracking-wide">
                     <Sparkles className="w-4 h-4 text-orange-500 shrink-0 fill-current" />
-                    Cauta cu AI si apoi salveaza proprietatile in categoriile de mai jos in functie de interes:
+                    Salveaza proprietatile in categoriile de mai jos in functie de interes:
                 </p>
             </div>
 
@@ -1262,25 +1263,40 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 </div>
             </div>
 
-            {/* Current Active Tab Explanatory Text Box */}
-            <div className={`p-5 rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4`}>
-                <div>
-                    <span className="font-semibold block mb-1 text-slate-900 text-sm flex items-center gap-2">
+            {/* Current Active Tab Explanatory Text Box (Collapsible Dropdown) */}
+            <div className={`p-4 rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm transition-all space-y-3`}>
+                <div 
+                    onClick={() => setIsAiStepOpen(!isAiStepOpen)}
+                    className="flex items-center justify-between cursor-pointer select-none"
+                >
+                    <span className="font-semibold text-slate-900 text-sm flex items-center gap-2">
                         {React.createElement((currentTabObj as any).icon || Sparkles, { className: "w-4 h-4 text-orange-600" })}
                         {activeTab === 'curate' ? 'Primul pas: Cauta cu AI' : `Stadiul: ${currentTabObj.name}`}
                     </span>
-                    <p className="whitespace-pre-line">{currentTabObj.desc}</p>
+                    <div className="p-1 bg-white/60 hover:bg-white rounded-lg transition-colors text-slate-700 shrink-0">
+                        {isAiStepOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
                 </div>
-                {activeTab === 'curate' && (
-                    <button
-                        onClick={() => loadAISuggestions()}
-                        disabled={isLoadingAI || !isApproved}
-                        title={!isApproved ? "Contul este în curs de aprobare de către un operator." : `Cauta cu AI (${instantAiCost} CR)`}
-                        className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/30 transition-all shrink-0 cursor-pointer active:scale-95 border border-orange-400/40"
-                    >
-                        <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
-                        {isLoadingAI ? 'Se caută cu AI...' : `Cauta cu AI (${instantAiCost} CR)`}
-                    </button>
+
+                {isAiStepOpen && (
+                    <div className="pt-1 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in duration-200">
+                        <p className="whitespace-pre-line leading-relaxed">{currentTabObj.desc}</p>
+
+                        {activeTab === 'curate' && (
+                            <button
+                                onClick={async () => {
+                                    setIsAiStepOpen(false);
+                                    await loadAISuggestions();
+                                }}
+                                disabled={isLoadingAI || !isApproved}
+                                title={!isApproved ? "Contul este în curs de aprobare de către un operator." : `Cauta cu AI (${instantAiCost} CR)`}
+                                className="px-5 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-orange-600/30 transition-all shrink-0 cursor-pointer active:scale-95 border border-orange-400/40"
+                            >
+                                <Sparkles className={`w-4 h-4 text-yellow-300 fill-current ${isLoadingAI ? 'animate-spin' : ''}`} />
+                                {isLoadingAI ? 'Se caută cu AI...' : `Cauta cu AI (${instantAiCost} CR)`}
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -1449,7 +1465,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <Sparkles className="w-7 h-7 text-orange-600 fill-current" />
                         </div>
                         <div className="max-w-md mx-auto space-y-2">
-                            <h4 className="font-semibold text-slate-900 text-base">Caută proprietăți cu AI?</h4>
+                            <h4 className="font-semibold text-slate-900 text-base">Gestioneaza cautarile tale cu AI dintr-un singur loc</h4>
                             <p className="text-xs text-slate-600 font-semibold leading-relaxed">
                                 Apasă pe butonul <strong className="text-orange-600 font-semibold">"Cauta cu AI ({instantAiCost} CR)"</strong> din caseta portocalie de mai sus pentru a porni algoritmul AI care va analiza piața și va selecta cele mai potrivite oferte pentru tine.
                             </p>
