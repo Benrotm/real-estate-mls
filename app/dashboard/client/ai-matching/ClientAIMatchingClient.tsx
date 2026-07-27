@@ -63,7 +63,7 @@ const TABS = [
         name: 'Mă mai gândesc', 
         icon: Clock,
         desc: 'Aici sunt cele la care ai fost la vizionare și încă te mai gândești, dar le găsești aici dacă te răzgândești.',
-        color: 'text-purple-600 border-purple-600 bg-purple-50 font-semibold'
+        color: 'text-blue-600 border-blue-600 bg-blue-50 font-semibold'
     },
     { 
         id: 'dismissed', 
@@ -115,12 +115,12 @@ const TAB_COLORS: Record<string, { active: string; inactive: string; badgeActive
         iconInactive: 'text-teal-700'
     },
     not_interested: {
-        active: 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-600/30 border-rose-500 font-semibold',
-        inactive: 'bg-rose-50 hover:bg-rose-100/80 text-rose-950 border-rose-200 font-semibold',
+        active: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 border-blue-500 font-semibold',
+        inactive: 'bg-blue-50 hover:bg-blue-100/80 text-blue-950 border-blue-200 font-semibold',
         badgeActive: 'bg-white/30 text-white font-semibold',
-        badgeInactive: 'bg-rose-200 text-rose-950 font-semibold',
-        iconActive: 'text-rose-100',
-        iconInactive: 'text-rose-600'
+        badgeInactive: 'bg-blue-200 text-blue-950 font-semibold',
+        iconActive: 'text-blue-100',
+        iconInactive: 'text-blue-600'
     },
     dismissed: {
         active: 'bg-gradient-to-r from-gray-700 to-slate-800 text-white shadow-md border-gray-600 font-semibold',
@@ -1210,8 +1210,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             </div>
 
             {/* The Tabs Navigation with Icons & Custom Colored Badges (Wrapped on 2 rows) */}
-            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex flex-wrap gap-2.5 items-center justify-start">
+            <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center justify-start">
                     {TABS.map(tab => {
                         const count = getTabProperties(tab.id).length;
                         const isActive = activeTab === tab.id;
@@ -1229,13 +1229,13 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-4 py-2.5 rounded-full text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer border ${
+                                className={`px-2.5 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
                                     isActive ? colors.active : colors.inactive
                                 }`}
                             >
-                                {IconComponent && <IconComponent className={`w-4 h-4 ${isActive ? colors.iconActive : colors.iconInactive}`} />}
+                                {IconComponent && <IconComponent className={`w-3.5 h-3.5 ${isActive ? colors.iconActive : colors.iconInactive}`} />}
                                 <span>{tab.name}</span>
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] ${
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] ${
                                     isActive ? colors.badgeActive : colors.badgeInactive
                                 }`}>
                                     {count}
@@ -1283,8 +1283,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                 )}
             </div>
 
-            {/* Properties Grid (2-Column Layout) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Properties Grid (2-Column Mobile, 3-Column Desktop Layout) */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                 {currentProperties.length > 0 ? (
                     currentProperties.map((item: any) => {
                         const prop = item.property || item;
