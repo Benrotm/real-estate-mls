@@ -164,7 +164,7 @@ function PropertyCardImageSlider({ images, title, matchScore }: { images?: strin
                 className="w-full h-full object-cover transition-all duration-300"
             />
             {matchScore !== undefined && (
-                <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-900/85 text-white border border-slate-700 shadow-sm backdrop-blur-sm flex items-center gap-1 z-10">
+                <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-slate-900/85 text-white border border-slate-700 shadow-sm backdrop-blur-sm flex items-center gap-1 z-10">
                     <Zap className="w-3 h-3 text-orange-500 fill-current" />
                     <span>Match: {matchScore}</span>
                 </div>
@@ -1340,7 +1340,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                     </div>
 
                                     {isWantSeeAgain && (
-                                        <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded-full text-[10px] font-black bg-purple-600 text-white border border-purple-400 shadow-md backdrop-blur-sm flex items-center gap-1 animate-pulse z-10">
+                                        <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-purple-600 text-white border border-purple-400 shadow-md backdrop-blur-sm flex items-center gap-1 animate-pulse z-10">
                                             <Flag className="w-3 h-3 fill-current" />
                                             <span>Mai vreau să-l văd o dată</span>
                                         </div>
@@ -1349,8 +1349,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
                                 <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                                     <div>
-                                        <h4 className="font-bold text-sm text-slate-900 line-clamp-2 leading-snug">{prop.title}</h4>
-                                        <div className="flex items-center gap-1 text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1.5">
+                                        <h4 className="font-semibold text-sm text-slate-900 line-clamp-2 leading-snug">{prop.title}</h4>
+                                        <div className="flex items-center gap-1 text-slate-500 text-[10px] font-semibold uppercase tracking-wider mt-1.5">
                                             <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                                             <span className="truncate">{prop.location_city || prop.city} {prop.location_area && `• ${prop.location_area}`}</span>
                                         </div>
@@ -1358,8 +1358,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                         <div className="grid grid-cols-3 gap-1.5 mt-3 mb-2">
                                             <div className="p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
                                                 <BedDouble className="w-3.5 h-3.5 text-slate-400 mx-auto mb-0.5" />
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase block">Camere</span>
-                                                <span className="text-xs font-black text-slate-900">{prop.rooms || '-'}</span>
+                                                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Camere</span>
+                                                <span className="text-xs font-semibold text-slate-900">{prop.rooms || '-'}</span>
                                             </div>
                                             <div className="p-2 bg-slate-50 rounded-xl text-center border border-slate-100">
                                                 <Ruler className="w-3.5 h-3.5 text-slate-400 mx-auto mb-0.5" />
