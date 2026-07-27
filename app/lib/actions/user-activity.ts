@@ -281,11 +281,12 @@ export async function getAIPipelineData() {
                 source: matchedLead?.source || (u as any).source || 'Direct Signup',
                 find_self_from_owner: findSelfFromOwner,
                 wants_agent_help: wantsAgentHelp,
-                restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
+                restrictions: restrictionsMap[u.id] || { allowed_types: [], allowed_transactions: [], allowed_cities: [] },
+                lead_details: matchedLead || null
             };
         });
 
-        // Identify un-accounted CRM leads (leads without a matching auth user profile) for Category 4
+        // Identify un-accounted CRM leads (leads without a matching auth user profile)
         const crmOnlyLeads = (leads || [])
             .filter(l => {
                 const hasCreatedByProfile = l.created_by && activeUsersList.some(u => u.id === l.created_by);
@@ -302,11 +303,12 @@ export async function getAIPipelineData() {
                 is_approved: false,
                 is_archived: l.is_archived === true || l.status === 'archived',
                 source: l.source || 'Formular CRM (Invite New Lead)',
-                find_self_from_owner: l.find_self_from_owner ?? l.search_direct_owner ?? true,
+                find_self_from_owner: l.find_self_from_owner ?? l.search_direct_owner ?? false,
                 wants_agent_help: l.wants_agent_help ?? l.search_with_agent ?? true,
                 credits: 0,
                 created_at: l.created_at,
-                restrictions: { allowed_types: [], allowed_transactions: [], allowed_cities: [] }
+                restrictions: { allowed_types: [], allowed_transactions: [], allowed_cities: [] },
+                lead_details: l
             }));
 
         const allPipelineItems = [...usersWithDetails, ...crmOnlyLeads];

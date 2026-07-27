@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { 
     Zap, Users, UserCheck, ShieldAlert, Activity, Search, Filter, 
     CheckCircle2, XCircle, Eye, Settings, Clock, Coins, MousePointer, 
-    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2, Archive, ArchiveRestore, FolderArchive
+    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2, Archive, ArchiveRestore, FolderArchive, SlidersHorizontal
 } from 'lucide-react';
 import { toggleUserApproval, saveUserPropertyRestrictions, toggleUserArchived } from '@/app/lib/admin';
 import { 
@@ -72,6 +72,9 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
 
     // Client Dashboard Preview Modal state
     const [previewUser, setPreviewUser] = useState<User | null>(null);
+
+    // Selected user for Criteria & Preferences Modal
+    const [selectedUserForCriteria, setSelectedUserForCriteria] = useState<User | null>(null);
 
     // Recommendation Modal State
     const [isRecModalOpen, setIsRecModalOpen] = useState(false);
@@ -203,19 +206,27 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
 
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-    // Helper classifier for the 3 Categories requested by admin
+    // Helper classifier for the 4 Categories requested by admin
     const classifyUserCategory = (u: User) => {
         const source = (u.source || '').toLowerCase();
         const role = (u.role || '').toLowerCase();
         
-        // 3. CRM Lead (added via Invite New Lead from Leads & CRM, no user profile account)
+        // 4. Formular CRM (Invite New Lead from Leads & CRM, no user profile account)
         if ((u as any).is_crm_only_lead || role === 'crm_lead' || source.includes('crm_invite') || source.includes('formular crm')) {
             return 'crm_invite';
         }
 
-        // 2. Both Options: Client with BOTH wants_agent_help === true AND find_self_from_owner !== false
-        if (u.wants_agent_help === true && u.find_self_from_owner !== false) {
+        const findOwner = u.find_self_from_owner === true;
+        const wantAgent = u.wants_agent_help !== false; // defaults to true unless explicitly false
+
+        // 2. Both Options: Client with BOTH find_self_from_owner === true AND wants_agent_help === true
+        if (findOwner && wantAgent) {
             return 'both_options';
+        }
+
+        // 3. Agent Only: "Vreau ajutor de la un Agent / Broker Imobiliar" checked, "Găsește singur de la proprietari" unchecked
+        if (!findOwner && wantAgent) {
+            return 'agent_only';
         }
 
         // 1. Direct Owner Only: Client with find_self_from_owner === true AND wants_agent_help === false
@@ -242,8 +253,9 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
     // Categorized Board Groups & Paired Columns (Activi, Suspendați & Arhivați)
     const cat1Users = filteredUsers.filter(u => classifyUserCategory(u) === 'direct_owner_only');
     const cat2Users = filteredUsers.filter(u => classifyUserCategory(u) === 'both_options');
-    const cat3Users = filteredUsers.filter(u => classifyUserCategory(u) === 'crm_invite');
-    const cat4ArchivedUsers = filteredUsers.filter(u => u.is_archived === true);
+    const cat3Users = filteredUsers.filter(u => classifyUserCategory(u) === 'agent_only');
+    const cat4Users = filteredUsers.filter(u => classifyUserCategory(u) === 'crm_invite');
+    const cat5ArchivedUsers = filteredUsers.filter(u => u.is_archived === true);
 
     const CATEGORIES = [
         {
@@ -273,12 +285,12 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             archived: cat2Users.filter(u => u.is_archived === true)
         },
         {
-            id: 'crm_invite',
-            name: '3. Formular CRM (Invite New Lead)',
-            desc: 'Lead-uri venite prin link-ul de invitare din pagina Leads & CRM (Fără proces de aprobare/suspendare)',
-            color: 'text-emerald-600 border-emerald-200 bg-emerald-50',
+            id: 'agent_only',
+            name: '3. Clienți Doar cu Ajutor Agent / Broker',
+            desc: 'Clienți care au bifat doar opțiunea Vreau ajutor de la un Agent/Broker (Intră direct în CRM)',
+            color: 'text-purple-600 border-purple-200 bg-purple-50',
             colCount: 2,
-            col1Title: 'Clienți Activi',
+            col1Title: 'Clienți Activi (În CRM)',
             col2Title: 'Clienți Arhivați',
             col3Title: '',
             active: cat3Users.filter(u => u.is_archived !== true),
@@ -286,15 +298,28 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             archived: cat3Users.filter(u => u.is_archived === true)
         },
         {
+            id: 'crm_invite',
+            name: '4. Formular CRM (Invite New Lead)',
+            desc: 'Lead-uri venite prin link-ul de invitare din pagina Leads & CRM (Fără proces de aprobare/suspendare)',
+            color: 'text-emerald-600 border-emerald-200 bg-emerald-50',
+            colCount: 2,
+            col1Title: 'Clienți Activi',
+            col2Title: 'Clienți Arhivați',
+            col3Title: '',
+            active: cat4Users.filter(u => u.is_archived !== true),
+            suspended: [],
+            archived: cat4Users.filter(u => u.is_archived === true)
+        },
+        {
             id: 'archived_all',
-            name: '4. Clienți Arhivați (Toate Categoriile)',
+            name: '5. Clienți Arhivați (Toate Categoriile)',
             desc: 'Toți clienții arhivați / inactivi pentru a menține secțiunile active curate',
             color: 'text-slate-700 border-slate-300 bg-slate-100',
             colCount: 1,
             col1Title: 'Toți Clienții Arhivați',
             col2Title: '',
             col3Title: '',
-            active: cat4ArchivedUsers,
+            active: cat5ArchivedUsers,
             suspended: [],
             archived: []
         }
@@ -348,6 +373,12 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
 
             {/* Universal Card Action Buttons */}
             <div className="space-y-1.5 pt-3 border-t border-slate-100">
+                <button
+                    onClick={() => setSelectedUserForCriteria(user)}
+                    className="w-full py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-emerald-200 cursor-pointer transition-colors"
+                >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-600" /> Criterii & Preferințe
+                </button>
                 <button
                     onClick={() => handleOpenRestrictionsModal(user)}
                     className="w-full py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-slate-200 cursor-pointer"
@@ -1041,6 +1072,151 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                             >
                                 Deschide Pagina Client Live <ArrowUpRight className="w-4 h-4" />
                             </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL 5: CRITERII & PREFERINȚE CLIENT */}
+            {selectedUserForCriteria && (
+                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+                    <div className="bg-slate-900 text-white border border-slate-800 rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+                                    <SlidersHorizontal className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-white flex items-center gap-2">
+                                        Preferințe & Criterii Căutare: <span className="text-emerald-400">{selectedUserForCriteria.full_name || selectedUserForCriteria.email}</span>
+                                    </h3>
+                                    <p className="text-slate-400 text-xs mt-0.5">
+                                        Date din formularul completat de client la înregistrare / generare lead CRM.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedUserForCriteria(null)}
+                                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* User Contact & Source Info */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-2">
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Date de Contact Client</span>
+                                <div className="text-sm font-bold text-white">{selectedUserForCriteria.full_name || 'Fără nume'}</div>
+                                <div className="text-xs text-slate-300 font-medium">{selectedUserForCriteria.email}</div>
+                                {selectedUserForCriteria.phone && (
+                                    <div className="text-xs text-orange-400 font-bold flex items-center gap-1.5 mt-1">
+                                        <Phone className="w-3.5 h-3.5" /> {selectedUserForCriteria.phone}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-2">
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Origine Sursă & Data Înregistrării</span>
+                                <div className="text-xs font-bold text-slate-200">{selectedUserForCriteria.source || 'Direct Signup'}</div>
+                                <div className="text-[11px] text-slate-400">Dată creare: {new Date(selectedUserForCriteria.created_at).toLocaleDateString('ro-RO')}</div>
+                            </div>
+                        </div>
+
+                        {/* GĂSEȘTE PROPRIETĂȚI DE LA */}
+                        <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800 space-y-3">
+                            <h4 className="text-xs font-black text-slate-300 uppercase tracking-wider">Secțiunea „GĂSEȘTE PROPRIETĂȚI DE LA”</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className={`p-3 rounded-lg border flex items-center gap-2.5 text-xs font-extrabold ${selectedUserForCriteria.find_self_from_owner ? 'bg-emerald-950/50 border-emerald-700/60 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>
+                                    {selectedUserForCriteria.find_self_from_owner ? <Check className="w-4 h-4 text-emerald-400" /> : <X className="w-4 h-4 text-slate-600" />}
+                                    <span>Găsește singur de la proprietar</span>
+                                </div>
+                                <div className={`p-3 rounded-lg border flex items-center gap-2.5 text-xs font-extrabold ${selectedUserForCriteria.wants_agent_help !== false ? 'bg-indigo-950/50 border-indigo-700/60 text-indigo-300' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>
+                                    {selectedUserForCriteria.wants_agent_help !== false ? <Check className="w-4 h-4 text-indigo-400" /> : <X className="w-4 h-4 text-slate-600" />}
+                                    <span>Vreau ajutor de la un Agent / Broker imobiliar</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Criterii Principale de Căutare */}
+                        <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800 space-y-4">
+                            <h4 className="text-xs font-black text-slate-300 uppercase tracking-wider">Criterii Principale de Căutare & Filtre</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">Tip Proprietate</span>
+                                    <span className="text-xs font-extrabold text-white">{(selectedUserForCriteria as any).lead_details?.preference_type || 'Orice Tip'}</span>
+                                </div>
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">Tip Tranzacție</span>
+                                    <span className="text-xs font-extrabold text-white">{(selectedUserForCriteria as any).lead_details?.preference_listing_type || 'Orice Tranzacție'}</span>
+                                </div>
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">Oraș / Zonă</span>
+                                    <span className="text-xs font-extrabold text-white">
+                                        {[(selectedUserForCriteria as any).lead_details?.preference_location_city, (selectedUserForCriteria as any).lead_details?.preference_location_area].filter(Boolean).join(' - ') || 'Toate Orașele'}
+                                    </span>
+                                </div>
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">Buget</span>
+                                    <span className="text-xs font-extrabold text-orange-400">
+                                        {(selectedUserForCriteria as any).lead_details?.budget_max || (selectedUserForCriteria as any).lead_details?.budget_min ? `${(selectedUserForCriteria as any).lead_details?.budget_min || 0} - ${(selectedUserForCriteria as any).lead_details?.budget_max || '∞'} ${(selectedUserForCriteria as any).lead_details?.currency || 'EUR'}` : 'Nespecificat'}
+                                    </span>
+                                </div>
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">Camere</span>
+                                    <span className="text-xs font-extrabold text-white">
+                                        {(selectedUserForCriteria as any).lead_details?.preference_rooms_min ? `Min. ${(selectedUserForCriteria as any).lead_details.preference_rooms_min} camere` : 'Nespecificat'}
+                                    </span>
+                                </div>
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">Suprafață</span>
+                                    <span className="text-xs font-extrabold text-white">
+                                        {(selectedUserForCriteria as any).lead_details?.preference_surface_min ? `Min. ${(selectedUserForCriteria as any).lead_details.preference_surface_min} mp` : 'Nespecificat'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Preferințe Suplimentare */}
+                        <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800 space-y-3">
+                            <h4 className="text-xs font-black text-slate-300 uppercase tracking-wider">Preferințe Suplimentare & Notițe</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Urgență Mutare</span>
+                                    <span className="font-extrabold text-slate-200">{(selectedUserForCriteria as any).lead_details?.move_urgency || (selectedUserForCriteria as any).lead_details?.move_in_date || 'Nespecificat'}</span>
+                                </div>
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Metodă de Plată</span>
+                                    <span className="font-extrabold text-slate-200">{(selectedUserForCriteria as any).lead_details?.payment_method || 'Nespecificat'}</span>
+                                </div>
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Copii Mici / Animale</span>
+                                    <span className="font-extrabold text-slate-200">
+                                        Copii: {(selectedUserForCriteria as any).lead_details?.has_small_kids ? 'Da' : 'Nu'} | Animale: {(selectedUserForCriteria as any).lead_details?.has_pets ? 'Da' : 'Nu'}
+                                    </span>
+                                </div>
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Motiv Cumpărare / Ocupație</span>
+                                    <span className="font-extrabold text-slate-200">
+                                        {[(selectedUserForCriteria as any).lead_details?.buying_reason, (selectedUserForCriteria as any).lead_details?.occupation].filter(Boolean).join(' / ') || 'Nespecificat'}
+                                    </span>
+                                </div>
+                            </div>
+                            {((selectedUserForCriteria as any).lead_details?.notes || (selectedUserForCriteria as any).lead_details?.liked_listings_links) && (
+                                <div className="p-3 bg-slate-900 rounded-lg border border-slate-800/80 text-xs">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Notițe / Link-uri Anunțuri</span>
+                                    <p className="text-slate-300 italic whitespace-pre-wrap">{(selectedUserForCriteria as any).lead_details?.notes || (selectedUserForCriteria as any).lead_details?.liked_listings_links}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end border-t border-slate-800 pt-4">
+                            <button
+                                onClick={() => setSelectedUserForCriteria(null)}
+                                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-extrabold transition-colors cursor-pointer"
+                            >
+                                Închide Previzualizarea
+                            </button>
                         </div>
                     </div>
                 </div>
