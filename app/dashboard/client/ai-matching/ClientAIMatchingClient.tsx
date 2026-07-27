@@ -820,7 +820,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                             <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
                                 Recomandări & Acces Rapid Cont
                             </h2>
-                            <p className="text-xs text-orange-100 font-medium">Datele de autentificare, shortcut-ul aplicației și sfaturile AI pentru căutarea ta</p>
+                            <p className="text-xs text-orange-100 font-medium">Datele de autentificare, shortcut-ul aplicației și sfaturile AI</p>
                         </div>
                     </div>
 
