@@ -124,7 +124,14 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
         if (!name.trim()) newErrors.name = 'Numele sau nickname-ul este obligatoriu';
-        if (!phone.trim()) newErrors.phone = 'Numărul de telefon este obligatoriu';
+        
+        const cleanPhone = phone.replace(/\D/g, '');
+        if (!phone.trim()) {
+            newErrors.phone = 'Numărul de telefon este obligatoriu';
+        } else if (!/^07\d{8}$/.test(cleanPhone)) {
+            newErrors.phone = 'Introduceți un număr de telefon din România de forma 07XXXXXXXX (ex. 0722 000 000)';
+        }
+
         if (!budgetMax.trim() || isNaN(Number(budgetMax)) || Number(budgetMax) <= 0) {
             newErrors.budget = 'Introduceți un buget maxim valid';
         }
@@ -550,7 +557,10 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
                 <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                        setPhone(e.target.value);
+                        if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+                    }}
                     placeholder="ex. 0722 000 000"
                     className={`w-full px-4 py-3 rounded-xl border bg-slate-50 text-slate-900 text-sm font-semibold transition-all outline-none focus:bg-white focus:ring-4 focus:ring-orange-500/10 ${errors.phone ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-orange-500'}`}
                 />
