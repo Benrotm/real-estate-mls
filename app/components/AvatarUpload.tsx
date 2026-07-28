@@ -60,7 +60,7 @@ export default function AvatarUpload({ userId, currentAvatarUrl, fullName }: Ava
     };
 
     return (
-        <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+        <div className="flex flex-col items-center gap-2 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
             <input
                 type="file"
                 ref={fileInputRef}
@@ -93,12 +93,10 @@ export default function AvatarUpload({ userId, currentAvatarUrl, fullName }: Ava
                 </div>
             </div>
 
-            {/* Helper Text (Mobile) */}
-            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap md:hidden">
-                <span className="text-xs text-slate-400 font-medium bg-white/90 px-2 py-1 rounded-full shadow-sm">
-                    Tap to change
-                </span>
-            </div>
+            {/* Helper Badge in flex flow (never overlaps name below) */}
+            <span className="text-[11px] text-slate-300 group-hover:text-orange-400 font-semibold transition-colors flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-0.5 rounded-full border border-slate-700/60 shadow-xs">
+                <Camera className="w-3.5 h-3.5 text-orange-400" /> Schimbă poza
+            </span>
         </div>
     );
 }
