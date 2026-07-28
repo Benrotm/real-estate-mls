@@ -702,6 +702,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
         if (tabId === 'curate') return aiSuggestions;
         if (tabId === 'winner') return matches.filter(m => m.status === 'winner' || m.status === 'sold');
         if (tabId === 'offer_made') return matches.filter(m => m.status === 'offer_made' || m.status === 'negotiation');
+        if (tabId === 'to_visit') return matches.filter(m => m.status === 'to_visit' || m.status === 'visit_scheduled');
         return matches.filter(m => m.status === tabId);
     };
 

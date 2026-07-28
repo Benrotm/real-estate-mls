@@ -17,6 +17,8 @@ export async function upsertMatchStatus(leadId: string, propertyId: string, stat
     let dbStatus = status;
     if (status === 'offer_made') dbStatus = 'negotiation';
     if (status === 'curate') dbStatus = 'to_verify';
+    if (status === 'to_visit') dbStatus = 'visit_scheduled';
+    if (status === 'winner') dbStatus = 'sold';
 
     const payload: any = {
         lead_id: leadId,
@@ -105,6 +107,8 @@ export async function bulkUpsertMatchStatus(leadId: string, propertyIds: string[
     let dbStatus = status;
     if (status === 'offer_made') dbStatus = 'negotiation';
     if (status === 'curate') dbStatus = 'to_verify';
+    if (status === 'to_visit') dbStatus = 'visit_scheduled';
+    if (status === 'winner') dbStatus = 'sold';
 
     const payloads = propertyIds.map(propertyId => ({
         lead_id: leadId,
