@@ -293,58 +293,54 @@ export default function ProfilPage() {
     const importUrl = role === 'admin' || role === 'super_admin' ? '/dashboard/admin/properties/import' : null;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 sm:p-8">
+        <div className="min-h-screen bg-slate-950 text-white pt-20 sm:pt-24 px-4 sm:px-8 pb-8">
             <div className="max-w-6xl mx-auto space-y-8">
                 
                 {/* Header / Quick Tabs */}
                 <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
                     <div>
-                        <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
-                            <User className="w-8 h-8 text-orange-500" />
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2.5 sm:gap-3">
+                            <User className="w-7 h-7 sm:w-8 sm:h-8 text-orange-500 shrink-0" />
                             Profilul Meu
                         </h1>
-                        <p className="text-slate-400 mt-1 text-sm">
+                        <p className="text-slate-400 mt-1 text-xs sm:text-sm">
                             Gestionează datele de cont, creditele, recomandările și tranzacțiile tale.
                         </p>
                     </div>
 
                     {/* Navigation Tabs */}
-                    <nav className="flex flex-wrap items-center gap-2 bg-slate-900/80 border border-slate-800 p-1.5 rounded-xl text-xs sm:text-sm">
+                    <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-slate-900/80 border border-slate-800 p-1.5 rounded-xl text-xs sm:text-sm">
                         <Link 
                             href="/dashboard"
-                            className="text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            className="text-slate-400 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                         >
                             <ArrowLeft className="w-4 h-4" />
                             Dashboard
                         </Link>
-                        <span className="w-px h-5 bg-slate-800" />
+                        <span className="w-px h-4 bg-slate-800" />
                         <Link 
                             href={chatUrl}
-                            className="text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            className="text-slate-400 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                         >
                             <MessageSquare className="w-4 h-4 text-emerald-400" />
                             Mesaje
                         </Link>
-                        <Link 
-                            href={favoritesUrl}
-                            className="text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                        >
-                            <Heart className="w-4 h-4 text-red-400" />
-                            Salvate
-                        </Link>
                         {importUrl && (
-                            <Link 
-                                href={importUrl}
-                                className="text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                            >
-                                <UploadCloud className="w-4 h-4 text-indigo-400" />
-                                Import API
-                            </Link>
+                            <>
+                                <span className="w-px h-4 bg-slate-800" />
+                                <Link 
+                                    href={importUrl}
+                                    className="text-slate-400 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                                >
+                                    <UploadCloud className="w-4 h-4 text-indigo-400" />
+                                    Import API
+                                </Link>
+                            </>
                         )}
-                        <span className="w-px h-5 bg-slate-800" />
+                        <span className="w-px h-4 bg-slate-800" />
                         <Link
                             href="/cont/plati"
-                            className="bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20 text-yellow-500 font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            className="bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20 text-yellow-500 font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
                         >
                             <Coins className="w-4 h-4 animate-pulse" />
                             Alimentează Credite
