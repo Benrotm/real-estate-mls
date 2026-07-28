@@ -702,6 +702,16 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
             wants_agent_help: wantsAgentHelp
         });
 
+        // Log initial registration credits transaction
+        if (initialClientCredits > 0) {
+            await adminSupabase.from('credit_transactions').insert({
+                user_id: userId,
+                amount: initialClientCredits,
+                description: 'Bonus înregistrare (credite inițiale)',
+                metadata: { initial_signup: true }
+            });
+        }
+
         // Award referral gift credits to referring agent/user if applicable
         if (agentId && referrerGiftCredits > 0) {
             try {

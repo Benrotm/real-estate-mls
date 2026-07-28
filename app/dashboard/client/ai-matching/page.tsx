@@ -86,13 +86,22 @@ export default async function ClientAIMatchingPage() {
         .eq('id', targetUserId)
         .maybeSingle();
 
-    let effectiveCredits = userProfile?.credits ?? 0;
+    let effectiveCredits = typeof userProfile?.credits === 'number' ? userProfile.credits : 0;
     if ((userProfile?.credits === null || userProfile?.credits === undefined) && targetUserId) {
         effectiveCredits = initialCreditsSetting;
         await adminSupabase
             .from('profiles')
             .update({ credits: initialCreditsSetting })
             .eq('id', targetUserId);
+
+        await adminSupabase
+            .from('credit_transactions')
+            .insert({
+                user_id: targetUserId,
+                amount: initialCreditsSetting,
+                description: 'Bonus înregistrare (credite inițiale)',
+                metadata: { initial_signup: true }
+            });
     }
 
     return (

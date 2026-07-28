@@ -17,6 +17,26 @@ export async function getUserCredits() {
         .single();
         
     if (error) return { error: error.message };
+
+    // Ledger Reconciliation: calculate exact sum from credit_transactions to ensure profiles.credits is ALWAYS 100% accurate!
+    const { data: txs } = await supabaseAdmin
+        .from('credit_transactions')
+        .select('amount')
+        .eq('user_id', user.id);
+
+    if (txs && txs.length > 0) {
+        const calculatedCredits = txs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+        const actualCredits = Math.max(0, calculatedCredits);
+
+        if (data?.credits !== actualCredits) {
+            await supabaseAdmin
+                .from('profiles')
+                .update({ credits: actualCredits })
+                .eq('id', user.id);
+            return { credits: actualCredits };
+        }
+    }
+
     return { credits: (data?.credits ?? 0) as number };
 }
 

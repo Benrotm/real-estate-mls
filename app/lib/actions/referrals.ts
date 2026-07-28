@@ -1,17 +1,18 @@
 'use server';
 
 import { createClient } from '../supabase/server';
+import { createAdminClient } from '../supabase/admin';
 import { revalidatePath } from 'next/cache';
 
 export async function processReferral(inviteeId: string, referrerId: string) {
-    const supabase = await createClient();
+    const supabaseAdmin = createAdminClient();
 
     // 1. Prevent double referral processing
-    const { data: existingTx, error: txCheckError } = await supabase
+    const { data: existingTx, error: txCheckError } = await supabaseAdmin
         .from('credit_transactions')
         .select('id')
         .eq('user_id', inviteeId)
-        .ilike('description', 'Bonus înregistrare%')
+        .or('description.ilike.Bonus înregistrare%,description.ilike.Bonus invitare%')
         .limit(1);
 
     if (existingTx && existingTx.length > 0) {
@@ -19,39 +20,44 @@ export async function processReferral(inviteeId: string, referrerId: string) {
         return { error: 'Referral already processed' };
     }
 
-    // 2. Fetch referral settings from platform_settings
-    const { data: settingsData } = await supabase
-        .from('platform_settings')
-        .select('setting_value')
-        .eq('setting_key', 'referral_settings')
-        .single();
+    // 2. Fetch referral settings from platform_settings or admin_settings
+    let referrerBonus = 15;
+    let inviteeBonus = 15;
 
-    const settings = (settingsData?.setting_value as any) || {
-        referrer_bonus: 15,
-        invitee_bonus: 10,
-        commission_percentage: 10
-    };
-
-    const referrerBonus = Number(settings.referrer_bonus) || 0;
-    const inviteeBonus = Number(settings.invitee_bonus) || 0;
-
-    // 3. Update Invitee Credits
-    if (inviteeBonus > 0) {
-        const { data: inviteeProfile } = await supabase
-            .from('profiles')
-            .select('credits')
-            .eq('id', inviteeId)
+    try {
+        const { data: creditConfig } = await supabaseAdmin
+            .from('admin_settings')
+            .select('value')
+            .eq('key', 'credit_costs_config')
             .single();
 
-        const currentInviteeCredits = inviteeProfile?.credits || 0;
+        if (creditConfig?.value) {
+            const parsed = typeof creditConfig.value === 'string' ? JSON.parse(creditConfig.value) : creditConfig.value;
+            if (parsed.referral_gift_credits_per_friend !== undefined) referrerBonus = Number(parsed.referral_gift_credits_per_friend);
+            if (parsed.client_no_agency_initial_credits !== undefined) inviteeBonus = Number(parsed.client_no_agency_initial_credits);
+        }
+    } catch (e) {
+        console.error("Error reading credit_costs_config in processReferral:", e);
+    }
+
+    // 3. Check if invitee profile exists and already has initial credits
+    const { data: inviteeProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('credits')
+        .eq('id', inviteeId)
+        .single();
+
+    // 4. Update Invitee Credits ONLY if they have not received initial registration credits
+    const currentInviteeCredits = inviteeProfile?.credits || 0;
+    if (inviteeBonus > 0 && currentInviteeCredits === 0) {
         const newInviteeCredits = currentInviteeCredits + inviteeBonus;
 
-        await supabase
+        await supabaseAdmin
             .from('profiles')
             .update({ credits: newInviteeCredits })
             .eq('id', inviteeId);
 
-        await supabase
+        await supabaseAdmin
             .from('credit_transactions')
             .insert({
                 user_id: inviteeId,
@@ -61,9 +67,9 @@ export async function processReferral(inviteeId: string, referrerId: string) {
             });
     }
 
-    // 4. Update Referrer Credits
-    if (referrerBonus > 0) {
-        const { data: referrerProfile } = await supabase
+    // 5. Update Referrer Credits
+    if (referrerBonus > 0 && referrerId) {
+        const { data: referrerProfile } = await supabaseAdmin
             .from('profiles')
             .select('credits')
             .eq('id', referrerId)
@@ -73,12 +79,12 @@ export async function processReferral(inviteeId: string, referrerId: string) {
             const currentReferrerCredits = referrerProfile.credits || 0;
             const newReferrerCredits = currentReferrerCredits + referrerBonus;
 
-            await supabase
+            await supabaseAdmin
                 .from('profiles')
                 .update({ credits: newReferrerCredits })
                 .eq('id', referrerId);
 
-            await supabase
+            await supabaseAdmin
                 .from('credit_transactions')
                 .insert({
                     user_id: referrerId,
@@ -88,6 +94,11 @@ export async function processReferral(inviteeId: string, referrerId: string) {
                 });
         }
     }
+
+    revalidatePath('/dashboard/client/ai-matching');
+    revalidatePath('/cont/plati');
+    revalidatePath('/cont/profil');
+    revalidatePath('/dashboard');
 
     return { success: true };
 }
