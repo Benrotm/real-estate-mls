@@ -1430,6 +1430,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                         const matchRecord = item.status ? item : null;
                         const isUpdating = updatingIds.includes(prop.id);
                         const isWantSeeAgain = matchRecord?.is_want_to_see_again || false;
+                        const externalLinkUrl = prop.social_media_url || prop.url;
+                        const isExternalProp = !!externalLinkUrl || prop.source === 'External Manual';
 
                         return (
                             <div key={prop.id} className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col relative group ${isUpdating ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -1500,7 +1502,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                         </div>
 
                                         {/* Owner Phone Badge (ONLY for external/manual properties added by client) */}
-                                        {(prop.url || prop.source === 'External Manual') && prop.owner_phone && (
+                                        {isExternalProp && prop.owner_phone && (
                                             <div className="flex items-center gap-1 mt-1 text-[11px] font-semibold text-slate-700">
                                                 <Phone className="w-3 h-3 text-orange-500 shrink-0" />
                                                 <span>Proprietar:</span>
@@ -1512,9 +1514,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
                                         {/* Action Buttons: Vezi Detalii / Deschide Anunț Extern + Calendar / Flag */}
                                         <div className="flex items-center justify-between gap-1.5 pt-2">
-                                            {prop.url || prop.source === 'External Manual' ? (
+                                            {isExternalProp ? (
                                                 <a
-                                                    href={prop.url}
+                                                    href={externalLinkUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1 shadow-sm transition-all cursor-pointer"

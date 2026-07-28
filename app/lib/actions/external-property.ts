@@ -122,7 +122,7 @@ export async function saveExternalPropertyForLead(params: {
     const { data: foundProp } = await adminSupabase
         .from('properties')
         .select('*')
-        .eq('url', url)
+        .eq('social_media_url', url)
         .maybeSingle();
 
     if (foundProp) {
@@ -148,13 +148,11 @@ export async function saveExternalPropertyForLead(params: {
                 description: description || 'Proprietate adăugată manual de client',
                 images: imgList,
                 owner_phone: ownerPhone || null,
-                url: url,
-                source: 'External Manual',
+                social_media_url: url,
                 status: 'active',
                 price: price || 0,
                 currency: 'EUR',
-                type: 'Apartment',
-                owner_id: user.id
+                type: 'Apartment'
             })
             .select()
             .single();
