@@ -5,7 +5,7 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck, Scan, UserPlus
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck, Scan, UserPlus, FileText, Link2
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -237,6 +237,114 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [allRawAreas, setAllRawAreas] = useState<{ name: string; parent_id: string | null }[]>([]);
     const [polygon, setPolygon] = useState<{ lat: number; lng: number }[] | undefined>(lead.preference_location_polygon || undefined);
     const [showMap, setShowMap] = useState(false);
+
+    // Manual External Property Addition state
+    const [isAddManualModalOpen, setIsAddManualModalOpen] = useState(false);
+    const [manualUrl, setManualUrl] = useState('');
+    const [manualTitle, setManualTitle] = useState('');
+    const [manualPhone, setManualPhone] = useState('');
+    const [manualNotes, setManualNotes] = useState('');
+    const [isScrapingUrl, setIsScrapingUrl] = useState(false);
+    const [scrapedPreview, setScrapedPreview] = useState<any>(null);
+    const [isSavingExternalProp, setIsSavingExternalProp] = useState(false);
+
+    // Card Notes state (map of propertyId -> note text)
+    const [cardNotes, setCardNotes] = useState<{ [propId: string]: string }>({});
+    const [savingNotesPropId, setSavingNotesPropId] = useState<string | null>(null);
+
+    const handleScrapeExternalUrl = async (urlToScrape: string) => {
+        if (!urlToScrape || !urlToScrape.trim()) return;
+        setIsScrapingUrl(true);
+        try {
+            const { scrapeExternalPropertyUrl } = await import('@/app/lib/actions/external-property');
+            const res = await scrapeExternalPropertyUrl(urlToScrape);
+            if (res.success) {
+                setScrapedPreview(res);
+                if (res.title && !manualTitle) {
+                    setManualTitle(res.title);
+                }
+            }
+        } catch (err) {
+            console.error('Error scraping URL:', err);
+        } finally {
+            setIsScrapingUrl(false);
+        }
+    };
+
+    const handleSaveExternalProperty = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!manualUrl.trim()) {
+            alert('Te rugăm să introduci link-ul proprietății.');
+            return;
+        }
+
+        setIsSavingExternalProp(true);
+        try {
+            const { saveExternalPropertyForLead } = await import('@/app/lib/actions/external-property');
+            const res = await saveExternalPropertyForLead({
+                leadId: lead.id,
+                url: manualUrl.trim(),
+                title: manualTitle.trim() || scrapedPreview?.title || 'Proprietate Adăugată Manual',
+                description: scrapedPreview?.description || '',
+                coverImage: scrapedPreview?.coverImage || '',
+                ownerPhone: manualPhone.trim() || undefined,
+                notes: manualNotes.trim() || undefined
+            });
+
+            if (res.error) {
+                alert('Eroare la salvarea proprietății: ' + res.error);
+            } else if (res.match) {
+                const resMatch = res.match as any;
+                const newPropId = resMatch.property_id || (Array.isArray(resMatch.property) ? resMatch.property[0]?.id : resMatch.property?.id);
+                setMatches(prev => {
+                    const filtered = prev.filter(m => {
+                        const mPropId = m.property_id || (Array.isArray(m.property) ? m.property[0]?.id : m.property?.id);
+                        return mPropId !== newPropId;
+                    });
+                    return [resMatch, ...filtered];
+                });
+                alert('Proprietatea externă a fost adăugată cu succes în lista ta!');
+                setIsAddManualModalOpen(false);
+                setManualUrl('');
+                setManualTitle('');
+                setManualPhone('');
+                setManualNotes('');
+                setScrapedPreview(null);
+                setActiveTab('saved');
+            }
+        } catch (err: any) {
+            alert('Eroare la salvare: ' + err.message);
+        } finally {
+            setIsSavingExternalProp(false);
+        }
+    };
+
+    const handleSaveCardNotes = async (propertyId: string, noteText: string, currentStatus: string = 'saved') => {
+        setSavingNotesPropId(propertyId);
+        try {
+            const res = await upsertMatchStatus(lead.id, propertyId, currentStatus || 'saved', noteText);
+            if (res.error) {
+                alert('Eroare la salvarea notiței: ' + res.error);
+            } else {
+                setMatches(prev => prev.map(m => {
+                    const mPropId = m.property_id || m.property?.id;
+                    if (mPropId === propertyId) {
+                        return { ...m, agent_notes: noteText };
+                    }
+                    return m;
+                }));
+                setCardNotes(prev => {
+                    const copy = { ...prev };
+                    delete copy[propertyId];
+                    return copy;
+                });
+            }
+        } catch (err: any) {
+            alert('Eroare: ' + err.message);
+        } finally {
+            setSavingNotesPropId(null);
+        }
+    };
 
     useEffect(() => {
         getSystemLocations().then(res => {
@@ -1250,7 +1358,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
             <div className={`rounded-2xl border ${currentTabObj.color} text-xs font-semibold leading-relaxed shadow-sm transition-all overflow-hidden`}>
                 {/* Always-visible Header Bar with Action Button */}
                 <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3 bg-white/40">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
                         {activeTab === 'curate' ? (
                             <button
                                 onClick={async () => {
@@ -1270,6 +1378,24 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                 Stadiul: {currentTabObj.name}
                             </span>
                         )}
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsAddManualModalOpen(true);
+                                setManualUrl('');
+                                setManualTitle('');
+                                setManualPhone('');
+                                setManualNotes('');
+                                setScrapedPreview(null);
+                            }}
+                            className="px-3.5 py-2 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer active:scale-95 border border-slate-700/80"
+                            title="Adaugă o proprietate dintr-o sursă externă (Facebook, OLX, Imobiliare, etc.)"
+                        >
+                            <Plus className="w-3.5 h-3.5 text-orange-400" />
+                            <span className="hidden sm:inline">Adaugă Manual (Link)</span>
+                            <span className="sm:hidden">Adaugă Link</span>
+                        </button>
                     </div>
 
                     {/* Instructions Toggle Chevron */}
@@ -1373,40 +1499,6 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             </div>
                                         </div>
 
-                                        {/* Vezi Detalii & Calendar/Flag Action Buttons directly under metrics */}
-                                        <div className="flex items-center justify-between gap-1.5 pt-1">
-                                            <Link
-                                                href={`/properties/${prop.id}`}
-                                                target="_blank"
-                                                className="w-full py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-semibold rounded-xl flex items-center justify-center gap-1 shadow-sm transition-all cursor-pointer"
-                                            >
-                                                Vezi Detalii <ArrowUpRight className="w-3.5 h-3.5 text-slate-950" />
-                                            </Link>
-
-                                            {/* Calendar & Flag buttons if applicable */}
-                                            {currentTabObj.hasCalendar && (
-                                                <button
-                                                    onClick={() => handleOpenCalendarModal(prop, 'De Văzut')}
-                                                    className="px-2 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-sm cursor-pointer shrink-0"
-                                                >
-                                                    <CalendarDays className="w-3.5 h-3.5" /> Calendar
-                                                </button>
-                                            )}
-
-                                            {currentTabObj.hasFlag && matchRecord && (
-                                                <button
-                                                    onClick={() => handleToggleWantToSeeAgain(matchRecord.id, isWantSeeAgain)}
-                                                    className={`px-2 py-2 text-xs font-semibold rounded-xl flex items-center gap-1 transition-colors shrink-0 ${
-                                                        isWantSeeAgain
-                                                            ? 'bg-purple-600 text-white'
-                                                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                                                    }`}
-                                                    title="Marchează dacă mai dorești o vizionare suplimentară"
-                                                >
-                                                    <Flag className="w-3.5 h-3.5" /> {isWantSeeAgain ? 'Bifat' : 'Mai vreau'}
-                                                </button>
-                                            )}
-                                        </div>
                                     </div>
 
                                     {/* Stage Action Pill Buttons with "Salvează în :" Label */}
@@ -1626,6 +1718,146 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                 </button>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: MANUAL EXTERNAL PROPERTY ADDITION */}
+            {isAddManualModalOpen && (
+                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+                    <div className="bg-slate-900 text-white border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 text-left relative overflow-hidden">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2.5 bg-orange-500/20 text-orange-400 rounded-xl border border-orange-500/30">
+                                    <Link2 className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-base text-white">Adaugă Proprietate Externă</h3>
+                                    <p className="text-xs text-slate-400">Facebook, OLX, Imobiliare, Publi24, etc.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsAddManualModalOpen(false)}
+                                className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveExternalProperty} className="space-y-4">
+                            <div>
+                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                                    Link Anunț (URL Facebook, OLX, etc.) <span className="text-orange-500">*</span>
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        value={manualUrl}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setManualUrl(val);
+                                            if (val.length > 10 && val.includes('.')) {
+                                                handleScrapeExternalUrl(val);
+                                            }
+                                        }}
+                                        placeholder="https://www.facebook.com/... sau https://www.olx.ro/..."
+                                        required
+                                        className="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-orange-500"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleScrapeExternalUrl(manualUrl)}
+                                        disabled={isScrapingUrl || !manualUrl.trim()}
+                                        className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-orange-400 rounded-xl border border-slate-700 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                                    >
+                                        {isScrapingUrl ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                        <span>Extrage Date</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Scraped Preview Banner if available */}
+                            {scrapedPreview && (
+                                <div className="p-3 bg-slate-950 border border-orange-500/30 rounded-xl flex items-center gap-3">
+                                    {scrapedPreview.coverImage ? (
+                                        <img src={scrapedPreview.coverImage} alt="Cover" className="w-14 h-14 object-cover rounded-lg shrink-0 border border-slate-800" />
+                                    ) : (
+                                        <div className="w-14 h-14 bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
+                                            <Link2 className="w-6 h-6" />
+                                        </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <span className="text-[10px] text-orange-400 font-bold uppercase tracking-wider block">Imagine & Titlu Detectat:</span>
+                                        <p className="text-xs font-semibold text-slate-200 truncate">{scrapedPreview.title || 'Proprietate Externă'}</p>
+                                        {scrapedPreview.siteName && <span className="text-[10px] text-slate-400 font-mono block">{scrapedPreview.siteName}</span>}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                                    Nume / Titlu Proprietate
+                                </label>
+                                <input
+                                    type="text"
+                                    value={manualTitle}
+                                    onChange={(e) => setManualTitle(e.target.value)}
+                                    placeholder="ex. Apartament 2 camere Calea Șagului"
+                                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                                    Număr Telefon Proprietar (Opțional)
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={manualPhone}
+                                    onChange={(e) => setManualPhone(e.target.value)}
+                                    placeholder="ex. 0722123456"
+                                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                                    Notițe Personale (Opțional)
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    value={manualNotes}
+                                    onChange={(e) => setManualNotes(e.target.value)}
+                                    placeholder="Notițe despre vizionare, proprietar, preț negociabil..."
+                                    className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-medium text-white focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+
+                            <div className="pt-2 flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddManualModalOpen(false)}
+                                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                                >
+                                    Anulează
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSavingExternalProp}
+                                    className="flex-1 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 rounded-xl text-xs font-extrabold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    {isSavingExternalProp ? (
+                                        <>
+                                            <RefreshCw className="w-4 h-4 animate-spin" /> Se salvează...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Plus className="w-4 h-4" /> Adaugă în Lista Mea
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

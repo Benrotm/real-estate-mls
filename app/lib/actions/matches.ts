@@ -12,6 +12,8 @@ export async function upsertMatchStatus(leadId: string, propertyId: string, stat
         return { error: 'Unauthorized' };
     }
 
+    const adminSupabase = createAdminClient();
+
     const payload: any = {
         lead_id: leadId,
         property_id: propertyId,
@@ -23,7 +25,7 @@ export async function upsertMatchStatus(leadId: string, propertyId: string, stat
     }
 
     // Attempt to update first (or insert via onConflict)
-    const { data, error } = await supabase
+    const { data, error } = await adminSupabase
         .from('lead_property_matches')
         .upsert(payload, { onConflict: 'lead_id,property_id' })
         .select()
@@ -36,6 +38,7 @@ export async function upsertMatchStatus(leadId: string, propertyId: string, stat
 
     revalidatePath(`/dashboard/agent/leads/${leadId}`);
     revalidatePath(`/dashboard/agent/leads/${leadId}/matches`);
+    revalidatePath('/dashboard/client/ai-matching');
 
     return { success: true, data };
 }
