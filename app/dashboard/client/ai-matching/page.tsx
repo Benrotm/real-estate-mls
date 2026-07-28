@@ -87,21 +87,33 @@ export default async function ClientAIMatchingPage() {
         .maybeSingle();
 
     let effectiveCredits = typeof userProfile?.credits === 'number' ? userProfile.credits : 0;
-    if ((userProfile?.credits === null || userProfile?.credits === undefined) && targetUserId) {
-        effectiveCredits = initialCreditsSetting;
-        await adminSupabase
-            .from('profiles')
-            .update({ credits: initialCreditsSetting })
-            .eq('id', targetUserId);
 
-        await adminSupabase
+    // Ledger check on server to ensure SSR passes the exact live balance without visual flash
+    if (targetUserId) {
+        const { data: txs } = await adminSupabase
             .from('credit_transactions')
-            .insert({
-                user_id: targetUserId,
-                amount: initialCreditsSetting,
-                description: 'Bonus înregistrare (credite inițiale)',
-                metadata: { initial_signup: true }
-            });
+            .select('amount')
+            .eq('user_id', targetUserId);
+
+        if (txs && txs.length > 0) {
+            const calculatedCredits = txs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+            effectiveCredits = Math.max(0, calculatedCredits);
+        } else if (userProfile?.credits === null || userProfile?.credits === undefined) {
+            effectiveCredits = initialCreditsSetting;
+            await adminSupabase
+                .from('profiles')
+                .update({ credits: initialCreditsSetting })
+                .eq('id', targetUserId);
+
+            await adminSupabase
+                .from('credit_transactions')
+                .insert({
+                    user_id: targetUserId,
+                    amount: initialCreditsSetting,
+                    description: 'Bonus înregistrare (credite inițiale)',
+                    metadata: { initial_signup: true }
+                });
+        }
     }
 
     return (

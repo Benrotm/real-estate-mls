@@ -5,7 +5,7 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck, Scan
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck, Scan, UserPlus
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
@@ -1188,15 +1188,15 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                 Atenție: Sold scăzut de credite! (Mai ai doar {credits} {credits === 1 ? 'credit' : 'credite'})
                             </h4>
                             <p className="text-xs font-semibold text-slate-700 mt-0.5">
-                                Reîncarcă soldul pentru a continua să folosești toate instrumentele AI fără întrerupere.
+                                Reîncarcă soldul sau obține <strong>CREDITE GRATUIT</strong> recomandând un prieten sau distribuind link-ul tău pe Social Media pentru ca și alții să se înregistreze!
                             </p>
                         </div>
                     </div>
                     <Link
-                        href="/cont/plati"
-                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-semibold shrink-0 shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+                        href="/cont/profil"
+                        className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shrink-0 shadow-md transition-all active:scale-95 flex items-center gap-1.5 border border-emerald-400/30"
                     >
-                        <Coins className="w-4 h-4" /> Cumpără Credite
+                        <UserPlus className="w-4 h-4" /> Invită un prieten 🎁
                     </Link>
                 </div>
             )}
