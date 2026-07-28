@@ -27,15 +27,27 @@ export default function LoginPage() {
         try {
             let result;
             if (authMethod === 'email') {
+                const rawInput = ((formData.get('email') as string) || '').trim();
+                let emailToUse = rawInput;
+                if (!rawInput.includes('@') && rawInput.replace(/\D/g, '').length >= 6) {
+                    emailToUse = `${rawInput.replace(/\D/g, '')}@client.imobum.com`;
+                }
                 result = await supabase.auth.signInWithPassword({
-                    email: formData.get('email') as string,
+                    email: emailToUse,
                     password,
                 });
             } else {
+                const rawPhone = ((formData.get('phone') as string) || '').trim().replace(/\D/g, '');
                 result = await supabase.auth.signInWithPassword({
-                    phone: formData.get('phone') as string,
+                    email: `${rawPhone}@client.imobum.com`,
                     password,
                 });
+                if (result.error && rawPhone) {
+                    result = await supabase.auth.signInWithPassword({
+                        phone: rawPhone,
+                        password,
+                    });
+                }
             }
             const { data, error } = result;
 
@@ -61,7 +73,7 @@ export default function LoginPage() {
                 else if (role === 'agent') targetPath = '/dashboard/agent';
                 else if (role === 'developer') targetPath = '/dashboard/developer';
                 else if (role === 'super_admin') targetPath = '/dashboard/admin';
-                else if (role === 'client') targetPath = '/dashboard/client';
+                else if (role === 'client' || role === 'client_no_agency') targetPath = '/dashboard/client';
 
                 console.log('Login successful. Role:', role, 'Redirecting to:', targetPath);
                 // Use window.location.href to force a full page reload.
