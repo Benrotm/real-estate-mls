@@ -222,14 +222,14 @@ export default function PlatiPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 sm:p-8">
-            <div className="max-w-4xl mx-auto space-y-8">
+        <div className="min-h-screen bg-slate-950 text-white px-4 pt-24 pb-8 sm:px-8 sm:py-8">
+            <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
                 
                 {/* Back Navigation & Dashboard Button */}
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-3">
                     <Link 
                         href="/dashboard/client/ai-matching" 
-                        className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-orange-600/30 transition-all cursor-pointer border border-orange-400/40 active:scale-95"
+                        className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-orange-600/30 transition-all cursor-pointer border border-orange-400/40 active:scale-95 shrink-0"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Înapoi la Dashboard
@@ -243,17 +243,23 @@ export default function PlatiPage() {
                 </div>
 
                 {/* Main Hero Card */}
-                <header className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+                <header className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none" />
                     
-                    <div className="space-y-2">
-                        <h1 className="text-3xl font-extrabold tracking-tight">Portal Alimentare Credite</h1>
-                        <p className="text-slate-400 text-sm max-w-md">
+                    <div className="space-y-2.5 w-full md:w-auto">
+                        <Link 
+                            href="/dashboard/client/ai-matching" 
+                            className="sm:hidden inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 transition-colors mb-1"
+                        >
+                            <ArrowLeft className="w-3.5 h-3.5" /> Întoarcere la Dashboard
+                        </Link>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Portal Alimentare Credite</h1>
+                        <p className="text-slate-400 text-xs sm:text-sm max-w-md">
                             Cumpără credite pentru a folosi instrumentele AI și featurile avansate ale platformei Imobum.
                         </p>
                     </div>
 
-                    <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-5 flex items-center gap-4 shrink-0 shadow-inner">
+                    <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-5 flex items-center gap-4 shrink-0 shadow-inner w-full md:w-auto justify-between md:justify-start">
                         <div className="w-12 h-12 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-center justify-center text-yellow-500">
                             <Coins className="w-6 h-6 animate-pulse" />
                         </div>
