@@ -97,22 +97,27 @@ export async function deductUserCredits(amount: number, description: string = 'C
     if (profile.referred_by && amount > 0) {
         const referrerId = profile.referred_by;
 
-        // Fetch referral settings & feature costs
-        const [settingsRes, costsRes] = await Promise.all([
-            supabaseAdmin.from('platform_settings').select('setting_value').eq('setting_key', 'referral_settings').single(),
-            supabaseAdmin.from('platform_settings').select('setting_value').eq('setting_key', 'feature_costs').single()
-        ]);
+        let commissionPercentage = 15;
+        try {
+            const { data: creditConfig } = await supabaseAdmin
+                .from('admin_settings')
+                .select('value')
+                .eq('key', 'credit_costs_config')
+                .single();
 
-        const settings = (settingsRes.data?.setting_value as any) || { commission_percentage: 10 };
-        const costsMap = (costsRes.data?.setting_value as Record<string, number>) || {};
-
-        let commissionPercentage = Number(settings.commission_percentage) || 10;
-        if (profile.role === 'client_no_agency' && costsMap['referral_client_no_agency_commission_percentage'] !== undefined) {
-            commissionPercentage = Number(costsMap['referral_client_no_agency_commission_percentage']);
+            if (creditConfig?.value) {
+                const parsed = typeof creditConfig.value === 'string' ? JSON.parse(creditConfig.value) : creditConfig.value;
+                if (parsed.referral_client_no_agency_commission_percentage !== undefined) {
+                    commissionPercentage = Number(parsed.referral_client_no_agency_commission_percentage);
+                }
+            }
+        } catch (e) {
+            console.error("Error reading credit_costs_config in deductUserCredits:", e);
         }
 
         if (commissionPercentage > 0) {
-            const commission = Math.floor(amount * (commissionPercentage / 100));
+            const rawCommission = amount * (commissionPercentage / 100);
+            const commission = rawCommission >= 1 ? Math.floor(rawCommission) : Math.max(1, Math.round(rawCommission));
 
             if (commission > 0) {
                 // Fetch referrer's current balance
@@ -138,7 +143,7 @@ export async function deductUserCredits(amount: number, description: string = 'C
                         .insert({
                             user_id: referrerId,
                             amount: commission,
-                            description: `Comision consum ${inviteeName}`,
+                            description: `Comision recomandare (${inviteeName})`,
                             metadata: {
                                 invitee_id: user.id,
                                 invitee_name: inviteeName,

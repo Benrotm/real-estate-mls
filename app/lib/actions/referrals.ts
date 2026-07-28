@@ -7,20 +7,24 @@ import { revalidatePath } from 'next/cache';
 export async function processReferral(inviteeId: string, referrerId: string) {
     const supabaseAdmin = createAdminClient();
 
-    // 1. Prevent double referral processing
-    const { data: existingTx, error: txCheckError } = await supabaseAdmin
-        .from('credit_transactions')
-        .select('id')
-        .eq('user_id', inviteeId)
-        .or('description.ilike.Bonus înregistrare%,description.ilike.Bonus invitare%')
-        .limit(1);
-
-    if (existingTx && existingTx.length > 0) {
-        console.log(`Referral already processed for invitee ${inviteeId}`);
-        return { error: 'Referral already processed' };
+    if (!inviteeId || !referrerId || inviteeId === referrerId) {
+        return { error: 'Invalid referral parameters' };
     }
 
-    // 2. Fetch referral settings from platform_settings or admin_settings
+    // 1. Prevent double referral processing for referrer
+    const { data: existingBonus } = await supabaseAdmin
+        .from('credit_transactions')
+        .select('id')
+        .eq('user_id', referrerId)
+        .eq('metadata->>invitee_id', inviteeId)
+        .limit(1);
+
+    if (existingBonus && existingBonus.length > 0) {
+        console.log(`Referral already processed for referrer ${referrerId} and invitee ${inviteeId}`);
+        return { success: true, message: 'Referral already processed' };
+    }
+
+    // 2. Fetch referral settings from admin_settings
     let referrerBonus = 15;
     let inviteeBonus = 15;
 
@@ -40,34 +44,13 @@ export async function processReferral(inviteeId: string, referrerId: string) {
         console.error("Error reading credit_costs_config in processReferral:", e);
     }
 
-    // 3. Check if invitee profile exists and already has initial credits
-    const { data: inviteeProfile } = await supabaseAdmin
+    // 3. Ensure invitee profile has referred_by set correctly
+    await supabaseAdmin
         .from('profiles')
-        .select('credits')
-        .eq('id', inviteeId)
-        .single();
+        .update({ referred_by: referrerId })
+        .eq('id', inviteeId);
 
-    // 4. Update Invitee Credits ONLY if they have not received initial registration credits
-    const currentInviteeCredits = inviteeProfile?.credits || 0;
-    if (inviteeBonus > 0 && currentInviteeCredits === 0) {
-        const newInviteeCredits = currentInviteeCredits + inviteeBonus;
-
-        await supabaseAdmin
-            .from('profiles')
-            .update({ credits: newInviteeCredits })
-            .eq('id', inviteeId);
-
-        await supabaseAdmin
-            .from('credit_transactions')
-            .insert({
-                user_id: inviteeId,
-                amount: inviteeBonus,
-                description: 'Bonus înregistrare (referral)',
-                metadata: { referrer_id: referrerId }
-            });
-    }
-
-    // 5. Update Referrer Credits
+    // 4. Update Referrer Credits
     if (referrerBonus > 0 && referrerId) {
         const { data: referrerProfile } = await supabaseAdmin
             .from('profiles')
@@ -95,10 +78,12 @@ export async function processReferral(inviteeId: string, referrerId: string) {
         }
     }
 
-    revalidatePath('/dashboard/client/ai-matching');
-    revalidatePath('/cont/plati');
-    revalidatePath('/cont/profil');
-    revalidatePath('/dashboard');
+    try {
+        revalidatePath('/dashboard/client/ai-matching');
+        revalidatePath('/cont/plati');
+        revalidatePath('/cont/profil');
+        revalidatePath('/dashboard');
+    } catch (e) {}
 
     return { success: true };
 }
@@ -108,13 +93,15 @@ export async function getReferralStats() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
 
+    const supabaseAdmin = createAdminClient();
+
     // Fetch referral settings from admin_settings
     let referrerBonus = 15;
     let inviteeBonus = 15;
     let commissionPercentage = 15;
 
     try {
-        const { data: creditConfig } = await supabase
+        const { data: creditConfig } = await supabaseAdmin
             .from('admin_settings')
             .select('value')
             .eq('key', 'credit_costs_config')
@@ -136,10 +123,10 @@ export async function getReferralStats() {
         commission_percentage: commissionPercentage
     };
 
-    // Get all invitees who registered using this user's link
+    // Get all invitees who registered using this user's link using Admin client (to bypass RLS on profiles)
     let invitees: any[] = [];
     try {
-        const { data, error: inviteesError } = await supabase
+        const { data, error: inviteesError } = await supabaseAdmin
             .from('profiles')
             .select('id, full_name, email, created_at')
             .eq('referred_by', user.id);
@@ -160,7 +147,7 @@ export async function getReferralStats() {
     try {
         for (const invitee of invitees) {
             // Find credits consumed by this invitee (sum of negative amounts in transactions)
-            const { data: consumedData } = await supabase
+            const { data: consumedData } = await supabaseAdmin
                 .from('credit_transactions')
                 .select('amount')
                 .eq('user_id', invitee.id)
@@ -169,7 +156,7 @@ export async function getReferralStats() {
             const creditsConsumed = (consumedData || []).reduce((acc, curr) => acc + Math.abs(curr.amount), 0);
 
             // Find all referral bonuses and commissions earned by current user from this invitee
-            const { data: earnedData } = await supabase
+            const { data: earnedData } = await supabaseAdmin
                 .from('credit_transactions')
                 .select('amount')
                 .eq('user_id', user.id)
@@ -178,7 +165,7 @@ export async function getReferralStats() {
 
             const totalEarnedFromInvitee = (earnedData || []).reduce((acc, curr) => acc + curr.amount, 0);
             
-            // Fallback for invitees where metadata wasn't set: attribute initial referrerBonus
+            // Fallback for invitees where metadata wasn't set: attribute initial referrerBonus if total earned is 0
             const finalEarnedFromInvitee = totalEarnedFromInvitee > 0 ? totalEarnedFromInvitee : referrerBonus;
 
             totalCommissionsEarned += finalEarnedFromInvitee;
@@ -213,7 +200,9 @@ export async function checkAndProcessReferral() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
 
-    const { data: profile, error } = await supabase
+    const supabaseAdmin = createAdminClient();
+
+    const { data: profile, error } = await supabaseAdmin
         .from('profiles')
         .select('id, referred_by')
         .eq('id', user.id)

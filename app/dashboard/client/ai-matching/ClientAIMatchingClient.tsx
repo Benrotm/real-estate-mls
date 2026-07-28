@@ -497,6 +497,9 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
         const syncLiveCredits = async () => {
             try {
+                const { checkAndProcessReferral } = await import('@/app/lib/actions/referrals');
+                await checkAndProcessReferral();
+
                 const { getUserCredits } = await import('@/app/lib/actions/credits');
                 const res = await getUserCredits();
                 if (isMounted && res && 'credits' in res && typeof res.credits === 'number') {

@@ -71,7 +71,16 @@ export default function SignUpPage() {
 
             if (error) throw error;
 
-            if (data.session) {
+            if (data.session && data.user) {
+                if (refParam) {
+                    try {
+                        const { processReferral } = await import('@/app/lib/actions/referrals');
+                        await processReferral(data.user.id, refParam);
+                    } catch (refErr) {
+                        console.error('Error processing referral on signup:', refErr);
+                    }
+                }
+
                 let targetPath = '/dashboard';
                 if (role === 'owner') targetPath = '/dashboard/owner';
                 else if (role === 'agent') targetPath = '/dashboard/agent';
