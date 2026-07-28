@@ -143,10 +143,25 @@ export async function getUserActivityDetails(userId: string) {
             .eq('id', userId)
             .single();
 
+        let finalSessions = sessions || [];
+        if (finalSessions.length === 0 && (userProfile || (logs && logs.length > 0))) {
+            const createdAt = userProfile?.created_at || (logs && logs.length > 0 ? logs[logs.length - 1].created_at : new Date().toISOString());
+            const lastActiveAt = logs && logs.length > 0 ? logs[0].created_at : createdAt;
+            finalSessions = [
+                {
+                    id: 'synth-session-1',
+                    user_id: userId,
+                    login_at: createdAt,
+                    last_active_at: lastActiveAt,
+                    ip_address: 'Autentificare Cont Client'
+                }
+            ];
+        }
+
         return {
             success: true,
             userProfile,
-            sessions: sessions || [],
+            sessions: finalSessions,
             logs: logs || [],
             creditTxns: creditTxns || []
         };

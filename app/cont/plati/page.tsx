@@ -17,7 +17,8 @@ import {
     Gift,
     Award,
     Copy,
-    Share2
+    Share2,
+    Users
 } from 'lucide-react';
 import Link from 'next/link';
 import ShareModal from '@/app/components/ShareModal';
@@ -58,6 +59,7 @@ export default function PlatiPage() {
         invitee_bonus: 10,
         commission_percentage: 10
     });
+    const [invitees, setInvitees] = useState<any[]>([]);
     const [totalCommissions, setTotalCommissions] = useState(0);
     const [copied, setCopied] = useState(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -111,6 +113,7 @@ export default function PlatiPage() {
 
         if (refRes && 'referralLink' in refRes) {
             setReferralLink(refRes.referralLink || '');
+            setInvitees(refRes.invitees || []);
             setTotalCommissions(refRes.totalCommissionsEarned || 0);
             if (refRes.userId) {
                 setUserId(refRes.userId);
@@ -594,6 +597,52 @@ export default function PlatiPage() {
                                     </button>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Invitees Stats Table */}
+                        <div className="space-y-3 pt-4 border-t border-slate-800">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                <Users className="w-4 h-4 text-emerald-400" />
+                                Prieteni înregistrați ({invitees.length})
+                            </h4>
+
+                            {invitees.length === 0 ? (
+                                <p className="text-xs text-slate-500 italic p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
+                                    Nu ai invitat niciun prieten încă. Trimite link-ul de mai sus pentru a începe!
+                                </p>
+                            ) : (
+                                <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-inner max-h-60 overflow-y-auto">
+                                    <table className="w-full text-left text-xs text-slate-300">
+                                        <thead className="bg-slate-900/60 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-850">
+                                            <tr>
+                                                <th className="px-4 py-3">Prieten</th>
+                                                <th className="px-4 py-3">Înregistrat</th>
+                                                <th className="px-4 py-3 text-right">Credite Consumate</th>
+                                                <th className="px-4 py-3 text-right">Comision Câștigat</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-850/50">
+                                            {invitees.map((invitee) => (
+                                                <tr key={invitee.id} className="hover:bg-slate-900/40 transition-colors">
+                                                    <td className="px-4 py-3">
+                                                        <div className="font-semibold text-white">{invitee.name}</div>
+                                                        <div className="text-[10px] text-slate-500">{invitee.email}</div>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-slate-400">
+                                                        {new Date(invitee.registeredAt).toLocaleDateString('ro-RO')}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-mono font-semibold text-slate-400">
+                                                        {invitee.creditsConsumed} CR
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-mono font-bold text-emerald-400">
+                                                        +{invitee.commissionEarned} CR
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { 
     Zap, Users, UserCheck, ShieldAlert, Activity, Search, Filter, 
     CheckCircle2, XCircle, Eye, Settings, Clock, Coins, MousePointer, 
-    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2, Archive, ArchiveRestore, FolderArchive, SlidersHorizontal, PlusCircle
+    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2, Archive, ArchiveRestore, FolderArchive, SlidersHorizontal, PlusCircle, Calendar
 } from 'lucide-react';
 import { toggleUserApproval, saveUserPropertyRestrictions, toggleUserArchived } from '@/app/lib/admin';
 import { 
@@ -257,7 +257,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
         }
 
         const findOwner = u.find_self_from_owner === true;
-        const wantAgent = u.wants_agent_help !== false; // defaults to true unless explicitly false
+        const wantAgent = u.wants_agent_help === true;
 
         // 2. Both Options: Client with BOTH find_self_from_owner === true AND wants_agent_help === true
         if (findOwner && wantAgent) {
@@ -269,7 +269,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
             return 'agent_only';
         }
 
-        // 1. Direct Owner Only: Client with find_self_from_owner === true AND wants_agent_help === false
+        // 1. Direct Owner Only: Client with find_self_from_owner === true AND wants_agent_help !== true
         return 'direct_owner_only';
     };
 
@@ -383,6 +383,12 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                 </span>
                             ) : (
                                 <span className="text-[11px] text-slate-400 italic block mt-0.5">Fără telefon</span>
+                            )}
+                            {user.created_at && (
+                                <span className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-1 bg-slate-100/80 px-2 py-0.5 rounded border border-slate-200/60 w-fit">
+                                    <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                                    Înregistrat: {new Date(user.created_at).toLocaleString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
                             )}
                         </div>
                     </div>
