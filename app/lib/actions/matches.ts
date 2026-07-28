@@ -14,10 +14,14 @@ export async function upsertMatchStatus(leadId: string, propertyId: string, stat
 
     const adminSupabase = createAdminClient();
 
+    let dbStatus = status;
+    if (status === 'offer_made') dbStatus = 'negotiation';
+    if (status === 'curate') dbStatus = 'to_verify';
+
     const payload: any = {
         lead_id: leadId,
         property_id: propertyId,
-        status: status,
+        status: dbStatus,
         updated_at: new Date().toISOString()
     };
     if (notes !== undefined) {
@@ -98,10 +102,14 @@ export async function bulkUpsertMatchStatus(leadId: string, propertyIds: string[
         return { error: 'Unauthorized' };
     }
 
+    let dbStatus = status;
+    if (status === 'offer_made') dbStatus = 'negotiation';
+    if (status === 'curate') dbStatus = 'to_verify';
+
     const payloads = propertyIds.map(propertyId => ({
         lead_id: leadId,
         property_id: propertyId,
-        status: status,
+        status: dbStatus,
         updated_at: new Date().toISOString()
     }));
 

@@ -695,10 +695,10 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
 
     const currentTabObj = TABS.find(t => t.id === activeTab) || TABS[0];
 
-    // Filter properties per tab
     const getTabProperties = (tabId: string) => {
         if (tabId === 'curate') return aiSuggestions;
         if (tabId === 'winner') return matches.filter(m => m.status === 'winner' || m.status === 'sold');
+        if (tabId === 'offer_made') return matches.filter(m => m.status === 'offer_made' || m.status === 'negotiation');
         return matches.filter(m => m.status === tabId);
     };
 
@@ -1499,8 +1499,8 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
                                             </div>
                                         </div>
 
-                                        {/* Owner Phone Badge if present */}
-                                        {prop.owner_phone && (
+                                        {/* Owner Phone Badge (ONLY for external/manual properties added by client) */}
+                                        {(prop.url || prop.source === 'External Manual') && prop.owner_phone && (
                                             <div className="flex items-center gap-1 mt-1 text-[11px] font-semibold text-slate-700">
                                                 <Phone className="w-3 h-3 text-orange-500 shrink-0" />
                                                 <span>Proprietar:</span>
