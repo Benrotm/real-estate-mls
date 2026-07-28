@@ -14,10 +14,15 @@ export async function scrapeExternalPropertyUrl(inputUrl: string) {
         formattedUrl = 'https://' + formattedUrl;
     }
 
+    const isFacebook = formattedUrl.includes('facebook.com') || formattedUrl.includes('fb.watch') || formattedUrl.includes('fb.me');
+    const userAgent = isFacebook
+        ? 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'
+        : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
     try {
         const response = await fetch(formattedUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': userAgent,
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language': 'ro-RO,ro;q=0.9,en-US;q=0.8,en;q=0.7'
             },
@@ -43,7 +48,7 @@ export async function scrapeExternalPropertyUrl(inputUrl: string) {
         };
 
         const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-        const title = getMetaTag('property', 'og:title') ||
+        let title = getMetaTag('property', 'og:title') ||
             getMetaTag('name', 'twitter:title') ||
             (titleTag ? titleTag[1].trim() : '');
 
@@ -58,11 +63,15 @@ export async function scrapeExternalPropertyUrl(inputUrl: string) {
             coverImage = 'https:' + coverImage;
         }
 
-        const siteName = getMetaTag('property', 'og:site_name') || '';
+        let siteName = getMetaTag('property', 'og:site_name') || (isFacebook ? 'Facebook' : '');
+
+        if (isFacebook && (!title || title.toLowerCase().includes('facebook') || title.toLowerCase().includes('log in'))) {
+            title = 'Anunț Imobiliar Facebook';
+        }
 
         return {
             success: true,
-            title: title ? title.replace(/&amp;/g, '&').replace(/&quot;/g, '"') : '',
+            title: title ? title.replace(/&amp;/g, '&').replace(/&quot;/g, '"') : (isFacebook ? 'Anunț Imobiliar Facebook' : ''),
             description: description ? description.replace(/&amp;/g, '&').replace(/&quot;/g, '"') : '',
             coverImage: coverImage,
             siteName: siteName,
@@ -72,10 +81,10 @@ export async function scrapeExternalPropertyUrl(inputUrl: string) {
         console.warn('Error scraping external URL:', err.message);
         return {
             success: true,
-            title: '',
+            title: isFacebook ? 'Anunț Imobiliar Facebook' : '',
             description: '',
             coverImage: '',
-            siteName: '',
+            siteName: isFacebook ? 'Facebook' : '',
             originalUrl: formattedUrl,
             fallback: true
         };
@@ -145,7 +154,7 @@ export async function saveExternalPropertyForLead(params: {
                 price: price || 0,
                 currency: 'EUR',
                 type: 'Apartment',
-                created_by: user.id
+                owner_id: user.id
             })
             .select()
             .single();
