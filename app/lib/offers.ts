@@ -175,9 +175,24 @@ export async function submitOffer(propertyId: string, amount: number) {
             console.error('Error in auto-chat interaction from offer:', chatError);
         }
 
+        // Auto-Update Client's AI Matching Stage & Personal Notes for this Property
+        try {
+            const { getOrCreateClientSelfServiceLead } = await import('./actions/leads');
+            const { upsertMatchStatus } = await import('./actions/matches');
+
+            const clientLeadRes = await getOrCreateClientSelfServiceLead();
+            if (clientLeadRes && clientLeadRes.lead?.id) {
+                const noteContent = `Ofertă făcută: ${amount.toLocaleString('ro-RO')} € (${new Date().toLocaleDateString('ro-RO')})`;
+                await upsertMatchStatus(clientLeadRes.lead.id, propertyId, 'offer_made', noteContent);
+            }
+        } catch (matchErr) {
+            console.error('Error updating client AI Matching status on offer:', matchErr);
+        }
+
         revalidatePath(`/properties/${propertyId}`);
         revalidatePath('/dashboard/owner/leads');
         revalidatePath('/dashboard/client/chat');
+        revalidatePath('/dashboard/client/ai-matching');
         return { success: true };
     } catch (error: any) {
         console.error('Submit offer error:', error);
