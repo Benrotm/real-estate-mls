@@ -172,27 +172,33 @@ export async function grantUserCredits(userId: string, amount: number, customDes
         return { error: 'Permisiuni insuficiente pentru a aloca credite.' };
     }
 
-    // Get user's current profile balance using admin client
-    const { data: profile, error: readError } = await supabaseAdmin
-        .from('profiles')
-        .select('credits')
-        .eq('id', userId)
-        .single();
-        
-    if (readError) return { error: readError.message };
+    // 1. Idempotency Guard: Block rapid duplicate requests within 10 seconds
+    const tenSecondsAgo = new Date(Date.now() - 10000).toISOString();
+    const { data: recentTx } = await supabaseAdmin
+        .from('credit_transactions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('amount', amount)
+        .gte('created_at', tenSecondsAgo)
+        .limit(1);
 
-    const currentCredits = profile?.credits || 0;
-    const newBalance = Math.max(0, currentCredits + amount);
+    if (recentTx && recentTx.length > 0) {
+        console.warn(`Duplicate credit grant request blocked for user ${userId}`);
+        const { data: p } = await supabaseAdmin.from('profiles').select('credits').eq('id', userId).single();
+        return { success: true, newBalance: p?.credits || 0 };
+    }
 
-    const { error: updateError } = await supabaseAdmin
-        .from('profiles')
-        .update({ credits: newBalance })
-        .eq('id', userId);
+    // 2. Fetch existing transaction ledger sum for strict accuracy
+    const { data: txs } = await supabaseAdmin
+        .from('credit_transactions')
+        .select('amount')
+        .eq('user_id', userId);
 
-    if (updateError) return { error: updateError.message };
+    const existingSum = (txs || []).reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+    const newBalance = Math.max(0, existingSum + amount);
 
-    // Log transaction using admin client
-    await supabaseAdmin
+    // 3. Log transaction first using admin client
+    const { error: logTxError } = await supabaseAdmin
         .from('credit_transactions')
         .insert({
             user_id: userId,
@@ -200,6 +206,18 @@ export async function grantUserCredits(userId: string, amount: number, customDes
             description: customDescription || (amount >= 0 ? 'Credite alocate de Admin' : 'Credite reduse de Admin'),
             metadata: { approved_by: user.id }
         });
+
+    if (logTxError) {
+        return { error: 'Eroare la înregistrarea tranzacției: ' + logTxError.message };
+    }
+
+    // 4. Update profile credits to match the exact new ledger sum
+    const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({ credits: newBalance })
+        .eq('id', userId);
+
+    if (updateError) return { error: updateError.message };
 
     revalidatePath('/dashboard/client/ai-matching');
     revalidatePath('/cont/plati');

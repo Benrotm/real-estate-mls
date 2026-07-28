@@ -73,7 +73,7 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
 
     const handleGrantCreditsSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedUserForCredits) return;
+        if (isGrantingCredits || !selectedUserForCredits) return;
         if (!grantAmount || isNaN(grantAmount)) {
             setGrantStatusMsg({ type: 'error', text: 'Te rugăm să introduci o sumă de credite validă.' });
             return;
