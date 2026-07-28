@@ -159,20 +159,21 @@ export async function deductUserCredits(amount: number, description: string = 'C
     return { success: true, remaining: newBalance };
 }
 
-export async function grantUserCredits(userId: string, amount: number) {
+export async function grantUserCredits(userId: string, amount: number, customDescription?: string) {
     const supabase = await createClient();
     
     // Verify admin calling the function
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Unauthorized' };
     
-    const { data: adminProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const supabaseAdmin = createAdminClient();
+    const { data: adminProfile } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single();
     if (!adminProfile || (adminProfile.role !== 'admin' && adminProfile.role !== 'super_admin')) {
-        return { error: 'Insufficient permissions' };
+        return { error: 'Permisiuni insuficiente pentru a aloca credite.' };
     }
 
-    // Get user's current
-    const { data: profile, error: readError } = await supabase
+    // Get user's current profile balance using admin client
+    const { data: profile, error: readError } = await supabaseAdmin
         .from('profiles')
         .select('credits')
         .eq('id', userId)
@@ -180,22 +181,23 @@ export async function grantUserCredits(userId: string, amount: number) {
         
     if (readError) return { error: readError.message };
 
-    const newBalance = (profile.credits || 0) + amount;
+    const currentCredits = profile?.credits || 0;
+    const newBalance = Math.max(0, currentCredits + amount);
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({ credits: newBalance })
         .eq('id', userId);
 
     if (updateError) return { error: updateError.message };
 
-    // Log transaction
-    await supabase
+    // Log transaction using admin client
+    await supabaseAdmin
         .from('credit_transactions')
         .insert({
             user_id: userId,
             amount: amount,
-            description: 'Credite acordate de admin',
+            description: customDescription || (amount >= 0 ? 'Credite alocate de Admin' : 'Credite reduse de Admin'),
             metadata: { approved_by: user.id }
         });
 
@@ -203,6 +205,7 @@ export async function grantUserCredits(userId: string, amount: number) {
     revalidatePath('/cont/plati');
     revalidatePath('/cont/profil');
     revalidatePath('/dashboard');
+    revalidatePath('/dashboard/admin/ai-pipeline');
 
     return { success: true, newBalance };
 }

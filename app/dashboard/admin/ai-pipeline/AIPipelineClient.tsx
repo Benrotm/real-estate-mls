@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { 
     Zap, Users, UserCheck, ShieldAlert, Activity, Search, Filter, 
     CheckCircle2, XCircle, Eye, Settings, Clock, Coins, MousePointer, 
-    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2, Archive, ArchiveRestore, FolderArchive, SlidersHorizontal
+    ArrowUpRight, AlertCircle, RefreshCw, Layers, Check, X, Shield, BedDouble, Ruler, MapPin, Sparkles, Phone, Trash2, Archive, ArchiveRestore, FolderArchive, SlidersHorizontal, PlusCircle
 } from 'lucide-react';
 import { toggleUserApproval, saveUserPropertyRestrictions, toggleUserArchived } from '@/app/lib/admin';
 import { 
@@ -63,6 +63,46 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
     const [allowedCities, setAllowedCities] = useState<string[]>([]);
     const [isSavingRestrictions, setIsSavingRestrictions] = useState(false);
     const [restrictionsStatusMsg, setRestrictionsStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    // Credit Grant Modal State
+    const [selectedUserForCredits, setSelectedUserForCredits] = useState<User | null>(null);
+    const [grantAmount, setGrantAmount] = useState<number>(15);
+    const [grantReason, setGrantReason] = useState<string>('');
+    const [isGrantingCredits, setIsGrantingCredits] = useState(false);
+    const [grantStatusMsg, setGrantStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    const handleGrantCreditsSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUserForCredits) return;
+        if (!grantAmount || isNaN(grantAmount)) {
+            setGrantStatusMsg({ type: 'error', text: 'Te rugăm să introduci o sumă de credite validă.' });
+            return;
+        }
+
+        setIsGrantingCredits(true);
+        setGrantStatusMsg(null);
+        try {
+            const { grantUserCredits } = await import('@/app/lib/actions/credits');
+            const res = await grantUserCredits(selectedUserForCredits.id, Number(grantAmount), grantReason.trim() || undefined);
+            
+            if (res.error) {
+                setGrantStatusMsg({ type: 'error', text: res.error });
+            } else {
+                const newBalance = res.newBalance;
+                setUsers(prev => prev.map(u => u.id === selectedUserForCredits.id ? { ...u, credits: newBalance } : u));
+                setGrantStatusMsg({ type: 'success', text: `Credite alocate cu succes! Noul sold este de ${newBalance} CR.` });
+                setTimeout(() => {
+                    setSelectedUserForCredits(null);
+                    setGrantStatusMsg(null);
+                    setGrantReason('');
+                }, 1500);
+            }
+        } catch (err: any) {
+            setGrantStatusMsg({ type: 'error', text: err.message || 'Eroare la alocarea creditelor' });
+        } finally {
+            setIsGrantingCredits(false);
+        }
+    };
 
     // Activity Monitor Modal state
     const [monitoredUser, setMonitoredUser] = useState<User | null>(null);
@@ -352,9 +392,19 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                     <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
                         {user.role === 'client_no_agency' ? 'Client fără agenție' : user.role === 'crm_lead' ? 'Lead CRM' : user.role}
                     </span>
-                    <span className="flex items-center gap-1 font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200">
-                        <Coins className="w-3 h-3 text-yellow-500" /> {user.credits || 0} CR
-                    </span>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSelectedUserForCredits(user);
+                            setGrantAmount(15);
+                            setGrantReason('');
+                            setGrantStatusMsg(null);
+                        }}
+                        title="Click pentru a aloca credite acestui utilizator"
+                        className="flex items-center gap-1 font-extrabold text-amber-900 bg-amber-100 hover:bg-amber-200 px-2.5 py-0.5 rounded-lg border border-amber-300 transition-all cursor-pointer shadow-2xs active:scale-95"
+                    >
+                        <Coins className="w-3.5 h-3.5 text-amber-600" /> {user.credits || 0} CR <PlusCircle className="w-3 h-3 text-amber-700" />
+                    </button>
                 </div>
 
                 <div className="flex flex-col gap-1 mt-2">
@@ -373,6 +423,17 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
 
             {/* Universal Card Action Buttons */}
             <div className="space-y-1.5 pt-3 border-t border-slate-100">
+                <button
+                    onClick={() => {
+                        setSelectedUserForCredits(user);
+                        setGrantAmount(15);
+                        setGrantReason('');
+                        setGrantStatusMsg(null);
+                    }}
+                    className="w-full py-1.5 px-2 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-slate-950 rounded-lg text-[11px] font-extrabold flex items-center justify-center gap-1.5 border border-amber-500/30 cursor-pointer shadow-2xs transition-all active:scale-95"
+                >
+                    <Coins className="w-3.5 h-3.5 text-slate-950" /> Alocă Credite CR
+                </button>
                 <button
                     onClick={() => setSelectedUserForCriteria(user)}
                     className="w-full py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 border border-emerald-200 cursor-pointer transition-colors"
@@ -1218,6 +1279,115 @@ export default function AIPipelineClient({ initialUsers, initialRecommendation }
                                 Închide Previzualizarea
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: ADMIN CREDIT GRANT MODAL */}
+            {selectedUserForCredits && (
+                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+                    <div className="bg-slate-900 text-white border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-6">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/30">
+                                    <Coins className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-base text-white">Alocare Credite Utilizator</h3>
+                                    <p className="text-xs text-slate-400">{selectedUserForCredits.full_name || selectedUserForCredits.email}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedUserForCredits(null)}
+                                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+                            <span className="text-xs text-slate-400 font-semibold">Sold Actual Utilizator:</span>
+                            <span className="text-lg font-black text-yellow-400 font-mono flex items-center gap-1">
+                                <Coins className="w-4 h-4" /> {selectedUserForCredits.credits || 0} CR
+                            </span>
+                        </div>
+
+                        {grantStatusMsg && (
+                            <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${grantStatusMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'}`}>
+                                {grantStatusMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" /> : <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />}
+                                <span>{grantStatusMsg.text}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleGrantCreditsSubmit} className="space-y-4">
+                            <div>
+                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                                    Cantitate Credite de Alocat (+ sau -)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={grantAmount}
+                                    onChange={(e) => setGrantAmount(Number(e.target.value))}
+                                    placeholder="ex: 15 sau 50"
+                                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-yellow-400 focus:outline-none focus:border-yellow-500"
+                                />
+                            </div>
+
+                            {/* Preset Buttons */}
+                            <div>
+                                <label className="text-[11px] font-semibold text-slate-400 block mb-1.5">Alegere Rapidă:</label>
+                                <div className="grid grid-cols-5 gap-1.5">
+                                    {[10, 15, 25, 50, 100].map(amt => (
+                                        <button
+                                            key={amt}
+                                            type="button"
+                                            onClick={() => setGrantAmount(amt)}
+                                            className={`py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${grantAmount === amt ? 'bg-yellow-500 text-slate-950 border-yellow-400 shadow-sm' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'}`}
+                                        >
+                                            +{amt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                                    Motiv / Notă Tranzacție (Opțional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={grantReason}
+                                    onChange={(e) => setGrantReason(e.target.value)}
+                                    placeholder="ex: Recompensă promovare, Suport client"
+                                    className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+
+                            <div className="pt-2 flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedUserForCredits(null)}
+                                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                                >
+                                    Anulează
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isGrantingCredits}
+                                    className="flex-1 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 rounded-xl text-xs font-extrabold transition-all shadow-lg shadow-yellow-500/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    {isGrantingCredits ? (
+                                        <>
+                                            <RefreshCw className="w-4 h-4 animate-spin" /> Se alocă...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Coins className="w-4 h-4" /> Confirmă Alocarea
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
