@@ -157,7 +157,7 @@ export default function SignUpPage() {
                 {role ? (
                     role === 'client' || role === 'client_no_agency' ? (
                         <div className="mt-6 border-t border-slate-100 pt-6 animate-fade-in text-left">
-                            <InviteLeadForm agentId="430ed9f0-3164-4346-a7e3-8124f35b5053" mode="client_no_agency" />
+                            <InviteLeadForm agentId={searchParams.get('ref') || "430ed9f0-3164-4346-a7e3-8124f35b5053"} mode="client_no_agency" />
                         </div>
                     ) : (
                     <div className="space-y-6 animate-fade-in text-left">
