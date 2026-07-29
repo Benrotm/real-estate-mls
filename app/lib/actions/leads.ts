@@ -479,24 +479,14 @@ export async function createLeadPublic(agentId: string, data: LeadData) {
         created_by: agentId,
         status: 'new',
         source: 'Shared Link Form',
-        currency: data.currency || 'EUR'
+        currency: data.currency || 'EUR',
+        search_direct_owner: search_direct_owner !== false,
+        search_with_agent: search_with_agent === true
     };
 
-    let { data: lead, error } = await supabase.from('leads').insert({
-        ...leadPayload,
-        find_self_from_owner: search_direct_owner !== false,
-        wants_agent_help: search_with_agent !== false
-    })
+    let { data: lead, error } = await supabase.from('leads').insert(leadPayload)
         .select()
         .single();
-
-    if (error && error.message?.includes('find_self_from_owner')) {
-        const { data: retryLead, error: retryErr } = await supabase.from('leads').insert(leadPayload)
-            .select()
-            .single();
-        lead = retryLead;
-        error = retryErr;
-    }
 
     if (error) {
         console.error('Create Public Lead Error:', error);
@@ -762,18 +752,11 @@ export async function submitClientNoAgencyFromInvite(agentId: string, data: {
         source: wantsAgentHelp ? 'Client Formular (Caută cu Agent & Proprietar)' : 'Client Self-Service Referral Form',
         currency: data.leadData.currency || 'EUR',
         notes: notes || data.leadData.social_notes || null,
-        find_self_from_owner: findSelfFromOwner,
-        wants_agent_help: wantsAgentHelp
+        search_direct_owner: findSelfFromOwner,
+        search_with_agent: wantsAgentHelp
     };
 
     let { error: leadErr } = await adminSupabase.from('leads').insert(leadPayload);
-
-    if (leadErr && leadErr.message?.includes('find_self_from_owner')) {
-        delete leadPayload.find_self_from_owner;
-        delete leadPayload.wants_agent_help;
-        const { error: retryErr } = await adminSupabase.from('leads').insert(leadPayload);
-        leadErr = retryErr;
-    }
 
     if (leadErr) {
         console.error('Error creating lead from client referral invite:', leadErr);

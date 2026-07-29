@@ -275,17 +275,13 @@ export async function getAIPipelineData() {
                 (matchedLead?.source || '').toLowerCase().includes('self-service') ||
                 (u as any).source?.toLowerCase().includes('invite');
 
-            const wantsAgentHelp = u.wants_agent_help !== undefined
-                ? u.wants_agent_help
-                : (matchedLead?.wants_agent_help !== undefined
-                    ? matchedLead.wants_agent_help
-                    : (matchedLead?.search_with_agent !== undefined ? matchedLead.search_with_agent : false));
+            const wantsAgentHelp = matchedLead?.search_with_agent !== undefined
+                ? matchedLead.search_with_agent === true
+                : (u.wants_agent_help === true);
 
-            const findSelfFromOwner = u.find_self_from_owner !== undefined
-                ? u.find_self_from_owner
-                : (matchedLead?.find_self_from_owner !== undefined
-                    ? matchedLead.find_self_from_owner
-                    : (matchedLead?.search_direct_owner !== undefined ? matchedLead.search_direct_owner : true));
+            const findSelfFromOwner = matchedLead?.search_direct_owner !== undefined
+                ? matchedLead.search_direct_owner !== false
+                : (u.find_self_from_owner !== false);
 
             const isApproved = isSelfService ? (u.is_approved !== false) : (u.is_approved ?? false);
 
