@@ -5,12 +5,12 @@ import {
     Zap, Bookmark, Phone, PhoneCall, Heart, Calendar, Clock, Handshake, 
     ThumbsDown, XCircle, Award, Sparkles, RefreshCw, ChevronDown, ChevronUp, 
     SlidersHorizontal, Search, MapPin, BedDouble, Ruler, ArrowUpRight, Flag, 
-    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck, Scan, UserPlus, FileText, Link2
+    Check, AlertCircle, Plus, ExternalLink, CalendarDays, Smartphone, Coins, ChevronLeft, ChevronRight, Eye, Download, X, Key, User, ShieldCheck, Scan, UserPlus, FileText, Link2, ShieldAlert, CheckCircle2, Loader2
 } from 'lucide-react';
 import { upsertMatchStatus, bulkUpsertMatchStatus } from '@/app/lib/actions/matches';
 import { findMatchingProperties } from '@/app/lib/actions/scoring';
 import { updateLead } from '@/app/lib/actions/leads';
-import { saveClientCalendarEvent, updateMatchWantToSeeAgainFlag, logUserActivity, activateInstantAIMatching } from '@/app/lib/actions/user-activity';
+import { saveClientCalendarEvent, updateMatchWantToSeeAgainFlag, logUserActivity, activateInstantAIMatching, requestClientAccessReactivation } from '@/app/lib/actions/user-activity';
 import DrawAreaSelector from '@/app/components/DrawAreaSelector';
 import MultiSearchableSelect from '@/app/components/MultiSearchableSelect';
 import { ROMANIAN_CITIES, TIMISOARA_AREAS, formatCityList, cleanCityName, normalizeText } from '@/app/lib/constants/locations';
@@ -201,11 +201,29 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     const [isApproved, setIsApproved] = useState<boolean>(lead.is_approved !== false);
     const [credits, setCredits] = useState<number>(userCredits);
     const [isActivatingInstant, setIsActivatingInstant] = useState(false);
+    const [isSendingRequest, setIsSendingRequest] = useState(false);
+    const [requestSent, setRequestSent] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('curate');
     const [updatingIds, setUpdatingIds] = useState<string[]>([]);
     const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
     const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
     const [isAiStepOpen, setIsAiStepOpen] = useState(true);
+
+    const handleRequestAccessReactivation = async () => {
+        setIsSendingRequest(true);
+        try {
+            const res = await requestClientAccessReactivation();
+            if (res.error) {
+                alert('Eroare: ' + res.error);
+            } else {
+                setRequestSent(true);
+            }
+        } catch (err: any) {
+            alert('Eroare la trimiterea solicitării: ' + err.message);
+        } finally {
+            setIsSendingRequest(false);
+        }
+    };
 
     // Lead preferences editing - all fields from form
     const [prefType, setPrefType] = useState(lead.preference_type || 'Apartment');
@@ -707,6 +725,71 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     };
 
     const currentProperties = getTabProperties(activeTab);
+
+    if (!isApproved) {
+        return (
+            <div className="max-w-3xl mx-auto px-2 sm:px-4 pt-8 pb-24 text-center space-y-6">
+                <div className="bg-slate-900 border-2 border-rose-500/40 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6 relative overflow-hidden text-left">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+                    
+                    <div className="flex items-center gap-4 border-b border-slate-800 pb-6">
+                        <div className="p-3.5 bg-gradient-to-tr from-rose-600 to-amber-500 text-white rounded-2xl shadow-lg shrink-0">
+                            <ShieldAlert className="w-8 h-8" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg sm:text-2xl font-black text-white">
+                                Accesul tău la AI Matching este Suspendat / În Așteptare
+                            </h2>
+                            <p className="text-xs sm:text-sm text-slate-400 font-semibold mt-1">
+                                Contul tău necesită re-activarea accesului de către un administrator.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 text-slate-300 text-xs sm:text-sm leading-relaxed">
+                        <p>
+                            Momentan, modulul de potrivire AI și vizualizarea proprietăților sunt suspendate temporar pentru contul tău. Dacă consideri că este o greșeală sau dorești să îți accesezi căutările și creditele disponibile, poți trimite o solicitare de re-activare printr-un singur click pe butonul de mai jos.
+                        </p>
+                    </div>
+
+                    {requestSent ? (
+                        <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl flex items-center gap-3 text-emerald-400 text-xs sm:text-sm font-bold animate-in fade-in">
+                            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+                            <span>Solicitarea ta de re-activare a fost trimisă cu succes către administratori! Vei fi notificat de îndată ce accesul este aprobat.</span>
+                        </div>
+                    ) : (
+                        <div className="pt-2 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                            <button
+                                type="button"
+                                onClick={handleRequestAccessReactivation}
+                                disabled={isSendingRequest}
+                                className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-orange-500/20 border border-amber-300/80 transition-all cursor-pointer transform hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                            >
+                                {isSendingRequest ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                                        <span>Se trimite solicitarea...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ShieldCheck className="w-4 h-4 text-slate-950" />
+                                        <span>Solicită Re-activare Acces</span>
+                                    </>
+                                )}
+                            </button>
+
+                            <a
+                                href="/cont/plati"
+                                className="text-xs text-slate-400 hover:text-white underline font-semibold transition-colors text-center sm:text-right"
+                            >
+                                Vezi soldul meu de credite ({credits} CR)
+                            </a>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-2 md:pt-4 pb-24 space-y-3.5">

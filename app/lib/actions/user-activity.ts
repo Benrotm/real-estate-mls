@@ -541,3 +541,51 @@ export async function activateInstantAIMatching() {
         return { error: err.message };
     }
 }
+
+export async function requestClientAccessReactivation() {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { error: 'Neautorizat' };
+        }
+
+        const adminSupabase = createAdminClient();
+
+        const { data: profile } = await adminSupabase
+            .from('profiles')
+            .select('full_name, email, phone')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        const { data: adminProfiles } = await adminSupabase
+            .from('profiles')
+            .select('id')
+            .in('role', ['admin', 'super_admin']);
+
+        const userName = profile?.full_name || profile?.email || 'Client';
+        const userContact = profile?.phone || profile?.email || '';
+
+        if (adminProfiles && adminProfiles.length > 0) {
+            const notifications = adminProfiles.map(adm => ({
+                user_id: adm.id,
+                type: 'system',
+                title: '🔑 Solicitare Re-activare Acces AI Matching',
+                content: `Clientul ${userName} (${userContact}) a solicitat re-activarea accesului în AI Pipeline.`,
+                link: '/dashboard/admin/ai-pipeline'
+            }));
+
+            await adminSupabase.from('notifications').insert(notifications);
+        }
+
+        await logUserActivity({
+            event_type: 'reactivation_requested',
+            description: `Client a solicitat re-activarea accesului în AI Pipeline`
+        });
+
+        return { success: true };
+    } catch (err: any) {
+        return { error: err.message };
+    }
+}
