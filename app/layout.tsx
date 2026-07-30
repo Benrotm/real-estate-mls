@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import BottomAuthBar from "./components/BottomAuthBar";
+import SafariDOMFix from "./components/SafariDOMFix";
 import "./globals.css";
 import { LanguageProvider } from "./context/LanguageContext";
 import { getUserProfile } from "./lib/auth";
@@ -66,6 +67,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <LanguageProvider>
+          <SafariDOMFix />
           <Navbar user={user} />
           <main className="flex-grow pt-16">
             {children}
