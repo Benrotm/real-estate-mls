@@ -69,7 +69,7 @@ export default async function RootLayout({
         <LanguageProvider>
           <SafariDOMFix />
           <Navbar user={user} />
-          <main className="flex-grow pt-24 md:pt-20">
+          <main className="flex-grow">
             {children}
           </main>
           <Footer />

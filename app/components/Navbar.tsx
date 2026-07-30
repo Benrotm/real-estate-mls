@@ -83,7 +83,7 @@ export default function Navbar({ user }: NavbarProps) {
   ];
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#1e293b] border-b border-white/10 shadow-xl">
+    <nav className="sticky top-0 w-full z-50 bg-[#1e293b] border-b border-white/10 shadow-xl">
       <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14 md:h-16">
           {/* Logo */}
