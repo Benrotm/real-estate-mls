@@ -77,7 +77,15 @@ export default function InviteLeadForm({ agentId, mode }: Props) {
         const matchedAreas = allRawAreas.filter(a => a.parent_id && selectedCityIds.includes(a.parent_id));
         
         if (matchedAreas.length > 0) {
-            return Array.from(new Set(matchedAreas.map(a => a.name))).sort((a, b) => a.localeCompare(b, 'ro'));
+            const areaMap = new Map<string, string>();
+            matchedAreas.forEach(a => {
+                const norm = normalizeText(a.name);
+                const existing = areaMap.get(norm);
+                if (!existing || (!/[ăâîșțŞŢĂÂÎ]/i.test(existing) && /[ăâîșțŞŢĂÂÎ]/i.test(a.name))) {
+                    areaMap.set(norm, a.name);
+                }
+            });
+            return Array.from(areaMap.values()).sort((a, b) => a.localeCompare(b, 'ro'));
         }
 
         if (normalizedSelected.some(n => n.includes('timi'))) {
