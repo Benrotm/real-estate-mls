@@ -792,7 +792,7 @@ export default function ClientAIMatchingClient({ lead, initialMatches, recommend
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-2 md:pt-4 pb-24 space-y-3.5">
+        <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 pt-6 md:pt-4 pb-24 space-y-3.5">
             {/* First Time Welcome Pop-up Modal for Client Login */}
             {/* First Time Welcome Pop-up Modal for Client Login */}
             {showWelcomeModal && (

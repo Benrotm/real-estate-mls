@@ -225,7 +225,7 @@ export default function PlatiPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white px-3 sm:px-8 pt-32 sm:pt-24 pb-12">
+        <div className="min-h-screen bg-slate-950 text-white px-3 sm:px-8 pt-36 sm:pt-28 pb-12">
             <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
                 
                 {/* Back Navigation & Dashboard Button */}

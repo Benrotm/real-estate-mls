@@ -293,7 +293,7 @@ export default function ProfilPage() {
     const importUrl = role === 'admin' || role === 'super_admin' ? '/dashboard/admin/properties/import' : null;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white pt-24 sm:pt-28 px-4 sm:px-8 pb-8">
+        <div className="min-h-screen bg-slate-950 text-white pt-32 sm:pt-28 px-4 sm:px-8 pb-8">
             <div className="max-w-6xl mx-auto space-y-8">
                 
                 {/* Header / Quick Tabs */}
