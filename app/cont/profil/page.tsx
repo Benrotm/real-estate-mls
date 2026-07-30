@@ -293,60 +293,54 @@ export default function ProfilPage() {
     const importUrl = role === 'admin' || role === 'super_admin' ? '/dashboard/admin/properties/import' : null;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white pt-32 sm:pt-28 px-4 sm:px-8 pb-8">
-            <div className="max-w-6xl mx-auto space-y-8">
-                
-                {/* Header / Quick Tabs */}
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2.5 sm:gap-3">
-                            <User className="w-7 h-7 sm:w-8 sm:h-8 text-orange-500 shrink-0" />
-                            Profilul Meu
-                        </h1>
-                        <p className="text-slate-400 mt-1 text-xs sm:text-sm">
-                            Gestionează datele de cont, creditele, recomandările și tranzacțiile tale.
-                        </p>
-                    </div>
+        <div className="max-w-6xl mx-auto px-2 sm:px-6 py-4 md:py-6 space-y-6">
+            
+            {/* Header / Navigation */}
+            <header className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2.5 sm:gap-3">
+                        <User className="w-7 h-7 sm:w-8 sm:h-8 text-orange-500 shrink-0" />
+                        Profilul Meu
+                    </h1>
+                    <p className="text-slate-400 mt-1 text-xs sm:text-sm">
+                        Gestionează datele de cont, creditele, recomandările și tranzacțiile tale.
+                    </p>
+                </div>
 
-                    {/* Navigation Tabs */}
-                    <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-slate-900/80 border border-slate-800 p-1.5 rounded-xl text-xs sm:text-sm">
+                {/* Navigation Links */}
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    <Link 
+                        href="/dashboard"
+                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors border border-slate-700/60"
+                    >
+                        <ArrowLeft className="w-4 h-4 text-orange-400" />
+                        Dashboard
+                    </Link>
+                    <Link 
+                        href={chatUrl}
+                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors border border-slate-700/60"
+                    >
+                        <MessageSquare className="w-4 h-4 text-emerald-400" />
+                        Mesaje
+                    </Link>
+                    {importUrl && (
                         <Link 
-                            href="/dashboard"
-                            className="text-slate-400 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+                            href={importUrl}
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors border border-slate-700/60"
                         >
-                            <ArrowLeft className="w-4 h-4" />
-                            Dashboard
+                            <UploadCloud className="w-4 h-4 text-indigo-400" />
+                            Import API
                         </Link>
-                        <span className="w-px h-4 bg-slate-800" />
-                        <Link 
-                            href={chatUrl}
-                            className="text-slate-400 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                        >
-                            <MessageSquare className="w-4 h-4 text-emerald-400" />
-                            Mesaje
-                        </Link>
-                        {importUrl && (
-                            <>
-                                <span className="w-px h-4 bg-slate-800" />
-                                <Link 
-                                    href={importUrl}
-                                    className="text-slate-400 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                                >
-                                    <UploadCloud className="w-4 h-4 text-indigo-400" />
-                                    Import API
-                                </Link>
-                            </>
-                        )}
-                        <span className="w-px h-4 bg-slate-800" />
-                        <Link
-                            href="/cont/plati"
-                            className="bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20 text-yellow-500 font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                        >
-                            <Coins className="w-4 h-4 animate-pulse" />
-                            Alimentează Credite
-                        </Link>
-                    </nav>
-                </header>
+                    )}
+                    <Link
+                        href="/cont/plati"
+                        className="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-bold px-3 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5"
+                    >
+                        <Coins className="w-4 h-4 text-yellow-400 animate-pulse" />
+                        Alimentează Credite
+                    </Link>
+                </div>
+            </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
@@ -741,12 +735,11 @@ export default function ProfilPage() {
                         </section>
                     </div>
                 </div>
+                <ShareModal 
+                    isOpen={isShareOpen} 
+                    onClose={() => setIsShareOpen(false)} 
+                    shareUrl={displayReferralLink} 
+                />
             </div>
-            <ShareModal 
-                isOpen={isShareOpen} 
-                onClose={() => setIsShareOpen(false)} 
-                shareUrl={displayReferralLink} 
-            />
-        </div>
     );
 }
