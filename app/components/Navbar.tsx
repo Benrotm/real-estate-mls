@@ -20,6 +20,7 @@ export default function Navbar({ user }: NavbarProps) {
   const userEmail = user?.full_name || "User";
   const userRole = user?.role;
   const isSuperAdmin = userRole === 'super_admin';
+  const isClient = userRole === 'client' || userRole === 'client_no_agency';
   const pathname = usePathname();
   const router = useRouter();
 
@@ -113,12 +114,13 @@ export default function Navbar({ user }: NavbarProps) {
                 Dashboard
               </Link>
             )}
-            {isLoggedIn ? (
+            {isLoggedIn && !isClient && (
               <Link href="/calculator-comisioane" className="text-sm font-bold text-white hover:text-orange-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md flex items-center gap-1.5">
                 <Calculator className="w-4 h-4 text-orange-400" />
                 Calculator
               </Link>
-            ) : (
+            )}
+            {!isLoggedIn && (
               <>
                 <Link href="/for-clients" className="text-sm font-bold text-white hover:text-cyan-300 transition-colors hover:bg-white/10 px-3 py-2 rounded-md">
                   For Clients
@@ -320,7 +322,7 @@ export default function Navbar({ user }: NavbarProps) {
                           <Link href="/profile" onClick={() => setIsUserMenuOpen(false)} className="px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3 text-sm font-medium text-slate-700 hover:text-slate-900">
                             <div className="w-5"><Settings className="w-4 h-4" /></div> Profile
                           </Link>
-                          {user?.plan_tier !== 'enterprise' && (
+                          {user?.plan_tier !== 'enterprise' && !isClient && (
                             <button
                               onClick={handleUpgradeToAgency}
                               disabled={isPending || loadingCost}
@@ -406,12 +408,13 @@ export default function Navbar({ user }: NavbarProps) {
               </Link>
             )}
 
-            {isLoggedIn ? (
+            {isLoggedIn && !isClient && (
               <Link href="/calculator-comisioane" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10">
                 <Calculator className="w-4 h-4" />
                 Calculator Comisioane
               </Link>
-            ) : (
+            )}
+            {!isLoggedIn && (
               <>
                 <Link href="/for-clients" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-cyan-300 hover:bg-white/10">
                   For Clients
