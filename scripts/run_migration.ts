@@ -1,6 +1,8 @@
 import { Client } from 'pg';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
+import dns from 'dns';
+dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config({ path: '.env.local' });
 
@@ -47,7 +49,8 @@ const MIGRATIONS = [
     'supabase/migrations/20260716010000_add_signup_notification.sql',
     'supabase/migrations/20260716020000_add_client_leads_rls.sql',
     'supabase/migrations/20260717180000_add_matches_rls_admin.sql',
-    'supabase/migrations/20260717190000_create_system_locations.sql'
+    'supabase/migrations/20260717190000_create_system_locations.sql',
+    'supabase/migrations/20260731000000_add_is_archived_columns.sql'
 ];
 
 async function run() {

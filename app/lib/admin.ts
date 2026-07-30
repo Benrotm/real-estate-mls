@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/app/lib/supabase/server';
-import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { UserRole } from './auth';
@@ -436,17 +436,7 @@ export async function fetchUsers() {
 
         const users = data || [];
 
-        // Fetch auth metadata (created_at, last_sign_in_at) using admin client
-        const supabaseAdmin = createAdminClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!,
-            {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false
-                }
-            }
-        );
+        const supabaseAdmin = createAdminClient();
 
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
             perPage: 1000
@@ -568,16 +558,7 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
     try {
         await verifyAdmin();
 
-        const supabaseAdmin = createAdminClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!,
-            {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false
-                }
-            }
-        );
+        const supabaseAdmin = createAdminClient();
 
         // Optional: Manual cleanup of child records to prevent FK constraint failures
         const supabase = await createClient();
@@ -693,30 +674,47 @@ export async function saveUserPropertyRestrictions(
 
 export async function toggleUserArchived(targetId: string, isArchived: boolean) {
     await verifyAdmin();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    let { error: err1 } = await supabase
+    // 1. Check if targetId belongs to a profile
+    const { data: profile } = await supabase
         .from('profiles')
-        .update({ is_archived: isArchived })
-        .eq('id', targetId);
+        .select('id, full_name, email, phone')
+        .eq('id', targetId)
+        .maybeSingle();
 
-    if (err1 && err1.message?.includes('is_archived')) {
-        await supabase
-            .from('profiles')
-            .update({ status: isArchived ? 'archived' : 'active' })
-            .eq('id', targetId);
+    const targetEmail = profile?.email ? profile.email.toLowerCase().trim() : null;
+    const newStatus = isArchived ? 'lost' : 'new';
+
+    // 2. Query matching leads by ID, created_by, or email
+    let leadQuery = supabase.from('leads').select('id, status');
+    if (targetEmail) {
+        leadQuery = leadQuery.or(`id.eq.${targetId},created_by.eq.${targetId},email.ilike.${targetEmail}`);
+    } else {
+        leadQuery = leadQuery.or(`id.eq.${targetId},created_by.eq.${targetId}`);
     }
 
-    let { error: err2 } = await supabase
-        .from('leads')
-        .update({ is_archived: isArchived })
-        .or(`id.eq.${targetId},created_by.eq.${targetId}`);
+    const { data: existingLeads } = await leadQuery;
 
-    if (err2 && err2.message?.includes('is_archived')) {
+    if (existingLeads && existingLeads.length > 0) {
+        const leadIds = existingLeads.map(l => l.id);
         await supabase
             .from('leads')
-            .update({ status: isArchived ? 'archived' : 'new' })
-            .or(`id.eq.${targetId},created_by.eq.${targetId}`);
+            .update({ status: newStatus })
+            .in('id', leadIds);
+    } else if (profile) {
+        // Create lead entry to track status for standalone profiles
+        await supabase
+            .from('leads')
+            .insert([{
+                id: profile.id,
+                created_by: profile.id,
+                name: profile.full_name || 'Client',
+                email: profile.email || '',
+                phone: profile.phone || '',
+                status: newStatus,
+                source: 'Direct Signup Profile'
+            }]);
     }
 
     revalidatePath('/dashboard/admin/ai-pipeline');
