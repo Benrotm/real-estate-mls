@@ -1276,16 +1276,27 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             private_notes: data.private_notes || '',
             documents: (function () {
                 const docs = Array.isArray(data.documents) ? [...data.documents] : [];
-                // Look for original source link (storia, olx, etc.)
-                const origLink = docs.find(d => typeof d === 'string' && (d.includes('storia.ro') || d.includes('olx.ro') || d.includes('publi24.ro') || d.includes('romimo.ro') || d.includes('imobiliare.ro') || d.includes('lajumate.ro') || d.includes('homezz.ro')));
+                // Remove all immoflux.ro links
+                const cleanDocs = docs.filter(d => typeof d === 'string' && !d.includes('immoflux.ro'));
 
-                if (origLink) {
-                    return Array.from(new Set([origLink, ...(sourceUrl && sourceUrl !== 'immoflux_batch' && sourceUrl !== origLink ? [sourceUrl] : []), ...docs]));
+                // Look for original source link (storia, olx, etc.)
+                const origLink = cleanDocs.find(d => typeof d === 'string' && (d.includes('storia.ro') || d.includes('olx.ro') || d.includes('publi24.ro') || d.includes('romimo.ro') || d.includes('imobiliare.ro') || d.includes('lajumate.ro') || d.includes('homezz.ro')));
+                const mapsLink = cleanDocs.find(d => typeof d === 'string' && (d.includes('google.com/maps') || d.includes('maps.google')));
+
+                const result: string[] = [];
+                if (origLink) result.push(origLink);
+                if (mapsLink) result.push(mapsLink);
+
+                for (const d of cleanDocs) {
+                    if (!result.includes(d)) result.push(d);
                 }
-                if (sourceUrl && sourceUrl !== 'immoflux_batch') {
-                    return Array.from(new Set([sourceUrl, ...docs]));
+
+                // If sourceUrl is original source site (not immoflux), include it
+                if (sourceUrl && !sourceUrl.includes('immoflux.ro') && sourceUrl !== 'immoflux_batch' && !result.includes(sourceUrl)) {
+                    result.unshift(sourceUrl);
                 }
-                return Array.from(new Set(docs));
+
+                return Array.from(new Set(result));
             })(),
 
             // Media

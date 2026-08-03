@@ -26,137 +26,52 @@ if (!supabaseUrl || !serviceKey) {
 
 const supabase = createClient(supabaseUrl, serviceKey);
 
-function sanitizeLocationText(rawText) {
-    if (!rawText || typeof rawText !== 'string') {
-        return { city: '', cleanText: '' };
-    }
-
-    let str = rawText.trim();
-
-    // 1. Remove Phone Numbers
-    str = str.replace(/(\+?40|\b07)\s*[\d\s.-]{7,15}\d/gi, ' ');
-    str = str.replace(/\+?[\d\s.-]{9,15}/g, ' ');
-
-    // 2. Remove Site & Platform Source Tags & noise words
-    const noisePatterns = [
-        /\b(storia|olx|romimo|imobiliare|publi24|immoflux|fluxmls|lajumate|anunturi)\b/gi,
-        /\b(whatsapp|wa\.me|viber|telegram)\b/gi,
-        /\b(status|activa|inactiva|inactiv|tip|portaluri|adresa|zona)\s*:?/gi,
-        /^tm[\s._-]+/i,
-        /\btm\s+(?=timisoara|giroc|dumbravita|ghiroda|mosnita)/gi
-    ];
-
-    for (const pattern of noisePatterns) {
-        str = str.replace(pattern, ' ');
-    }
-
-    str = str.replace(/\s+/g, ' ').replace(/^[\s,._-]+|[\s,._-]+$/g, '').trim();
-
-    let extractedCity = str;
-    let extractedArea = undefined;
-
-    if (str.includes(' - ')) {
-        const parts = str.split(' - ').map(p => p.trim()).filter(Boolean);
-        if (parts.length >= 2) {
-            extractedCity = parts[0];
-            extractedArea = parts[1];
-        }
-    } else if (str.includes('-') && !str.toLowerCase().includes('cluj-napoca')) {
-        const parts = str.split('-').map(p => p.trim()).filter(Boolean);
-        if (parts.length >= 2) {
-            extractedCity = parts[0];
-            extractedArea = parts[1];
-        }
-    }
-
-    extractedCity = extractedCity.replace(/\s*\(.*?\)\s*/g, '').trim();
-
-    return {
-        city: extractedCity,
-        area: extractedArea,
-        cleanText: str
-    };
-}
-
 async function main() {
-    console.log('Fetching ALL properties in batches of 1000 to clean location fields...');
+    console.log('Cleaning immoflux links from documents array across all properties in Supabase...');
 
     let page = 0;
     const pageSize = 1000;
-    let totalCleaned = 0;
-    let totalChecked = 0;
-
-    const noiseRegex = /(storia|olx|romimo|imobiliare|publi24|immoflux|whatsapp|\+40|\b07\d{8})/i;
+    let totalDocsCleaned = 0;
 
     while (true) {
         const start = page * pageSize;
         const end = start + pageSize - 1;
-        console.log(`Fetching properties range ${start} to ${end}...`);
 
         const { data: properties, error } = await supabase
             .from('properties')
-            .select('id, title, location_city, location_area, location_county, address')
+            .select('id, documents')
             .range(start, end);
 
-        if (error) {
-            console.error('Error fetching batch:', error);
+        if (error || !properties || properties.length === 0) {
             break;
         }
-
-        if (!properties || properties.length === 0) {
-            console.log('No more properties found in range.');
-            break;
-        }
-
-        totalChecked += properties.length;
-        console.log(`Batch ${page + 1}: Received ${properties.length} properties.`);
 
         for (const prop of properties) {
-            const currentCity = prop.location_city || '';
-            const currentArea = prop.location_area || '';
-            const currentAddress = prop.address || '';
+            const docs = Array.isArray(prop.documents) ? prop.documents : [];
+            const hasImmoflux = docs.some(d => typeof d === 'string' && d.includes('immoflux.ro'));
 
-            const needsCleaning = noiseRegex.test(currentCity) || noiseRegex.test(currentArea) || noiseRegex.test(currentAddress) || currentCity.toLowerCase().startsWith('tm ');
+            if (!hasImmoflux) continue;
 
-            if (!needsCleaning) continue;
-
-            const citySan = sanitizeLocationText(currentCity);
-            let newCity = citySan.city || 'Timisoara';
-            let newArea = currentArea;
-
-            if (!newArea && citySan.area) {
-                newArea = citySan.area;
-            }
-
-            if (newArea) {
-                newArea = sanitizeLocationText(newArea).cleanText;
-            }
-
-            const addrParts = [newArea, newCity, prop.location_county || 'Timis', 'Romania'].filter(Boolean);
-            const newAddress = sanitizeLocationText(addrParts.join(', ')).cleanText;
+            const cleanDocs = docs.filter(d => typeof d === 'string' && !d.includes('immoflux.ro'));
 
             const { error: updateErr } = await supabase
                 .from('properties')
                 .update({
-                    location_city: newCity,
-                    location_area: newArea,
-                    address: newAddress,
+                    documents: cleanDocs,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', prop.id);
 
-            if (updateErr) {
-                console.error(`Failed updating property ${prop.id}:`, updateErr);
-            } else {
-                totalCleaned++;
-                console.log(`[CLEANED #${prop.id}] City: "${currentCity}" -> "${newCity}" | Area: "${currentArea}" -> "${newArea}"`);
+            if (!updateErr) {
+                totalDocsCleaned++;
+                console.log(`[DOCS CLEANED #${prop.id}] Removed immoflux link from documents.`);
             }
         }
 
         page++;
     }
 
-    console.log(`Finished ALL pages! Checked ${totalChecked} properties. Total properties cleaned: ${totalCleaned}`);
+    console.log(`Finished! Total properties updated to remove immoflux links: ${totalDocsCleaned}`);
 }
 
 main();

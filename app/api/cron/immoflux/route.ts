@@ -445,25 +445,26 @@ export async function GET(request: NextRequest) {
                         }
                     });
 
-                    if (originalSourceUrl) {
-                        item.listingObj.documents = [originalSourceUrl];
-                    } else if (item.panelUrl) {
-                        item.listingObj.documents = [item.panelUrl];
+                    // Extract Google Maps Pin Coordinates from full Immoflux HTML (a, iframe, img, staticmap, etc.)
+                    const fullPanelHtml = $panel.html() || panelText;
+                    const mapMatch = fullPanelHtml.match(/(?:maps\.google\.com|google\.com\/maps)[^"']*?(?:q|query|center)=([+|-]?\d{2}\.\d+)\s*[,%2C]\s*([+|-]?\d{2}\.\d+)/i) || fullPanelHtml.match(/(?:q|query|center|markers)=([+|-]?\d{2}\.\d+)\s*[,%2C]\s*([+|-]?\d{2}\.\d+)/i);
+
+                    let mapsPinUrl = '';
+                    if (mapMatch) {
+                        const lat = parseFloat(mapMatch[1]);
+                        const lng = parseFloat(mapMatch[2]);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            item.listingObj.latitude = lat;
+                            item.listingObj.longitude = lng;
+                            mapsPinUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                        }
                     }
 
-                    // Extract Google Maps Pin Coordinates from Immoflux HTML
-                    $panel('a[href*="google.com/maps"]').each((_: any, el: any) => {
-                        const href = $panel(el).attr('href') || '';
-                        const match = href.match(/query=([\d.-]+),([\d.-]+)/i) || href.match(/q=([\d.-]+),([\d.-]+)/i) || href.match(/ll=([\d.-]+),([\d.-]+)/i);
-                        if (match) {
-                            const lat = parseFloat(match[1]);
-                            const lng = parseFloat(match[2]);
-                            if (!isNaN(lat) && !isNaN(lng)) {
-                                item.listingObj.latitude = lat;
-                                item.listingObj.longitude = lng;
-                            }
-                        }
-                    });
+                    // Populate documents (EXCLUDE immoflux.ro links!)
+                    const docList: string[] = [];
+                    if (originalSourceUrl) docList.push(originalSourceUrl);
+                    if (mapsPinUrl) docList.push(mapsPinUrl);
+                    item.listingObj.documents = docList;
 
                 } catch (e) {
                     item.listingObj.images = item.fallbackImages;

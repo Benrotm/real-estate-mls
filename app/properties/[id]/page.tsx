@@ -551,30 +551,59 @@ export default async function PropertyDetailPage({
                                     </div>
                                 )}
 
-                                {hasAccess && property.documents && property.documents.length > 0 && (
-                                    <div>
-                                        <div className="text-xs font-bold text-slate-500 uppercase mb-3">Private Documents</div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {property.documents.map((doc, i) => (
-                                                <a
-                                                    key={i}
-                                                    href={doc}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center gap-3 bg-slate-800/80 border border-slate-700/80 p-3 rounded-lg hover:bg-slate-700 transition group"
-                                                >
-                                                    <div className="w-8 h-8 bg-slate-700 rounded flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-slate-600 transition-colors">
-                                                        <FileText className="w-4 h-4" />
-                                                    </div>
-                                                    <span className="text-sm text-slate-300 truncate font-medium group-hover:text-white transition-colors">
-                                                        {doc.split('/').pop() || doc}
-                                                    </span>
-                                                    <ExternalLink className="w-3 h-3 text-slate-500 ml-auto" />
-                                                </a>
-                                            ))}
+                                {hasAccess && (function () {
+                                    const rawDocs = property.documents || [];
+                                    const cleanDocs = rawDocs.filter(d => typeof d === 'string' && !d.includes('immoflux.ro'));
+
+                                    // Add Google Maps Pin link if lat/lng are present and map link is not already in list
+                                    if (property.latitude && property.longitude) {
+                                        const mapPinUrl = `https://www.google.com/maps/search/?api=1&query=${property.latitude},${property.longitude}`;
+                                        if (!cleanDocs.some(d => d.includes('google.com/maps') || d.includes('maps.google'))) {
+                                            cleanDocs.push(mapPinUrl);
+                                        }
+                                    }
+
+                                    if (cleanDocs.length === 0) return null;
+
+                                    return (
+                                        <div>
+                                            <div className="text-xs font-bold text-slate-500 uppercase mb-3">Private Documents & Source Links</div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {cleanDocs.map((doc, i) => {
+                                                    let label = doc.split('/').pop() || doc;
+                                                    let icon = <FileText className="w-4 h-4" />;
+                                                    if (doc.includes('storia.ro')) label = 'Original Ad (Storia.ro)';
+                                                    else if (doc.includes('olx.ro')) label = 'Original Ad (OLX.ro)';
+                                                    else if (doc.includes('romimo.ro')) label = 'Original Ad (Romimo.ro)';
+                                                    else if (doc.includes('publi24.ro')) label = 'Original Ad (Publi24.ro)';
+                                                    else if (doc.includes('imobiliare.ro')) label = 'Original Ad (Imobiliare.ro)';
+                                                    else if (doc.includes('google.com/maps') || doc.includes('maps.google')) {
+                                                        label = 'Google Maps Pin (GPS Location)';
+                                                        icon = <MapPin className="w-4 h-4 text-emerald-400" />;
+                                                    }
+
+                                                    return (
+                                                        <a
+                                                            key={i}
+                                                            href={doc}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-3 bg-slate-800/80 border border-slate-700/80 p-3 rounded-lg hover:bg-slate-700 transition group"
+                                                        >
+                                                            <div className="w-8 h-8 bg-slate-700 rounded flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-slate-600 transition-colors">
+                                                                {icon}
+                                                            </div>
+                                                            <span className="text-sm text-slate-300 truncate font-medium group-hover:text-white transition-colors">
+                                                                {label}
+                                                            </span>
+                                                            <ExternalLink className="w-3 h-3 text-slate-500 ml-auto" />
+                                                        </a>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
 
                                 {/* Owner / Admin Actions */}
                                 {hasAccess && (

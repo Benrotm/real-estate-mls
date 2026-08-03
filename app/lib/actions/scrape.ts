@@ -763,23 +763,29 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 }
             });
 
-            if (originalSourceUrl) {
-                data.documents = Array.from(new Set([originalSourceUrl, ...(data.documents || [])]));
+            // 2. Extract Google Maps Pin Coordinates from full Immoflux HTML (a, iframe, img, staticmap, etc.)
+            const fullHtmlStr = $.html() || fullBodyText;
+            const mapMatch = fullHtmlStr.match(/(?:maps\.google\.com|google\.com\/maps)[^"']*?(?:q|query|center)=([+|-]?\d{2}\.\d+)\s*[,%2C]\s*([+|-]?\d{2}\.\d+)/i) || fullHtmlStr.match(/(?:q|query|center|markers)=([+|-]?\d{2}\.\d+)\s*[,%2C]\s*([+|-]?\d{2}\.\d+)/i);
+
+            let mapsPinUrl = '';
+            if (mapMatch) {
+                const lat = parseFloat(mapMatch[1]);
+                const lng = parseFloat(mapMatch[2]);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    data.latitude = lat;
+                    data.longitude = lng;
+                    mapsPinUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                }
             }
 
-            // 2. Extract Google Maps Pin Coordinates from Immoflux HTML
-            $('a[href*="google.com/maps"]').each((_, el) => {
-                const href = $(el).attr('href') || '';
-                const match = href.match(/query=([\d.-]+),([\d.-]+)/i) || href.match(/q=([\d.-]+),([\d.-]+)/i) || href.match(/ll=([\d.-]+),([\d.-]+)/i);
-                if (match) {
-                    const lat = parseFloat(match[1]);
-                    const lng = parseFloat(match[2]);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        data.latitude = lat;
-                        data.longitude = lng;
-                    }
-                }
-            });
+            // 3. Populate documents: EXCLUDE immoflux links, KEEP originalSourceUrl + mapsPinUrl
+            const docList: string[] = [];
+            if (originalSourceUrl) docList.push(originalSourceUrl);
+            if (mapsPinUrl) docList.push(mapsPinUrl);
+
+            // Filter existing documents to remove immoflux.ro
+            const existingDocs = (data.documents || []).filter(d => typeof d === 'string' && !d.includes('immoflux.ro'));
+            data.documents = Array.from(new Set([...docList, ...existingDocs]));
 
             // Specs extraction (Immoflux-specific)
             const areaMatch = fullBodyText.match(/(?:Suprafata utila|Suprafață utilă|Utila|Utilă)\s*:\s*([\d.,]+)/i) || fullBodyText.match(/SU\s+([\d.,]+)\s*mp/i) || fullBodyText.match(/SU\s*:\s*([\d.,]+)/i) || fullBodyText.match(/suprafat[aă]\s*(?:util[aă])?\s*(?:de\s*)?([\d.,]+)\s*m/i);
