@@ -435,6 +435,36 @@ export async function GET(request: NextRequest) {
                         const pPlusMatch = panelText.match(/P\s*\+\s*(\d+)\s*(?:E|etaj)/i);
                         if (pPlusMatch) item.listingObj.total_floors = parseInt(pPlusMatch[1], 10);
                     }
+
+                    // Extract Original Source Ad URL (Storia, OLX, Romimo, Imobiliare, Publi24, etc.)
+                    let originalSourceUrl = '';
+                    $panel('a[href]').each((_: any, el: any) => {
+                        const href = $panel(el).attr('href') || '';
+                        if (href && (href.includes('storia.ro') || href.includes('olx.ro') || href.includes('publi24.ro') || href.includes('romimo.ro') || href.includes('imobiliare.ro') || href.includes('lajumate.ro') || href.includes('homezz.ro'))) {
+                            originalSourceUrl = href;
+                        }
+                    });
+
+                    if (originalSourceUrl) {
+                        item.listingObj.documents = [originalSourceUrl];
+                    } else if (item.panelUrl) {
+                        item.listingObj.documents = [item.panelUrl];
+                    }
+
+                    // Extract Google Maps Pin Coordinates from Immoflux HTML
+                    $panel('a[href*="google.com/maps"]').each((_: any, el: any) => {
+                        const href = $panel(el).attr('href') || '';
+                        const match = href.match(/query=([\d.-]+),([\d.-]+)/i) || href.match(/q=([\d.-]+),([\d.-]+)/i) || href.match(/ll=([\d.-]+),([\d.-]+)/i);
+                        if (match) {
+                            const lat = parseFloat(match[1]);
+                            const lng = parseFloat(match[2]);
+                            if (!isNaN(lat) && !isNaN(lng)) {
+                                item.listingObj.latitude = lat;
+                                item.listingObj.longitude = lng;
+                            }
+                        }
+                    });
+
                 } catch (e) {
                     item.listingObj.images = item.fallbackImages;
                 }
@@ -442,11 +472,13 @@ export async function GET(request: NextRequest) {
                 item.listingObj.images = item.fallbackImages;
             }
 
-            // Sync Geocode
-            const coords = await geocodeAddress(item.listingObj.address);
-            if (coords) {
-                item.listingObj.latitude = coords.lat;
-                item.listingObj.longitude = coords.lng;
+            // Sync Geocode fallback if coordinates are still missing
+            if (!item.listingObj.latitude || !item.listingObj.longitude) {
+                const coords = await geocodeAddress(item.listingObj.address);
+                if (coords) {
+                    item.listingObj.latitude = coords.lat;
+                    item.listingObj.longitude = coords.lng;
+                }
             }
 
             listings.push(item.listingObj);

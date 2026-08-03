@@ -1274,7 +1274,19 @@ export async function createPropertyFromData(data: Partial<PropertyType>, source
             owner_name: data.owner_name || '',
             owner_phone: data.owner_phone || '',
             private_notes: data.private_notes || '',
-            documents: sourceUrl && sourceUrl !== 'immoflux_batch' ? Array.from(new Set([sourceUrl, ...(data.documents || [])])) : (data.documents || []),
+            documents: (function () {
+                const docs = Array.isArray(data.documents) ? [...data.documents] : [];
+                // Look for original source link (storia, olx, etc.)
+                const origLink = docs.find(d => typeof d === 'string' && (d.includes('storia.ro') || d.includes('olx.ro') || d.includes('publi24.ro') || d.includes('romimo.ro') || d.includes('imobiliare.ro') || d.includes('lajumate.ro') || d.includes('homezz.ro')));
+
+                if (origLink) {
+                    return Array.from(new Set([origLink, ...(sourceUrl && sourceUrl !== 'immoflux_batch' && sourceUrl !== origLink ? [sourceUrl] : []), ...docs]));
+                }
+                if (sourceUrl && sourceUrl !== 'immoflux_batch') {
+                    return Array.from(new Set([sourceUrl, ...docs]));
+                }
+                return Array.from(new Set(docs));
+            })(),
 
             // Media
             images: data.images || [],

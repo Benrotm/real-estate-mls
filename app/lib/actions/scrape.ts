@@ -754,6 +754,33 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
                 }
             }
 
+            // 1. Extract Original Source Ad URL (Storia, OLX, Romimo, Imobiliare, Publi24, Homezz, Lajumate)
+            let originalSourceUrl = '';
+            $('a[href]').each((_, el) => {
+                const href = $(el).attr('href') || '';
+                if (href && (href.includes('storia.ro') || href.includes('olx.ro') || href.includes('publi24.ro') || href.includes('romimo.ro') || href.includes('imobiliare.ro') || href.includes('lajumate.ro') || href.includes('homezz.ro'))) {
+                    originalSourceUrl = href;
+                }
+            });
+
+            if (originalSourceUrl) {
+                data.documents = Array.from(new Set([originalSourceUrl, ...(data.documents || [])]));
+            }
+
+            // 2. Extract Google Maps Pin Coordinates from Immoflux HTML
+            $('a[href*="google.com/maps"]').each((_, el) => {
+                const href = $(el).attr('href') || '';
+                const match = href.match(/query=([\d.-]+),([\d.-]+)/i) || href.match(/q=([\d.-]+),([\d.-]+)/i) || href.match(/ll=([\d.-]+),([\d.-]+)/i);
+                if (match) {
+                    const lat = parseFloat(match[1]);
+                    const lng = parseFloat(match[2]);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        data.latitude = lat;
+                        data.longitude = lng;
+                    }
+                }
+            });
+
             // Specs extraction (Immoflux-specific)
             const areaMatch = fullBodyText.match(/(?:Suprafata utila|Suprafață utilă|Utila|Utilă)\s*:\s*([\d.,]+)/i) || fullBodyText.match(/SU\s+([\d.,]+)\s*mp/i) || fullBodyText.match(/SU\s*:\s*([\d.,]+)/i) || fullBodyText.match(/suprafat[aă]\s*(?:util[aă])?\s*(?:de\s*)?([\d.,]+)\s*m/i);
             if (areaMatch) {
