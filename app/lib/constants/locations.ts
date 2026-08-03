@@ -93,8 +93,64 @@ export function formatCityList(cities: SystemCity[], counties: SystemCounty[]): 
     return Array.from(new Set(formatted));
 }
 
+export function sanitizeLocationText(rawText: string): { city: string; area?: string; cleanText: string } {
+    if (!rawText || typeof rawText !== 'string') {
+        return { city: '', cleanText: '' };
+    }
+
+    let str = rawText.trim();
+
+    // 1. Remove Phone Numbers (e.g. +40 727 884 182, +40727884182, 0727884182, etc.)
+    str = str.replace(/(\+?40|\b07)\s*[\d\s.-]{7,15}\d/gi, ' ');
+    str = str.replace(/\+?[\d\s.-]{9,15}/g, ' ');
+
+    // 2. Remove Site & Platform Source Tags & noise words
+    const noisePatterns = [
+        /\b(storia|olx|romimo|imobiliare|publi24|immoflux|fluxmls|lajumate|anunturi)\b/gi,
+        /\b(whatsapp|wa\.me|viber|telegram)\b/gi,
+        /\b(status|activa|inactiva|inactiv|tip|portaluri|adresa|zona)\s*:?/gi,
+        /^tm[\s._-]+/i,
+        /\btm\s+(?=timisoara|giroc|dumbravita|ghiroda|mosnita)/gi
+    ];
+
+    for (const pattern of noisePatterns) {
+        str = str.replace(pattern, ' ');
+    }
+
+    // 3. Clean up whitespace & punctuation
+    str = str.replace(/\s+/g, ' ').replace(/^[\s,._-]+|[\s,._-]+$/g, '').trim();
+
+    // 4. Check for City - Area split (e.g., "Timisoara - Buziasului")
+    let extractedCity = str;
+    let extractedArea: string | undefined = undefined;
+
+    if (str.includes(' - ')) {
+        const parts = str.split(' - ').map(p => p.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+            extractedCity = parts[0];
+            extractedArea = parts[1];
+        }
+    } else if (str.includes('-') && !str.toLowerCase().includes('cluj-napoca')) {
+        const parts = str.split('-').map(p => p.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+            extractedCity = parts[0];
+            extractedArea = parts[1];
+        }
+    }
+
+    extractedCity = extractedCity.replace(/\s*\(.*?\)\s*/g, '').trim();
+
+    return {
+        city: extractedCity,
+        area: extractedArea,
+        cleanText: str
+    };
+}
+
 export function cleanCityName(city: string): string {
-    return city.replace(/\s*\(.*?\)\s*/g, '').trim();
+    if (!city) return '';
+    const sanitized = sanitizeLocationText(city);
+    return sanitized.city || city.replace(/\s*\(.*?\)\s*/g, '').trim();
 }
 
 /**

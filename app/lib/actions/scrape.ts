@@ -3,6 +3,7 @@
 import * as cheerio from 'cheerio';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { getAdminSettings } from './admin-settings';
+import { sanitizeLocationText } from '@/app/lib/constants/locations';
 
 export interface ScrapedProperty {
     title?: string;
@@ -828,10 +829,13 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             const cityRaw = getLabelValueRobust('Adresa', ['Portaluri', 'Telefon', 'Status', 'Tip']) || data.location_city;
             const areaRaw = getLabelValueRobust('Zona', ['Adresa', 'Portaluri', 'Telefon', 'Status', 'Tip']) || data.location_area;
 
-            let finalCity = filterNoiseParanoid(cityRaw) || 'Timisoara';
-            let finalArea = filterNoiseParanoid(areaRaw);
+            const citySanitized = sanitizeLocationText(cityRaw || '');
+            const areaSanitized = sanitizeLocationText(areaRaw || '');
 
-            // Cleanup City "TM " prefix
+            let finalCity = citySanitized.city || filterNoiseParanoid(cityRaw) || 'Timisoara';
+            let finalArea = areaSanitized.cleanText || citySanitized.area || filterNoiseParanoid(areaRaw);
+
+            // Cleanup City "TM " prefix if any remains
             if (finalCity.toLowerCase().startsWith('tm ')) {
                 finalCity = finalCity.replace(/^tm\s+/i, '').trim();
             }
@@ -840,9 +844,9 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             data.location_area = finalArea;
             data.location_county = data.location_county || 'Timis';
 
-            // Synthesize Definitive Address
+            // Synthesize Definitive Address without noise or phone numbers
             const addrParts = [finalArea, finalCity, data.location_county, 'Romania'].filter(p => p && p.length > 2);
-            data.address = addrParts.join(', ');
+            data.address = sanitizeLocationText(addrParts.join(', ')).cleanText;
 
             // Image Extraction (Prioritize href for high-res)
             $('.owl-carousel .item a').each((_, el) => {

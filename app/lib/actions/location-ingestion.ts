@@ -1,9 +1,27 @@
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { normalizeText, cleanCityName } from '@/app/lib/constants/locations';
+import { normalizeText, cleanCityName, sanitizeLocationText } from '@/app/lib/constants/locations';
 
 export async function processAndNormalizePropertyLocation(propertyData: Record<string, any>): Promise<Record<string, any>> {
     try {
         const supabase = createAdminClient();
+
+        // Perform strict location sanitization
+        if (propertyData.location_city) {
+            const citySan = sanitizeLocationText(String(propertyData.location_city));
+            propertyData.location_city = citySan.city || propertyData.location_city;
+            if (!propertyData.location_area && citySan.area) {
+                propertyData.location_area = citySan.area;
+            }
+        }
+
+        if (propertyData.location_area) {
+            const areaSan = sanitizeLocationText(String(propertyData.location_area));
+            propertyData.location_area = areaSan.cleanText || propertyData.location_area;
+        }
+
+        if (propertyData.address) {
+            propertyData.address = sanitizeLocationText(String(propertyData.address)).cleanText;
+        }
 
         let city = propertyData.location_city ? cleanCityName(propertyData.location_city) : '';
         let area = propertyData.location_area ? String(propertyData.location_area).trim() : '';

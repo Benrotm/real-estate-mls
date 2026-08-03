@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
 import { createPropertyFromData } from "@/app/lib/actions/properties";
 import { ImmofluxConfig } from '@/app/lib/actions/admin-settings';
+import { sanitizeLocationText } from '@/app/lib/constants/locations';
 
 // Helper function to geocode address strings to coordinates (for Maps)
 async function geocodeAddress(addressString: string): Promise<{ lat: number, lng: number } | null> {
@@ -237,9 +238,10 @@ export async function GET(request: NextRequest) {
                 else if (rowHtml.includes('spatiu comercial') || rowHtml.includes('spatiu industrial') || rowHtml.includes('birou')) propertyType = 'Commercial';
                 else if (rowHtml.includes('apartament') || rowHtml.includes('garsonier')) propertyType = 'Apartment';
 
-                let cleanedLocation = location.replace(/^TM\s+/i, '').trim();
-                let citySplit = cleanedLocation.split(',');
-                let parsedCity = citySplit[0] ? citySplit[0].trim() : 'Timisoara';
+                const locSanitized = sanitizeLocationText(location || '');
+                let cleanedLocation = locSanitized.cleanText;
+                let parsedCity = locSanitized.city || 'Timisoara';
+                let parsedArea = locSanitized.area || '';
 
                 // Determine county from city name dynamically
                 const cityCountyMap: Record<string, string> = {
@@ -281,10 +283,13 @@ export async function GET(request: NextRequest) {
 
                 const transactionLabel = listingType === 'For Rent' ? 'For Rent' : 'For Sale';
                 const roomsLabel = rooms > 0 ? `${rooms} Rooms` : '';
-                const generatedTitle = [propertyType, transactionLabel, roomsLabel, cleanedLocation || parsedCity, price > 0 ? `${price.toLocaleString('en-US')} ${currency}` : '']
+                const generatedTitle = [propertyType, transactionLabel, roomsLabel, parsedArea || parsedCity, price > 0 ? `${price.toLocaleString('en-US')} ${currency}` : '']
                     .filter(Boolean).join(' ');
 
                 const panelUrl = $page(el).find('a.avatar.avatar-big.avatar-ap').attr('data-url');
+
+                const addrParts = [parsedArea, parsedCity, parsedCounty, 'Romania'].filter(p => p && p.length > 2);
+                const synthesizedAddress = sanitizeLocationText(addrParts.join(', ')).cleanText;
 
                 // Only collect base fields and the panelUrl here
                 baseItems.push({
@@ -297,8 +302,9 @@ export async function GET(request: NextRequest) {
                         type: propertyType,
                         listing_type: listingType,
                         description,
-                        address: cleanedLocation ? `${cleanedLocation}, ${parsedCounty}, Romania` : `${parsedCity}, ${parsedCounty}, Romania`,
+                        address: synthesizedAddress,
                         location_city: parsedCity,
+                        location_area: parsedArea,
                         location_county: parsedCounty,
                         latitude: null,
                         longitude: null,
