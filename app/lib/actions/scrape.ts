@@ -784,7 +784,7 @@ export async function scrapeProperty(url: string, customSelectors?: any, cookies
             if (mapsPinUrl) docList.push(mapsPinUrl);
 
             // Filter existing documents to remove immoflux.ro
-            const existingDocs = (data.documents || []).filter(d => typeof d === 'string' && !d.includes('immoflux.ro'));
+            const existingDocs = ((data.documents as string[]) || []).filter((d: string) => typeof d === 'string' && !d.includes('immoflux.ro'));
             data.documents = Array.from(new Set([...docList, ...existingDocs]));
 
             // Specs extraction (Immoflux-specific)
