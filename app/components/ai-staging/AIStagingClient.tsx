@@ -12,7 +12,8 @@ import {
   generateVideo, 
   generate3DPlan, 
   generateDescription, 
-  generateRoomAnimation 
+  generateRoomAnimation,
+  generateWalkthroughVideo
 } from '@/app/lib/actions/ai-staging';
 import { getFeatureCosts } from '@/app/lib/actions/settings';
 import { Coins } from 'lucide-react';
@@ -20,7 +21,7 @@ import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
 export const CreditsContext = createContext<{credits: number, costs: Record<string, number>}>({credits: 0, costs: {}});
 
-// Define the 5 main features corresponding to the provided link
+// Define the 6 main features corresponding to the provided link
 const AI_FEATURES = [
   {
     id: 'virtual-staging',
@@ -56,6 +57,13 @@ const AI_FEATURES = [
     subtitle: 'Încarcă poza goală, alege mobilierul și AI generează o animație în care fiecare piesă apare una câte una',
     icon: Wand2,
     color: 'from-pink-500 to-rose-400'
+  },
+  {
+    id: 'walkthrough-video',
+    title: 'AI Floorplan Walkthrough — Video 3D',
+    subtitle: 'Transformă schița 2D sau planul 3D într-un video walkthrough cinematic de prezentare a apartamentului',
+    icon: Building,
+    color: 'from-amber-500 to-orange-400'
   }
 ];
 
@@ -105,6 +113,8 @@ export default function AIStagingClient({ userRole }: { userRole: string }) {
         return <DescriptionGenTool />;
       case 'room-builder':
         return <RoomBuilderTool />;
+      case 'walkthrough-video':
+        return <WalkthroughVideoTool />;
       default:
         return null;
     }
@@ -681,6 +691,198 @@ function VideoGeneratorTool() {
                    </>
               )}
             </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WalkthroughVideoTool() {
+  const [isPending, startTransition] = useTransition();
+  const { credits, costs } = useContext(CreditsContext);
+  const cost = costs['ai_walkthrough_video'] || 0;
+  const [provider, setProvider] = useState('gemini');
+  const [apiKey, setApiKey] = useState('');
+
+  const [planUrl, setPlanUrl] = useState('');
+  const [style, setStyle] = useState('Modern Lux');
+  const [tourMode, setTourMode] = useState('Tur 1st Person (Ochiul liber)');
+  const [videoFormat, setVideoFormat] = useState('16:9 (YouTube/site)');
+  const [duration, setDuration] = useState('15 secunde');
+  const [enableVoiceover, setEnableVoiceover] = useState(true);
+
+  const [result, setResult] = useState('');
+  const [script, setScript] = useState('');
+  const [error, setError] = useState('');
+
+  const submitAction = () => {
+    if (!planUrl) { setError('Vă rugăm să încărcați o schiță 2D sau un plan 3D.'); return; }
+    setError('');
+    startTransition(async () => {
+      const res = await generateWalkthroughVideo({
+        planUrl,
+        style,
+        tourMode,
+        videoFormat,
+        enableVoiceover,
+        duration
+      }, provider, apiKey);
+
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setResult(res.resultUrl || '');
+        setScript(res.narrationScript || '');
+      }
+    });
+  };
+
+  const renderPills = (items: string[], current: string, setter: (val: string) => void) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {items.map(item => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => setter(item)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            current === item
+              ? 'border-amber-400 bg-amber-500/10 text-amber-300'
+              : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-300'
+          }`}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="space-y-6">
+        <ProviderSettings 
+          providerList={[
+            {id: 'gemini', name: 'Google Gemini + Video AI'},
+            {id: 'replicate', name: 'Replicate API (Flux / Luma)'},
+            {id: 'fal', name: 'Fal.ai API (Kling / Hunyuan)'},
+            {id: 'runway', name: 'Runway Gen-3 API'}
+          ]}
+          onProviderChange={setProvider}
+          onKeyChange={setApiKey}
+        />
+
+        <div className="space-y-5 bg-[#141210] p-6 rounded-2xl border border-amber-900/20">
+          <h3 className="text-amber-500 font-semibold text-xs tracking-widest uppercase">
+            1. Încărcare Schiță 2D sau Plan 3D (PDF / Imagine)
+          </h3>
+          <FileUploader 
+            label="Trageți fișierul aici sau dați click pentru a încărca schița (Blueprint 2D / Cutaway 3D)"
+            accept="image/*,.pdf"
+            onUploadComplete={urls => setPlanUrl(urls[0])}
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              2. Stil Arhitectural & Interior
+            </label>
+            {renderPills(['Modern Lux', 'Scandinavian', 'Minimalist', 'Clasic Elegant', 'Industrial'], style, setStyle)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              3. Tip Walkthrough Video
+            </label>
+            {renderPills(['Tur 1st Person (Ochiul liber)', 'Fly-Through Izometric 3D', 'Prezentare Panoramică 360'], tourMode, setTourMode)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              4. Format Video & Durată
+            </label>
+            {renderPills(['16:9 (YouTube/site)', '9:16 (Reels/TikTok)', '1:1 (Instagram)'], videoFormat, setVideoFormat)}
+            <div className="mt-2">
+              {renderPills(['15 secunde', '30 secunde'], duration, setDuration)}
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-white/10">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={enableVoiceover} 
+                onChange={e => setEnableVoiceover(e.target.checked)} 
+                className="w-4 h-4 accent-amber-500 rounded bg-black/50" 
+              />
+              <span className="text-slate-300 text-sm">
+                Generare script narație AI (Gemini Voiceover) bazat pe dimensiuni & camere
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+
+        <button 
+          onClick={submitAction}
+          disabled={isPending || credits < cost}
+          className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all flex flex-col justify-center items-center gap-1 disabled:opacity-50"
+        >
+          {isPending ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" /> Procesare Gemini AI Vision & Randare Video...
+            </div>
+          ) : (
+            <span className="flex items-center justify-center gap-2">Lansează AI Walkthrough Video 3D</span>
+          )}
+          {!isPending && (
+            <span className="text-xs text-white/80 flex items-center gap-1 mt-1 font-normal">
+              <Coins size={12}/> Cost: {cost} credite (Balanță: {credits})
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px] relative overflow-hidden">
+          {result ? (
+            <>
+              <video src={result} controls autoPlay loop className="w-full h-full object-contain rounded-xl bg-black relative z-10" />
+              <button 
+                onClick={() => handleDownload(result, 'walkthrough_3d_imobum.mp4')} 
+                className="absolute top-8 right-8 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20"
+              >
+                <Download className="w-4 h-4"/> Descărcare Video MP4
+              </button>
+            </>
+          ) : (
+            <div className="text-center">
+              {isPending ? (
+                <>
+                  <Loader2 className="w-16 h-16 text-amber-500 animate-spin mx-auto mb-4" />
+                  <p className="text-slate-400 animate-pulse">Gemini AI analizează schița spațială & generează turul 3D...</p>
+                </>
+              ) : (
+                <>
+                  <Building className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                  <p className="text-slate-500 text-sm">Turul video 3D va fi generat și afișat aici...</p>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {script && (
+          <div className="bg-[#141210] p-4 rounded-xl border border-amber-900/30 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-amber-400 font-semibold text-xs uppercase tracking-widest">Narație Generată Gemini AI</span>
+              <button 
+                onClick={() => copyToClipboardSafe(script)}
+                className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg border border-white/10 transition-colors"
+              >
+                Copiază Script
+              </button>
+            </div>
+            <p className="text-slate-300 text-xs leading-relaxed italic">{script}</p>
+          </div>
         )}
       </div>
     </div>

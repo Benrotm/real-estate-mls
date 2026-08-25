@@ -9,7 +9,8 @@ export default function AIProviderSettingsPage() {
         replicate_api_token: '',
         openai_api_key: '',
         fal_api_key: '',
-        runway_api_secret: ''
+        runway_api_secret: '',
+        gemini_api_key: ''
     });
     
     const [showKey, setShowKey] = useState<Record<string, boolean>>({});
@@ -46,6 +47,7 @@ export default function AIProviderSettingsPage() {
     };
 
     const providers = [
+        { id: 'gemini_api_key', name: 'Google Gemini API Key', desc: 'Used for Multimodal Floorplan Perception, Spatial Vector Analysis, and AI Video Scripting.' },
         { id: 'replicate_api_token', name: 'Replicate API Token', desc: 'Used for Flux models, Room Builder, and Lora implementations.' },
         { id: 'openai_api_key', name: 'OpenAI API Key', desc: 'Used for GPT text descriptions and advanced parsing.' },
         { id: 'fal_api_key', name: 'Fal.ai API Key', desc: 'Used for real-time inference and fast generation workloads.' },
