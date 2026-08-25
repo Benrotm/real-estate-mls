@@ -2,6 +2,7 @@
 
 import { updateSystemFeatureDeduction } from './credits';
 import { createClient } from '../supabase/server';
+import { createAdminClient } from '../supabase/admin';
 
 async function getGlobalApiKey(provider: string) {
     const supabase = await createClient();
@@ -136,7 +137,7 @@ export async function uploadAIFileAction(formData: FormData): Promise<{ success:
         const file = formData.get('file') as File;
         if (!file) return { success: false, error: 'Nu a fost selectat niciun fișier.' };
 
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         const fileExt = file.name.split('.').pop() || 'png';
         const fileName = `ai_staging_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
         const filePath = `ai_uploads/${fileName}`;
