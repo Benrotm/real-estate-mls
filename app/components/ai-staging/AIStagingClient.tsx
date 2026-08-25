@@ -5,7 +5,7 @@ import {
   Wand2, Video, FileImage, FileText, 
   Layers, UploadCloud, Settings, ChevronRight, 
   Sparkles, CheckCircle2, Sliders, Image as ImageIcon, Camera, Building, Sofa, Loader2, Download,
-  Save, Eye, EyeOff
+  Save, Eye, EyeOff, X, RefreshCw, Sun, Moon, Maximize2
 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import { 
@@ -15,6 +15,7 @@ import {
   generateDescription, 
   generateRoomAnimation,
   generateWalkthroughVideo,
+  optimizeWalkthroughPromptAction,
   uploadAIFileAction
 } from '@/app/lib/actions/ai-staging';
 import { getFeatureCosts, saveSingleAIKey } from '@/app/lib/actions/settings';
