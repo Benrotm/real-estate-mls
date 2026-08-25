@@ -21,7 +21,7 @@ import { getFeatureCosts, saveSingleAIKey } from '@/app/lib/actions/settings';
 import { Coins } from 'lucide-react';
 import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
-export const CreditsContext = createContext<{credits: number, costs: Record<string, number>}>({credits: 0, costs: {}});
+export const CreditsContext = createContext<{credits: number, costs: Record<string, number>, canUseCustomKeys: boolean, userRole: string}>({credits: 0, costs: {}, canUseCustomKeys: true, userRole: 'user'});
 
 // Define the 6 main features corresponding to the provided link
 const AI_FEATURES = [
@@ -91,17 +91,36 @@ export default function AIStagingClient({ userRole }: { userRole: string }) {
   const [activeTab, setActiveTab] = useState(AI_FEATURES[0].id);
   const [credits, setCredits] = useState(0);
   const [costs, setCosts] = useState<Record<string, number>>({});
+  const [canUseCustomKeys, setCanUseCustomKeys] = useState(
+    userRole === 'admin' || userRole === 'super_admin' || userRole === 'superadmin'
+  );
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({data: {user}}) => {
         if (!user) return;
-        const { data: p } = await supabase.from('profiles').select('credits').eq('id', user.id).single();
-        if (p) setCredits(p.credits || 0);
+        const { data: p } = await supabase.from('profiles').select('credits, role, plan_tier').eq('id', user.id).single();
+        if (p) {
+          setCredits(p.credits || 0);
+          const isAdmin = p.role === 'admin' || p.role === 'super_admin' || p.role === 'superadmin';
+          if (isAdmin) {
+            setCanUseCustomKeys(true);
+          } else {
+            const { data: pf } = await supabase
+              .from('plan_features')
+              .select('is_included')
+              .eq('role', p.role)
+              .eq('plan_name', p.plan_tier || 'free')
+              .eq('feature_key', 'ai_custom_api_keys')
+              .maybeSingle();
+            
+            setCanUseCustomKeys(!!pf?.is_included);
+          }
+        }
 
         const costsRes = await getFeatureCosts();
         if (costsRes.costs) setCosts(costsRes.costs);
     });
-  }, []);
+  }, [userRole]);
 
   const renderActiveTool = () => {
     switch (activeTab) {
@@ -123,7 +142,7 @@ export default function AIStagingClient({ userRole }: { userRole: string }) {
   };
 
   return (
-    <CreditsContext.Provider value={{credits, costs}}>
+    <CreditsContext.Provider value={{credits, costs, canUseCustomKeys, userRole}}>
     <div className="bg-[#0a0a0f] text-slate-200 font-sans p-4 md:p-8 rounded-2xl min-h-[calc(100vh-6rem)]">
       {/* Header */}
       <div className="mb-10 text-center relative z-10">
@@ -467,7 +486,7 @@ function ProviderSettings({
 
 function VirtualStagingTool() {
   const [isPending, startTransition] = useTransition();
-  const { credits, costs } = useContext(CreditsContext);
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
   const cost = costs['ai_virtual_staging'] || 0;
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
@@ -499,20 +518,37 @@ function VirtualStagingTool() {
     setError('');
     
     startTransition(async () => {
-      const res = await generateVirtualStaging({ imageUrl, roomType, style, additionalOptions }, provider, apiKey);
-      if (res.error) setError(res.error);
-      else setResult(res.resultUrl || '');
+      try {
+        const res = await generateVirtualStaging({ imageUrl, roomType, style, additionalOptions }, provider, apiKey);
+        if (res.error) setError(res.error);
+        else setResult(res.resultUrl || '');
+      } catch (err: any) {
+        console.error('VirtualStaging error:', err);
+        setError(err.message || 'A apărut o eroare la procesare.');
+      }
     });
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div className="space-y-6">
+        {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'falai', name: 'Fal.ai API'}, {id: 'midjourney', name: 'Midjourney API'}]}
           onProviderChange={setProvider}
           onKeyChange={setApiKey}
         />
+      ) : (
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 mb-6 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span>Serviciul AI este alimentat direct de platformă. Generările consumă credite din balanța contului tău.</span>
+          </div>
+          <span className="font-semibold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20 text-[11px] flex-shrink-0">
+            Mod Asistat
+          </span>
+        </div>
+      )}
 
         <div>
           <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-widest">1. Încarcă Imagine</label>
@@ -639,7 +675,7 @@ function VirtualStagingTool() {
 
 function VideoGeneratorTool() {
   const [isPending, startTransition] = useTransition();
-  const { credits, costs } = useContext(CreditsContext);
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
   const cost = costs['ai_video_generator'] || 0;
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
@@ -699,11 +735,23 @@ function VideoGeneratorTool() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div className="space-y-6">
+        {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'luma', name: 'Luma Dream Machine'}, {id: 'runway', name: 'Runway Gen-3'}]}
           onProviderChange={setProvider}
           onKeyChange={setApiKey}
         />
+      ) : (
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 mb-6 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span>Serviciul AI este alimentat direct de platformă. Generările consumă credite din balanța contului tău.</span>
+          </div>
+          <span className="font-semibold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20 text-[11px] flex-shrink-0">
+            Mod Asistat
+          </span>
+        </div>
+      )}
 
         <div>
           <label className="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wide">1. ÎNcarcă Pozele Proprietății (Max 15)</label>
@@ -806,7 +854,7 @@ function VideoGeneratorTool() {
 
 function WalkthroughVideoTool() {
   const [isPending, startTransition] = useTransition();
-  const { credits, costs } = useContext(CreditsContext);
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
   const cost = costs['ai_walkthrough_video'] || 0;
   const [provider, setProvider] = useState('gemini');
   const [apiKey, setApiKey] = useState('');
@@ -826,20 +874,25 @@ function WalkthroughVideoTool() {
     if (!planUrl) { setError('Vă rugăm să încărcați o schiță 2D sau un plan 3D.'); return; }
     setError('');
     startTransition(async () => {
-      const res = await generateWalkthroughVideo({
-        planUrl,
-        style,
-        tourMode,
-        videoFormat,
-        enableVoiceover,
-        duration
-      }, provider, apiKey);
+      try {
+        const res = await generateWalkthroughVideo({
+          planUrl,
+          style,
+          tourMode,
+          videoFormat,
+          enableVoiceover,
+          duration
+        }, provider, apiKey);
 
-      if (res.error) {
-        setError(res.error);
-      } else {
-        setResult(res.resultUrl || '');
-        setScript(res.narrationScript || '');
+        if (res.error) {
+          setError(res.error);
+        } else {
+          setResult(res.resultUrl || '');
+          setScript(res.narrationScript || '');
+        }
+      } catch (err: any) {
+        console.error('WalkthroughVideo error:', err);
+        setError(err.message || 'A apărut o eroare la procesare.');
       }
     });
   };
@@ -866,6 +919,7 @@ function WalkthroughVideoTool() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div className="space-y-6">
+        {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[
             {id: 'gemini', name: 'Google Gemini + Video AI'},
@@ -876,6 +930,17 @@ function WalkthroughVideoTool() {
           onProviderChange={setProvider}
           onKeyChange={setApiKey}
         />
+      ) : (
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 mb-6 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span>Serviciul AI este alimentat direct de platformă. Generările consumă credite din balanța contului tău.</span>
+          </div>
+          <span className="font-semibold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20 text-[11px] flex-shrink-0">
+            Mod Asistat
+          </span>
+        </div>
+      )}
 
         <div className="space-y-5 bg-[#141210] p-6 rounded-2xl border border-amber-900/20">
           <h3 className="text-amber-500 font-semibold text-xs tracking-widest uppercase">
@@ -998,7 +1063,7 @@ function WalkthroughVideoTool() {
 
 function Plan3DTool() {
   const [isPending, startTransition] = useTransition();
-  const { credits, costs } = useContext(CreditsContext);
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
   const cost = costs['ai_plan_3d'] || 0;
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
@@ -1012,20 +1077,37 @@ function Plan3DTool() {
     if (!planUrl) { setError('Încărcați Planul 2D.'); return; }
     setError('');
     startTransition(async () => {
-      const res = await generate3DPlan({ planUrl, perspective }, provider, apiKey);
-      if (res.error) setError(res.error);
-      else setResult(res.resultUrl || '');
+      try {
+        const res = await generate3DPlan({ planUrl, perspective }, provider, apiKey);
+        if (res.error) setError(res.error);
+        else setResult(res.resultUrl || '');
+      } catch (err: any) {
+        console.error('Plan3D error:', err);
+        setError(err.message || 'A apărut o eroare la procesare.');
+      }
     });
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div className="space-y-6">
+        {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'controlnet', name: 'ControlNet / SD'}]}
           onProviderChange={setProvider}
           onKeyChange={setApiKey}
         />
+      ) : (
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 mb-6 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span>Serviciul AI este alimentat direct de platformă. Generările consumă credite din balanța contului tău.</span>
+          </div>
+          <span className="font-semibold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20 text-[11px] flex-shrink-0">
+            Mod Asistat
+          </span>
+        </div>
+      )}
 
         <div>
           <label className="block text-sm font-medium text-slate-400 mb-2">Încarcă Planul de Bază (Schiță/CAD 2D)</label>
@@ -1092,7 +1174,7 @@ function Plan3DTool() {
 
 function DescriptionGenTool() {
   const [isPending, startTransition] = useTransition();
-  const { credits, costs } = useContext(CreditsContext);
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
   const cost = costs['ai_description'] || 0;
   const [provider, setProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
@@ -1117,9 +1199,14 @@ function DescriptionGenTool() {
     }
     setError('');
     startTransition(async () => {
-      const res = await generateDescription({ propertyType, surface, rooms, location, features, tone, destination }, provider, apiKey);
-      if (res.error) setError(res.error);
-      else setResult(res.resultText || '');
+      try {
+        const res = await generateDescription({ propertyType, surface, rooms, location, features, tone, destination }, provider, apiKey);
+        if (res.error) setError(res.error);
+        else setResult(res.resultText || '');
+      } catch (err: any) {
+        console.error('DescriptionGen error:', err);
+        setError(err.message || 'A apărut o eroare la procesare.');
+      }
     });
   };
 
@@ -1144,11 +1231,23 @@ function DescriptionGenTool() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div className="space-y-6">
+        {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'openai', name: 'OpenAI (ChatGPT)'}, {id: 'anthropic', name: 'Anthropic (Claude)'}, {id: 'gemini', name: 'Google Gemini'}]}
           onProviderChange={setProvider}
           onKeyChange={setApiKey}
         />
+      ) : (
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 mb-6 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span>Serviciul AI este alimentat direct de platformă. Generările consumă credite din balanța contului tău.</span>
+          </div>
+          <span className="font-semibold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20 text-[11px] flex-shrink-0">
+            Mod Asistat
+          </span>
+        </div>
+      )}
 
         <div className="bg-[#161513] border border-yellow-900/30 rounded-2xl p-6 space-y-6">
            <h3 className="text-yellow-600 font-semibold text-xs tracking-widest uppercase mb-4">Detalii Proprietate</h3>
@@ -1249,7 +1348,7 @@ function DescriptionGenTool() {
 
 function RoomBuilderTool() {
   const [isPending, startTransition] = useTransition();
-  const { credits, costs } = useContext(CreditsContext);
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
   const cost = costs['ai_room_builder'] || 0;
   const [provider, setProvider] = useState('replicate');
   const [apiKey, setApiKey] = useState('');
@@ -1270,9 +1369,14 @@ function RoomBuilderTool() {
     if (selectedFurniture.length === 0) { setError('Selectați cel puțin o piesă de mobilier.'); return; }
     setError('');
     startTransition(async () => {
-      const res = await generateRoomAnimation({ imageUrl, speed, pan, selectedFurniture, ambientColor }, provider, apiKey);
-      if (res.error) setError(res.error);
-      else setResult(res.resultUrl || '');
+      try {
+        const res = await generateRoomAnimation({ imageUrl, speed, pan, selectedFurniture, ambientColor }, provider, apiKey);
+        if (res.error) setError(res.error);
+        else setResult(res.resultUrl || '');
+      } catch (err: any) {
+        console.error('RoomBuilder error:', err);
+        setError(err.message || 'A apărut o eroare la procesare.');
+      }
     });
   };
 
@@ -1362,11 +1466,23 @@ function RoomBuilderTool() {
       </div>
 
       <div className="col-span-1 lg:col-span-2 space-y-6">
+        {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'runway', name: 'Runway API'}]}
           onProviderChange={setProvider}
           onKeyChange={setApiKey}
         />
+      ) : (
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 mb-6 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span>Serviciul AI este alimentat direct de platformă. Generările consumă credite din balanța contului tău.</span>
+          </div>
+          <span className="font-semibold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20 text-[11px] flex-shrink-0">
+            Mod Asistat
+          </span>
+        </div>
+      )}
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <div className="space-y-6">

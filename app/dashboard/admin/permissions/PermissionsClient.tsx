@@ -36,7 +36,8 @@ const FEATURE_INFO: Record<string, { label: string; desc: string }> = {
     property_price_calculator: { label: 'Calculator Comisioane & Rate', desc: 'Permite utilizarea calculatorului de finanțare și comisioane.' },
     target_marketing: { label: 'Promovare Listings (Featured)', desc: 'Permite promovarea proprietăților pe primele poziții în platformă.' },
     agency_team: { label: 'Grup Agency & Team Leader', desc: 'Permite administrarea membrilor echipei, sharing lead-uri și supervizare contracte.' },
-    ai_studio: { label: 'AI Copywriter Studio', desc: 'Permite utilizarea AI-ului pentru generare descrieri sau matching inteligent.' }
+    ai_studio: { label: 'AI Studio Imobiliare Pro', desc: 'Permite accesul la suita completă de 6 instrumente AI Studio (Virtual Staging, Video 3D Walkthrough, Plan 2D→3D, Descrieri, Room Builder).' },
+    ai_custom_api_keys: { label: 'Configurare Chei API Personale (BYOK)', desc: 'Permite utilizatorilor să își configureze propriile chei API (Gemini, Replicate, Fal, OpenAI). Dacă este dezactivat, utilizează serviciul Master al platformei și consumă credite.' }
 };
 
 const getFeatureInfo = (key: string, fallbackLabel?: string) => {

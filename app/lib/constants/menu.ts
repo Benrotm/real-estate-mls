@@ -134,6 +134,7 @@ export const DEFAULT_MENUS: Record<string, MenuItemDefinition[]> = {
     client: [
         { name: 'Dashboard', icon: 'LayoutDashboard', href: '/dashboard/client' },
         { name: 'AI Matching', icon: 'Zap', href: '/dashboard/client/ai-matching' },
+        { name: 'AI Studio', icon: 'Wand2', href: '/dashboard/client/ai-staging', requiresFeature: 'ai_studio' },
         { name: 'Browse Properties', icon: 'Building', href: '/properties' },
         { name: 'My Favorites', icon: 'Heart', href: '/dashboard/client/favorites' },
         { name: 'My Offers', icon: 'DollarSign', href: '/dashboard/client/offers' },

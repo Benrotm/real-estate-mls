@@ -12,6 +12,7 @@ export const SYSTEM_FEATURES = {
     TARGET_MARKETING: 'target_marketing',
     AGENCY_TEAM: 'agency_team',
     AI_STUDIO: 'ai_studio',
+    AI_CUSTOM_API_KEYS: 'ai_custom_api_keys',
 } as const;
 
 export type SystemFeature = typeof SYSTEM_FEATURES[keyof typeof SYSTEM_FEATURES];
