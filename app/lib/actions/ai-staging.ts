@@ -222,16 +222,16 @@ export async function generateWalkthroughVideo(payload: {
 
         await new Promise(resolve => setTimeout(resolve, 3500));
 
-        // High-definition architectural & cinematic video streaming assets with full CORS & byte-range support
+        // High-definition architectural video assets hosted permanently in Supabase Storage with range streaming support
         const videoLibrary: Record<string, string> = {
-            'Modern Lux': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-            'Scandinavian': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-            'Minimalist': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-            'Clasic Elegant': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-            'Industrial': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4'
+            'Modern Lux': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/modern_lux.mp4',
+            'Scandinavian': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/scandinavian.mp4',
+            'Minimalist': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/minimalist.mp4',
+            'Clasic Elegant': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/modern_lux.mp4',
+            'Industrial': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/walkthrough_sample_1.mp4'
         };
 
-        const chosenVideo = videoLibrary[payload.style] || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+        const chosenVideo = videoLibrary[payload.style] || 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/modern_lux.mp4';
 
         return { 
             success: true, 

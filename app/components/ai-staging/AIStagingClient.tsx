@@ -1051,9 +1051,8 @@ function WalkthroughVideoTool() {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        {canUseCustomKeys ? (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[
             {id: 'gemini', name: 'Google Gemini + Video AI'},
@@ -1076,8 +1075,8 @@ function WalkthroughVideoTool() {
         </div>
       )}
 
-      {/* Main Configuration Card */}
-      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-amber-900/20 shadow-xl">
+      {/* Main Configuration Card - Full Width */}
+      <div className="w-full space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-amber-900/20 shadow-xl">
         <h3 className="text-amber-500 font-semibold text-xs tracking-widest uppercase">
           1. Încărcare Schiță 2D sau Plan 3D (PDF / Imagine)
         </h3>
@@ -1283,6 +1282,23 @@ function WalkthroughVideoTool() {
         )}
 
         {/* Technical Specs Summary */}
+        <div className="bg-[#141210]/60 p-5 rounded-2xl border border-white/5 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div>
+            <span className="text-slate-500 block text-[11px]">Stil Interior</span>
+            <span className="text-slate-200 font-semibold mt-0.5 block">{style}</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[11px]">Traseu Cameră</span>
+            <span className="text-slate-200 font-semibold mt-0.5 block">{tourMode}</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[11px]">Atmosferă & Lumină</span>
+            <span className="text-slate-200 font-semibold mt-0.5 block">{ambience}</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[11px]">Format & Durată</span>
+            <span className="text-slate-200 font-semibold mt-0.5 block">{videoFormat} • {duration}</span>
+          </div>
         </div>
       </div>
     </div>
