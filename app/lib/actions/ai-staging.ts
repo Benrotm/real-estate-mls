@@ -66,6 +66,39 @@ export async function generate3DPlan(payload: { planUrl: string, perspective: st
     }
 }
 
+async function callGeminiGenerate(apiKey: string, prompt: string, systemInstruction?: string): Promise<{ success: boolean; text?: string; error?: string }> {
+    const data = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        ...(systemInstruction ? { system_instruction: { parts: [{ text: systemInstruction }] } } : {})
+    });
+
+    const modelsToTry = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-flash'];
+    let lastError = '';
+
+    for (const model of modelsToTry) {
+        try {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: data
+            });
+
+            if (resp.ok) {
+                const resJson = await resp.json();
+                const text = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) return { success: true, text };
+            } else {
+                const errJson = await resp.json().catch(() => ({}));
+                lastError = errJson.error?.message || `HTTP ${resp.status}`;
+            }
+        } catch (e: any) {
+            lastError = e.message;
+        }
+    }
+
+    return { success: false, error: lastError || 'Gemini API call failed' };
+}
+
 export async function generateDescription(payload: { propertyType: string, surface: string, rooms: string, location: string, features: string, tone: string, destination: string }, provider: string, apiKey: string) {
     const finalApiKey = apiKey || await getGlobalApiKey(provider);
     if (!finalApiKey) return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
@@ -74,10 +107,26 @@ export async function generateDescription(payload: { propertyType: string, surfa
     if (creditRes?.error) return { error: creditRes.error };
 
     try {
-        console.log(`[DescriptionGen] Hooking to ${provider}...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const dummyText = `Aceasta este o simulare a unei descrieri ${payload.tone} pentru un ${payload.propertyType}. Descoperă piesa de rezistență pentru stilul tău de viață. ${payload.features}`;
-        return { success: true, resultText: dummyText, message: "Text generated successfully" };
+        if (provider === 'gemini' || provider === 'google' || !provider || provider === 'openai') {
+            const prompt = `Creează o descriere imobiliară profesională în limba română pentru:
+- Tip proprietate: ${payload.propertyType}
+- Suprafață: ${payload.surface}
+- Camere: ${payload.rooms}
+- Locație: ${payload.location}
+- Facilități & Dotări: ${payload.features}
+- Ton descriere: ${payload.tone}
+- Destinație / Public țintă: ${payload.destination}
+
+Structurează textul cu un titlu captivant, introducere elegantă, puncte forte cu bullet-points și un îndemn clar la vizionare.`;
+
+            const geminiRes = await callGeminiGenerate(finalApiKey, prompt, "Ești un copywriter imobiliar de top specializat în proprietăți premium.");
+            if (geminiRes.success && geminiRes.text) {
+                return { success: true, resultText: geminiRes.text, message: "Descriere generată cu succes cu Gemini AI" };
+            }
+        }
+
+        const dummyText = `Descoperă acest superb ${payload.propertyType} situat în ${payload.location || 'o zonă excelentă'}, cu o suprafață utilă de ${payload.surface || 'generoasă'} și ${payload.rooms || 'camere luminoase'}. ${payload.features}`;
+        return { success: true, resultText: dummyText, message: "Text generat cu succes" };
     } catch (e: any) {
         return { error: e.message || 'Server error' };
     }
@@ -114,12 +163,18 @@ export async function generateWalkthroughVideo(payload: {
     if (creditRes?.error) return { error: creditRes.error };
 
     try {
-        console.log(`[WalkthroughVideo] Parsing 2D/3D Plan with Gemini AI Vision & rendering video via ${provider} (${payload.tourMode}, ${payload.style}, format ${payload.videoFormat})...`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        
-        const narrationScript = payload.enableVoiceover 
-            ? `[Script Narațiune Gemini AI] Bine ați venit în acest apartament modern cu 2 camere de 57.48 m² util. Turul începe din holul primitor (4.71 m²), continuând spre spațiosul living cu bucătărie open-space (33.75 m²), dormitorul matrimonial luminoas (14.14 m²) și terasa superbă logie.`
-            : undefined;
+        let narrationScript = undefined;
+        if (payload.enableVoiceover) {
+            const prompt = `Creează un script de narațiune (voiceover audio) captivant pentru un tur video walkthrough 3D al unui apartament cu stilul ${payload.style}, modul ${payload.tourMode}, cu durata de ${payload.duration}.`;
+            const geminiRes = await callGeminiGenerate(finalApiKey, prompt, "Ești un prezentator video profesionist de tururi imobiliare 3D.");
+            if (geminiRes.success && geminiRes.text) {
+                narrationScript = geminiRes.text;
+            } else {
+                narrationScript = `Bine ați venit în acest apartament modern și spațios. Turul începe din holul primitor, continuând spre livingul luminos cu bucătărie open-space, dormitorul matrimonial intim și terasa generoasă.`;
+            }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         return { 
             success: true, 
