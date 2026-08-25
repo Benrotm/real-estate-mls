@@ -62,6 +62,35 @@ export async function updateAIProviderKeys(keysMap: Record<string, string>) {
     return { success: true };
 }
 
+export async function saveSingleAIKey(keyName: string, keyValue: string) {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { error: 'Unauthorized' };
+
+        const { data } = await supabase
+            .from('platform_settings')
+            .select('setting_value')
+            .eq('setting_key', 'ai_api_keys')
+            .maybeSingle();
+
+        const existing = (data?.setting_value as Record<string, string>) || {};
+        existing[keyName] = keyValue;
+
+        const { error } = await supabase
+            .from('platform_settings')
+            .upsert({
+                setting_key: 'ai_api_keys',
+                setting_value: existing
+            });
+
+        if (error) return { error: error.message };
+        return { success: true };
+    } catch (e: any) {
+        return { error: e.message || 'Server error' };
+    }
+}
+
 export async function getSocialLinks() {
     const supabase = await createClient();
     const { data, error } = await supabase

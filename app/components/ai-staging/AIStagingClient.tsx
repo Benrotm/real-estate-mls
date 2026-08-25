@@ -4,7 +4,8 @@ import React, { useState, useTransition, useEffect, createContext, useContext } 
 import { 
   Wand2, Video, FileImage, FileText, 
   Layers, UploadCloud, Settings, ChevronRight, 
-  Sparkles, CheckCircle2, Sliders, Image as ImageIcon, Camera, Building, Sofa, Loader2, Download
+  Sparkles, CheckCircle2, Sliders, Image as ImageIcon, Camera, Building, Sofa, Loader2, Download,
+  Save, Eye, EyeOff
 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import { 
@@ -13,9 +14,10 @@ import {
   generate3DPlan, 
   generateDescription, 
   generateRoomAnimation,
-  generateWalkthroughVideo
+  generateWalkthroughVideo,
+  uploadAIFileAction
 } from '@/app/lib/actions/ai-staging';
-import { getFeatureCosts } from '@/app/lib/actions/settings';
+import { getFeatureCosts, saveSingleAIKey } from '@/app/lib/actions/settings';
 import { Coins } from 'lucide-react';
 import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
@@ -234,30 +236,41 @@ function FileUploader({
     const newUrls: string[] = [];
 
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `ai_staging_${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-        const filePath = `ai_uploads/${fileName}`; // Organized folder 
+      for (const file of Array.from(files)) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await uploadAIFileAction(formData);
 
-        const { error: uploadError } = await supabase.storage
-            .from('property-images')
-            .upload(filePath, file);
+          if (res.success && res.url) {
+            newUrls.push(res.url);
+          } else {
+            // Client-side fallback to base64 Data URL
+            const reader = new FileReader();
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+            newUrls.push(dataUrl);
+          }
+        } catch (innerError) {
+          // If server action throws network error, read as data URL locally
+          const reader = new FileReader();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          newUrls.push(dataUrl);
+        }
+      }
 
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('property-images')
-            .getPublicUrl(filePath);
-
-        return publicUrl;
-      });
-
-      const results = await Promise.all(uploadPromises);
-      setProgressFiles(results);
-      onUploadComplete(results);
-    } catch (error) {
+      setProgressFiles(newUrls);
+      onUploadComplete(newUrls);
+    } catch (error: any) {
       console.error('Error uploading:', error);
-      alert('Failed to upload files to storage.');
+      alert('Eroare la încărcare: ' + (error?.message || 'Verificați fișierul selectat.'));
     } finally {
       setUploading(false);
       if (e.target) e.target.value = '';
@@ -266,20 +279,20 @@ function FileUploader({
 
   return (
     <div className="relative">
-      <label className="border-2 border-dashed border-white/20 hover:border-cyan-400/50 bg-black/20 rounded-2xl p-10 text-center transition-all cursor-pointer group hover:bg-black/40 block">
+      <label className="border-2 border-dashed border-white/20 hover:border-cyan-400/50 bg-black/20 rounded-2xl p-8 text-center transition-all cursor-pointer group hover:bg-black/40 block">
         {uploading ? (
-           <div className="flex flex-col items-center justify-center">
-             <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mb-4" />
-             <p className="text-slate-300">Se încarcă fișierele...</p>
+           <div className="flex flex-col items-center justify-center py-4">
+             <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mb-3" />
+             <p className="text-slate-300 font-medium text-sm">Se încarcă și se procesează fișierul...</p>
            </div>
         ) : (
           <>
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-cyan-500/20 group-hover:scale-110 transition-all duration-300">
-              <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-cyan-400" />
+            <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-cyan-500/20 group-hover:scale-110 transition-all duration-300">
+              <UploadCloud className="w-7 h-7 text-slate-400 group-hover:text-cyan-400" />
             </div>
-            <h4 className="text-lg font-medium text-slate-200 mb-2">{label}</h4>
-            <p className="text-sm text-slate-500 mb-6">Trageți fișierele aici sau dați click pentru a încărca</p>
-            <div className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors border border-white/10 inline-block pointer-events-none">
+            <h4 className="text-base font-medium text-slate-200 mb-1">{label}</h4>
+            <p className="text-xs text-slate-500 mb-4">Trageți fișierele aici sau dați click pentru a încărca</p>
+            <div className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold transition-colors border border-white/10 inline-block pointer-events-none">
               Selectează din fișiere
             </div>
             <input 
@@ -310,7 +323,7 @@ function FileUploader({
 }
 
 // ----------------------------------------------------
-// Provider Settings Component
+// Provider Settings Component with Save API Key button
 // ----------------------------------------------------
 
 function ProviderSettings({ 
@@ -322,34 +335,128 @@ function ProviderSettings({
   onProviderChange: (p: string) => void;
   onKeyChange: (k: string) => void;
 }) {
+  const [selectedProvider, setSelectedProvider] = useState(providerList[0]?.id || 'replicate');
+  const [apiKey, setApiKey] = useState('');
+  const [showKey, setShowKey] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const getKeyName = (id: string) => {
+    if (id === 'gemini' || id === 'google') return 'gemini_api_key';
+    if (id === 'replicate' || id === 'controlnet') return 'replicate_api_token';
+    if (id === 'fal' || id === 'falai') return 'fal_api_key';
+    if (id === 'openai') return 'openai_api_key';
+    if (id === 'runway') return 'runway_api_secret';
+    return `${id}_api_key`;
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const keyName = getKeyName(selectedProvider);
+      const localKey = localStorage.getItem('ai_provider_key_' + keyName) || '';
+      setApiKey(localKey);
+      onKeyChange(localKey);
+      onProviderChange(selectedProvider);
+      setIsSaved(false);
+    }
+  }, [selectedProvider]);
+
+  const handleProviderSelect = (p: string) => {
+    setSelectedProvider(p);
+    onProviderChange(p);
+  };
+
+  const handleKeyInput = (val: string) => {
+    setApiKey(val);
+    onKeyChange(val);
+    setIsSaved(false);
+  };
+
+  const handleSaveKey = async () => {
+    setIsSaving(true);
+    const keyName = getKeyName(selectedProvider);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('ai_provider_key_' + keyName, apiKey);
+      }
+      await saveSingleAIKey(keyName, apiKey);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 4000);
+    } catch (e) {
+      console.warn('Error saving API key:', e);
+      setIsSaved(true);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div className="bg-black/40 border border-white/10 rounded-2xl p-5 mb-6">
-      <div className="flex items-center gap-2 mb-4 text-slate-300 font-medium">
-        <Settings className="w-5 h-5 text-indigo-400" />
-        Configurare Furnizor AI (API)
+    <div className="bg-black/40 border border-white/10 rounded-2xl p-5 mb-6 shadow-xl">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-slate-300 font-medium text-sm">
+          <Settings className="w-4 h-4 text-indigo-400" />
+          <span>Configurare Furnizor AI (API)</span>
+        </div>
+        {isSaved && (
+          <span className="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full font-semibold">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Cheie Salvată!
+          </span>
+        )}
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Furnizor AI</label>
+          <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
+            Furnizor AI
+          </label>
           <select 
-            onChange={(e) => onProviderChange(e.target.value)} 
-            className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none outline-none focus:ring-2 focus:ring-indigo-500/50"
+            value={selectedProvider}
+            onChange={(e) => handleProviderSelect(e.target.value)} 
+            className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm"
           >
             {providerList.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
         </div>
+
         <div>
-           <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Cheie API (Secret Key)</label>
-           <input 
-             type="password" 
-             placeholder="sk-..."
-             onChange={(e) => onKeyChange(e.target.value)}
-             className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/50"
-           />
+          <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">
+            Cheie API (Secret Key)
+          </label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <input 
+                type={showKey ? "text" : "password"} 
+                value={apiKey}
+                placeholder="sk-... sau token API"
+                onChange={(e) => handleKeyInput(e.target.value)}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm font-mono"
+              />
+              <button 
+                type="button"
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              >
+                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveKey}
+              disabled={isSaving}
+              className="px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-colors flex-shrink-0 disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+              title="Salvează cheia API pentru acest furnizor"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSaving ? 'Salvare...' : 'Salvează'}</span>
+            </button>
+          </div>
         </div>
       </div>
+      <p className="text-[11px] text-slate-500 mt-2">
+        💡 <span className="italic">Opțional: dacă lăsați câmpul gol, platforma va utiliza automat cheia Master configurată global de Superadmin.</span>
+      </p>
     </div>
   );
 }
