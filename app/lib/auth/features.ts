@@ -23,7 +23,8 @@ function getEquivalentPlanNames(role: string, tier: string): string[] {
     // 2. Role-specific mappings based on observed DB data
     if (role === 'agent') {
         if (t === 'pro') { names.add('Broker'); names.add('Pro Real'); names.add('Professional'); }
-        if (t === 'enterprise') { names.add('Full House Agency'); }
+        else if (t === 'enterprise') { names.add('Full House Agency'); }
+        else { names.add('Broker'); names.add('Full House Agency'); names.add('Free'); names.add('Free Plan'); }
     }
     else if (role === 'owner') {
         if (t === 'pro') { names.add('Pro'); } // Redundant but safe
