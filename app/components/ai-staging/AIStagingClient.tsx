@@ -232,7 +232,49 @@ export default function AIStagingClient({ userRole }: { userRole: string }) {
 
 // ----------------------------------------------------
 // File Uploader with Supabase integration
-// ----------------------------------------------------
+// Helper to compress image if > 1.5MB before uploading
+async function compressImageIfNeeded(file: File): Promise<File> {
+  if (!file.type.startsWith('image/') || file.size < 1.5 * 1024 * 1024) {
+    return file;
+  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.onload = () => {
+        const maxDim = 2048;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }));
+            } else {
+              resolve(file);
+            }
+          }, 'image/jpeg', 0.88);
+        } else {
+          resolve(file);
+        }
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 function FileUploader({ 
   label, 
@@ -246,48 +288,54 @@ function FileUploader({
   onUploadComplete: (urls: string[]) => void 
 }) {
   const [uploading, setUploading] = useState(false);
-  const [progressFiles, setProgressFiles] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<{ url: string; name: string; isPdf?: boolean }[]>([]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    const newUrls: string[] = [];
+    const newItems: { url: string; name: string; isPdf?: boolean }[] = multiple ? [...uploadedFiles] : [];
 
     try {
-      for (const file of Array.from(files)) {
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          const res = await uploadAIFileAction(formData);
+      for (const rawFile of Array.from(files)) {
+        const file = await compressImageIfNeeded(rawFile);
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
-          if (res.success && res.url) {
-            newUrls.push(res.url);
+        try {
+          // Direct client-side Supabase Storage upload (bypasses serverless size limits)
+          const fileExt = file.name.split('.').pop() || (isPdf ? 'pdf' : 'jpg');
+          const fileName = `ai_uploads/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          const { data, error: uploadErr } = await supabase.storage
+            .from('property-images')
+            .upload(fileName, file, { upsert: true });
+
+          if (!uploadErr && data?.path) {
+            const { data: { publicUrl } } = supabase.storage.from('property-images').getPublicUrl(data.path);
+            newItems.push({ url: publicUrl, name: file.name, isPdf });
           } else {
-            // Client-side fallback to base64 Data URL
-            const reader = new FileReader();
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            });
-            newUrls.push(dataUrl);
+            // Fallback via server action
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await uploadAIFileAction(formData);
+
+            if (res.success && res.url) {
+              newItems.push({ url: res.url, name: file.name, isPdf });
+            } else {
+              // Local blob url fallback for visual preview
+              const localBlob = URL.createObjectURL(file);
+              newItems.push({ url: localBlob, name: file.name, isPdf });
+            }
           }
         } catch (innerError) {
-          // If server action throws network error, read as data URL locally
-          const reader = new FileReader();
-          const dataUrl = await new Promise<string>((resolve, reject) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          newUrls.push(dataUrl);
+          const localBlob = URL.createObjectURL(file);
+          newItems.push({ url: localBlob, name: file.name, isPdf });
         }
       }
 
-      setProgressFiles(newUrls);
-      onUploadComplete(newUrls);
+      setUploadedFiles(newItems);
+      onUploadComplete(newItems.map(item => item.url));
     } catch (error: any) {
       console.error('Error uploading:', error);
       alert('Eroare la încărcare: ' + (error?.message || 'Verificați fișierul selectat.'));
@@ -297,45 +345,81 @@ function FileUploader({
     }
   };
 
+  const handleRemove = (index: number) => {
+    const updated = uploadedFiles.filter((_, i) => i !== index);
+    setUploadedFiles(updated);
+    onUploadComplete(updated.map(item => item.url));
+  };
+
   return (
-    <div className="relative">
-      <label className="border-2 border-dashed border-white/20 hover:border-cyan-400/50 bg-black/20 rounded-2xl p-8 text-center transition-all cursor-pointer group hover:bg-black/40 block">
-        {uploading ? (
-           <div className="flex flex-col items-center justify-center py-4">
-             <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mb-3" />
-             <p className="text-slate-300 font-medium text-sm">Se încarcă și se procesează fișierul...</p>
-           </div>
-        ) : (
-          <>
-            <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-cyan-500/20 group-hover:scale-110 transition-all duration-300">
-              <UploadCloud className="w-7 h-7 text-slate-400 group-hover:text-cyan-400" />
+    <div className="space-y-3">
+      {uploadedFiles.length === 0 || multiple ? (
+        <label className="border-2 border-dashed border-white/20 hover:border-amber-400/50 bg-black/20 rounded-2xl p-6 text-center transition-all cursor-pointer group hover:bg-black/40 block">
+          {uploading ? (
+             <div className="flex flex-col items-center justify-center py-3">
+               <Loader2 className="w-8 h-8 text-amber-400 animate-spin mb-2" />
+               <p className="text-slate-300 font-medium text-xs">Se optimizează și se încarcă fișierul...</p>
+             </div>
+          ) : (
+            <>
+              <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-2.5 group-hover:bg-amber-500/20 group-hover:scale-110 transition-all duration-300">
+                <UploadCloud className="w-6 h-6 text-slate-400 group-hover:text-amber-400" />
+              </div>
+              <h4 className="text-sm font-medium text-slate-200 mb-1">{label}</h4>
+              <p className="text-[11px] text-slate-500 mb-3">Schițe 2D, Planuri Arhitectură, Axonometrii 3D sau PDF</p>
+              <div className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition-colors border border-white/10 inline-block pointer-events-none">
+                Selectează Fișierul
+              </div>
+              <input 
+                 type="file" 
+                 accept={accept} 
+                 multiple={multiple} 
+                 className="hidden" 
+                 onChange={handleUpload}
+              />
+            </>
+          )}
+        </label>
+      ) : null}
+
+      {/* Visual Preview Card */}
+      {uploadedFiles.length > 0 && (
+        <div className="space-y-2">
+          {uploadedFiles.map((fileItem, idx) => (
+            <div key={idx} className="bg-black/50 border border-emerald-500/30 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-lg group">
+              <div className="flex items-center gap-3 min-w-0">
+                {fileItem.isPdf ? (
+                  <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
+                    <FileText className="w-6 h-6 text-red-400 mb-1" />
+                    <span className="text-[9px] font-bold text-red-400">PDF</span>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/10 bg-slate-900 flex-shrink-0 relative shadow-inner">
+                    <img src={fileItem.url} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <p className="text-xs font-semibold text-slate-200 truncate">{fileItem.name}</p>
+                  </div>
+                  <p className="text-[11px] text-emerald-400/90 mt-0.5 font-medium">Schiță încărcată & gata de procesare</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleRemove(idx)}
+                  className="px-3 py-1.5 bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 rounded-lg transition-colors border border-white/10 text-xs flex items-center gap-1"
+                  title="Elimină și alege alt fișier"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Schimbă</span>
+                </button>
+              </div>
             </div>
-            <h4 className="text-base font-medium text-slate-200 mb-1">{label}</h4>
-            <p className="text-xs text-slate-500 mb-4">Trageți fișierele aici sau dați click pentru a încărca</p>
-            <div className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold transition-colors border border-white/10 inline-block pointer-events-none">
-              Selectează din fișiere
-            </div>
-            <input 
-               type="file" 
-               accept={accept} 
-               multiple={multiple} 
-               className="hidden" 
-               onChange={handleUpload}
-            />
-          </>
-        )}
-      </label>
-      
-      {progressFiles.length > 0 && !multiple && (
-        <div className="mt-3 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl">
-           <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-           <p className="text-sm text-emerald-300 truncate">Fișier încărcat cu succes!</p>
-        </div>
-      )}
-      {progressFiles.length > 0 && multiple && (
-        <div className="mt-3 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl">
-           <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-           <p className="text-sm text-emerald-300 truncate">{progressFiles.length} fișiere încărcate cu succes!</p>
+          ))}
         </div>
       )}
     </div>
@@ -841,12 +925,12 @@ function VideoGeneratorTool() {
                      <p className="text-slate-400 animate-pulse">Randare Video Cinematic...</p>
                    </>
                 ) : (
-                   <>
-                      <Video className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                      <p className="text-slate-500">Player-ul video va fi disponibil aici...</p>
-                   </>
-              )}
-            </div>
+                    <>
+                       <Video className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                       <p className="text-slate-500">Player-ul video va fi disponibil aici...</p>
+                    </>
+               )}
+             </div>
         )}
       </div>
     </div>
@@ -855,6 +939,7 @@ function VideoGeneratorTool() {
 
 function WalkthroughVideoTool() {
   const [isPending, startTransition] = useTransition();
+  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
   const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
   const cost = costs['ai_walkthrough_video'] || 0;
   const [provider, setProvider] = useState('gemini');
@@ -865,11 +950,56 @@ function WalkthroughVideoTool() {
   const [tourMode, setTourMode] = useState('Tur 1st Person (Ochiul liber)');
   const [videoFormat, setVideoFormat] = useState('16:9 (YouTube/site)');
   const [duration, setDuration] = useState('15 secunde');
+  const [ambience, setAmbience] = useState('Lumină Naturală de Zi');
+  const [focusRooms, setFocusRooms] = useState<string[]>(['Living + Bucătărie', 'Dormitor Matrimonial', 'Terasă']);
   const [enableVoiceover, setEnableVoiceover] = useState(true);
+
+  // Dynamic Prompt Box State
+  const [promptText, setPromptText] = useState(
+    'Cinematic 8K 3D architectural walkthrough video, Modern Lux interior design, Tur 1st Person (Ochiul liber) camera path, Lumină Naturală de Zi, prioritizing Living + Bucătărie, Dormitor Matrimonial, Terasă, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.'
+  );
 
   const [result, setResult] = useState('');
   const [script, setScript] = useState('');
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+
+  // Update prompt whenever options change
+  useEffect(() => {
+    const focusStr = focusRooms.length > 0 ? focusRooms.join(', ') : 'Living, Dormitor, Terasă';
+    setPromptText(
+      `Cinematic 8K 3D architectural walkthrough video, ${style} interior design, ${tourMode} camera path, ${ambience}, prioritizing ${focusStr}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions, format ${videoFormat}, duration ${duration}.`
+    );
+  }, [style, tourMode, ambience, focusRooms, videoFormat, duration]);
+
+  const handleOptimizePrompt = async () => {
+    setIsOptimizingPrompt(true);
+    try {
+      const res = await optimizeWalkthroughPromptAction({
+        style,
+        tourMode,
+        ambience,
+        focusRooms,
+        details: 'Apartament 2 camere cu living open-space, dormitor matrimonial și terasă logie'
+      }, provider, apiKey);
+
+      if (res.prompt) {
+        setPromptText(res.prompt);
+      }
+    } catch (e) {
+      console.warn('Error optimizing prompt:', e);
+    } finally {
+      setIsOptimizingPrompt(false);
+    }
+  };
+
+  const toggleFocusRoom = (room: string) => {
+    if (focusRooms.includes(room)) {
+      setFocusRooms(prev => prev.filter(r => r !== room));
+    } else {
+      setFocusRooms(prev => [...prev, room]);
+    }
+  };
 
   const submitAction = () => {
     if (!planUrl) { setError('Vă rugăm să încărcați o schiță 2D sau un plan 3D.'); return; }
@@ -882,7 +1012,10 @@ function WalkthroughVideoTool() {
           tourMode,
           videoFormat,
           enableVoiceover,
-          duration
+          duration,
+          customPrompt: promptText,
+          ambience,
+          focusRooms
         }, provider, apiKey);
 
         if (res.error) {
@@ -907,7 +1040,7 @@ function WalkthroughVideoTool() {
           onClick={() => setter(item)}
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
             current === item
-              ? 'border-amber-400 bg-amber-500/10 text-amber-300'
+              ? 'border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
               : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-300'
           }`}
         >
@@ -943,38 +1076,98 @@ function WalkthroughVideoTool() {
         </div>
       )}
 
-        <div className="space-y-5 bg-[#141210] p-6 rounded-2xl border border-amber-900/20">
+        <div className="space-y-5 bg-[#141210] p-6 rounded-2xl border border-amber-900/20 shadow-xl">
           <h3 className="text-amber-500 font-semibold text-xs tracking-widest uppercase">
             1. Încărcare Schiță 2D sau Plan 3D (PDF / Imagine)
           </h3>
           <FileUploader 
-            label="Trageți fișierul aici sau dați click pentru a încărca schița (Blueprint 2D / Cutaway 3D)"
+            label="Trageți schița sau axonometria 3D aici"
             accept="image/*,.pdf"
-            onUploadComplete={urls => setPlanUrl(urls[0])}
+            onUploadComplete={urls => setPlanUrl(urls[0] || '')}
           />
 
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              2. Stil Arhitectural & Interior
+              2. Stil Arhitectural & Finisaje
             </label>
             {renderPills(['Modern Lux', 'Scandinavian', 'Minimalist', 'Clasic Elegant', 'Industrial'], style, setStyle)}
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              3. Tip Walkthrough Video
+              3. Tip Walkthrough Video & Traseu Cameră
             </label>
             {renderPills(['Tur 1st Person (Ochiul liber)', 'Fly-Through Izometric 3D', 'Prezentare Panoramică 360'], tourMode, setTourMode)}
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              4. Format Video & Durată
+              4. Atmosferă & Iluminat
+            </label>
+            {renderPills(['Lumină Naturală de Zi', 'Apus Cald (Golden Hour)', 'Eleganță Nocturnă (Evening Luxury)'], ambience, setAmbience)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              5. Camere de Evidențiat în Video
+            </label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {['Living + Bucătărie', 'Dormitor Matrimonial', 'Terasă', 'Baie Spa'].map(room => {
+                const isSelected = focusRooms.includes(room);
+                return (
+                  <button
+                    key={room}
+                    type="button"
+                    onClick={() => toggleFocusRoom(room)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      isSelected
+                        ? 'border-amber-400 bg-amber-500/20 text-amber-300'
+                        : 'border-white/10 text-slate-400 hover:border-white/20'
+                    }`}
+                  >
+                    {isSelected ? '✓ ' : '+ '}{room}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              6. Format Video & Durată
             </label>
             {renderPills(['16:9 (YouTube/site)', '9:16 (Reels/TikTok)', '1:1 (Instagram)'], videoFormat, setVideoFormat)}
             <div className="mt-2">
               {renderPills(['15 secunde', '30 secunde'], duration, setDuration)}
             </div>
+          </div>
+
+          {/* Prompt Tuning Box */}
+          <div className="pt-3 border-t border-white/10 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-amber-400 uppercase tracking-widest">
+                7. Prompt AI Walkthrough (Editabil)
+              </label>
+              <button
+                type="button"
+                onClick={handleOptimizePrompt}
+                disabled={isOptimizingPrompt}
+                className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-lg transition-colors"
+              >
+                {isOptimizingPrompt ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                <span>Auto-Optimizare Gemini AI</span>
+              </button>
+            </div>
+            <textarea
+              rows={3}
+              value={promptText}
+              onChange={e => setPromptText(e.target.value)}
+              placeholder="Promptul tehnic pentru randarea video 3D..."
+              className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-amber-500/50 font-mono resize-none"
+            />
+            <p className="text-[10px] text-slate-500 italic">
+              💡 Poți personaliza direct termenii din prompt pentru a ajusta stilul mobilierului, unghiul camerei sau atmosfera video.
+            </p>
           </div>
 
           <div className="pt-2 border-t border-white/10">
@@ -1015,28 +1208,32 @@ function WalkthroughVideoTool() {
       </div>
 
       <div className="space-y-4">
-        <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px] relative overflow-hidden">
+        <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[420px] relative overflow-hidden shadow-2xl">
           {result ? (
             <>
-              <video src={result} controls autoPlay loop className="w-full h-full object-contain rounded-xl bg-black relative z-10" />
+              <video src={result} controls autoPlay loop className="w-full h-full object-cover rounded-xl bg-black relative z-10" />
               <button 
                 onClick={() => handleDownload(result, 'walkthrough_3d_imobum.mp4')} 
-                className="absolute top-8 right-8 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20"
+                className="absolute top-8 right-8 bg-black/70 hover:bg-black/90 border border-white/20 text-white px-4 py-2 rounded-xl flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20"
               >
                 <Download className="w-4 h-4"/> Descărcare Video MP4
               </button>
             </>
           ) : (
-            <div className="text-center">
+            <div className="text-center px-4">
               {isPending ? (
                 <>
                   <Loader2 className="w-16 h-16 text-amber-500 animate-spin mx-auto mb-4" />
-                  <p className="text-slate-400 animate-pulse">Gemini AI analizează schița spațială & generează turul 3D...</p>
+                  <p className="text-slate-300 font-semibold text-sm mb-1">Gemini AI analizează schița spațială...</p>
+                  <p className="text-slate-500 text-xs">Se generează turul cinematic 3D conform specificațiilor</p>
                 </>
               ) : (
                 <>
                   <Building className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                  <p className="text-slate-500 text-sm">Turul video 3D va fi generat și afișat aici...</p>
+                  <h4 className="text-slate-300 font-semibold text-sm mb-1">Previzualizare Tur Video 3D</h4>
+                  <p className="text-slate-500 text-xs max-w-xs mx-auto">
+                    Încarcă schița 2D sau axonometria 3D și lansează generatorul pentru a crea turul video cinematic.
+                  </p>
                 </>
               )}
             </div>
@@ -1044,19 +1241,44 @@ function WalkthroughVideoTool() {
         </div>
 
         {script && (
-          <div className="bg-[#141210] p-4 rounded-xl border border-amber-900/30 space-y-2">
+          <div className="bg-[#141210] p-5 rounded-2xl border border-amber-900/30 space-y-3 shadow-xl">
             <div className="flex items-center justify-between">
-              <span className="text-amber-400 font-semibold text-xs uppercase tracking-widest">Narație Generată Gemini AI</span>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span className="text-amber-400 font-semibold text-xs uppercase tracking-widest">Narațiune Generată Gemini AI</span>
+              </div>
               <button 
-                onClick={() => copyToClipboardSafe(script)}
-                className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg border border-white/10 transition-colors"
+                onClick={async () => {
+                  const success = await copyToClipboardSafe(script);
+                  if (success) {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }
+                }}
+                className="text-xs text-amber-400 hover:text-amber-300 font-medium px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg transition-colors"
               >
-                Copiază Script
+                {copied ? '✓ Copiat' : 'Copiază Script'}
               </button>
             </div>
-            <p className="text-slate-300 text-xs leading-relaxed italic">{script}</p>
+            <p className="text-slate-300 text-xs leading-relaxed italic whitespace-pre-wrap">{script}</p>
           </div>
         )}
+
+        {/* Technical Specs Summary */}
+        <div className="bg-black/20 p-4 rounded-xl border border-white/5 space-y-2 text-xs">
+          <div className="flex justify-between text-slate-400">
+            <span>Stil Selectat:</span>
+            <span className="text-slate-200 font-medium">{style}</span>
+          </div>
+          <div className="flex justify-between text-slate-400">
+            <span>Mod Cameră:</span>
+            <span className="text-slate-200 font-medium">{tourMode}</span>
+          </div>
+          <div className="flex justify-between text-slate-400">
+            <span>Atmosferă:</span>
+            <span className="text-slate-200 font-medium">{ambience}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
