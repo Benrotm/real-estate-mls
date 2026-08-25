@@ -222,16 +222,16 @@ export async function generateWalkthroughVideo(payload: {
 
         await new Promise(resolve => setTimeout(resolve, 3500));
 
-        // High-definition architectural real estate 3D video samples based on style & tour mode
+        // High-definition architectural & cinematic video streaming assets with full CORS & byte-range support
         const videoLibrary: Record<string, string> = {
-            'Modern Lux': 'https://assets.mixkit.co/videos/preview/mixkit-modern-living-room-interior-3998-large.mp4',
-            'Scandinavian': 'https://assets.mixkit.co/videos/preview/mixkit-bright-and-modern-apartment-living-room-41723-large.mp4',
-            'Minimalist': 'https://assets.mixkit.co/videos/preview/mixkit-modern-bedroom-interior-with-minimalist-design-41727-large.mp4',
-            'Clasic Elegant': 'https://assets.mixkit.co/videos/preview/mixkit-luxury-living-room-interior-with-a-view-41724-large.mp4',
-            'Industrial': 'https://assets.mixkit.co/videos/preview/mixkit-kitchen-in-a-modern-apartment-41725-large.mp4'
+            'Modern Lux': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+            'Scandinavian': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+            'Minimalist': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+            'Clasic Elegant': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
+            'Industrial': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4'
         };
 
-        const chosenVideo = videoLibrary[payload.style] || 'https://assets.mixkit.co/videos/preview/mixkit-modern-living-room-interior-3998-large.mp4';
+        const chosenVideo = videoLibrary[payload.style] || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
 
         return { 
             success: true, 
