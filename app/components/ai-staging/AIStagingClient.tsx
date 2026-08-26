@@ -5,7 +5,7 @@ import {
   Wand2, Video, FileImage, FileText, 
   Layers, UploadCloud, Settings, ChevronRight, 
   Sparkles, CheckCircle2, Sliders, Image as ImageIcon, Camera, Building, Sofa, Loader2, Download,
-  Save, Eye, EyeOff, X, RefreshCw, Sun, Moon, Maximize2
+  Save, Eye, EyeOff, X, RefreshCw, Sun, Moon, Maximize2, HelpCircle, Info, ShieldCheck, Coins
 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import { 
@@ -19,12 +19,10 @@ import {
   uploadAIFileAction
 } from '@/app/lib/actions/ai-staging';
 import { getFeatureCosts, saveSingleAIKey } from '@/app/lib/actions/settings';
-import { Coins } from 'lucide-react';
 import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
 
 export const CreditsContext = createContext<{credits: number, costs: Record<string, number>, canUseCustomKeys: boolean, userRole: string}>({credits: 0, costs: {}, canUseCustomKeys: true, userRole: 'user'});
 
-// Define the 6 main features corresponding to the provided link
 const AI_FEATURES = [
   {
     id: 'virtual-staging',
@@ -940,8 +938,10 @@ function VideoGeneratorTool() {
 function WalkthroughVideoTool() {
   const [isPending, startTransition] = useTransition();
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
-  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
+  const [showAdminGuide, setShowAdminGuide] = useState(false);
+  const { credits, costs, canUseCustomKeys, userRole } = useContext(CreditsContext);
   const cost = costs['ai_walkthrough_video'] || 0;
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
   const [provider, setProvider] = useState('gemini');
   const [apiKey, setApiKey] = useState('');
 
@@ -1052,6 +1052,117 @@ function WalkthroughVideoTool() {
 
   return (
     <div className="w-full space-y-8">
+      {/* Superadmin Info Badge & Guide */}
+      {isAdmin && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowAdminGuide(!showAdminGuide)}
+              className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition-all cursor-pointer shadow-lg"
+            >
+              <HelpCircle className="w-4 h-4 text-amber-400" />
+              <span>{showAdminGuide ? 'Ascunde Ghid Superadmin' : '❓ Cum funcționează? Ghid Superadmin: AI Video, Credite & Costuri'}</span>
+            </button>
+            <span className="text-[11px] text-amber-400/70 font-mono">Vizibil doar pentru Administrator</span>
+          </div>
+
+          {showAdminGuide && (
+            <div className="bg-[#181410] border border-amber-500/30 rounded-2xl p-6 space-y-5 text-xs text-slate-300 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-2 pb-3 border-b border-amber-500/20 text-amber-400 font-bold text-sm">
+                <ShieldCheck className="w-5 h-5 text-amber-400" />
+                <span>Ghid Administrativ: Funcționare AI, Relația cu Creditele & Costuri Provideri</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2.5 bg-black/30 p-4 rounded-xl border border-white/5">
+                  <h4 className="text-amber-300 font-bold flex items-center gap-1.5">
+                    <span>1. Ce înseamnă „100% Funcțional & Gratuit”?</span>
+                  </h4>
+                  <ul className="space-y-1.5 text-slate-300 list-disc list-inside leading-relaxed text-[11.5px]">
+                    <li>
+                      <strong className="text-white">Costul tău ca Admin către Google:</strong> Pe Google AI Studio, modelele <span className="text-cyan-300 font-mono">Gemini 2.5/3.6 Flash & Pro Vision</span> au Free Tier generos (15 RPM / 1M jetoane/zi). Analiza schițelor, recunoașterea camerelor și generarea scripturilor de voce costă <strong className="text-emerald-400">0 RON</strong>.
+                    </li>
+                    <li>
+                      <strong className="text-white">Relația cu Utilizatorii (Agenți):</strong> Utilizatorii nu plătesc către Google, ci consumă <strong className="text-amber-300">Credite Imobum</strong> din contul lor (setate de tine în <em>Setări Credite</em>).
+                    </li>
+                    <li>
+                      <strong className="text-white">Profit Platformă:</strong> Costul tău este 0 RON, iar creditele consumate de utilizatori reprezintă <strong className="text-emerald-400">marjă brută de 100%</strong>.
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2.5 bg-black/30 p-4 rounded-xl border border-white/5">
+                  <h4 className="text-amber-300 font-bold flex items-center gap-1.5">
+                    <span>2. Randarea Video AI (Image-to-Video) & Google Veo</span>
+                  </h4>
+                  <ul className="space-y-1.5 text-slate-300 list-disc list-inside leading-relaxed text-[11.5px]">
+                    <li>
+                      <strong className="text-white">De ce Veo dă cotă depășită (429) pe Free:</strong> Modelele de difuzie video (<span className="text-cyan-300 font-mono">Google Veo 3.1, Kling AI, Luma</span>) necesită clustere GPU masive. Google oferă 0 secunde video gratuite pe chei fără card/billing Google Cloud.
+                    </li>
+                    <li>
+                      <strong className="text-white">Activare Veo:</strong> Dacă asociezi un cont de facturare Google Cloud Billing pe AI Studio, Veo este deblocat la plata pe consum.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-white/10">
+                <h4 className="text-amber-300 font-bold text-xs uppercase tracking-wider">
+                  3. Comparație Provideri Video AI & Costuri Reale de Randare
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[11px] text-left border border-white/10 rounded-xl overflow-hidden">
+                    <thead className="bg-white/5 text-slate-200">
+                      <tr>
+                        <th className="p-2.5">Provider AI</th>
+                        <th className="p-2.5">Modele Principale</th>
+                        <th className="p-2.5">Calitate Arhitectură / Walkthrough</th>
+                        <th className="p-2.5">Cost Mediu / Video (5-10s)</th>
+                        <th className="p-2.5">Recomandare Imobum</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-slate-300">
+                      <tr className="bg-amber-500/5">
+                        <td className="p-2.5 font-bold text-amber-300">Fal.ai</td>
+                        <td className="p-2.5 font-mono text-[10.5px]">Kling v1.5 / v2.0, Luma, MiniMax</td>
+                        <td className="p-2.5 text-emerald-400">⭐⭐⭐⭐⭐ Excelent (Lider mondial pe interioare)</td>
+                        <td className="p-2.5 font-semibold text-white">~$0.35 – $0.50</td>
+                        <td className="p-2.5 font-bold text-emerald-400">Recomandat #1 (API rapid)</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold text-slate-200">Replicate</td>
+                        <td className="p-2.5 font-mono text-[10.5px]">Kling AI, Luma Ray, SVD</td>
+                        <td className="p-2.5 text-emerald-300">⭐⭐⭐⭐ Foarte bun & flexibil</td>
+                        <td className="p-2.5 font-semibold text-white">~$0.30 – $0.60</td>
+                        <td className="p-2.5 text-cyan-300">Recomandat #2</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold text-slate-200">Google Veo 3.1</td>
+                        <td className="p-2.5 font-mono text-[10.5px]">Veo 3.1 Fast / Generate</td>
+                        <td className="p-2.5 text-emerald-400">⭐⭐⭐⭐⭐ Cinematic DeepMind</td>
+                        <td className="p-2.5 font-semibold text-white">~$0.40 – $0.70</td>
+                        <td className="p-2.5 text-slate-400">Necesită Google Cloud Billing</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold text-slate-200">RunwayML</td>
+                        <td className="p-2.5 font-mono text-[10.5px]">Gen-3 Alpha Turbo</td>
+                        <td className="p-2.5 text-amber-300">⭐⭐⭐⭐ Bun pe mișcare de cameră</td>
+                        <td className="p-2.5 font-semibold text-white">~$0.25 – $0.50</td>
+                        <td className="p-2.5 text-slate-400">Opțional</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[10px] text-slate-400 italic pt-1">
+                  💡 <strong>Strategie Credite:</strong> Dacă o randare video te costă ~$0.40 (~2 RON) pe Fal.ai sau Veo, poți seta costul în platformă la <strong>15-20 credite</strong> (echivalent 5-10 RON), generând un profit sănătos la fiecare generare de tur video.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[
