@@ -53,10 +53,21 @@ export async function updateFeatureCosts(costsMap: Record<string, number>) {
 export async function updateAIProviderKeys(keysMap: Record<string, string>) {
     const supabase = await createClient();
     
+    const { data } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'ai_api_keys')
+        .maybeSingle();
+
+    const existing = (data?.setting_value as Record<string, string>) || {};
+    const merged = { ...existing, ...keysMap };
+
     const { error } = await supabase
         .from('platform_settings')
-        .update({ setting_value: keysMap })
-        .eq('setting_key', 'ai_api_keys');
+        .upsert({
+            setting_key: 'ai_api_keys',
+            setting_value: merged
+        });
 
     if (error) return { error: error.message };
     return { success: true };

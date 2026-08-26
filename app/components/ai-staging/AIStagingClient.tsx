@@ -976,6 +976,7 @@ function WalkthroughVideoTool() {
     setIsOptimizingPrompt(true);
     try {
       const res = await optimizeWalkthroughPromptAction({
+        planUrl,
         style,
         tourMode,
         ambience,
