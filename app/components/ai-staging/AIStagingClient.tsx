@@ -956,7 +956,7 @@ function WalkthroughVideoTool() {
 
   // Dynamic Prompt Box State
   const [promptText, setPromptText] = useState(
-    'Cinematic 8K 3D architectural walkthrough video, Modern Lux interior design, Tur 1st Person (Ochiul liber) camera path, Lumină Naturală de Zi, prioritizing Living + Bucătărie, Dormitor Matrimonial, Terasă, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.'
+    'Cinematic 1080p 3D architectural walkthrough video, Modern Lux interior design, Tur 1st Person (Ochiul liber) camera path, Lumină Naturală de Zi, prioritizing Living + Bucătărie, Dormitor Matrimonial, Terasă, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.'
   );
 
   const [result, setResult] = useState('');
@@ -968,7 +968,7 @@ function WalkthroughVideoTool() {
   useEffect(() => {
     const focusStr = focusRooms.length > 0 ? focusRooms.join(', ') : 'Living, Dormitor, Terasă';
     setPromptText(
-      `Cinematic 8K 3D architectural walkthrough video, ${style} interior design, ${tourMode} camera path, ${ambience}, prioritizing ${focusStr}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions, format ${videoFormat}, duration ${duration}.`
+      `Cinematic 1080p 3D architectural walkthrough video, ${style} interior design, ${tourMode} camera path, ${ambience}, prioritizing ${focusStr}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions, format ${videoFormat}, duration ${duration}.`
     );
   }, [style, tourMode, ambience, focusRooms, videoFormat, duration]);
 

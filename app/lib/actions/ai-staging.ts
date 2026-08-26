@@ -148,23 +148,86 @@ export async function generateRoomAnimation(payload: { imageUrl: string, speed: 
     }
 }
 
+async function callFalKlingImageToVideo(
+    falKey: string, 
+    imageUrl: string, 
+    prompt: string, 
+    duration: string = "5", 
+    aspectRatio: string = "16:9"
+): Promise<{ success: boolean; videoUrl?: string; error?: string }> {
+    try {
+        const postData = JSON.stringify({
+            prompt,
+            image_url: imageUrl,
+            duration: duration.includes("30") ? "10" : "5",
+            aspect_ratio: aspectRatio.includes("9:16") ? "9:16" : aspectRatio.includes("1:1") ? "1:1" : "16:9"
+        });
+
+        const queueResp = await fetch("https://queue.fal.run/fal-ai/kling-video/v1/standard/image-to-video", {
+            method: "POST",
+            headers: {
+                "Authorization": `Key ${falKey}`,
+                "Content-Type": "application/json"
+            },
+            body: postData
+        });
+
+        if (!queueResp.ok) {
+            const err = await queueResp.json().catch(() => ({}));
+            return { success: false, error: err.detail || `Fal.ai HTTP ${queueResp.status}` };
+        }
+
+        const queueJson = await queueResp.json();
+        const requestId = queueJson.request_id;
+        if (!requestId) return { success: false, error: "Fal.ai nu a returnat request_id" };
+
+        // Poll for up to 90 seconds (20 iterations * 4.5s)
+        for (let i = 0; i < 20; i++) {
+            await new Promise(r => setTimeout(r, 4500));
+            const statusResp = await fetch(`https://queue.fal.run/fal-ai/kling-video/requests/${requestId}/status`, {
+                headers: { "Authorization": `Key ${falKey}` }
+            });
+
+            if (statusResp.ok) {
+                const statusJson = await statusResp.json();
+                if (statusJson.status === "COMPLETED") {
+                    const resultResp = await fetch(`https://queue.fal.run/fal-ai/kling-video/requests/${requestId}`, {
+                        headers: { "Authorization": `Key ${falKey}` }
+                    });
+                    if (resultResp.ok) {
+                        const resultJson = await resultResp.json();
+                        const videoUrl = resultJson.video?.url;
+                        if (videoUrl) return { success: true, videoUrl };
+                    }
+                } else if (statusJson.status === "FAILED") {
+                    return { success: false, error: statusJson.error || "Randarea video a eșuat pe Fal.ai" };
+                }
+            }
+        }
+
+        return { success: false, error: "Randarea video a durat prea mult. Vă rugăm să reîncercați." };
+    } catch (e: any) {
+        return { success: false, error: e.message || "Eroare la apelul Fal.ai" };
+    }
+}
+
 export async function optimizeWalkthroughPromptAction(payload: {
-    style: string;
-    tourMode: string;
-    ambience?: string;
-    focusRooms?: string[];
-    details?: string;
-}, provider: string, apiKey?: string): Promise<{ success: boolean; prompt?: string; error?: string }> {
+    style: string,
+    tourMode: string,
+    ambience?: string,
+    focusRooms?: string[],
+    details?: string
+}, provider: string, apiKey: string) {
     const finalApiKey = apiKey || await getGlobalApiKey(provider || 'gemini');
     if (!finalApiKey) {
         return {
             success: true,
-            prompt: `Cinematic 8K 3D architectural walkthrough video, ${payload.style} interior design, ${payload.tourMode} camera path, ${payload.ambience || 'Natural Daylight'}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.`
+            prompt: `Cinematic 1080p 3D architectural walkthrough video, ${payload.style} interior design, ${payload.tourMode} camera path, ${payload.ambience || 'Natural Daylight'}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.`
         };
     }
 
     try {
-        const promptGenRequest = `Creează un prompt tehnic profesional în limba engleză pentru un motor AI de randare video 3D arhitectural (tip Sora / Kling / Runway / Luma / Unreal Engine).
+        const promptGenRequest = `Creează un prompt tehnic profesional în limba engleză pentru un motor AI de randare video 3D arhitectural (tip Kling / Sora / Runway / Luma / Unreal Engine 5).
 Specificații proiect:
 - Stil Interior & Arhitectură: ${payload.style}
 - Mod Cameră / Traseu: ${payload.tourMode}
@@ -172,7 +235,7 @@ Specificații proiect:
 - Camere de evidențiat: ${payload.focusRooms?.join(', ') || 'Living, Bucătărie, Dormitor, Terasă'}
 - Detalii adiționale: ${payload.details || 'Apartament modern'}
 
-Returnează DOAR promptul optimizat (în engleză), concis, bogat în termeni de calitate (8k, photorealistic architectural visualization, smooth camera glide, cinematic lighting).`;
+Returnează DOAR promptul optimizat (în engleză), concis, bogat în termeni de calitate (1080p full HD, photorealistic architectural visualization, smooth slow camera glide, cinematic lighting, raytracing reflections).`;
 
         const geminiRes = await callGeminiGenerate(finalApiKey, promptGenRequest, "Ești un prompt engineer de elită pentru randări video 3D arhitecturale și tururi imobiliare.");
         if (geminiRes.success && geminiRes.text) {
@@ -181,12 +244,12 @@ Returnează DOAR promptul optimizat (în engleză), concis, bogat în termeni de
 
         return {
             success: true,
-            prompt: `Cinematic 8K 3D architectural walkthrough video, ${payload.style} interior design, ${payload.tourMode} camera path, ${payload.ambience || 'Natural Daylight'}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.`
+            prompt: `Cinematic 1080p 3D architectural walkthrough video, ${payload.style} interior design, ${payload.tourMode} camera path, ${payload.ambience || 'Natural Daylight'}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.`
         };
     } catch (e: any) {
         return {
             success: true,
-            prompt: `Cinematic 8K 3D architectural walkthrough video, ${payload.style} interior design, ${payload.tourMode} camera path, Unreal Engine 5 render.`
+            prompt: `Cinematic 1080p 3D architectural walkthrough video, ${payload.style} interior design, ${payload.tourMode} camera path, Unreal Engine 5 render.`
         };
     }
 }
@@ -202,17 +265,21 @@ export async function generateWalkthroughVideo(payload: {
     ambience?: string,
     focusRooms?: string[]
 }, provider: string, apiKey: string) {
-    const finalApiKey = apiKey || await getGlobalApiKey(provider);
-    if (!finalApiKey) return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
+    const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+    const falApiKey = (provider === 'fal' && apiKey) ? apiKey : await getGlobalApiKey('fal');
+
+    if (!geminiApiKey && !falApiKey && !apiKey) {
+        return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
+    }
 
     const creditRes = await updateSystemFeatureDeduction('ai_walkthrough_video');
     if (creditRes?.error) return { error: creditRes.error };
 
     try {
         let narrationScript = undefined;
-        if (payload.enableVoiceover) {
+        if (payload.enableVoiceover && geminiApiKey) {
             const prompt = `Creează un script de narațiune (voiceover audio) captivant în limba română pentru un tur video walkthrough 3D al unui apartament cu stilul ${payload.style}, modul ${payload.tourMode}, iluminat ${payload.ambience || 'lumină naturală'}, cu durata de ${payload.duration}. Camere incluse: ${payload.focusRooms?.join(', ') || 'living, dormitor, terasă'}.`;
-            const geminiRes = await callGeminiGenerate(finalApiKey, prompt, "Ești un prezentator video profesionist de tururi imobiliare 3D.");
+            const geminiRes = await callGeminiGenerate(geminiApiKey, prompt, "Ești un prezentator video profesionist de tururi imobiliare 3D.");
             if (geminiRes.success && geminiRes.text) {
                 narrationScript = geminiRes.text;
             } else {
@@ -220,9 +287,32 @@ export async function generateWalkthroughVideo(payload: {
             }
         }
 
-        await new Promise(resolve => setTimeout(resolve, 3500));
+        const effectivePrompt = payload.customPrompt || `Cinematic 1080p 3D architectural walkthrough video, ${payload.style} interior design, ${payload.tourMode} camera path, ${payload.ambience || 'Natural Daylight'}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera glide.`;
 
-        // High-definition architectural video assets hosted permanently in Supabase Storage with range streaming support
+        // 1. If Fal.ai key is available -> Generate real AI Video from the uploaded blueprint/axonometry
+        if (falApiKey && payload.planUrl) {
+            console.log('[AI Staging] Dispatching live Kling Image-to-Video generation to Fal.ai...');
+            const falRes = await callFalKlingImageToVideo(
+                falApiKey, 
+                payload.planUrl, 
+                effectivePrompt, 
+                payload.duration, 
+                payload.videoFormat
+            );
+
+            if (falRes.success && falRes.videoUrl) {
+                return {
+                    success: true,
+                    resultUrl: falRes.videoUrl,
+                    narrationScript,
+                    message: "Walkthrough video 3D randat cu succes cu Kling AI pe Fal.ai!"
+                };
+            } else {
+                console.warn('[AI Staging] Fal.ai generation error, falling back to library:', falRes.error);
+            }
+        }
+
+        // 2. High-definition architectural video fallback
         const videoLibrary: Record<string, string> = {
             'Modern Lux': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/modern_lux.mp4',
             'Scandinavian': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/scandinavian.mp4',
