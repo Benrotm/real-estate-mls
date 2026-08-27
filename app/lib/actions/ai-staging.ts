@@ -718,6 +718,321 @@ export async function generateWalkthroughVideo(payload: {
     }
 }
 
+// =========================================================================
+// 1. GENERARE PANORAMĂ 360° EQUIRECTANGULARĂ PER CAMERĂ (TUR VIRTUAL 360)
+// =========================================================================
+export async function generatePanorama360Action(
+    payload: {
+        planUrl: string;
+        roomName: string;
+        style: string;
+        ambience: string;
+        furnitureDetails?: string;
+        customPrompt?: string;
+    },
+    provider: string = 'gemini',
+    apiKey?: string
+): Promise<{ success: boolean; panoramaUrl?: string; promptUsed?: string; error?: string }> {
+    try {
+        const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+        const falApiKey = (provider === 'fal' && apiKey) ? apiKey : await getGlobalApiKey('fal');
+
+        const creditRes = await updateSystemFeatureDeduction('ai_panorama_360');
+        if (creditRes?.error) return { success: false, error: creditRes.error };
+
+        const panoramaPrompt = payload.customPrompt || 
+            `equirectangular 360 degree spherical panorama view of ${payload.roomName} inside a modern luxury apartment, ${payload.style} interior design style, ${payload.ambience}. ${payload.furnitureDetails || ''}. 2:1 aspect ratio, seamless 360 hdr panoramic photography, ultra-high resolution, architectural interior staging, perfect spherical mapping, photorealistic textures, Unreal Engine 5 render.`;
+
+        // 1. Try Fal.ai FLUX (Best in class for 2:1 360 Equirectangular Panoramas)
+        if (falApiKey) {
+            try {
+                console.log('[Panorama 360] Generating equirectangular panorama via Fal.ai Flux...');
+                const falPost = await fetch("https://queue.fal.run/fal-ai/flux/dev", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Key ${falApiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        prompt: panoramaPrompt,
+                        image_size: { width: 1408, height: 704 }, // Exactly 2:1 for 360 spherical viewer
+                        num_inference_steps: 28,
+                        guidance_scale: 3.5
+                    })
+                });
+
+                if (falPost.ok) {
+                    const queueData = await falPost.json();
+                    const requestId = queueData.request_id;
+                    if (requestId) {
+                        for (let i = 0; i < 20; i++) {
+                            await new Promise(r => setTimeout(r, 2500));
+                            const st = await fetch(`https://queue.fal.run/fal-ai/flux/requests/${requestId}/status`, {
+                                headers: { "Authorization": `Key ${falApiKey}` }
+                            });
+                            if (st.ok) {
+                                const stJson = await st.json();
+                                if (stJson.status === "COMPLETED") {
+                                    const res = await fetch(`https://queue.fal.run/fal-ai/flux/requests/${requestId}`, {
+                                        headers: { "Authorization": `Key ${falApiKey}` }
+                                    });
+                                    if (res.ok) {
+                                        const resData = await res.json();
+                                        const imgUrl = resData.images?.[0]?.url;
+                                        if (imgUrl) {
+                                            return { success: true, panoramaUrl: imgUrl, promptUsed: panoramaPrompt };
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (falErr) {
+                console.warn('[Panorama 360] Fal.ai error, trying Gemini fallback:', falErr);
+            }
+        }
+
+        // 2. Fallback / Gemini Imagen 3 Generation
+        if (geminiApiKey) {
+            try {
+                const geminiImgResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${geminiApiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instances: [{ prompt: panoramaPrompt }],
+                        parameters: {
+                            sampleCount: 1,
+                            aspectRatio: "16:9",
+                            outputOptions: { mimeType: "image/jpeg" }
+                        }
+                    })
+                });
+
+                if (geminiImgResp.ok) {
+                    const imgJson = await geminiImgResp.json();
+                    const b64 = imgJson.predictions?.[0]?.bytesBase64Encoded;
+                    if (b64) {
+                        const buffer = Buffer.from(b64, 'base64');
+                        const supabase = createAdminClient();
+                        const fileName = `panorama_360_${Date.now()}.jpg`;
+                        const filePath = `ai_uploads/${fileName}`;
+                        await supabase.storage.from('property-images').upload(filePath, buffer, { contentType: 'image/jpeg', upsert: true });
+                        const { data: { publicUrl } } = supabase.storage.from('property-images').getPublicUrl(filePath);
+                        return { success: true, panoramaUrl: publicUrl, promptUsed: panoramaPrompt };
+                    }
+                }
+            } catch (gErr) {
+                console.warn('[Panorama 360] Gemini Imagen error:', gErr);
+            }
+        }
+
+        return { success: false, error: "Nu s-a putut genera panorama 360°. Vă rugăm să verificați cheia API Fal.ai sau Google Gemini." };
+    } catch (e: any) {
+        return { success: false, error: e.message || "Eroare server la generarea panoramei 360°" };
+    }
+}
+
+// =========================================================================
+// 2. PIPELINE 2-STAGE: PASUL 1 (PLAN 2D/3D → RANDARE INTERIOARĂ LA NIVELUL OCHILOR)
+// =========================================================================
+export async function generateInteriorRenderFromPlanAction(
+    payload: {
+        planUrl: string;
+        roomName: string;
+        style: string;
+        ambience: string;
+        furnitureDetails?: string;
+    },
+    provider: string = 'gemini',
+    apiKey?: string
+): Promise<{ success: boolean; interiorImageUrl?: string; promptUsed?: string; error?: string }> {
+    try {
+        const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+        const falApiKey = (provider === 'fal' && apiKey) ? apiKey : await getGlobalApiKey('fal');
+
+        const creditRes = await updateSystemFeatureDeduction('ai_walkthrough_2stage');
+        if (creditRes?.error) return { success: false, error: creditRes.error };
+
+        const interiorPrompt = `Photorealistic architectural interior photography, eye-level perspective inside the ${payload.roomName} of a luxury modern apartment. Design style: ${payload.style}. Lighting & Ambience: ${payload.ambience}. Room details and furniture: ${payload.furnitureDetails || 'Modern bespoke furniture, elegant wooden parquet, large panoramic windows with sheer curtains, warm ambient lighting'}. High-end architectural digest photography, 8k resolution, crisp textures, depth of field.`;
+
+        // 1. Fal.ai Flux Dev
+        if (falApiKey) {
+            try {
+                const falPost = await fetch("https://queue.fal.run/fal-ai/flux/dev", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Key ${falApiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        prompt: interiorPrompt,
+                        image_size: "landscape_16_9",
+                        num_inference_steps: 28,
+                        guidance_scale: 3.5
+                    })
+                });
+
+                if (falPost.ok) {
+                    const queueData = await falPost.json();
+                    const requestId = queueData.request_id;
+                    if (requestId) {
+                        for (let i = 0; i < 20; i++) {
+                            await new Promise(r => setTimeout(r, 2500));
+                            const st = await fetch(`https://queue.fal.run/fal-ai/flux/requests/${requestId}/status`, {
+                                headers: { "Authorization": `Key ${falApiKey}` }
+                            });
+                            if (st.ok) {
+                                const stJson = await st.json();
+                                if (stJson.status === "COMPLETED") {
+                                    const res = await fetch(`https://queue.fal.run/fal-ai/flux/requests/${requestId}`, {
+                                        headers: { "Authorization": `Key ${falApiKey}` }
+                                    });
+                                    if (res.ok) {
+                                        const resData = await res.json();
+                                        const imgUrl = resData.images?.[0]?.url;
+                                        if (imgUrl) {
+                                            return { success: true, interiorImageUrl: imgUrl, promptUsed: interiorPrompt };
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (falErr) {
+                console.warn('[2-Stage Render] Fal.ai error:', falErr);
+            }
+        }
+
+        // 2. Gemini Imagen 3
+        if (geminiApiKey) {
+            try {
+                const geminiImgResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${geminiApiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instances: [{ prompt: interiorPrompt }],
+                        parameters: {
+                            sampleCount: 1,
+                            aspectRatio: "16:9",
+                            outputOptions: { mimeType: "image/jpeg" }
+                        }
+                    })
+                });
+
+                if (geminiImgResp.ok) {
+                    const imgJson = await geminiImgResp.json();
+                    const b64 = imgJson.predictions?.[0]?.bytesBase64Encoded;
+                    if (b64) {
+                        const buffer = Buffer.from(b64, 'base64');
+                        const supabase = createAdminClient();
+                        const fileName = `interior_render_${Date.now()}.jpg`;
+                        const filePath = `ai_uploads/${fileName}`;
+                        await supabase.storage.from('property-images').upload(filePath, buffer, { contentType: 'image/jpeg', upsert: true });
+                        const { data: { publicUrl } } = supabase.storage.from('property-images').getPublicUrl(filePath);
+                        return { success: true, interiorImageUrl: publicUrl, promptUsed: interiorPrompt };
+                    }
+                }
+            } catch (gErr) {
+                console.warn('[2-Stage Render] Gemini Imagen error:', gErr);
+            }
+        }
+
+        return { success: false, error: "Nu s-a putut genera imaginea interioară. Vă rugăm să verificați cheia API." };
+    } catch (e: any) {
+        return { success: false, error: e.message || "Eroare la randarea interioară din plan" };
+    }
+}
+
+// =========================================================================
+// 2. PIPELINE 2-STAGE: PASUL 2 (RANDARE INTERIOR FOTO → VIDEO WALKTHROUGH FIDEL)
+// =========================================================================
+export async function generateInteriorWalkthroughVideoAction(
+    payload: {
+        interiorImageUrl: string;
+        motionType: string;
+        duration: string;
+        customPrompt?: string;
+    },
+    provider: string = 'gemini',
+    apiKey?: string
+): Promise<{ success: boolean; videoUrl?: string; error?: string }> {
+    try {
+        const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+        const falApiKey = (provider === 'fal' && apiKey) ? apiKey : await getGlobalApiKey('fal');
+
+        const videoMotionPrompt = payload.customPrompt || 
+            `Smooth slow-motion cinematic camera glide forward through this room, ${payload.motionType}, eye-level perspective, photorealistic reflections and lighting, smooth continuous 1st-person architectural motion, steady gimbal movement, 4k render.`;
+
+        // 1. Google Veo 3.1
+        if (provider === 'gemini' && geminiApiKey) {
+            const veoRes = await callGoogleVeoGenerate(geminiApiKey, payload.interiorImageUrl, videoMotionPrompt);
+            if (veoRes.success && veoRes.videoUrl) {
+                return { success: true, videoUrl: veoRes.videoUrl };
+            }
+        }
+
+        // 2. Fal.ai Kling Video
+        if (falApiKey) {
+            const falRes = await callFalKlingImageToVideo(falApiKey, payload.interiorImageUrl, videoMotionPrompt, payload.duration, "16:9");
+            if (falRes.success && falRes.videoUrl) {
+                return { success: true, videoUrl: falRes.videoUrl };
+            }
+        }
+
+        return { success: false, error: "Eroare la animarea randării interioare. Verificați creditele și cheia API." };
+    } catch (e: any) {
+        return { success: false, error: e.message || "Eroare la generarea video walkthrough" };
+    }
+}
+
+// =========================================================================
+// 3. ABORDAREA 2: TUR IZOMETRIC / FLY-THROUGH DIRECT DIN SCHIȚĂ (PĂSTRARE PLAN)
+// =========================================================================
+export async function generateIsometricFlythroughAction(
+    payload: {
+        planUrl: string;
+        cameraAngle: string;
+        style: string;
+        duration: string;
+        customPrompt?: string;
+    },
+    provider: string = 'gemini',
+    apiKey?: string
+): Promise<{ success: boolean; videoUrl?: string; error?: string }> {
+    try {
+        const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+        const falApiKey = (provider === 'fal' && apiKey) ? apiKey : await getGlobalApiKey('fal');
+
+        const creditRes = await updateSystemFeatureDeduction('ai_walkthrough_isometric');
+        if (creditRes?.error) return { success: false, error: creditRes.error };
+
+        const isoPrompt = payload.customPrompt || 
+            `Smooth 3D isometric architectural fly-through animation over this exact 3D apartment floorplan. ${payload.cameraAngle}, maintaining the exact walls, layout and rooms from the image. Modern ${payload.style} interior lighting, realistic sunlight casting dynamic soft shadows, architectural model rotation, smooth cinematic camera orbiting over the layout, Unreal Engine 5 render.`;
+
+        // 1. Google Veo
+        if (provider === 'gemini' && geminiApiKey) {
+            const veoRes = await callGoogleVeoGenerate(geminiApiKey, payload.planUrl, isoPrompt);
+            if (veoRes.success && veoRes.videoUrl) {
+                return { success: true, videoUrl: veoRes.videoUrl };
+            }
+        }
+
+        // 2. Fal.ai Kling
+        if (falApiKey) {
+            const falRes = await callFalKlingImageToVideo(falApiKey, payload.planUrl, isoPrompt, payload.duration, "16:9");
+            if (falRes.success && falRes.videoUrl) {
+                return { success: true, videoUrl: falRes.videoUrl };
+            }
+        }
+
+        return { success: false, error: "Eroare la generarea turului izometric. Verificați cheia API Google Veo sau Fal.ai." };
+    } catch (e: any) {
+        return { success: false, error: e.message || "Eroare la generarea turului izometric" };
+    }
+}
+
 export async function uploadAIFileAction(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
         const file = formData.get('file') as File;
@@ -755,3 +1070,4 @@ export async function uploadAIFileAction(formData: FormData): Promise<{ success:
         return { success: false, error: e.message || 'Eroare la procesarea fișierului.' };
     }
 }
+

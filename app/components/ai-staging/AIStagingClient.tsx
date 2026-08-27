@@ -19,6 +19,10 @@ import {
   analyzeFloorplanAction,
   optimizeWalkthroughPromptAction,
   generateWalkthroughStoryboardAction,
+  generatePanorama360Action,
+  generateInteriorRenderFromPlanAction,
+  generateInteriorWalkthroughVideoAction,
+  generateIsometricFlythroughAction,
   uploadAIFileAction,
   RoomItem,
   StoryboardTimelineItem
@@ -37,6 +41,27 @@ const AI_FEATURES = [
     color: 'from-blue-500 to-cyan-400'
   },
   {
+    id: 'panorama-360',
+    title: 'Tur Virtual 360° Panoramic per Cameră',
+    subtitle: 'Generare sferică 360° interactivă pe camere din schiță, explorabilă cu mouse-ul sau pe telefon',
+    icon: Compass,
+    color: 'from-cyan-500 to-teal-400'
+  },
+  {
+    id: 'walkthrough-2stage',
+    title: 'Walkthrough 2-Stage (Plan → Render Interior → Video)',
+    subtitle: 'Cea mai fidelă metodă: Randează prima imagine foto la nivelul ochilor, apoi animă mișcarea camerei',
+    icon: Camera,
+    color: 'from-emerald-500 to-green-400'
+  },
+  {
+    id: 'isometric-flythrough',
+    title: 'Tur Video Izometric 3D (Fly-Through din Schiță)',
+    subtitle: 'Păstrează 100% schița 3D printr-o animație cinematică aeriană orbitală cu lumini și umbre reale',
+    icon: Layers,
+    color: 'from-purple-500 to-indigo-400'
+  },
+  {
     id: 'video-generator',
     title: 'Generator Video AI pentru Imobiliare',
     subtitle: 'Transformă pozele proprietății într-un video cinematic cu narație, muzică și logo-ul agenției tale',
@@ -47,7 +72,7 @@ const AI_FEATURES = [
     id: 'plan-3d',
     title: 'Plan 2D → Vizualizare 3D',
     subtitle: 'Încarcă orice plan de arhitectură, schiță sau desen de mână și primești o randare 3D profesională',
-    icon: Layers,
+    icon: Building,
     color: 'from-green-500 to-emerald-400'
   },
   {
@@ -66,8 +91,8 @@ const AI_FEATURES = [
   },
   {
     id: 'walkthrough-video',
-    title: 'AI Floorplan Walkthrough — Video 3D',
-    subtitle: 'Transformă schița 2D sau planul 3D într-un video walkthrough cinematic de prezentare a apartamentului',
+    title: 'AI Floorplan Walkthrough — Video Direct',
+    subtitle: 'Generare directă video din schiță 2D/3D (Google Veo / Fal.ai Kling)',
     icon: Building,
     color: 'from-amber-500 to-orange-400'
   }
@@ -130,6 +155,12 @@ export default function AIStagingClient({ userRole }: { userRole: string }) {
     switch (activeTab) {
       case 'virtual-staging':
         return <VirtualStagingTool />;
+      case 'panorama-360':
+        return <Panorama360Tool />;
+      case 'walkthrough-2stage':
+        return <Walkthrough2StageTool />;
+      case 'isometric-flythrough':
+        return <IsometricFlythroughTool />;
       case 'video-generator':
         return <VideoGeneratorTool />;
       case 'plan-3d':
@@ -564,6 +595,742 @@ function ProviderSettings({
       <p className="text-[11px] text-slate-500 mt-2">
         💡 <span className="italic">Opțional: dacă lăsați câmpul gol, platforma va utiliza automat cheia Master configurată global de Superadmin.</span>
       </p>
+    </div>
+  );
+}
+
+// =========================================================================
+// 1. TOOL DEDICAT: TUR VIRTUAL 360° PANORAMIC PER CAMERĂ
+// =========================================================================
+function Panorama360Tool() {
+  const [isPending, startTransition] = useTransition();
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
+  const cost = costs['ai_panorama_360'] || 5;
+
+  const [provider, setProvider] = useState('fal');
+  const [apiKey, setApiKey] = useState('');
+
+  const [planUrl, setPlanUrl] = useState('');
+  const [roomName, setRoomName] = useState('Living & Dining Open-Space');
+  const [style, setStyle] = useState('Modern Lux');
+  const [ambience, setAmbience] = useState('Lumină Naturală de Zi');
+  const [furnitureDetails, setFurnitureDetails] = useState('Canapea modulară albă, măsuță marmură, parchet stejar, ferestre mari vitrate, plante decorative');
+  const [customPrompt, setCustomPrompt] = useState('');
+
+  const [result, setResult] = useState('');
+  const [error, setError] = useState('');
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const roomsList = [
+    'Living & Dining Open-Space',
+    'Dormitor Matrimonial',
+    'Terasă Exterioară cu Deck',
+    'Bucătărie cu Insulă',
+    'Baie Modernă Tip Spa',
+    'Hol de Intrare & Vestibul'
+  ];
+
+  const stylesList = ['Modern Lux', 'Scandinavian', 'Minimalist', 'Clasic Elegant', 'Industrial', 'Japandi'];
+  const ambienceList = ['Lumină Naturală de Zi', 'Apus Cald (Golden Hour)', 'Eleganță Nocturnă (Evening Ambience)'];
+
+  const handleSubmit = () => {
+    if (!planUrl) {
+      setError('Vă rugăm să încărcați o schiță 2D sau o axonometrie a apartamentului.');
+      return;
+    }
+    setError('');
+    startTransition(async () => {
+      try {
+        const res = await generatePanorama360Action({
+          planUrl,
+          roomName,
+          style,
+          ambience,
+          furnitureDetails,
+          customPrompt: customPrompt || undefined
+        }, provider, apiKey);
+
+        if (res.error) {
+          setError(res.error);
+        } else if (res.panoramaUrl) {
+          setResult(res.panoramaUrl);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Eroare la generarea panoramei 360°.');
+      }
+    });
+  };
+
+  const renderPills = (items: string[], current: string, setter: (val: string) => void) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {items.map(item => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => setter(item)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+            current === item
+              ? 'border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+              : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-300'
+          }`}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
+        <ProviderSettings 
+          providerList={[
+            {id: 'fal', name: 'Fal.ai API (Flux Dev Equirectangular 360) — Calitate Maximă 2:1'},
+            {id: 'gemini', name: 'Google Imagen 3 (Google AI Studio)'}
+          ]}
+          onProviderChange={setProvider}
+          onKeyChange={setApiKey}
+        />
+      ) : (
+        <div className="bg-cyan-950/30 border border-cyan-500/20 rounded-2xl p-4 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Compass className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span>Generare Panoramă 360° Sferică (Format Equirectangular 2:1 pentru vizualizare 360° interactivă).</span>
+          </div>
+          <span className="font-semibold text-cyan-300 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20 text-[11px] flex-shrink-0">
+            Mod Asistat
+          </span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-cyan-900/30 shadow-xl">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold text-xs flex items-center justify-center shadow-lg">
+                1
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Configurare Panoramă 360° pe Cameră
+                </h3>
+                <p className="text-xs text-slate-400">Alege camera exactă din schiță pe care dorești să o vezi sferic la 360°</p>
+              </div>
+            </div>
+            <span className="text-xs font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-3 py-1 rounded-lg">
+              {cost} credite
+            </span>
+          </div>
+
+          <FileUploader 
+            label="Încarcă schița apartamentului sau planul 2D/3D (JPG, PNG)"
+            accept="image/*"
+            onUploadComplete={urls => setPlanUrl(urls[0] || '')}
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Selectează Încăperea pentru Vederea 360°
+            </label>
+            {renderPills(roomsList, roomName, setRoomName)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Stil Arhitectural & Mobilier
+            </label>
+            {renderPills(stylesList, style, setStyle)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Atmosferă & Iluminat
+            </label>
+            {renderPills(ambienceList, ambience, setAmbience)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Mobilier & Detalii de Inclus în Încăpere (Opțional)
+            </label>
+            <input
+              type="text"
+              value={furnitureDetails}
+              onChange={e => setFurnitureDetails(e.target.value)}
+              className="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/50"
+              placeholder="ex: Canapea albă, măsuță marmură, deck din lemn, plante..."
+            />
+          </div>
+
+          {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
+
+          <button 
+            onClick={handleSubmit}
+            disabled={isPending || credits < cost}
+            className="w-full py-4 bg-gradient-to-r from-cyan-500 via-teal-500 to-cyan-600 hover:from-cyan-400 hover:to-teal-400 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
+          >
+            {isPending ? (
+              <span className="flex items-center gap-2 text-base">
+                <Loader2 className="w-5 h-5 animate-spin" /> Generare Panoramă 360° Sferică...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2 text-base">
+                <Compass className="w-5 h-5" /> Generează Panoramă 360° ({roomName})
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* 360 Viewer / Result Area */}
+        <div className="space-y-6">
+          <div className="bg-black/50 rounded-2xl border border-cyan-500/30 flex flex-col items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
+            {result ? (
+              <div className="w-full space-y-4 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" /> Panoramă 360° Gata — {roomName}
+                  </span>
+                  <button 
+                    onClick={() => handleDownload(result, `panorama_360_${roomName.toLowerCase().replace(/\s+/g, '_')}.jpg`)} 
+                    className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all text-xs font-semibold shadow-lg cursor-pointer"
+                  >
+                    <Download className="w-4 h-4"/> Descarcă Imagine 360°
+                  </button>
+                </div>
+
+                {/* Interactive 360 Panning Container */}
+                <div 
+                  className="relative rounded-xl overflow-x-scroll no-scrollbar bg-black aspect-[2/1] border border-white/10 shadow-2xl cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={(e) => {
+                    setIsDragging(true);
+                    setStartX(e.pageX - e.currentTarget.offsetLeft);
+                    setScrollLeft(e.currentTarget.scrollLeft);
+                  }}
+                  onMouseLeave={() => setIsDragging(false)}
+                  onMouseUp={() => setIsDragging(false)}
+                  onMouseMove={(e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const x = e.pageX - e.currentTarget.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    e.currentTarget.scrollLeft = scrollLeft - walk;
+                  }}
+                >
+                  <img src={result} alt="Panorama 360" className="h-full max-w-none object-cover min-w-[200%]" draggable={false} />
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[11px] text-cyan-300 pointer-events-none flex items-center gap-1.5 shadow-lg">
+                    <Compass className="w-3.5 h-3.5 animate-spin" /> Trage cu mouse-ul stânga/dreapta pentru a explora la 360°
+                  </div>
+                </div>
+
+                <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-slate-300 flex items-center justify-between">
+                  <span>📐 Format: <strong>2:1 Equirectangular Sferic</strong></span>
+                  <span className="text-cyan-400">Compatibil Facebook 360, Kuula, VR & Matterport</span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center px-4 py-8">
+                {isPending ? (
+                  <div className="space-y-4 text-center">
+                    <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
+                    <p className="font-bold text-slate-200 text-sm">Calculare proiecție sferică equirectangulară...</p>
+                    <p className="text-slate-400 text-xs max-w-xs mx-auto">Construiește toate cele 4 laturi ale camerei {roomName} în 360°.</p>
+                  </div>
+                ) : (
+                  <>
+                    <Compass className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                    <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Tur Virtual 360°</h4>
+                    <p className="text-slate-400 text-sm max-w-md mx-auto">Încarcă schița, alege încăperea dorită și explorează camera la 360°.</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =========================================================================
+// 2. TOOL DEDICAT: WALKTHROUGH 2-STAGE (PLAN → RANDARE FOTO → VIDEO FIDEL)
+// =========================================================================
+function Walkthrough2StageTool() {
+  const [isPending, startTransition] = useTransition();
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
+  const cost = costs['ai_walkthrough_2stage'] || 12;
+
+  const [provider, setProvider] = useState('fal');
+  const [apiKey, setApiKey] = useState('');
+
+  const [planUrl, setPlanUrl] = useState('');
+  const [roomName, setRoomName] = useState('Living Open-Space & Terasă');
+  const [style, setStyle] = useState('Modern Lux');
+  const [ambience, setAmbience] = useState('Lumină Naturală de Zi');
+  const [furnitureDetails, setFurnitureDetails] = useState('Canapea colțar albă, măsuță marmură, masă dining 4 scaune, ieșire pe terasa cu deck');
+  const [motionType, setMotionType] = useState('Înaintare lină prin living spre terasă');
+  const [duration, setDuration] = useState('5 secunde');
+
+  const [isRenderingImage, setIsRenderingImage] = useState(false);
+  const [interiorImageUrl, setInteriorImageUrl] = useState('');
+  const [videoResultUrl, setVideoResultUrl] = useState('');
+  const [error, setError] = useState('');
+
+  const roomsList = ['Living Open-Space & Terasă', 'Dormitor Matrimonial', 'Bucătărie cu Insulă', 'Baie Modernă'];
+  const motionsList = [
+    'Înaintare lină prin living spre terasă',
+    'Panoramare lentă stânga-dreapta',
+    'Rotire cinematică la 45 grade',
+    'Intrare dinspre hol spre centrul camerei'
+  ];
+
+  // Pasul 1: Randare Foto la nivelul ochilor din schiță
+  const handleRenderInterior = async () => {
+    if (!planUrl) {
+      setError('Vă rugăm să încărcați schița la Pasul 1.');
+      return;
+    }
+    setError('');
+    setIsRenderingImage(true);
+    try {
+      const res = await generateInteriorRenderFromPlanAction({
+        planUrl,
+        roomName,
+        style,
+        ambience,
+        furnitureDetails
+      }, provider, apiKey);
+
+      if (res.error) {
+        setError(res.error);
+      } else if (res.interiorImageUrl) {
+        setInteriorImageUrl(res.interiorImageUrl);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Eroare la randarea interioară.');
+    } finally {
+      setIsRenderingImage(false);
+    }
+  };
+
+  // Pasul 2: Video Walkthrough din imaginea aprobată
+  const handleGenerateVideo = () => {
+    if (!interiorImageUrl) {
+      setError('Vă rugăm să generați mai întâi randarea foto interioară (Pasul 1).');
+      return;
+    }
+    setError('');
+    startTransition(async () => {
+      try {
+        const res = await generateInteriorWalkthroughVideoAction({
+          interiorImageUrl,
+          motionType,
+          duration
+        }, provider, apiKey);
+
+        if (res.error) {
+          setError(res.error);
+        } else if (res.videoUrl) {
+          setVideoResultUrl(res.videoUrl);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Eroare la generarea video.');
+      }
+    });
+  };
+
+  const renderPills = (items: string[], current: string, setter: (val: string) => void) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {items.map(item => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => setter(item)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+            current === item
+              ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300 shadow-[0_0_10px_rgba(10,185,129,0.2)]'
+              : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-300'
+          }`}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
+        <ProviderSettings 
+          providerList={[
+            {id: 'fal', name: 'Fal.ai API (Flux Dev + Kling Video) — Cel mai fidel rezultat'},
+            {id: 'gemini', name: 'Google AI Studio (Imagen 3 + Veo 3.1)'}
+          ]}
+          onProviderChange={setProvider}
+          onKeyChange={setApiKey}
+        />
+      ) : (
+        <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span><strong>Abordarea 2-Stage:</strong> Pasul 1 randează camera la nivelul ochilor, iar Pasul 2 o animă fidel în video 1080p.</span>
+          </div>
+          <span className="font-semibold text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 text-[11px] flex-shrink-0">
+            Pipeline Recomandat
+          </span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Controls */}
+        <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-emerald-900/30 shadow-xl">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center shadow-lg">
+                1
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Etapa 1: Plan → Randare Foto Interioară
+                </h3>
+                <p className="text-xs text-slate-400">Randează prima cameră la nivelul ochilor respectând mobilierul din plan</p>
+              </div>
+            </div>
+          </div>
+
+          <FileUploader 
+            label="Încarcă schița 2D sau axonometria 3D"
+            accept="image/*"
+            onUploadComplete={urls => setPlanUrl(urls[0] || '')}
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Selectează Încăperea
+            </label>
+            {renderPills(roomsList, roomName, setRoomName)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Stil & Finisaje
+            </label>
+            {renderPills(['Modern Lux', 'Scandinavian', 'Minimalist', 'Clasic Elegant'], style, setStyle)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Mobilier & Dotări (Fidele Schiței)
+            </label>
+            <input
+              type="text"
+              value={furnitureDetails}
+              onChange={e => setFurnitureDetails(e.target.value)}
+              className="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:border-emerald-500/50 outline-none"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleRenderInterior}
+            disabled={isRenderingImage || !planUrl}
+            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-lg"
+          >
+            {isRenderingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+            <span>Randează Imaginea Foto Interioară din Plan</span>
+          </button>
+
+          {/* Etapa 2 */}
+          <div className="pt-4 border-t border-white/10 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-lg bg-orange-500/20 border border-orange-500/40 text-orange-300 font-bold text-xs flex items-center justify-center shadow-lg">
+                2
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Etapa 2: Animare Video Walkthrough
+                </h3>
+                <p className="text-xs text-slate-400">Generează mișcarea camerei din imaginea randată mai sus</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                Tip Mișcare Cameră
+              </label>
+              {renderPills(motionsList, motionType, setMotionType)}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                Durată Video
+              </label>
+              {renderPills(['5 secunde', '10 secunde (Extins)', '15 secunde (Max)'], duration, setDuration)}
+            </div>
+
+            {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
+
+            <button
+              type="button"
+              onClick={handleGenerateVideo}
+              disabled={isPending || !interiorImageUrl || credits < cost}
+              className="w-full py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-2xl"
+            >
+              {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Video className="w-5 h-5" />}
+              <span>Lansează Video Walkthrough Fidel din Randare</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Results Area (Image + Video) */}
+        <div className="space-y-6">
+          <div className="bg-black/50 rounded-2xl border border-emerald-500/30 p-6 min-h-[460px] flex flex-col justify-center items-center shadow-2xl relative overflow-hidden">
+            {videoResultUrl ? (
+              <div className="w-full space-y-3 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" /> Video Walkthrough 3D Generat
+                  </span>
+                  <button 
+                    onClick={() => handleDownload(videoResultUrl, 'walkthrough_fidel_2stage.mp4')}
+                    className="text-xs bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/30 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Descarcă MP4
+                  </button>
+                </div>
+                <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
+                  <video src={videoResultUrl} controls autoPlay loop playsInline className="w-full h-full object-contain" />
+                </div>
+              </div>
+            ) : interiorImageUrl ? (
+              <div className="w-full space-y-3 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" /> Randare Foto Etapa 1 Gata
+                  </span>
+                  <span className="text-[11px] text-slate-400">Apasă pe butonul de mai jos pentru a o anima</span>
+                </div>
+                <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
+                  <img src={interiorImageUrl} alt="Interior Render" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center px-4 py-8 text-slate-400">
+                <Camera className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Pipeline 2-Stage</h4>
+                <p className="text-xs max-w-sm mx-auto">Încarcă schița pentru a obține mai întâi randarea foto exactă a camerei, apoi animă turul video.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =========================================================================
+// 3. TOOL DEDICAT: TUR VIDEO IZOMETRIC 3D (FLY-THROUGH DIRECT DIN SCHIȚĂ)
+// =========================================================================
+function IsometricFlythroughTool() {
+  const [isPending, startTransition] = useTransition();
+  const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
+  const cost = costs['ai_walkthrough_isometric'] || 10;
+
+  const [provider, setProvider] = useState('fal');
+  const [apiKey, setApiKey] = useState('');
+
+  const [planUrl, setPlanUrl] = useState('');
+  const [cameraAngle, setCameraAngle] = useState('Rotație orbitală lină la 360 grade peste macheta 3D');
+  const [style, setStyle] = useState('Modern Lux cu Iluminat Dinamic');
+  const [duration, setDuration] = useState('5 secunde');
+  const [customPrompt, setCustomPrompt] = useState('');
+
+  const [resultUrl, setResultUrl] = useState('');
+  const [error, setError] = useState('');
+
+  const cameraAngles = [
+    'Rotație orbitală lină la 360 grade peste macheta 3D',
+    'Panoramare dinamică din colțul de Sud spre Nord',
+    'Zoom-in cinematic din aer spre living și terasă',
+    'Vedere aeriană 3D Bird-Eye View cu umbre în mișcare'
+  ];
+
+  const handleSubmit = () => {
+    if (!planUrl) {
+      setError('Vă rugăm să încărcați o axonometrie 3D sau o schiță a apartamentului.');
+      return;
+    }
+    setError('');
+    startTransition(async () => {
+      try {
+        const res = await generateIsometricFlythroughAction({
+          planUrl,
+          cameraAngle,
+          style,
+          duration,
+          customPrompt: customPrompt || undefined
+        }, provider, apiKey);
+
+        if (res.error) {
+          setError(res.error);
+        } else if (res.videoUrl) {
+          setResultUrl(res.videoUrl);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Eroare la generarea turului izometric.');
+      }
+    });
+  };
+
+  const renderPills = (items: string[], current: string, setter: (val: string) => void) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {items.map(item => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => setter(item)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+            current === item
+              ? 'border-purple-400 bg-purple-500/20 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.2)]'
+              : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-300'
+          }`}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
+        <ProviderSettings 
+          providerList={[
+            {id: 'fal', name: 'Fal.ai API (Kling AI Fly-Through) — Păstrează Schița 100%'},
+            {id: 'gemini', name: 'Google Veo 3.1 (Google DeepMind)'}
+          ]}
+          onProviderChange={setProvider}
+          onKeyChange={setApiKey}
+        />
+      ) : (
+        <div className="bg-purple-950/30 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <Layers className="w-4 h-4 text-purple-400 flex-shrink-0" />
+            <span><strong>Tur Izometric / Fly-Through:</strong> Păstrează fidel pereții și unghiul 3D din schița încărcată, animând camera în zbor deasupra apartamentului.</span>
+          </div>
+          <span className="font-semibold text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20 text-[11px] flex-shrink-0">
+            Fidelitate Schiță
+          </span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-purple-900/30 shadow-xl">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 font-bold text-xs flex items-center justify-center shadow-lg">
+                1
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Configurare Fly-Through Izometric 3D
+                </h3>
+                <p className="text-xs text-slate-400">Animație 3D continuă peste compartimentarea exactă din imagine</p>
+              </div>
+            </div>
+            <span className="text-xs font-bold text-purple-300 bg-purple-500/15 border border-purple-500/30 px-3 py-1 rounded-lg">
+              {cost} credite
+            </span>
+          </div>
+
+          <FileUploader 
+            label="Încarcă axonometria 3D sau planul de arhitectură"
+            accept="image/*"
+            onUploadComplete={urls => setPlanUrl(urls[0] || '')}
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Unghi & Mișcare Cameră Aeriană
+            </label>
+            {renderPills(cameraAngles, cameraAngle, setCameraAngle)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Stil & Iluminat
+            </label>
+            {renderPills(['Modern Lux cu Iluminat Dinamic', 'Lumină Naturală cu Umbre Realiste', 'Atmosferă de Seară cu Spoturi Aprinse'], style, setStyle)}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+              Durată Animație
+            </label>
+            {renderPills(['5 secunde', '10 secunde (Extins)', '15 secunde (Max)'], duration, setDuration)}
+          </div>
+
+          {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
+
+          <button 
+            onClick={handleSubmit}
+            disabled={isPending || credits < cost}
+            className="w-full py-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-600 hover:from-purple-400 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
+          >
+            {isPending ? (
+              <span className="flex items-center gap-2 text-base">
+                <Loader2 className="w-5 h-5 animate-spin" /> Randare Fly-Through Izometric 3D...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2 text-base">
+                <Layers className="w-5 h-5" /> Generează Video Izometric 3D ({duration})
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Video Result */}
+        <div className="space-y-6">
+          <div className="bg-black/50 rounded-2xl border border-purple-500/30 flex flex-col items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
+            {resultUrl ? (
+              <div className="w-full space-y-4 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" /> Fly-Through Izometric Generat cu Succes
+                  </span>
+                  <button 
+                    onClick={() => handleDownload(resultUrl, 'flythrough_izometric_3d.mp4')} 
+                    className="bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all text-xs font-semibold shadow-lg cursor-pointer"
+                  >
+                    <Download className="w-4 h-4"/> Descarcă MP4
+                  </button>
+                </div>
+                <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
+                  <video src={resultUrl} controls autoPlay loop playsInline className="w-full h-full object-contain" />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center px-4 py-8">
+                {isPending ? (
+                  <div className="space-y-4 text-center">
+                    <Loader2 className="w-10 h-10 text-purple-400 animate-spin mx-auto" />
+                    <p className="font-bold text-slate-200 text-sm">Randare traiectorie orbitală peste schiță...</p>
+                    <p className="text-slate-400 text-xs max-w-xs mx-auto">Păstrează pereții și camerele din schiță, animând camera în zbor 3D.</p>
+                  </div>
+                ) : (
+                  <>
+                    <Layers className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                    <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Tur Izometric 3D</h4>
+                    <p className="text-slate-400 text-sm max-w-md mx-auto">Încarcă schița 3D pentru a genera o animație cinematică de rotație peste apartament.</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
