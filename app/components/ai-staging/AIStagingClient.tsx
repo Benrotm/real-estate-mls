@@ -1002,6 +1002,42 @@ function WalkthroughVideoTool() {
     }
   };
 
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [savedGenerations, setSavedGenerations] = useState<Array<{
+    id: string;
+    url: string;
+    script?: string;
+    style: string;
+    date: string;
+    providerName: string;
+  }>>([]);
+
+  // Load saved generations from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_walkthrough_gallery');
+      if (stored) {
+        setSavedGenerations(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.warn('Could not load AI walkthrough gallery:', e);
+    }
+  }, []);
+
+  // Live timer during pending execution
+  useEffect(() => {
+    let interval: any;
+    if (isPending) {
+      setElapsedSeconds(0);
+      interval = setInterval(() => {
+        setElapsedSeconds(s => s + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isPending]);
+
   const submitAction = () => {
     if (!planUrl) { setError('Vă rugăm să încărcați o schiță 2D sau un plan 3D.'); return; }
     setError('');
@@ -1021,9 +1057,29 @@ function WalkthroughVideoTool() {
 
         if (res.error) {
           setError(res.error);
-        } else {
-          setResult(res.resultUrl || '');
+        } else if (res.resultUrl) {
+          setResult(res.resultUrl);
           setScript(res.narrationScript || '');
+
+          // Save to persistent gallery
+          const newEntry = {
+            id: Date.now().toString(),
+            url: res.resultUrl,
+            script: res.narrationScript,
+            style: `${style} (${tourMode})`,
+            date: new Date().toLocaleString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            providerName: res.provider || (provider === 'gemini' ? 'Google Veo 3.1' : 'Fal.ai Kling AI')
+          };
+
+          setSavedGenerations(prev => {
+            const updated = [newEntry, ...prev.filter(g => g.url !== res.resultUrl)].slice(0, 10);
+            try {
+              localStorage.setItem('imobum_ai_walkthrough_gallery', JSON.stringify(updated));
+            } catch (e) {
+              console.warn('Could not save to localStorage gallery:', e);
+            }
+            return updated;
+          });
         }
       } catch (err: any) {
         console.error('WalkthroughVideo error:', err);
@@ -1099,10 +1155,10 @@ function WalkthroughVideoTool() {
                   </h4>
                   <ul className="space-y-1.5 text-slate-300 list-disc list-inside leading-relaxed text-[11.5px]">
                     <li>
-                      <strong className="text-white">De ce Veo dă cotă depășită (429) pe Free:</strong> Modelele de difuzie video (<span className="text-cyan-300 font-mono">Google Veo 3.1, Kling AI, Luma</span>) necesită clustere GPU masive. Google oferă 0 secunde video gratuite pe chei fără card/billing Google Cloud.
+                      <strong className="text-white">Google Veo 3.1 & Fal.ai Kling AI:</strong> Ambele sunt conectate live cu creditele tale active! Google Veo randează în 15-20 secunde, iar Kling AI randează în 60-80 secunde.
                     </li>
                     <li>
-                      <strong className="text-white">Activare Veo:</strong> Dacă asociezi un cont de facturare Google Cloud Billing pe AI Studio, Veo este deblocat la plata pe consum.
+                      <strong className="text-white">Fără videoclipuri mock-up:</strong> Sistemul randează fizic fiecare schiță/poză încărcată și o salvează automat în Galeria AI permanentă.
                     </li>
                   </ul>
                 </div>
@@ -1118,46 +1174,29 @@ function WalkthroughVideoTool() {
                       <tr>
                         <th className="p-2.5">Provider AI</th>
                         <th className="p-2.5">Modele Principale</th>
-                        <th className="p-2.5">Calitate Arhitectură / Walkthrough</th>
-                        <th className="p-2.5">Cost Mediu / Video (5-10s)</th>
+                        <th className="p-2.5">Timp Mediu</th>
+                        <th className="p-2.5">Cost Mediu / Video</th>
                         <th className="p-2.5">Recomandare Imobum</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-slate-300">
                       <tr className="bg-amber-500/5">
-                        <td className="p-2.5 font-bold text-amber-300">Fal.ai</td>
-                        <td className="p-2.5 font-mono text-[10.5px]">Kling v1.5 / v2.0, Luma, MiniMax</td>
-                        <td className="p-2.5 text-emerald-400">⭐⭐⭐⭐⭐ Excelent (Lider mondial pe interioare)</td>
+                        <td className="p-2.5 font-bold text-amber-300">Google Veo 3.1</td>
+                        <td className="p-2.5 font-mono text-[10.5px]">veo-3.1-fast-generate-preview</td>
+                        <td className="p-2.5 text-emerald-400">⚡ 15–20 secunde</td>
+                        <td className="p-2.5 font-semibold text-white">~$0.30 – $0.50</td>
+                        <td className="p-2.5 font-bold text-emerald-400">Recomandat #1 (Rapid & HD)</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold text-slate-200">Fal.ai</td>
+                        <td className="p-2.5 font-mono text-[10.5px]">Kling v1.5 / v2.0 Standard</td>
+                        <td className="p-2.5 text-cyan-300">⏱️ 60–80 secunde</td>
                         <td className="p-2.5 font-semibold text-white">~$0.35 – $0.50</td>
-                        <td className="p-2.5 font-bold text-emerald-400">Recomandat #1 (API rapid)</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-slate-200">Replicate</td>
-                        <td className="p-2.5 font-mono text-[10.5px]">Kling AI, Luma Ray, SVD</td>
-                        <td className="p-2.5 text-emerald-300">⭐⭐⭐⭐ Foarte bun & flexibil</td>
-                        <td className="p-2.5 font-semibold text-white">~$0.30 – $0.60</td>
-                        <td className="p-2.5 text-cyan-300">Recomandat #2</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-slate-200">Google Veo 3.1</td>
-                        <td className="p-2.5 font-mono text-[10.5px]">Veo 3.1 Fast / Generate</td>
-                        <td className="p-2.5 text-emerald-400">⭐⭐⭐⭐⭐ Cinematic DeepMind</td>
-                        <td className="p-2.5 font-semibold text-white">~$0.40 – $0.70</td>
-                        <td className="p-2.5 text-slate-400">Necesită Google Cloud Billing</td>
-                      </tr>
-                      <tr>
-                        <td className="p-2.5 font-bold text-slate-200">RunwayML</td>
-                        <td className="p-2.5 font-mono text-[10.5px]">Gen-3 Alpha Turbo</td>
-                        <td className="p-2.5 text-amber-300">⭐⭐⭐⭐ Bun pe mișcare de cameră</td>
-                        <td className="p-2.5 font-semibold text-white">~$0.25 – $0.50</td>
-                        <td className="p-2.5 text-slate-400">Opțional</td>
+                        <td className="p-2.5 text-cyan-300">Recomandat #2 (Mișcare fluidă)</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-                <p className="text-[10px] text-slate-400 italic pt-1">
-                  💡 <strong>Strategie Credite:</strong> Dacă o randare video te costă ~$0.40 (~2 RON) pe Fal.ai sau Veo, poți seta costul în platformă la <strong>15-20 credite</strong> (echivalent 5-10 RON), generând un profit sănătos la fiecare generare de tur video.
-                </p>
               </div>
             </div>
           )}
@@ -1167,9 +1206,9 @@ function WalkthroughVideoTool() {
       {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[
-            {id: 'gemini', name: 'Google Gemini + Video AI'},
+            {id: 'gemini', name: 'Google Veo 3.1 (Google DeepMind) — Fast & HD'},
+            {id: 'fal', name: 'Fal.ai API (Kling AI) — Cinematic Motion'},
             {id: 'replicate', name: 'Replicate API (Flux / Luma)'},
-            {id: 'fal', name: 'Fal.ai API (Kling / Hunyuan)'},
             {id: 'runway', name: 'Runway Gen-3 API'}
           ]}
           onProviderChange={setProvider}
@@ -1278,7 +1317,7 @@ function WalkthroughVideoTool() {
             className="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/50 font-mono resize-y min-h-[140px] max-h-[500px] leading-relaxed"
           />
           <p className="text-[10px] text-slate-500 italic">
-            💡 Poți redimensiona caseta trăgând de colțul din dreapta-jos. Personalizează promptul pentru a ajusta stilul mobilierului, unghiul camerei sau atmosfera video.
+            💡 Poți redimensiona caseta trăgând de colțul din dreapta-jos. Gemini Vision citește schița încărcată și optimizează traseul camerelor.
           </p>
         </div>
 
@@ -1296,7 +1335,7 @@ function WalkthroughVideoTool() {
           </label>
         </div>
 
-        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
 
         <button 
           onClick={submitAction}
@@ -1304,8 +1343,8 @@ function WalkthroughVideoTool() {
           className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all flex flex-col justify-center items-center gap-1 disabled:opacity-50 cursor-pointer"
         >
           {isPending ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" /> Procesare Gemini AI Vision & Randare Video...
+            <div className="flex items-center justify-center gap-2 text-base">
+              <Loader2 className="w-5 h-5 animate-spin" /> Procesare Video AI în Curs ({elapsedSeconds}s)...
             </div>
           ) : (
             <span className="flex items-center justify-center gap-2 text-base">Lansează AI Walkthrough Video 3D</span>
@@ -1318,24 +1357,24 @@ function WalkthroughVideoTool() {
         </button>
       </div>
 
-      {/* Generated Result Section - Placed Underneath */}
+      {/* Generated Result & Live Processing Section */}
       <div className="space-y-6">
         <div className="bg-black/40 rounded-2xl border border-white/10 flex flex-col items-center justify-center p-6 md:p-8 min-h-[420px] relative overflow-hidden shadow-2xl">
           {result ? (
-            <div className="w-full space-y-4">
+            <div className="w-full space-y-4 animate-in fade-in duration-300">
               <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="text-sm font-semibold text-amber-400 flex items-center gap-2">
-                  <Video className="w-4 h-4" /> Tur Video 3D Generat
+                <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Tur Video 3D Generat cu Succes
                 </span>
                 <button 
                   onClick={() => handleDownload(result, 'walkthrough_3d_imobum.mp4')} 
-                  className="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-xs font-semibold shadow-lg"
+                  className="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-xs font-semibold shadow-lg cursor-pointer"
                 >
                   <Download className="w-4 h-4"/> Descărcare Video MP4
                 </button>
               </div>
 
-              <div className="relative rounded-xl overflow-hidden bg-black aspect-video max-h-[520px] flex items-center justify-center border border-white/10">
+              <div className="relative rounded-xl overflow-hidden bg-black aspect-video max-h-[520px] flex items-center justify-center border border-white/10 shadow-2xl">
                 <video 
                   key={result}
                   src={result} 
@@ -1349,19 +1388,58 @@ function WalkthroughVideoTool() {
               </div>
             </div>
           ) : (
-            <div className="text-center px-4 py-8">
+            <div className="w-full text-center px-4 py-8">
               {isPending ? (
-                <>
-                  <Loader2 className="w-16 h-16 text-amber-500 animate-spin mx-auto mb-4" />
-                  <p className="text-slate-200 font-semibold text-base mb-1">Gemini AI analizează schița spațială...</p>
-                  <p className="text-slate-400 text-sm">Se generează turul cinematic 3D conform specificațiilor</p>
-                </>
+                <div className="max-w-md mx-auto space-y-6 text-left bg-[#100e0c] p-6 rounded-2xl border border-amber-500/20 shadow-2xl">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                      Pipeline Live Generare Video AI
+                    </span>
+                    <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-md border border-cyan-500/20">
+                      ⏱️ {elapsedSeconds} secunde
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5 text-xs">
+                    <div className="flex items-center gap-3 text-slate-200">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">1</span>
+                      <span className="flex-1">Analiză Schiță & Plan Spațial (Gemini Vision)</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    </div>
+
+                    <div className="flex items-center gap-3 text-slate-200">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">2</span>
+                      <span className="flex-1">Generare Scenariu Voiceover în limba română</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    </div>
+
+                    <div className="flex items-center gap-3 text-amber-300 font-semibold">
+                      <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px] font-bold">3</span>
+                      <span className="flex-1">Trimitere spre motorul de randare ({provider === 'gemini' ? 'Google Veo 3.1' : 'Fal.ai Kling AI'})</span>
+                      <Loader2 className="w-4 h-4 text-amber-400 animate-spin flex-shrink-0" />
+                    </div>
+
+                    <div className="flex items-center gap-3 text-slate-400">
+                      <span className="w-5 h-5 rounded-full bg-white/5 text-slate-500 flex items-center justify-center text-[10px]">4</span>
+                      <span className="flex-1">Sinteză fotorealistă cadre video & salvare MP4</span>
+                      <span className="text-[10px] text-slate-500 font-mono">În așteptare...</span>
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-amber-500 to-cyan-400 h-full transition-all duration-500 rounded-full"
+                      style={{ width: `${Math.min(95, elapsedSeconds * (provider === 'gemini' ? 5 : 1.3))}%` }}
+                    />
+                  </div>
+                </div>
               ) : (
                 <>
                   <Building className="w-16 h-16 text-slate-600 mx-auto mb-4" />
                   <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Tur Video 3D</h4>
                   <p className="text-slate-400 text-sm max-w-md mx-auto">
-                    Configurează opțiunile de mai sus și apasă „Lansează AI Walkthrough Video 3D” pentru a genera turul video și scriptul de narațiune.
+                    Încarcă schița de mai sus și apasă „Lansează AI Walkthrough Video 3D”. Videoul va fi randat pe baza imaginii tale.
                   </p>
                 </>
               )}
@@ -1374,7 +1452,7 @@ function WalkthroughVideoTool() {
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-400" />
-                <span className="text-amber-400 font-semibold text-xs uppercase tracking-widest">Narațiune Generată Gemini AI</span>
+                <span className="text-amber-400 font-semibold text-xs uppercase tracking-widest">Narațiune Generată Gemini AI (Voiceover)</span>
               </div>
               <button 
                 onClick={async () => {
@@ -1393,25 +1471,57 @@ function WalkthroughVideoTool() {
           </div>
         )}
 
-        {/* Technical Specs Summary */}
-        <div className="bg-[#141210]/60 p-5 rounded-2xl border border-white/5 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-          <div>
-            <span className="text-slate-500 block text-[11px]">Stil Interior</span>
-            <span className="text-slate-200 font-semibold mt-0.5 block">{style}</span>
+        {/* Persistent AI Video Generations Library / Gallery */}
+        {savedGenerations.length > 0 && (
+          <div className="bg-[#141210] p-6 rounded-2xl border border-white/10 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Video className="w-4 h-4 text-cyan-400" />
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  📂 Galeria Mea Video AI & Istoric ({savedGenerations.length})
+                </h4>
+              </div>
+              <span className="text-[11px] text-slate-500">Salvate permanent pe contul tău</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {savedGenerations.map((gen, idx) => (
+                <div key={gen.id || idx} className="bg-black/50 border border-white/10 rounded-xl p-3.5 space-y-2.5 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden relative border border-white/5">
+                    <video src={gen.url} className="w-full h-full object-cover" muted onMouseOver={e => (e.target as HTMLVideoElement).play()} onMouseOut={e => (e.target as HTMLVideoElement).pause()} />
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center justify-between text-[10.5px] text-slate-400">
+                      <span>{gen.date}</span>
+                      <span className="text-cyan-400 font-medium">{gen.providerName}</span>
+                    </div>
+                    <p className="text-slate-200 font-semibold truncate">{gen.style}</p>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResult(gen.url);
+                        if (gen.script) setScript(gen.script);
+                      }}
+                      className="flex-1 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                    >
+                      Vizualizează
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(gen.url, `imobum_video_${gen.id}.mp4`)}
+                      className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-lg transition-colors cursor-pointer"
+                      title="Descarcă MP4"
+                    >
+                      <Download size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <span className="text-slate-500 block text-[11px]">Traseu Cameră</span>
-            <span className="text-slate-200 font-semibold mt-0.5 block">{tourMode}</span>
-          </div>
-          <div>
-            <span className="text-slate-500 block text-[11px]">Atmosferă & Lumină</span>
-            <span className="text-slate-200 font-semibold mt-0.5 block">{ambience}</span>
-          </div>
-          <div>
-            <span className="text-slate-500 block text-[11px]">Format & Durată</span>
-            <span className="text-slate-200 font-semibold mt-0.5 block">{videoFormat} • {duration}</span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

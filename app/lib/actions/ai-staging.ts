@@ -178,6 +178,98 @@ export async function generateRoomAnimation(payload: { imageUrl: string, speed: 
     }
 }
 
+async function callGoogleVeoGenerate(
+    geminiApiKey: string, 
+    imageUrl: string, 
+    prompt: string
+): Promise<{ success: boolean; videoUrl?: string; error?: string }> {
+    try {
+        let imagePart: any = undefined;
+        if (imageUrl) {
+            try {
+                const imgResp = await fetch(imageUrl);
+                if (imgResp.ok) {
+                    const arrayBuf = await imgResp.arrayBuffer();
+                    const b64 = Buffer.from(arrayBuf).toString('base64');
+                    const mime = imgResp.headers.get('content-type') || 'image/png';
+                    imagePart = { bytesBase64Encoded: b64, mimeType: mime };
+                }
+            } catch (err) {
+                console.warn('[Veo] Image fetch failed, proceeding with prompt:', err);
+            }
+        }
+
+        const instanceObj: any = { prompt };
+        if (imagePart) {
+            instanceObj.image = imagePart;
+        }
+
+        const postData = JSON.stringify({
+            instances: [instanceObj]
+        });
+
+        console.log('[AI Staging] Dispatching live Video Generation to Google Veo 3.1...');
+        const initResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-fast-generate-preview:predictLongRunning?key=${geminiApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: postData
+        });
+
+        if (!initResp.ok) {
+            const errJson = await initResp.json().catch(() => ({}));
+            return { success: false, error: errJson.error?.message || `Google Veo HTTP ${initResp.status}` };
+        }
+
+        const initJson = await initResp.json();
+        const opName = initJson.name;
+        if (!opName) return { success: false, error: "Google Veo nu a returnat numele operațiunii" };
+
+        // Poll operation for up to 60s
+        for (let i = 0; i < 20; i++) {
+            await new Promise(r => setTimeout(r, 3500));
+            const pollResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/${opName}?key=${geminiApiKey}`);
+            if (pollResp.ok) {
+                const pollJson = await pollResp.json();
+                if (pollJson.done) {
+                    const videoUri = pollJson.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri;
+                    if (!videoUri) {
+                        return { success: false, error: "Google Veo nu a returnat URI-ul video" };
+                    }
+
+                    // Download video from Google & upload to permanent Supabase Storage
+                    const downloadUrl = `${videoUri}&key=${geminiApiKey}`;
+                    const videoDownloadResp = await fetch(downloadUrl);
+                    if (!videoDownloadResp.ok) {
+                        return { success: false, error: "Eroare la descărcarea videoului generat din Google Cloud" };
+                    }
+                    const videoBuffer = Buffer.from(await videoDownloadResp.arrayBuffer());
+
+                    const supabase = createAdminClient();
+                    const storagePath = `ai_walkthrough/veo_${Date.now()}.mp4`;
+                    const { error: upErr } = await supabase.storage
+                        .from('property-images')
+                        .upload(storagePath, videoBuffer, { contentType: 'video/mp4', upsert: true });
+
+                    if (upErr) {
+                        console.error('Supabase upload error:', upErr);
+                        return { success: false, error: upErr.message };
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('property-images')
+                        .getPublicUrl(storagePath);
+
+                    return { success: true, videoUrl: publicUrl };
+                }
+            }
+        }
+
+        return { success: false, error: "Randarea Google Veo a depășit timpul alocat (timeout). Vă rugăm să reîncercați." };
+    } catch (e: any) {
+        return { success: false, error: e.message || "Eroare la apelul Google Veo 3.1" };
+    }
+}
+
 async function callFalKlingImageToVideo(
     falKey: string, 
     imageUrl: string, 
@@ -193,6 +285,7 @@ async function callFalKlingImageToVideo(
             aspect_ratio: aspectRatio.includes("9:16") ? "9:16" : aspectRatio.includes("1:1") ? "1:1" : "16:9"
         });
 
+        console.log('[AI Staging] Dispatching live Kling Image-to-Video generation to Fal.ai...');
         const queueResp = await fetch("https://queue.fal.run/fal-ai/kling-video/v1/standard/image-to-video", {
             method: "POST",
             headers: {
@@ -211,7 +304,7 @@ async function callFalKlingImageToVideo(
         const requestId = queueJson.request_id;
         if (!requestId) return { success: false, error: "Fal.ai nu a returnat request_id" };
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 25; i++) {
             await new Promise(r => setTimeout(r, 4500));
             const statusResp = await fetch(`https://queue.fal.run/fal-ai/kling-video/requests/${requestId}/status`, {
                 headers: { "Authorization": `Key ${falKey}` }
@@ -225,8 +318,23 @@ async function callFalKlingImageToVideo(
                     });
                     if (resultResp.ok) {
                         const resultJson = await resultResp.json();
-                        const videoUrl = resultJson.video?.url;
-                        if (videoUrl) return { success: true, videoUrl };
+                        const rawVideoUrl = resultJson.video?.url;
+                        if (rawVideoUrl) {
+                            try {
+                                const dl = await fetch(rawVideoUrl);
+                                if (dl.ok) {
+                                    const buf = Buffer.from(await dl.arrayBuffer());
+                                    const supabase = createAdminClient();
+                                    const storagePath = `ai_walkthrough/kling_${Date.now()}.mp4`;
+                                    await supabase.storage.from('property-images').upload(storagePath, buf, { contentType: 'video/mp4', upsert: true });
+                                    const { data: { publicUrl } } = supabase.storage.from('property-images').getPublicUrl(storagePath);
+                                    return { success: true, videoUrl: publicUrl };
+                                }
+                            } catch (e) {
+                                return { success: true, videoUrl: rawVideoUrl };
+                            }
+                            return { success: true, videoUrl: rawVideoUrl };
+                        }
                     }
                 } else if (statusJson.status === "FAILED") {
                     return { success: false, error: statusJson.error || "Randarea video a eșuat pe Fal.ai" };
@@ -234,7 +342,7 @@ async function callFalKlingImageToVideo(
             }
         }
 
-        return { success: false, error: "Randarea video a durat prea mult. Vă rugăm să reîncercați." };
+        return { success: false, error: "Randarea video a durat prea mult pe Fal.ai. Vă rugăm să reîncercați." };
     } catch (e: any) {
         return { success: false, error: e.message || "Eroare la apelul Fal.ai" };
     }
@@ -257,7 +365,7 @@ export async function optimizeWalkthroughPromptAction(payload: {
     }
 
     try {
-        const promptGenRequest = `Analizează această imagine / axonometrie / schiță de apartament și creează un prompt tehnic profesional în limba engleză pentru un motor AI de randare video 3D arhitectural (Kling AI / Sora / Unreal Engine 5).
+        const promptGenRequest = `Analizează această imagine / axonometrie / schiță de apartament și creează un prompt tehnic profesional în limba engleză pentru un motor AI de randare video 3D arhitectural (Kling AI / Google Veo 3.1 / Unreal Engine 5).
 Specificații proiect:
 - Stil Interior & Arhitectură: ${payload.style}
 - Mod Cameră / Traseu: ${payload.tourMode}
@@ -304,8 +412,9 @@ export async function generateWalkthroughVideo(payload: {
     ambience?: string,
     focusRooms?: string[]
 }, provider: string, apiKey: string) {
-    const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
-    const falApiKey = (provider === 'fal' && apiKey) ? apiKey : await getGlobalApiKey('fal');
+    const selectedProvider = provider || 'gemini';
+    const geminiApiKey = (selectedProvider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+    const falApiKey = (selectedProvider === 'fal' && apiKey) ? apiKey : await getGlobalApiKey('fal');
 
     if (!geminiApiKey && !falApiKey && !apiKey) {
         return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
@@ -326,15 +435,49 @@ export async function generateWalkthroughVideo(payload: {
             );
             if (geminiRes.success && geminiRes.text) {
                 narrationScript = geminiRes.text;
-            } else {
-                narrationScript = `Bine ați venit în acest apartament modern și spațios. Turul începe din holul primitor, continuând spre livingul luminos cu bucătărie open-space, dormitorul matrimonial intim și terasa generoasă.`;
             }
         }
 
         const effectivePrompt = payload.customPrompt || `Cinematic 1080p 3D architectural walkthrough video, ${payload.style} interior design, ${payload.tourMode} camera path, ${payload.ambience || 'Natural Daylight'}, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera glide.`;
 
-        if (falApiKey && payload.planUrl) {
-            console.log('[AI Staging] Dispatching live Kling Image-to-Video generation to Fal.ai...');
+        // 1. If provider is Google Gemini / Veo -> Call Google Veo 3.1
+        if ((selectedProvider === 'gemini' || selectedProvider === 'google') && geminiApiKey) {
+            const veoRes = await callGoogleVeoGenerate(geminiApiKey, payload.planUrl, effectivePrompt);
+            if (veoRes.success && veoRes.videoUrl) {
+                return {
+                    success: true,
+                    resultUrl: veoRes.videoUrl,
+                    narrationScript,
+                    provider: 'Google Veo 3.1',
+                    message: "Walkthrough video 3D generat cu Google Veo 3.1!"
+                };
+            } else if (veoRes.error) {
+                // If Veo had an issue but Fal is available, try Fal as seamless backup
+                if (falApiKey && payload.planUrl) {
+                    console.log('[AI Staging] Veo failed (' + veoRes.error + '), falling back to Fal.ai Kling...');
+                    const falRes = await callFalKlingImageToVideo(
+                        falApiKey, 
+                        payload.planUrl, 
+                        effectivePrompt, 
+                        payload.duration, 
+                        payload.videoFormat
+                    );
+                    if (falRes.success && falRes.videoUrl) {
+                        return {
+                            success: true,
+                            resultUrl: falRes.videoUrl,
+                            narrationScript,
+                            provider: 'Fal.ai (Kling AI)',
+                            message: "Walkthrough video 3D generat cu Kling AI pe Fal.ai!"
+                        };
+                    }
+                }
+                return { error: `Eroare generare video (Google Veo): ${veoRes.error}` };
+            }
+        }
+
+        // 2. If provider is Fal.ai -> Call Fal.ai Kling AI
+        if (selectedProvider === 'fal' && falApiKey && payload.planUrl) {
             const falRes = await callFalKlingImageToVideo(
                 falApiKey, 
                 payload.planUrl, 
@@ -348,29 +491,15 @@ export async function generateWalkthroughVideo(payload: {
                     success: true,
                     resultUrl: falRes.videoUrl,
                     narrationScript,
+                    provider: 'Fal.ai (Kling AI)',
                     message: "Walkthrough video 3D randat cu succes cu Kling AI pe Fal.ai!"
                 };
             } else {
-                console.warn('[AI Staging] Fal.ai generation error, falling back to library:', falRes.error);
+                return { error: `Eroare generare video (Fal.ai): ${falRes.error}` };
             }
         }
 
-        const videoLibrary: Record<string, string> = {
-            'Modern Lux': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/modern_lux.mp4',
-            'Scandinavian': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/scandinavian.mp4',
-            'Minimalist': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/minimalist.mp4',
-            'Clasic Elegant': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/modern_lux.mp4',
-            'Industrial': 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/walkthrough_sample_1.mp4'
-        };
-
-        const chosenVideo = videoLibrary[payload.style] || 'https://cwfhcrftwsxsovexkero.supabase.co/storage/v1/object/public/property-images/ai_walkthrough/modern_lux.mp4';
-
-        return { 
-            success: true, 
-            resultUrl: chosenVideo, 
-            narrationScript,
-            message: "Walkthrough video 3D generat cu succes cu Gemini AI" 
-        };
+        return { error: "Nu a fost găsit un furnizor video activ. Asigurați-vă că aveți o cheie API configurată pentru Google Gemini (Veo) sau Fal.ai." };
     } catch (e: any) {
         return { error: e.message || 'Server error' };
     }
