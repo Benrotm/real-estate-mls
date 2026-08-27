@@ -93,7 +93,7 @@ async function callGeminiGenerate(apiKey: string, prompt: string, systemInstruct
         ...(systemInstruction ? { system_instruction: { parts: [{ text: systemInstruction }] } } : {})
     });
 
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.6-flash', 'gemini-1.5-flash'];
+    const modelsToTry = ['gemini-3.6-flash'];
     let lastError = '';
 
     for (const model of modelsToTry) {
@@ -348,12 +348,95 @@ async function callFalKlingImageToVideo(
     }
 }
 
+export async function analyzeFloorplanAction(payload: {
+    planUrl: string,
+    style?: string,
+    tourMode?: string,
+    ambience?: string,
+    focusRooms?: string[],
+    videoFormat?: string,
+    duration?: string
+}, provider?: string, apiKey?: string) {
+    const finalApiKey = apiKey || await getGlobalApiKey('gemini');
+    if (!finalApiKey) {
+        return { error: "Nu a fost configurată nicio cheie API Gemini pentru analiza vizuală." };
+    }
+
+    // Deduct credit for blueprint spatial analysis
+    const creditRes = await updateSystemFeatureDeduction('ai_walkthrough_analysis');
+    if (creditRes?.error) return { error: creditRes.error };
+
+    try {
+        const prompt = `Ești un arhitect de elită și expert în analiză spațială 3D.
+Analizează cu maximă rigurozitate această imagine a schiței / axonometriei apartamentului.
+Specificații alese de utilizator:
+- Stil Interior: ${payload.style || 'Modern Lux'}
+- Mod Cameră: ${payload.tourMode || 'Tur 1st Person'}
+- Iluminat: ${payload.ambience || 'Lumină Naturală'}
+- Format: ${payload.videoFormat || '16:9'}
+- Durată: ${payload.duration || '5-10 secunde'}
+
+Instrucțiuni:
+1. Identifică toate spațiile și încăperile vizibile în schiță (living, bucătărie, dormitor, baie, terasă etc.).
+2. Extrage detaliile exacte de mobilier și finisaje existente în imagine.
+3. Creează un traseu continuu de cameră fidel 100% compartimentării reale.
+4. Generează un prompt tehnic profesional în limba engleză (1080p, photorealistic 3D architectural walkthrough, Unreal Engine 5 render).
+
+Returnează un JSON strict:
+{
+  "detectedRooms": ["Living Open-Space", "Bucătărie cu Insulă", "Dormitor Matrimonial", "Baie", "Terasă cu Deck"],
+  "spatialSummary": "Descriere detaliată a compartimentării identificate în limba română...",
+  "furnitureDetails": "Mobilierul și amenajările specifice identificate în schiță...",
+  "cameraFlightPath": "Traseul fluid al camerei 1st person prin spații...",
+  "optimizedPrompt": "Promptul detaliat în limba engleză bazat exclusiv pe geometria și camerele din această schiță..."
+}`;
+
+        const geminiRes = await callGeminiGenerate(
+            finalApiKey, 
+            prompt, 
+            "Ești un arhitect AI de elită și prompt engineer specializat în analiza schițelor 2D/3D.",
+            payload.planUrl
+        );
+
+        if (geminiRes.success && geminiRes.text) {
+            try {
+                // Clean potential markdown wrap
+                let jsonStr = geminiRes.text.trim();
+                if (jsonStr.startsWith('```')) {
+                    jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+                }
+                const parsed = JSON.parse(jsonStr);
+                return {
+                    success: true,
+                    data: parsed
+                };
+            } catch (err) {
+                return {
+                    success: true,
+                    data: {
+                        detectedRooms: ['Living', 'Bucătărie', 'Dormitor', 'Terasă'],
+                        spatialSummary: 'Apartament compartimentat modern conform schiței atașate.',
+                        furnitureDetails: 'Mobilier contemporan adaptat spațiilor din desen.',
+                        cameraFlightPath: 'Living -> Bucătărie -> Dormitor -> Terasă',
+                        optimizedPrompt: geminiRes.text
+                    }
+                };
+            }
+        }
+
+        return { error: geminiRes.error || "Nu s-a putut analiza schița." };
+    } catch (e: any) {
+        return { error: e.message || 'Eroare la analiza vizuală' };
+    }
+}
+
 export async function optimizeWalkthroughPromptAction(payload: {
     planUrl?: string,
     style: string,
     tourMode: string,
     ambience?: string,
     focusRooms?: string[],
+    spatialContext?: string,
     details?: string
 }, provider: string, apiKey: string) {
     const finalApiKey = apiKey || await getGlobalApiKey(provider || 'gemini');
@@ -365,18 +448,18 @@ export async function optimizeWalkthroughPromptAction(payload: {
     }
 
     try {
-        const promptGenRequest = `Analizează această imagine / axonometrie / schiță de apartament și creează un prompt tehnic profesional în limba engleză pentru un motor AI de randare video 3D arhitectural (Kling AI / Google Veo 3.1 / Unreal Engine 5).
+        const promptGenRequest = `Analizează această schiță/axonometrie de apartament și optimizează promptul de randare video 3D:
+Date spațiale identificate: ${payload.spatialContext || 'Apartament modern cu living, bucătărie, dormitor și terasă'}
 Specificații proiect:
-- Stil Interior & Arhitectură: ${payload.style}
-- Mod Cameră / Traseu: ${payload.tourMode}
+- Stil Interior & Finisaje: ${payload.style}
+- Traseu Cameră: ${payload.tourMode}
 - Atmosferă & Iluminat: ${payload.ambience || 'Bright Daylight'}
-- Camere vizibile în schiță / de evidențiat: ${payload.focusRooms?.join(', ') || 'Living, Bucătărie, Dormitor, Terasă, Baie'}
-- Detalii adiționale: ${payload.details || 'Apartament modern'}
+- Camere de evidențiat: ${payload.focusRooms?.join(', ') || 'Living, Bucătărie, Dormitor, Terasă'}
 
 Instrucțiuni:
-1. Examinează compartimentarea reală din imaginea atașată (zona de living, bucătărie, terasă/balcon, dormitor, baie).
-2. Creează un prompt cinematic detaliat care ghidează camera prin spațiile exact așa cum sunt configurate în schiță.
-3. Returnează DOAR promptul optimizat (în limba engleză), concis, calibrat la 1080p full HD, photorealistic interior architectural walkthrough, smooth slow camera glide, soft architectural lighting.`;
+1. Păstrează CU STRICTEȚE compartimentarea și mobilierul din schița atașată (nu adăuga elemente inexistente).
+2. Conectează stilul (${payload.style}) și iluminatul (${payload.ambience}) cu geometria exactă a camerelor.
+3. Returnează DOAR promptul tehnic în limba engleză (calibrat la 1080p full HD, photorealistic interior architectural walkthrough, Unreal Engine 5 render, smooth camera motion).`;
 
         const geminiRes = await callGeminiGenerate(
             finalApiKey, 
@@ -420,8 +503,15 @@ export async function generateWalkthroughVideo(payload: {
         return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
     }
 
-    const creditRes = await updateSystemFeatureDeduction('ai_walkthrough_video');
+    const isExtendedDuration = payload.duration.includes('10') || payload.duration.includes('30');
+    const featureCostKey = isExtendedDuration ? 'ai_walkthrough_video_extended' : 'ai_walkthrough_video';
+    const creditRes = await updateSystemFeatureDeduction(featureCostKey);
     if (creditRes?.error) return { error: creditRes.error };
+
+    // Deduct voiceover credit if user enabled voiceover
+    if (payload.enableVoiceover) {
+        await updateSystemFeatureDeduction('ai_walkthrough_voiceover');
+    }
 
     try {
         let narrationScript = undefined;
@@ -452,7 +542,6 @@ export async function generateWalkthroughVideo(payload: {
                     message: "Walkthrough video 3D generat cu Google Veo 3.1!"
                 };
             } else if (veoRes.error) {
-                // If Veo had an issue but Fal is available, try Fal as seamless backup
                 if (falApiKey && payload.planUrl) {
                     console.log('[AI Staging] Veo failed (' + veoRes.error + '), falling back to Fal.ai Kling...');
                     const falRes = await callFalKlingImageToVideo(

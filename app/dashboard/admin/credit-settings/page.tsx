@@ -56,7 +56,10 @@ export default function CreditSettingsPage() {
         { key: 'ai_plan_3d', title: 'Plan 2D → 3D', icon: Wand2 },
         { key: 'ai_description', title: 'Generator Descrieri', icon: Wand2 },
         { key: 'ai_room_builder', title: 'Room Builder — Animație', icon: Wand2 },
-        { key: 'ai_walkthrough_video', title: 'AI Floorplan Walkthrough — Video 3D', icon: Wand2 },
+        { key: 'ai_walkthrough_analysis', title: 'Pasul 1: Analiză Schiță / Axonometrie AI (Gemini Vision)', icon: Wand2 },
+        { key: 'ai_walkthrough_video', title: 'Pasul 2: Video Walkthrough 3D Standard (5–10 sec)', icon: Wand2 },
+        { key: 'ai_walkthrough_video_extended', title: 'Pasul 2: Video Walkthrough 3D Extins (15–30 sec)', icon: Wand2 },
+        { key: 'ai_walkthrough_voiceover', title: 'Opțional: Generare Scenariu Voiceover AI', icon: Wand2 },
         { key: 'instant_ai_activation_cost', title: 'Cost Activare Instantă cu AI (Client Self-Service)', icon: Wand2 }
     ];
 
