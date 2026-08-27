@@ -6,7 +6,7 @@ import {
   Layers, UploadCloud, Settings, ChevronRight, 
   Sparkles, CheckCircle2, Sliders, Image as ImageIcon, Camera, Building, Sofa, Loader2, Download,
   Save, Eye, EyeOff, X, RefreshCw, Sun, Moon, Maximize2, HelpCircle, Info, ShieldCheck, Coins,
-  Plus, Trash2, Edit3, Compass, MapPin
+  Plus, Trash2, Edit3, Compass, MapPin, Copy, Check
 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import { 
@@ -602,10 +602,165 @@ function ProviderSettings({
 // =========================================================================
 // 1. TOOL DEDICAT: TUR VIRTUAL 360° PANORAMIC PER CAMERĂ
 // =========================================================================
+
+// ----------------------------------------------------
+// Reusable Persistent Gallery Component for All AI Tools
+// ----------------------------------------------------
+export interface AIGalleryItem {
+  id: string;
+  url?: string;
+  text?: string;
+  stage1Url?: string;
+  script?: string;
+  title: string;
+  style?: string;
+  badge?: string;
+  date: string;
+  type: 'image' | 'video' | 'text';
+}
+
+export function AIGallerySection({
+  title = 'Galeria Mea AI & Istoric',
+  items,
+  onSelect,
+  onDownload,
+  onDelete
+}: {
+  title?: string;
+  items: AIGalleryItem[];
+  onSelect: (item: AIGalleryItem) => void;
+  onDownload?: (item: AIGalleryItem) => void;
+  onDelete?: (id: string) => void;
+}) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="bg-[#141210] p-6 rounded-2xl border border-white/10 space-y-4 shadow-xl animate-in fade-in duration-300">
+      <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+            📂 {title} ({items.length})
+          </h4>
+        </div>
+        <span className="text-[11px] text-slate-500">Salvate permanent pe dispozitivul tău</span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map((gen, idx) => (
+          <div
+            key={gen.id || idx}
+            className="bg-black/50 border border-white/10 rounded-xl p-3.5 space-y-2.5 flex flex-col justify-between hover:border-amber-500/40 transition-all group"
+          >
+            {gen.type === 'video' ? (
+              <div className="aspect-video bg-black rounded-lg overflow-hidden relative border border-white/5">
+                <video
+                  src={gen.url}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  onMouseOver={e => (e.target as HTMLVideoElement).play().catch(() => {})}
+                  onMouseOut={e => {
+                    const v = e.target as HTMLVideoElement;
+                    v.pause();
+                    v.currentTime = 0;
+                  }}
+                />
+                <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-[10px] text-slate-300 pointer-events-none flex items-center gap-1 backdrop-blur-xs">
+                  <Video size={10} className="text-amber-400" /> Video
+                </div>
+              </div>
+            ) : gen.type === 'image' ? (
+              <div className="aspect-video bg-black rounded-lg overflow-hidden relative border border-white/5">
+                <img src={gen.url} alt="Thumbnail" className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded text-[10px] text-slate-300 pointer-events-none flex items-center gap-1 backdrop-blur-xs">
+                  <ImageIcon size={10} className="text-cyan-400" /> Imagine
+                </div>
+              </div>
+            ) : (
+              <div className="bg-black/70 rounded-lg p-3 border border-white/5 text-xs text-slate-300 line-clamp-4 h-24 overflow-hidden font-mono leading-relaxed">
+                {gen.text}
+              </div>
+            )}
+
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center justify-between text-[10.5px] text-slate-400">
+                <span>{gen.date}</span>
+                {gen.badge && (
+                  <span className="text-cyan-400 font-medium bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20 text-[10px]">
+                    {gen.badge}
+                  </span>
+                )}
+              </div>
+              <p className="text-slate-200 font-semibold truncate" title={gen.title}>
+                {gen.title}
+              </p>
+              {gen.style && (
+                <p className="text-slate-400 text-[11px] truncate">{gen.style}</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+              <button
+                type="button"
+                onClick={() => onSelect(gen)}
+                className="flex-1 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-xs font-medium transition-colors cursor-pointer text-center"
+              >
+                {gen.type === 'text' ? 'Încarcă în Editor' : 'Vizualizează'}
+              </button>
+
+              {gen.type === 'text' && gen.text && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await copyToClipboardSafe(gen.text || '');
+                    if (ok) {
+                      setCopiedId(gen.id);
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }
+                  }}
+                  className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-lg transition-colors cursor-pointer"
+                  title="Copiază text"
+                >
+                  {copiedId === gen.id ? <Check size={14} /> : <Copy size={14} />}
+                </button>
+              )}
+
+              {gen.url && onDownload && (
+                <button
+                  type="button"
+                  onClick={() => onDownload(gen)}
+                  className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-lg transition-colors cursor-pointer"
+                  title="Descarcă fișier"
+                >
+                  <Download size={14} />
+                </button>
+              )}
+
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(gen.id)}
+                  className="p-1.5 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                  title="Șterge din istoric"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Panorama360Tool() {
   const [isPending, startTransition] = useTransition();
   const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
-  const cost = costs['ai_panorama_360'] || 5;
+  const cost = costs['ai_panorama_360'] || 8;
 
   const [provider, setProvider] = useState('fal');
   const [apiKey, setApiKey] = useState('');
@@ -614,7 +769,7 @@ function Panorama360Tool() {
   const [roomName, setRoomName] = useState('Living & Dining Open-Space');
   const [style, setStyle] = useState('Modern Lux');
   const [ambience, setAmbience] = useState('Lumină Naturală de Zi');
-  const [furnitureDetails, setFurnitureDetails] = useState('Canapea modulară albă, măsuță marmură, parchet stejar, ferestre mari vitrate, plante decorative');
+  const [furnitureDetails, setFurnitureDetails] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
 
   const [result, setResult] = useState('');
@@ -623,6 +778,25 @@ function Panorama360Tool() {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_panorama_gallery');
+      if (stored) setSavedGenerations(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Could not load panorama gallery:', e);
+    }
+  }, []);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_panorama_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
 
   const roomsList = [
     'Living & Dining Open-Space',
@@ -657,6 +831,21 @@ function Panorama360Tool() {
           setError(res.error);
         } else if (res.panoramaUrl) {
           setResult(res.panoramaUrl);
+
+          const newEntry: AIGalleryItem = {
+            id: Date.now().toString(),
+            url: res.panoramaUrl,
+            title: roomName,
+            style: `${style} • ${ambience}`,
+            badge: 'Panoramă 360°',
+            date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            type: 'image'
+          };
+          setSavedGenerations(prev => {
+            const updated = [newEntry, ...prev];
+            try { localStorage.setItem('imobum_ai_panorama_gallery', JSON.stringify(updated)); } catch(e){}
+            return updated;
+          });
         }
       } catch (err: any) {
         setError(err.message || 'Eroare la generarea panoramei 360°.');
@@ -820,11 +1009,6 @@ function Panorama360Tool() {
                 <Compass className="w-3.5 h-3.5 animate-spin" /> Trage cu mouse-ul stânga/dreapta pentru a explora la 360°
               </div>
             </div>
-
-            <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-slate-300 flex items-center justify-between">
-              <span>📐 Format: <strong>2:1 Equirectangular Sferic</strong></span>
-              <span className="text-cyan-400">Compatibil Facebook 360, Kuula, VR & Matterport</span>
-            </div>
           </div>
         ) : (
           <div className="text-center px-4 py-8">
@@ -844,13 +1028,22 @@ function Panorama360Tool() {
           </div>
         )}
       </div>
+
+      <AIGallerySection
+        title="Galeria Panorame 360° & Istoric"
+        items={savedGenerations}
+        onSelect={(gen) => {
+          if (gen.url) setResult(gen.url);
+        }}
+        onDownload={(gen) => {
+          if (gen.url) handleDownload(gen.url, `panorama_360_${gen.id}.jpg`);
+        }}
+        onDelete={handleDeleteGeneration}
+      />
     </div>
   );
 }
 
-// =========================================================================
-// 2. TOOL DEDICAT: WALKTHROUGH 2-STAGE (PLAN → RANDARE FOTO → VIDEO FIDEL)
-// =========================================================================
 function Walkthrough2StageTool() {
   const [isPending, startTransition] = useTransition();
   const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
@@ -871,6 +1064,25 @@ function Walkthrough2StageTool() {
   const [interiorImageUrl, setInteriorImageUrl] = useState('');
   const [videoResultUrl, setVideoResultUrl] = useState('');
   const [error, setError] = useState('');
+
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_2stage_gallery');
+      if (stored) setSavedGenerations(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Could not load 2-stage gallery:', e);
+    }
+  }, []);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_2stage_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
 
   const roomsList = ['Living Open-Space & Terasă', 'Dormitor Matrimonial', 'Bucătărie cu Insulă', 'Baie Modernă'];
   const motionsList = [
@@ -926,6 +1138,22 @@ function Walkthrough2StageTool() {
           setError(res.error);
         } else if (res.videoUrl) {
           setVideoResultUrl(res.videoUrl);
+
+          const newEntry: AIGalleryItem = {
+            id: Date.now().toString(),
+            url: res.videoUrl,
+            stage1Url: interiorImageUrl,
+            title: roomName,
+            style: `${style} • ${motionType}`,
+            badge: 'Pipeline 2-Stage',
+            date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            type: 'video'
+          };
+          setSavedGenerations(prev => {
+            const updated = [newEntry, ...prev];
+            try { localStorage.setItem('imobum_ai_2stage_gallery', JSON.stringify(updated)); } catch(e){}
+            return updated;
+          });
         }
       } catch (err: any) {
         setError(err.message || 'Eroare la generarea video.');
@@ -953,7 +1181,7 @@ function Walkthrough2StageTool() {
   );
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-8">
       {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[
@@ -975,6 +1203,7 @@ function Walkthrough2StageTool() {
         </div>
       )}
 
+      {/* Stage 1 Card */}
       <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-emerald-900/30 shadow-xl">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-2.5">
@@ -998,148 +1227,208 @@ function Walkthrough2StageTool() {
 
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Selectează Încăperea
+            Selectează Camera pentru Randare
           </label>
           {renderPills(roomsList, roomName, setRoomName)}
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Stil & Finisaje
+            Stil Interior
           </label>
-          {renderPills(['Modern Lux', 'Scandinavian', 'Minimalist', 'Clasic Elegant'], style, setStyle)}
+          {renderPills(['Modern Lux', 'Minimalist Cald', 'Scandinavian Nordic', 'Clasic Contemporan'], style, setStyle)}
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Mobilier & Dotări (Fidele Schiței)
+            Atmosferă & Iluminat
           </label>
-          <input
-            type="text"
+          {renderPills(['Lumină Naturală de Zi', 'Apus Cald (Golden Hour)', 'Seară cu Lumini Reci și Spoturi'], ambience, setAmbience)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Descriere Mobilier Identificat în Schiță
+          </label>
+          <textarea
+            rows={2}
             value={furnitureDetails}
             onChange={e => setFurnitureDetails(e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:border-emerald-500/50 outline-none"
+            className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 resize-none"
+            placeholder="Descrie piesele de mobilier vizibile în plan..."
           />
         </div>
 
-        <button
-          type="button"
+        <button 
           onClick={handleRenderInterior}
-          disabled={isRenderingImage || !planUrl}
-          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-lg"
+          disabled={isRenderingImage}
+          className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 text-sm"
         >
-          {isRenderingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-          <span>Randează Imaginea Foto Interioară din Plan</span>
+          {isRenderingImage ? (
+            <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Randare Cadru Interior din Plan...</span>
+          ) : (
+            <span className="flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Generează Cadrul Interior (Etapa 1)</span>
+          )}
         </button>
 
-        <div className="pt-4 border-t border-white/10 space-y-4">
+        {interiorImageUrl && (
+          <div className="p-4 bg-black/40 rounded-xl border border-emerald-500/30 space-y-2 animate-in fade-in">
+            <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4" /> Cadru interior generat cu fidelitate din plan:
+            </span>
+            <div className="aspect-video bg-black rounded-lg overflow-hidden border border-white/10 max-h-[300px]">
+              <img src={interiorImageUrl} alt="Interior Render" className="w-full h-full object-contain" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Stage 2 Card */}
+      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-emerald-900/30 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-2.5">
-            <span className="w-7 h-7 rounded-lg bg-orange-500/20 border border-orange-500/40 text-orange-300 font-bold text-xs flex items-center justify-center shadow-lg">
+            <span className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center shadow-lg">
               2
             </span>
             <div>
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                Etapa 2: Animare Video Walkthrough
+                Etapa 2: Animare Video Cinematică (Walkthrough)
               </h3>
-              <p className="text-xs text-slate-400">Generează mișcarea camerei din imaginea randată mai sus</p>
+              <p className="text-xs text-slate-400">Transformă cadrul fix generat la Etapa 1 într-un video fluid la persoana 1</p>
             </div>
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Tip Mișcare Cameră
-            </label>
-            {renderPills(motionsList, motionType, setMotionType)}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Durată Video
-            </label>
-            {renderPills(['5 secunde', '10 secunde (Extins)', '15 secunde (Max)'], duration, setDuration)}
-          </div>
-
-          {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
-
-          <button
-            type="button"
-            onClick={handleGenerateVideo}
-            disabled={isPending || !interiorImageUrl || credits < cost}
-            className="w-full py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-2xl"
-          >
-            {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Video className="w-5 h-5" />}
-            <span>Lansează Video Walkthrough Fidel din Randare</span>
-          </button>
+          <span className="text-xs font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 rounded-lg">
+            {cost} credite
+          </span>
         </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Mișcare Cameră Video
+          </label>
+          {renderPills(motionsList, motionType, setMotionType)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Durată Video
+          </label>
+          {renderPills(['5 secunde', '10 secunde (Extins)'], duration, setDuration)}
+        </div>
+
+        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
+
+        <button 
+          onClick={handleGenerateVideo}
+          disabled={isPending || !interiorImageUrl || credits < cost}
+          className="w-full py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(16,185,129,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
+        >
+          {isPending ? (
+            <span className="flex items-center gap-2 text-base">
+              <Loader2 className="w-5 h-5 animate-spin" /> Generare Video Walkthrough 1080p...
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 text-base">
+              <Video className="w-5 h-5" /> Randare Video Cinematic din Cadru
+            </span>
+          )}
+        </button>
       </div>
 
-      <div className="bg-black/50 rounded-2xl border border-emerald-500/30 p-6 min-h-[460px] flex flex-col justify-center items-center shadow-2xl relative overflow-hidden">
+      {/* Video Result */}
+      <div className="bg-black/50 rounded-2xl border border-emerald-500/30 flex flex-col items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
         {videoResultUrl ? (
-          <div className="w-full space-y-3 animate-in fade-in duration-300">
+          <div className="w-full space-y-4 animate-in fade-in duration-300">
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
-              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> Video Walkthrough 3D Generat
+              <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Video Walkthrough 2-Stage Finalizat
               </span>
               <button 
-                onClick={() => handleDownload(videoResultUrl, 'walkthrough_fidel_2stage.mp4')}
-                className="text-xs bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/30 flex items-center gap-1 cursor-pointer"
+                onClick={() => handleDownload(videoResultUrl, 'walkthrough_2stage.mp4')} 
+                className="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all text-xs font-semibold shadow-lg cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" /> Descarcă MP4
+                <Download className="w-4 h-4"/> Descarcă MP4
               </button>
             </div>
             <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
               <video src={videoResultUrl} controls autoPlay loop playsInline className="w-full h-full object-contain" />
             </div>
           </div>
-        ) : interiorImageUrl ? (
-          <div className="w-full space-y-3 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between pb-2 border-b border-white/10">
-              <span className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> Randare Foto Etapa 1 Gata
-              </span>
-              <span className="text-[11px] text-slate-400">Apasă pe butonul de mai jos pentru a o anima</span>
-            </div>
-            <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
-              <img src={interiorImageUrl} alt="Interior Render" className="w-full h-full object-cover" />
-            </div>
-          </div>
         ) : (
-          <div className="text-center px-4 py-8 text-slate-400">
-            <Camera className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Pipeline 2-Stage</h4>
-            <p className="text-xs max-w-sm mx-auto">Încarcă schița pentru a obține mai întâi randarea foto exactă a camerei, apoi animă turul video.</p>
+          <div className="text-center px-4 py-8">
+            {isPending ? (
+              <div className="space-y-4 text-center">
+                <Loader2 className="w-10 h-10 text-emerald-400 animate-spin mx-auto" />
+                <p className="font-bold text-slate-200 text-sm">Animare cadru foto în mișcare continuă...</p>
+                <p className="text-slate-400 text-xs max-w-xs mx-auto">Păstrează 100% canapeaua, masa și pereții generați la Pasul 1.</p>
+              </div>
+            ) : (
+              <>
+                <Video className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Video Walkthrough</h4>
+                <p className="text-slate-400 text-sm max-w-md mx-auto">După randarea cadrului de la Pasul 1, apasă pe 'Randare Video Cinematic' pentru a genera turul video.</p>
+              </>
+            )}
           </div>
         )}
       </div>
+
+      <AIGallerySection
+        title="Galeria Walkthrough 2-Stage & Istoric"
+        items={savedGenerations}
+        onSelect={(gen) => {
+          if (gen.url) setVideoResultUrl(gen.url);
+          if (gen.stage1Url) setInteriorImageUrl(gen.stage1Url);
+        }}
+        onDownload={(gen) => {
+          if (gen.url) handleDownload(gen.url, `walkthrough_2stage_${gen.id}.mp4`);
+        }}
+        onDelete={handleDeleteGeneration}
+      />
     </div>
   );
 }
 
-// =========================================================================
-// 3. TOOL DEDICAT: TUR VIDEO IZOMETRIC 3D (FLY-THROUGH DIRECT DIN SCHIȚĂ)
-// =========================================================================
 function IsometricFlythroughTool() {
   const [isPending, startTransition] = useTransition();
   const { credits, costs, canUseCustomKeys } = useContext(CreditsContext);
-  const cost = costs['ai_walkthrough_isometric'] || 10;
+  const cost = costs['ai_walkthrough_flythrough'] || 12;
 
   const [provider, setProvider] = useState('fal');
   const [apiKey, setApiKey] = useState('');
 
   const [planUrl, setPlanUrl] = useState('');
-  const [cameraAngle, setCameraAngle] = useState('Rotație orbitală lină la 360 grade peste macheta 3D');
+  const [cameraAngle, setCameraAngle] = useState('Rotire orbitală 360 grade în jurul schiței');
   const [style, setStyle] = useState('Modern Lux cu Iluminat Dinamic');
   const [duration, setDuration] = useState('5 secunde');
-  const [customPrompt, setCustomPrompt] = useState('');
 
   const [resultUrl, setResultUrl] = useState('');
   const [error, setError] = useState('');
 
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_flythrough_gallery');
+      if (stored) setSavedGenerations(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Could not load flythrough gallery:', e);
+    }
+  }, []);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_flythrough_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
+
   const cameraAngles = [
-    'Rotație orbitală lină la 360 grade peste macheta 3D',
-    'Panoramare dinamică din colțul de Sud spre Nord',
-    'Zoom-in cinematic din aer spre living și terasă',
-    'Vedere aeriană 3D Bird-Eye View cu umbre în mișcare'
+    'Rotire orbitală 360 grade în jurul schiței',
+    'Zbor de sus în jos (Top-Down spre Izometric)',
+    'Panoramare diagonală peste toate camerele',
+    'Zoom lin din unghi de 45 grade spre living'
   ];
 
   const handleSubmit = () => {
@@ -1154,14 +1443,28 @@ function IsometricFlythroughTool() {
           planUrl,
           cameraAngle,
           style,
-          duration,
-          customPrompt: customPrompt || undefined
+          duration
         }, provider, apiKey);
 
         if (res.error) {
           setError(res.error);
         } else if (res.videoUrl) {
           setResultUrl(res.videoUrl);
+
+          const newEntry: AIGalleryItem = {
+            id: Date.now().toString(),
+            url: res.videoUrl,
+            title: cameraAngle,
+            style: `${style} • ${duration}`,
+            badge: 'Fly-Through 3D',
+            date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            type: 'video'
+          };
+          setSavedGenerations(prev => {
+            const updated = [newEntry, ...prev];
+            try { localStorage.setItem('imobum_ai_flythrough_gallery', JSON.stringify(updated)); } catch(e){}
+            return updated;
+          });
         }
       } catch (err: any) {
         setError(err.message || 'Eroare la generarea turului izometric.');
@@ -1189,7 +1492,7 @@ function IsometricFlythroughTool() {
   );
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-8">
       {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[
@@ -1311,6 +1614,18 @@ function IsometricFlythroughTool() {
           </div>
         )}
       </div>
+
+      <AIGallerySection
+        title="Galeria Tururi Izometrice 3D & Istoric"
+        items={savedGenerations}
+        onSelect={(gen) => {
+          if (gen.url) setResultUrl(gen.url);
+        }}
+        onDownload={(gen) => {
+          if (gen.url) handleDownload(gen.url, `flythrough_3d_${gen.id}.mp4`);
+        }}
+        onDelete={handleDeleteGeneration}
+      />
     </div>
   );
 }
@@ -1328,6 +1643,25 @@ function VirtualStagingTool() {
   const [additionalOptions, setAdditionalOptions] = useState<string[]>(['Plante', 'Lumină naturală']);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
+
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_virtual_staging_gallery');
+      if (stored) setSavedGenerations(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Could not load virtual staging gallery:', e);
+    }
+  }, []);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_virtual_staging_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
 
   const stylesData = [
     { id: 'Modern', icon: '🏠' },
@@ -1352,7 +1686,24 @@ function VirtualStagingTool() {
       try {
         const res = await generateVirtualStaging({ imageUrl, roomType, style, additionalOptions }, provider, apiKey);
         if (res.error) setError(res.error);
-        else setResult(res.resultUrl || '');
+        else if (res.resultUrl) {
+          setResult(res.resultUrl);
+
+          const newEntry: AIGalleryItem = {
+            id: Date.now().toString(),
+            url: res.resultUrl,
+            title: `${roomType} ${style}`,
+            style: additionalOptions.join(', '),
+            badge: 'Virtual Staging',
+            date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            type: 'image'
+          };
+          setSavedGenerations(prev => {
+            const updated = [newEntry, ...prev];
+            try { localStorage.setItem('imobum_ai_virtual_staging_gallery', JSON.stringify(updated)); } catch(e){}
+            return updated;
+          });
+        }
       } catch (err: any) {
         console.error('VirtualStaging error:', err);
         setError(err.message || 'A apărut o eroare la procesare.');
@@ -1518,6 +1869,18 @@ function VirtualStagingTool() {
           </div>
         )}
       </div>
+
+      <AIGallerySection
+        title="Galeria Virtual Staging & Istoric"
+        items={savedGenerations}
+        onSelect={(gen) => {
+          if (gen.url) setResult(gen.url);
+        }}
+        onDownload={(gen) => {
+          if (gen.url) handleDownload(gen.url, `virtual_staging_${gen.id}.png`);
+        }}
+        onDelete={handleDeleteGeneration}
+      />
     </div>
   );
 }
@@ -1532,7 +1895,6 @@ function VideoGeneratorTool() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
   
-  // New State variables matching the requested options
   const [musicType, setMusicType] = useState('Cinematic elegant');
   const [voiceType, setVoiceType] = useState('Voce feminină');
   const [videoFormat, setVideoFormat] = useState('16:9 (YouTube/site)');
@@ -1541,13 +1903,31 @@ function VideoGeneratorTool() {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_video_gen_gallery');
+      if (stored) setSavedGenerations(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Could not load video generator gallery:', e);
+    }
+  }, []);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_video_gen_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
+
   const submitAction = () => {
     if (imageUrls.length === 0) {
         setError('Încărcați cel puțin o imagine.'); return;
     }
     setError('');
     startTransition(async () => {
-      // Pass the new configuration shape to the backend
       const res = await generateVideo({ 
         imageUrls, 
         musicType, 
@@ -1558,11 +1938,27 @@ function VideoGeneratorTool() {
       }, provider, apiKey);
       
       if (res.error) setError(res.error);
-      else setResult(res.resultUrl || '');
+      else if (res.resultUrl) {
+        setResult(res.resultUrl);
+
+        const newEntry: AIGalleryItem = {
+          id: Date.now().toString(),
+          url: res.resultUrl,
+          title: videoFormat,
+          style: `${voiceType} • ${musicType}`,
+          badge: 'Video Imobiliar',
+          date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          type: 'video'
+        };
+        setSavedGenerations(prev => {
+          const updated = [newEntry, ...prev];
+          try { localStorage.setItem('imobum_ai_video_gen_gallery', JSON.stringify(updated)); } catch(e){}
+          return updated;
+        });
+      }
     });
   };
 
-  // Helper for rendering Pill selectors
   const renderPills = (options: string[], currentValue: string, setter: (val: string) => void) => (
     <div className="flex flex-wrap gap-2 mt-2">
       {options.map((opt) => (
@@ -1590,7 +1986,7 @@ function VideoGeneratorTool() {
           onKeyChange={setApiKey}
         />
       ) : (
-        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 mb-6 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between text-xs text-slate-300 shadow-lg">
           <div className="flex items-center gap-2.5">
             <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
             <span>Serviciul AI este alimentat direct de platformă. Generările consumă credite din balanța contului tău.</span>
@@ -1718,6 +2114,18 @@ function VideoGeneratorTool() {
              </div>
         )}
       </div>
+
+      <AIGallerySection
+        title="Galeria Video Imobiliare & Istoric"
+        items={savedGenerations}
+        onSelect={(gen) => {
+          if (gen.url) setResult(gen.url);
+        }}
+        onDownload={(gen) => {
+          if (gen.url) handleDownload(gen.url, `video_staging_${gen.id}.mp4`);
+        }}
+        onDelete={handleDeleteGeneration}
+      />
     </div>
   );
 }
@@ -1958,14 +2366,15 @@ function WalkthroughVideoTool() {
   };
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [savedGenerations, setSavedGenerations] = useState<Array<{
-    id: string;
-    url: string;
-    script?: string;
-    style: string;
-    date: string;
-    providerName: string;
-  }>>([]);
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_walkthrough_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
 
   useEffect(() => {
     try {
@@ -2014,13 +2423,15 @@ function WalkthroughVideoTool() {
           setResult(res.resultUrl);
           setScript(res.narrationScript || script || '');
 
-          const newEntry = {
+          const newEntry: AIGalleryItem = {
             id: Date.now().toString(),
             url: res.resultUrl,
             script: res.narrationScript || script,
-            style: `${style} (${tourMode}) - ${duration}`,
-            date: new Date().toLocaleString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-            providerName: res.provider || (provider === 'gemini' ? 'Google Veo 3.1' : 'Fal.ai Kling AI')
+            title: `Walkthrough ${duration}`,
+            style: `${style} (${tourMode})`,
+            badge: res.provider || (provider === 'gemini' ? 'Google Veo 3.1' : 'Fal.ai Kling AI'),
+            date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            type: 'video'
           };
 
           setSavedGenerations(prev => {
@@ -2612,57 +3023,18 @@ function WalkthroughVideoTool() {
           </div>
         )}
 
-        {/* Persistent AI Video Generations Library / Gallery */}
-        {savedGenerations.length > 0 && (
-          <div className="bg-[#141210] p-6 rounded-2xl border border-white/10 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <Video className="w-4 h-4 text-cyan-400" />
-                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-                  📂 Galeria Mea Video AI & Istoric ({savedGenerations.length})
-                </h4>
-              </div>
-              <span className="text-[11px] text-slate-500">Salvate permanent pe contul tău</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {savedGenerations.map((gen, idx) => (
-                <div key={gen.id || idx} className="bg-black/50 border border-white/10 rounded-xl p-3.5 space-y-2.5 flex flex-col justify-between hover:border-amber-500/40 transition-colors">
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden relative border border-white/5">
-                    <video src={gen.url} className="w-full h-full object-cover" muted onMouseOver={e => (e.target as HTMLVideoElement).play()} onMouseOut={e => (e.target as HTMLVideoElement).pause()} />
-                  </div>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex items-center justify-between text-[10.5px] text-slate-400">
-                      <span>{gen.date}</span>
-                      <span className="text-cyan-400 font-medium">{gen.providerName}</span>
-                    </div>
-                    <p className="text-slate-200 font-semibold truncate">{gen.style}</p>
-                  </div>
-                  <div className="flex items-center gap-2 pt-2 border-t border-white/5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setResult(gen.url);
-                        if (gen.script) setScript(gen.script);
-                      }}
-                      className="flex-1 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                    >
-                      Vizualizează
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDownload(gen.url, `imobum_video_${gen.id}.mp4`)}
-                      className="p-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-lg transition-colors cursor-pointer"
-                      title="Descarcă MP4"
-                    >
-                      <Download size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <AIGallerySection
+          title="Galeria Walkthrough Video & Istoric"
+          items={savedGenerations}
+          onSelect={(gen) => {
+            if (gen.url) setResult(gen.url);
+            if (gen.script) setScript(gen.script);
+          }}
+          onDownload={(gen) => {
+            if (gen.url) handleDownload(gen.url, `imobum_video_${gen.id}.mp4`);
+          }}
+          onDelete={handleDeleteGeneration}
+        />
       </div>
     </div>
   );
@@ -2676,9 +3048,28 @@ function Plan3DTool() {
   const [apiKey, setApiKey] = useState('');
   
   const [planUrl, setPlanUrl] = useState('');
-  const [perspective, setPerspective] = useState('Top-Down');
+  const [perspective, setPerspective] = useState('Top-Down (Vedere de sus 3D)');
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
+
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_plan3d_gallery');
+      if (stored) setSavedGenerations(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Could not load 3d plan gallery:', e);
+    }
+  }, []);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_plan3d_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
 
   const submitAction = () => {
     if (!planUrl) { setError('Încărcați Planul 2D.'); return; }
@@ -2687,7 +3078,24 @@ function Plan3DTool() {
       try {
         const res = await generate3DPlan({ planUrl, perspective }, provider, apiKey);
         if (res.error) setError(res.error);
-        else setResult(res.resultUrl || '');
+        else if (res.resultUrl) {
+          setResult(res.resultUrl);
+
+          const newEntry: AIGalleryItem = {
+            id: Date.now().toString(),
+            url: res.resultUrl,
+            title: perspective,
+            style: 'Plan Mochetat & Mobilat 3D',
+            badge: 'Plan 3D',
+            date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            type: 'image'
+          };
+          setSavedGenerations(prev => {
+            const updated = [newEntry, ...prev];
+            try { localStorage.setItem('imobum_ai_plan3d_gallery', JSON.stringify(updated)); } catch(e){}
+            return updated;
+          });
+        }
       } catch (err: any) {
         console.error('Plan3D error:', err);
         setError(err.message || 'A apărut o eroare la procesare.');
@@ -2696,9 +3104,8 @@ function Plan3DTool() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        {canUseCustomKeys ? (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'controlnet', name: 'ControlNet / SD'}]}
           onProviderChange={setProvider}
@@ -2715,6 +3122,24 @@ function Plan3DTool() {
           </span>
         </div>
       )}
+
+      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-emerald-900/30 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center shadow-lg">
+              1
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Configurare Plan 2D → Vizualizare 3D
+              </h3>
+              <p className="text-xs text-slate-400">Încarcă schița 2D sau planul de arhitectură pentru a fi convertit în machetă 3D</p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 rounded-lg">
+            {cost} credite
+          </span>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-400 mb-2">Încarcă Planul de Bază (Schiță/CAD 2D)</label>
@@ -2775,6 +3200,18 @@ function Plan3DTool() {
             </div>
         )}
       </div>
+
+      <AIGallerySection
+        title="Galeria Planuri 3D & Istoric"
+        items={savedGenerations}
+        onSelect={(gen) => {
+          if (gen.url) setResult(gen.url);
+        }}
+        onDownload={(gen) => {
+          if (gen.url) handleDownload(gen.url, `plan_3d_${gen.id}.png`);
+        }}
+        onDelete={handleDeleteGeneration}
+      />
     </div>
   );
 }
@@ -2798,6 +3235,25 @@ function DescriptionGenTool() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_descriptions_gallery');
+      if (stored) setSavedGenerations(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Could not load descriptions gallery:', e);
+    }
+  }, []);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_descriptions_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
+
   const submitAction = () => {
     if (!features && !surface && !location) { 
         setError('Introduceți câteva detalii.'); 
@@ -2808,7 +3264,24 @@ function DescriptionGenTool() {
       try {
         const res = await generateDescription({ propertyType, surface, rooms, location, features, tone, destination }, provider, apiKey);
         if (res.error) setError(res.error);
-        else setResult(res.resultText || '');
+        else if (res.resultText) {
+          setResult(res.resultText);
+
+          const newEntry: AIGalleryItem = {
+            id: Date.now().toString(),
+            text: res.resultText,
+            title: `${propertyType} (${rooms} camere)${location ? ' • ' + location : ''}`,
+            style: `${tone} • ${destination}`,
+            badge: 'Descriere AI',
+            date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            type: 'text'
+          };
+          setSavedGenerations(prev => {
+            const updated = [newEntry, ...prev];
+            try { localStorage.setItem('imobum_ai_descriptions_gallery', JSON.stringify(updated)); } catch(e){}
+            return updated;
+          });
+        }
       } catch (err: any) {
         console.error('DescriptionGen error:', err);
         setError(err.message || 'A apărut o eroare la procesare.');
@@ -2967,6 +3440,15 @@ function DescriptionGenTool() {
           </div>
         )}
       </div>
+
+      <AIGallerySection
+        title="Galeria Descrieri Anunțuri & Istoric"
+        items={savedGenerations}
+        onSelect={(gen) => {
+          if (gen.text) setResult(gen.text);
+        }}
+        onDelete={handleDeleteGeneration}
+      />
     </div>
   );
 }
@@ -2988,6 +3470,25 @@ function RoomBuilderTool() {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
+  const [savedGenerations, setSavedGenerations] = useState<AIGalleryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('imobum_ai_room_builder_gallery');
+      if (stored) setSavedGenerations(JSON.parse(stored));
+    } catch (e) {
+      console.warn('Could not load room builder gallery:', e);
+    }
+  }, []);
+
+  const handleDeleteGeneration = (id: string) => {
+    setSavedGenerations(prev => {
+      const updated = prev.filter(g => g.id !== id);
+      try { localStorage.setItem('imobum_ai_room_builder_gallery', JSON.stringify(updated)); } catch(e){}
+      return updated;
+    });
+  };
+
   const submitAction = () => {
     if (!imageUrl) { setError('Încărcați o imagine inițială.'); return; }
     if (selectedFurniture.length === 0) { setError('Selectați cel puțin o piesă de mobilier.'); return; }
@@ -2996,7 +3497,24 @@ function RoomBuilderTool() {
       try {
         const res = await generateRoomAnimation({ imageUrl, speed, pan, selectedFurniture, ambientColor }, provider, apiKey);
         if (res.error) setError(res.error);
-        else setResult(res.resultUrl || '');
+        else if (res.resultUrl) {
+          setResult(res.resultUrl);
+
+          const newEntry: AIGalleryItem = {
+            id: Date.now().toString(),
+            url: res.resultUrl,
+            title: selectedFurniture.slice(0, 3).join(', ') + (selectedFurniture.length > 3 ? ` +${selectedFurniture.length - 3}` : ''),
+            style: `Ambient ${ambientColor} • ${speed}s/obiect`,
+            badge: 'Room Builder',
+            date: new Date().toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            type: 'video'
+          };
+          setSavedGenerations(prev => {
+            const updated = [newEntry, ...prev];
+            try { localStorage.setItem('imobum_ai_room_builder_gallery', JSON.stringify(updated)); } catch(e){}
+            return updated;
+          });
+        }
       } catch (err: any) {
         console.error('RoomBuilder error:', err);
         setError(err.message || 'A apărut o eroare la procesare.');
@@ -3181,6 +3699,18 @@ function RoomBuilderTool() {
             </div>
         )}
       </div>
+
+      <AIGallerySection
+        title="Galeria Room Builder & Istoric"
+        items={savedGenerations}
+        onSelect={(gen) => {
+          if (gen.url) setResult(gen.url);
+        }}
+        onDownload={(gen) => {
+          if (gen.url) handleDownload(gen.url, `room_builder_${gen.id}.mp4`);
+        }}
+        onDelete={handleDeleteGeneration}
+      />
     </div>
   );
 }
