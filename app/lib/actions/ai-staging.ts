@@ -278,14 +278,19 @@ async function callFalKlingImageToVideo(
     aspectRatio: string = "16:9"
 ): Promise<{ success: boolean; videoUrl?: string; error?: string }> {
     try {
+        let cleanDuration: string = "5";
+        if (duration.includes("15")) cleanDuration = "15";
+        else if (duration.includes("10")) cleanDuration = "10";
+        else cleanDuration = "5";
+
         const postData = JSON.stringify({
             prompt,
             image_url: imageUrl,
-            duration: duration.includes("30") ? "10" : "5",
+            duration: cleanDuration,
             aspect_ratio: aspectRatio.includes("9:16") ? "9:16" : aspectRatio.includes("1:1") ? "1:1" : "16:9"
         });
 
-        console.log('[AI Staging] Dispatching live Kling Image-to-Video generation to Fal.ai...');
+        console.log(`[AI Staging] Dispatching live Kling Image-to-Video generation to Fal.ai (Duration: ${cleanDuration}s)...`);
         const queueResp = await fetch("https://queue.fal.run/fal-ai/kling-video/v1/standard/image-to-video", {
             method: "POST",
             headers: {
@@ -304,7 +309,7 @@ async function callFalKlingImageToVideo(
         const requestId = queueJson.request_id;
         if (!requestId) return { success: false, error: "Fal.ai nu a returnat request_id" };
 
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < 30; i++) {
             await new Promise(r => setTimeout(r, 4500));
             const statusResp = await fetch(`https://queue.fal.run/fal-ai/kling-video/requests/${requestId}/status`, {
                 headers: { "Authorization": `Key ${falKey}` }
@@ -348,6 +353,19 @@ async function callFalKlingImageToVideo(
     }
 }
 
+export interface RoomItem {
+    name: string;
+    position: string;
+    surface: string;
+    features: string;
+}
+
+export interface StoryboardTimelineItem {
+    timeframe: string;
+    area: string;
+    action: string;
+}
+
 export async function analyzeFloorplanAction(payload: {
     planUrl: string,
     style?: string,
@@ -369,26 +387,38 @@ export async function analyzeFloorplanAction(payload: {
     try {
         const prompt = `Ești un arhitect de elită și expert în analiză spațială 3D.
 Analizează cu maximă rigurozitate această imagine a schiței / axonometriei apartamentului.
-Specificații alese de utilizator:
+Specificații proiect:
 - Stil Interior: ${payload.style || 'Modern Lux'}
 - Mod Cameră: ${payload.tourMode || 'Tur 1st Person'}
 - Iluminat: ${payload.ambience || 'Lumină Naturală'}
 - Format: ${payload.videoFormat || '16:9'}
-- Durată: ${payload.duration || '5-10 secunde'}
+- Durată: ${payload.duration || '8 secunde'}
 
 Instrucțiuni:
-1. Identifică toate spațiile și încăperile vizibile în schiță (living, bucătărie, dormitor, baie, terasă etc.).
-2. Extrage detaliile exacte de mobilier și finisaje existente în imagine.
-3. Creează un traseu continuu de cameră fidel 100% compartimentării reale.
-4. Generează un prompt tehnic profesional în limba engleză (1080p, photorealistic 3D architectural walkthrough, Unreal Engine 5 render).
+1. Identifică fiecare încăpere/zonă vizibilă în schiță, poziționarea ei relativă (ex: Vest, Est, Nord-Est, Central, Spre terasă), suprafața estimată sau citită (ex: '20 mp', '14 mp') și mobilierul/finisajele exacte.
+2. Creează un traseu fluid al camerei 1st-person și o sincronizare pe secunde (timeline).
+3. Generează un prompt tehnic profesional în limba engleză (1080p photorealistic, Unreal Engine 5 render).
+4. Creează un script de voiceover captivant în limba română.
 
 Returnează un JSON strict:
 {
-  "detectedRooms": ["Living Open-Space", "Bucătărie cu Insulă", "Dormitor Matrimonial", "Baie", "Terasă cu Deck"],
-  "spatialSummary": "Descriere detaliată a compartimentării identificate în limba română...",
-  "furnitureDetails": "Mobilierul și amenajările specifice identificate în schiță...",
-  "cameraFlightPath": "Traseul fluid al camerei 1st person prin spații...",
-  "optimizedPrompt": "Promptul detaliat în limba engleză bazat exclusiv pe geometria și camerele din această schiță..."
+  "rooms": [
+    { "name": "Living Open-Space", "position": "Zona Sud-Vest / Central", "surface": "20 mp", "features": "Canapea colțar modulară albă, măsuță rotundă marmură, fotoliu crem" },
+    { "name": "Bucătărie & Dining", "position": "Zona Centrală / Est", "surface": "12 mp", "features": "Masă rotundă dining 4 scaune, insulă/peninsulă cu chiuvetă și plită" },
+    { "name": "Dormitor Matrimonial", "position": "Zona Nord-Est", "surface": "15 mp", "features": "Pat matrimonial tapițat, noptiere simetrice, acces spre terasă" },
+    { "name": "Baie", "position": "Zona Nord-Vest", "surface": "6 mp", "features": "Cabină de duș walk-in sticlă, mașină de spălat rufe, lavoar" },
+    { "name": "Terasă Exterioară cu Deck", "position": "Zona Nord-Vest / Fațadă", "surface": "22 mp", "features": "Deck din lemn, 2 șezlonguri albe, umbrelă mare de soare, jardiniere cu flori" }
+  ],
+  "detectedRooms": ["Living Open-Space", "Bucătărie & Dining", "Dormitor Matrimonial", "Baie", "Terasă Exterioară cu Deck"],
+  "spatialSummary": "Descriere detaliată a compartimentării identificate...",
+  "cameraFlightPath": "Intrare -> Living & Dining -> Insulă Bucătărie -> Dormitor -> Terasă",
+  "timeline": [
+    { "timeframe": "0-2s", "area": "Intrare & Living", "action": "Intrare fluidă din hol spre zona de living luminos..." },
+    { "timeframe": "2-5s", "area": "Bucătărie & Dormitor", "action": "Trecere panoramică lină peste insula de bucătărie și privire spre dormitor..." },
+    { "timeframe": "5-8s", "area": "Terasă cu Deck", "action": "Ieșire spectaculoasă pe terasa cu deck din lemn, șezlonguri și flori..." }
+  ],
+  "visualPromptCue": "Promptul vizual tehnic în limba engleză...",
+  "voiceoverScript": "Scriptul audio de prezentare în limba română..."
 }`;
 
         const geminiRes = await callGeminiGenerate(
@@ -400,7 +430,6 @@ Returnează un JSON strict:
 
         if (geminiRes.success && geminiRes.text) {
             try {
-                // Clean potential markdown wrap
                 let jsonStr = geminiRes.text.trim();
                 if (jsonStr.startsWith('```')) {
                     jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
@@ -414,11 +443,23 @@ Returnează un JSON strict:
                 return {
                     success: true,
                     data: {
-                        detectedRooms: ['Living', 'Bucătărie', 'Dormitor', 'Terasă'],
+                        rooms: [
+                            { name: 'Living Open-Space', position: 'Central', surface: '20 mp', features: 'Canapea albă modulară, măsuță cafea' },
+                            { name: 'Bucătărie & Dining', position: 'Est', surface: '12 mp', features: 'Masă dining, insulă bucătărie' },
+                            { name: 'Dormitor Matrimonial', position: 'Nord', surface: '15 mp', features: 'Pat matrimonial tapițat, noptiere' },
+                            { name: 'Baie', position: 'Vest', surface: '6 mp', features: 'Cabină duș sticlă, mașină de spălat' },
+                            { name: 'Terasă cu Deck', position: 'Fațadă', surface: '22 mp', features: 'Deck lemn, 2 șezlonguri, umbrelă' }
+                        ],
+                        detectedRooms: ['Living Open-Space', 'Bucătărie & Dining', 'Dormitor Matrimonial', 'Baie', 'Terasă cu Deck'],
                         spatialSummary: 'Apartament compartimentat modern conform schiței atașate.',
-                        furnitureDetails: 'Mobilier contemporan adaptat spațiilor din desen.',
                         cameraFlightPath: 'Living -> Bucătărie -> Dormitor -> Terasă',
-                        optimizedPrompt: geminiRes.text
+                        timeline: [
+                            { timeframe: '0-2s', area: 'Living', action: 'Prezentare living luminos' },
+                            { timeframe: '2-5s', area: 'Bucătărie & Dormitor', action: 'Tranziție spre dining și dormitor' },
+                            { timeframe: '5-8s', area: 'Terasă', action: 'Ieșire pe terasă cu deck' }
+                        ],
+                        visualPromptCue: geminiRes.text,
+                        voiceoverScript: 'Bine ai venit în acest spațiu elegant și luminos cu terasă spectaculoasă.'
                     }
                 };
             }
@@ -437,6 +478,8 @@ export async function optimizeWalkthroughPromptAction(payload: {
     ambience?: string,
     focusRooms?: string[],
     spatialContext?: string,
+    roomsData?: RoomItem[],
+    duration?: string,
     details?: string
 }, provider: string, apiKey: string) {
     const finalApiKey = apiKey || await getGlobalApiKey(provider || 'gemini');
@@ -448,17 +491,22 @@ export async function optimizeWalkthroughPromptAction(payload: {
     }
 
     try {
-        const promptGenRequest = `Analizează această schiță/axonometrie de apartament și optimizează promptul de randare video 3D:
-Date spațiale identificate: ${payload.spatialContext || 'Apartament modern cu living, bucătărie, dormitor și terasă'}
+        const roomsDetailStr = payload.roomsData && payload.roomsData.length > 0 
+            ? payload.roomsData.map(r => `${r.name} (${r.position}, ${r.surface || 'N/A'}): ${r.features}`).join(' | ')
+            : (payload.spatialContext || 'Apartament modern cu living, bucătărie, dormitor și terasă');
+
+        const promptGenRequest = `Analizează această schiță/axonometrie de apartament și actualizează promptul tehnic de randare video 3D:
+Încăperi & Poziționare exacte: ${roomsDetailStr}
 Specificații proiect:
 - Stil Interior & Finisaje: ${payload.style}
 - Traseu Cameră: ${payload.tourMode}
 - Atmosferă & Iluminat: ${payload.ambience || 'Bright Daylight'}
 - Camere de evidențiat: ${payload.focusRooms?.join(', ') || 'Living, Bucătărie, Dormitor, Terasă'}
+- Durată Țintă: ${payload.duration || '8 secunde'}
 
 Instrucțiuni:
-1. Păstrează CU STRICTEȚE compartimentarea și mobilierul din schița atașată (nu adăuga elemente inexistente).
-2. Conectează stilul (${payload.style}) și iluminatul (${payload.ambience}) cu geometria exactă a camerelor.
+1. Păstrează CU STRICTEȚE compartimentarea, mobilierul și poziționarea încăperilor indicate mai sus (nu adăuga elemente inexistente).
+2. Integrează fluid stilul (${payload.style}), atmosfera (${payload.ambience}) și traseul (${payload.tourMode}).
 3. Returnează DOAR promptul tehnic în limba engleză (calibrat la 1080p full HD, photorealistic interior architectural walkthrough, Unreal Engine 5 render, smooth camera motion).`;
 
         const geminiRes = await callGeminiGenerate(
@@ -484,6 +532,82 @@ Instrucțiuni:
     }
 }
 
+export async function generateWalkthroughStoryboardAction(payload: {
+    planUrl: string,
+    style: string,
+    tourMode: string,
+    ambience: string,
+    focusRooms: string[],
+    duration: string,
+    roomsData?: RoomItem[]
+}, provider: string, apiKey: string) {
+    const finalApiKey = apiKey || await getGlobalApiKey('gemini');
+    if (!finalApiKey) {
+        return { error: "Nu a fost configurată o cheie API Gemini." };
+    }
+
+    try {
+        const roomsDetailStr = payload.roomsData && payload.roomsData.length > 0 
+            ? payload.roomsData.map(r => `${r.name} (${r.position}, ${r.surface || ''}): ${r.features}`).join(' | ')
+            : payload.focusRooms.join(', ');
+
+        const prompt = `Creează un scenariu detaliat și sincronizat pe secunde (Storyboard & Voiceover) pentru un tur video walkthrough 3D cu durata de ${payload.duration}.
+Specificații:
+- Stil: ${payload.style}
+- Traseu: ${payload.tourMode}
+- Atmosferă: ${payload.ambience}
+- Încăperi & Poziționare: ${roomsDetailStr}
+
+Returnează un JSON strict:
+{
+  "visualPromptCue": "Promptul cinematic 1st-person POV complet în limba engleză (calibrat pentru Veo / Kling)...",
+  "voiceoverScript": "Scriptul audio complet în limba română (ton cald, rafinat, entuziasmat)...",
+  "timeline": [
+    { "timeframe": "Secundele 0-2", "area": "Intrare & Living", "action": "Descrierea exactă a mișcării camerei..." },
+    { "timeframe": "Secundele 2-5", "area": "Bucătărie & Dormitor", "action": "Descrierea exactă a mișcării camerei..." },
+    { "timeframe": "Secundele 5-8", "area": "Terasă", "action": "Descrierea exactă a mișcării camerei..." }
+  ],
+  "formattedFullScript": "Text complet formatat frumos cu titluri markdown..."
+}`;
+
+        const geminiRes = await callGeminiGenerate(
+            finalApiKey, 
+            prompt, 
+            "Ești un regizor AI și prezentator imobiliar expert în scenarii video sincronizate.",
+            payload.planUrl
+        );
+
+        if (geminiRes.success && geminiRes.text) {
+            try {
+                let jsonStr = geminiRes.text.trim();
+                if (jsonStr.startsWith('```')) {
+                    jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+                }
+                const parsed = JSON.parse(jsonStr);
+                return { success: true, data: parsed };
+            } catch (err) {
+                return {
+                    success: true,
+                    data: {
+                        visualPromptCue: `Cinematic 1st-person POV walkthrough, 4K resolution, ${payload.style}, ${payload.ambience}.`,
+                        voiceoverScript: 'Pășește într-un sanctuar al eleganței și bucură-te de un spațiu luminos și rafinat.',
+                        timeline: [
+                            { timeframe: '0-2s', area: 'Living', action: 'Intrare în living' },
+                            { timeframe: '2-5s', area: 'Bucătărie & Dormitor', action: 'Trecere prin dining și dormitor' },
+                            { timeframe: '5-8s', area: 'Terasă', action: 'Ieșire pe terasă' }
+                        ],
+                        formattedFullScript: geminiRes.text
+                    }
+                };
+            }
+        }
+
+        return { error: geminiRes.error || "Eroare la generarea scenariului." };
+    } catch (e: any) {
+        return { error: e.message || "Eroare de server" };
+    }
+}
+
 export async function generateWalkthroughVideo(payload: { 
     planUrl: string, 
     style: string, 
@@ -503,7 +627,7 @@ export async function generateWalkthroughVideo(payload: {
         return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
     }
 
-    const isExtendedDuration = payload.duration.includes('10') || payload.duration.includes('30');
+    const isExtendedDuration = payload.duration.includes('10') || payload.duration.includes('15') || payload.duration.includes('30');
     const featureCostKey = isExtendedDuration ? 'ai_walkthrough_video_extended' : 'ai_walkthrough_video';
     const creditRes = await updateSystemFeatureDeduction(featureCostKey);
     if (creditRes?.error) return { error: creditRes.error };

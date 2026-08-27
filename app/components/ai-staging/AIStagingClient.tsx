@@ -5,7 +5,8 @@ import {
   Wand2, Video, FileImage, FileText, 
   Layers, UploadCloud, Settings, ChevronRight, 
   Sparkles, CheckCircle2, Sliders, Image as ImageIcon, Camera, Building, Sofa, Loader2, Download,
-  Save, Eye, EyeOff, X, RefreshCw, Sun, Moon, Maximize2, HelpCircle, Info, ShieldCheck, Coins
+  Save, Eye, EyeOff, X, RefreshCw, Sun, Moon, Maximize2, HelpCircle, Info, ShieldCheck, Coins,
+  Plus, Trash2, Edit3, Compass, MapPin
 } from 'lucide-react';
 import { supabase } from '@/app/lib/supabase/client';
 import { 
@@ -17,7 +18,10 @@ import {
   generateWalkthroughVideo,
   analyzeFloorplanAction,
   optimizeWalkthroughPromptAction,
-  uploadAIFileAction
+  generateWalkthroughStoryboardAction,
+  uploadAIFileAction,
+  RoomItem,
+  StoryboardTimelineItem
 } from '@/app/lib/actions/ai-staging';
 import { getFeatureCosts, saveSingleAIKey } from '@/app/lib/actions/settings';
 import { copyToClipboardSafe } from '@/app/lib/utils/clipboard';
@@ -939,6 +943,7 @@ function WalkthroughVideoTool() {
   const [isPending, startTransition] = useTransition();
   const [isAnalyzingPlan, setIsAnalyzingPlan] = useState(false);
   const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
+  const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState(false);
   const [showAdminGuide, setShowAdminGuide] = useState(false);
   const { credits, costs, canUseCustomKeys, userRole } = useContext(CreditsContext);
   
@@ -951,24 +956,46 @@ function WalkthroughVideoTool() {
   const [provider, setProvider] = useState('gemini');
   const [apiKey, setApiKey] = useState('');
 
+  // Step 1 Inputs & Detected Spatial Data
   const [planUrl, setPlanUrl] = useState('');
   const [style, setStyle] = useState('Modern Lux');
   const [tourMode, setTourMode] = useState('Tur 1st Person (Ochiul liber)');
   const [videoFormat, setVideoFormat] = useState('16:9 (YouTube/site)');
-  const [duration, setDuration] = useState('5-8 secunde (HD Rapid)');
+  const [duration, setDuration] = useState('8 secunde (Google Veo)');
   const [ambience, setAmbience] = useState('Lumină Naturală de Zi');
-  const [focusRooms, setFocusRooms] = useState<string[]>(['Living + Bucătărie', 'Dormitor Matrimonial', 'Terasă']);
+  const [focusRooms, setFocusRooms] = useState<string[]>(['Living Open-Space', 'Bucătărie & Dining', 'Dormitor Matrimonial', 'Terasă']);
   const [enableVoiceover, setEnableVoiceover] = useState(true);
 
+  // Editable rooms list
+  const [rooms, setRooms] = useState<RoomItem[]>([
+    { name: 'Living Open-Space', position: 'Central-Vest', surface: '20 mp', features: 'Canapea modulară albă, măsuță marmură, fotoliu crem' },
+    { name: 'Bucătărie & Dining', position: 'Central-Est', surface: '12 mp', features: 'Masă dining 4 scaune, insulă cu chiuvetă și plită' },
+    { name: 'Dormitor Matrimonial', position: 'Nord-Est', surface: '15 mp', features: 'Pat dublu tapițat, noptiere simetrice' },
+    { name: 'Baie', position: 'Nord-Vest', surface: '6.5 mp', features: 'Duș walk-in sticlă, mașină de spălat' },
+    { name: 'Terasă Exterioară cu Deck', position: 'Sud / Fațadă', surface: '22 mp', features: 'Deck din lemn, 2 șezlonguri, umbrelă soare, jardiniere flori' }
+  ]);
+
+  // Analysis result state
   const [spatialAnalysis, setSpatialAnalysis] = useState<{
     detectedRooms?: string[];
     spatialSummary?: string;
-    furnitureDetails?: string;
     cameraFlightPath?: string;
+    timeline?: StoryboardTimelineItem[];
+    visualPromptCue?: string;
+    voiceoverScript?: string;
   } | null>(null);
 
+  // Storyboard & Full Script state (generated pre-video or during step 1)
+  const [storyboardData, setStoryboardData] = useState<{
+    visualPromptCue?: string;
+    voiceoverScript?: string;
+    timeline?: StoryboardTimelineItem[];
+    formattedFullScript?: string;
+  } | null>(null);
+
+  // Dynamic Prompt Box State
   const [promptText, setPromptText] = useState(
-    'Cinematic 1080p 3D architectural walkthrough video, Modern Lux interior design, Tur 1st Person (Ochiul liber) camera path, Lumină Naturală de Zi, prioritizing Living + Bucătărie, Dormitor Matrimonial, Terasă, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.'
+    'Cinematic 1080p 3D architectural walkthrough video, Modern Lux interior design, Tur 1st Person (Ochiul liber) camera path, Lumină Naturală de Zi, prioritizing Living Open-Space, Bucătărie & Dining, Dormitor Matrimonial, Terasă, Unreal Engine 5 render, raytracing reflections, photorealistic textures, smooth camera transitions.'
   );
 
   const [result, setResult] = useState('');
@@ -976,14 +1003,27 @@ function WalkthroughVideoTool() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
+  // Duration options mapped to provider capabilities
   const durationOptions = provider === 'gemini' 
-    ? ['5-8 secunde (HD Rapid - Google Veo)', '8 secunde (Cinematic - Google Veo)']
-    : ['5 secunde (Kling AI Standard)', '10 secunde (Kling AI Extended)'];
+    ? ['5-8 secunde (Google Veo Fast)', '8 secunde (Google Veo Cinematic)']
+    : ['5 secunde (Kling AI Standard)', '10 secunde (Kling AI Pro)', '15 secunde (Kling AI Extended)'];
 
-  const isExtended = duration.includes('10') || duration.includes('30');
+  // Current Total Cost Calculation
+  const isExtended = duration.includes('10') || duration.includes('15') || duration.includes('30');
   const activeVideoCost = isExtended ? extendedVideoCost : standardVideoCost;
   const totalCost = activeVideoCost + (enableVoiceover ? voiceoverCost : 0);
 
+  // Update prompt whenever user changes options 2-6
+  useEffect(() => {
+    const focusStr = focusRooms.length > 0 ? focusRooms.join(', ') : 'Living, Bucătărie, Dormitor, Terasă';
+    const roomSummary = rooms.map(r => `${r.name} (${r.position || 'Zonă'}, ${r.surface || ''}): ${r.features}`).join('; ');
+    
+    setPromptText(
+      `Cinematic 1080p 3D architectural walkthrough video, ${style} interior style, ${tourMode} camera motion, ${ambience}, priority areas: ${focusStr}. Layout and furniture based on: ${roomSummary}. Unreal Engine 5 render, ray-traced lighting, photorealistic textures, smooth transitions, format ${videoFormat}, duration ${duration}.`
+    );
+  }, [style, tourMode, ambience, focusRooms, videoFormat, duration, rooms]);
+
+  // Step 1: Perform Spatial Analysis on Blueprint
   const handleAnalyzeFloorplan = async (overrideUrl?: string) => {
     const targetUrl = overrideUrl || planUrl;
     if (!targetUrl) {
@@ -1007,11 +1047,24 @@ function WalkthroughVideoTool() {
         setError(res.error);
       } else if (res.data) {
         setSpatialAnalysis(res.data);
-        if (res.data.detectedRooms && res.data.detectedRooms.length > 0) {
+        if (res.data.rooms && res.data.rooms.length > 0) {
+          setRooms(res.data.rooms);
+          setFocusRooms(res.data.rooms.map((r: any) => r.name));
+        } else if (res.data.detectedRooms && res.data.detectedRooms.length > 0) {
           setFocusRooms(res.data.detectedRooms);
         }
-        if (res.data.optimizedPrompt) {
-          setPromptText(res.data.optimizedPrompt);
+        if (res.data.visualPromptCue) {
+          setPromptText(res.data.visualPromptCue);
+        }
+        if (res.data.voiceoverScript) {
+          setScript(res.data.voiceoverScript);
+        }
+        if (res.data.timeline) {
+          setStoryboardData({
+            visualPromptCue: res.data.visualPromptCue,
+            voiceoverScript: res.data.voiceoverScript,
+            timeline: res.data.timeline
+          });
         }
       }
     } catch (e: any) {
@@ -1022,6 +1075,45 @@ function WalkthroughVideoTool() {
     }
   };
 
+  // Pre-generate Storyboard & Synchronized Timeline
+  const handleGenerateStoryboard = async () => {
+    if (!planUrl) {
+      setError('Vă rugăm să încărcați o schiță la Pasul 1.');
+      return;
+    }
+    setError('');
+    setIsGeneratingStoryboard(true);
+    try {
+      const res = await generateWalkthroughStoryboardAction({
+        planUrl,
+        style,
+        tourMode,
+        ambience,
+        focusRooms,
+        duration,
+        roomsData: rooms
+      }, provider, apiKey);
+
+      if (res.error) {
+        setError(res.error);
+      } else if (res.data) {
+        setStoryboardData(res.data);
+        if (res.data.visualPromptCue) {
+          setPromptText(res.data.visualPromptCue);
+        }
+        if (res.data.voiceoverScript) {
+          setScript(res.data.voiceoverScript);
+        }
+      }
+    } catch (e: any) {
+      console.warn('Error generating storyboard:', e);
+      setError(e.message || 'Eroare la generarea scenariului.');
+    } finally {
+      setIsGeneratingStoryboard(false);
+    }
+  };
+
+  // Optimize prompt preserving spatial layout & room modifications
   const handleOptimizePrompt = async () => {
     setIsOptimizingPrompt(true);
     try {
@@ -1031,7 +1123,8 @@ function WalkthroughVideoTool() {
         tourMode,
         ambience,
         focusRooms,
-        spatialContext: spatialAnalysis ? `${spatialAnalysis.spatialSummary} | Mobilier: ${spatialAnalysis.furnitureDetails}` : undefined,
+        roomsData: rooms,
+        duration,
         details: 'Apartament identificat pe baza schiței atașate'
       }, provider, apiKey);
 
@@ -1050,6 +1143,34 @@ function WalkthroughVideoTool() {
       setFocusRooms(prev => prev.filter(r => r !== room));
     } else {
       setFocusRooms(prev => [...prev, room]);
+    }
+  };
+
+  // Room editing handlers
+  const updateRoomField = (index: number, field: keyof RoomItem, val: string) => {
+    setRooms(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: val };
+      return copy;
+    });
+  };
+
+  const addRoom = () => {
+    const newR: RoomItem = {
+      name: `Încăpere nouă ${rooms.length + 1}`,
+      position: 'Zona Centrală',
+      surface: '10 mp',
+      features: 'Finisaje moderne, iluminat natural'
+    };
+    setRooms(prev => [...prev, newR]);
+    setFocusRooms(prev => [...prev, newR.name]);
+  };
+
+  const removeRoom = (index: number) => {
+    const roomToRemove = rooms[index];
+    setRooms(prev => prev.filter((_, idx) => idx !== index));
+    if (roomToRemove) {
+      setFocusRooms(prev => prev.filter(r => r !== roomToRemove.name));
     }
   };
 
@@ -1108,13 +1229,13 @@ function WalkthroughVideoTool() {
           setError(res.error);
         } else if (res.resultUrl) {
           setResult(res.resultUrl);
-          setScript(res.narrationScript || '');
+          setScript(res.narrationScript || script || '');
 
           const newEntry = {
             id: Date.now().toString(),
             url: res.resultUrl,
-            script: res.narrationScript,
-            style: `${style} (${tourMode})`,
+            script: res.narrationScript || script,
+            style: `${style} (${tourMode}) - ${duration}`,
             date: new Date().toLocaleString('ro-RO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
             providerName: res.provider || (provider === 'gemini' ? 'Google Veo 3.1' : 'Fal.ai Kling AI')
           };
@@ -1143,7 +1264,7 @@ function WalkthroughVideoTool() {
           key={item}
           type="button"
           onClick={() => setter(item)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
             current === item
               ? 'border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
               : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-300'
@@ -1185,10 +1306,10 @@ function WalkthroughVideoTool() {
                   </h4>
                   <ul className="space-y-1.5 text-slate-300 list-disc list-inside leading-relaxed text-[11.5px]">
                     <li>
-                      <strong className="text-white">Pasul 1 (Analiză Schiță):</strong> Gemini Vision scanează poza, identifică camerele reale și mobilierul real fără a inventa elemente străine.
+                      <strong className="text-white">Pasul 1 (Analiză Schiță & Poziționare):</strong> Gemini Vision scanează poza, identifică fiecare încăpere, poziția ei, suprafața și mobilierul exact. Utilizatorul poate ajusta manual datele.
                     </li>
                     <li>
-                      <strong className="text-white">Pasul 2 (Randare Video):</strong> Utilizatorul verifică promptul fidel schiței, iar motorul video generează turul 3D exact după geometria recunoscută.
+                      <strong className="text-white">Pasul 2 (Randare Video & Storyboard):</strong> Permite generarea unui scenariu sincronizat pe secunde (0-2s, 2-5s, 5-8s) înainte de a cheltui creditele pe video.
                     </li>
                   </ul>
                 </div>
@@ -1199,10 +1320,10 @@ function WalkthroughVideoTool() {
                   </h4>
                   <ul className="space-y-1.5 text-slate-300 list-disc list-inside leading-relaxed text-[11.5px]">
                     <li>
-                      <strong className="text-white">Google Veo 3.1:</strong> Generează secvențe native de <strong>5–8 secunde</strong> (1080p Full HD).
+                      <strong className="text-white">Google Veo 3.1:</strong> Generează secvențe native de <strong>5–8 secunde</strong> (1080p Full HD, 15-20s randare).
                     </li>
                     <li>
-                      <strong className="text-white">Fal.ai (Kling AI):</strong> Suportă mod <strong>5 secunde (Standard)</strong> sau <strong>10 secunde (Extended)</strong>.
+                      <strong className="text-white">Fal.ai (Kling AI):</strong> Suportă mod <strong>5 secunde (Standard)</strong>, <strong>10 secunde (Pro)</strong> sau <strong>15 secunde (Extended)</strong>.
                     </li>
                   </ul>
                 </div>
@@ -1233,7 +1354,7 @@ function WalkthroughVideoTool() {
                         <td className="p-2.5 font-semibold text-amber-400">{standardVideoCost} credite</td>
                       </tr>
                       <tr>
-                        <td className="p-2.5 font-bold text-slate-200">Pasul 2: Video Walkthrough Extins (10s)</td>
+                        <td className="p-2.5 font-bold text-slate-200">Pasul 2: Video Walkthrough Extins (10–15s)</td>
                         <td className="p-2.5 font-mono text-[10.5px]">ai_walkthrough_video_extended</td>
                         <td className="p-2.5 font-semibold text-amber-400">{extendedVideoCost} credite</td>
                       </tr>
@@ -1255,7 +1376,7 @@ function WalkthroughVideoTool() {
         <ProviderSettings 
           providerList={[
             {id: 'gemini', name: 'Google Veo 3.1 (Google DeepMind) — Fast & HD (5-8s)'},
-            {id: 'fal', name: 'Fal.ai API (Kling AI) — Cinematic Motion (5-10s)'},
+            {id: 'fal', name: 'Fal.ai API (Kling AI) — Cinematic Motion (5-15s)'},
             {id: 'replicate', name: 'Replicate API (Flux / Luma)'},
             {id: 'runway', name: 'Runway Gen-3 API'}
           ]}
@@ -1274,6 +1395,9 @@ function WalkthroughVideoTool() {
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* PASUL 1: ÎNCĂRCARE, IDENTIFICARE & EDITARE SUPRAFEȚE/POZIȚII CAMERE */}
+      {/* ========================================================================= */}
       <div className="w-full space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-amber-900/30 shadow-xl relative overflow-hidden">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-2.5">
@@ -1284,7 +1408,7 @@ function WalkthroughVideoTool() {
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                 Pasul 1: Încărcare & Identificare Spațială Schiță / Axonometrie
               </h3>
-              <p className="text-xs text-slate-400">Gemini Vision scanează compartimentarea pentru a bloca layout-ul fix al camerelor</p>
+              <p className="text-xs text-slate-400">Gemini Vision identifică încăperile, poziționarea, suprafața (m²) și mobilierul. Le poți edita sau completa manual.</p>
             </div>
           </div>
           <span className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-lg font-mono">
@@ -1309,60 +1433,117 @@ function WalkthroughVideoTool() {
             <Loader2 className="w-5 h-5 animate-spin flex-shrink-0 text-amber-400" />
             <div>
               <p className="font-bold text-amber-200 text-sm">Gemini Vision analizează schița spațială...</p>
-              <p className="text-slate-300 text-xs">Identifică livingul, bucătăria, dormitoarele și mobilierul desenat.</p>
+              <p className="text-slate-300 text-xs">Identifică compartimentarea, pozițiile, suprafețele în m² și mobilierul desenat.</p>
             </div>
           </div>
         )}
 
-        {spatialAnalysis && (
-          <div className="space-y-4 bg-black/40 border border-emerald-500/30 rounded-xl p-5 shadow-xl animate-in fade-in duration-300">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <span className="font-bold text-white text-xs uppercase tracking-wider">
-                  Compartimentare & Mobilier Identificate în Schiță (Fixe)
+        {/* Editable Rooms & Spatial Layout Panel */}
+        <div className="space-y-4 bg-black/40 border border-emerald-500/30 rounded-xl p-5 shadow-xl animate-in fade-in duration-300">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <div>
+                <span className="font-bold text-white text-xs uppercase tracking-wider block">
+                  Compartimentare, Poziții & Suprafețe Identificate (Editabile)
                 </span>
+                <span className="text-[11px] text-slate-400">Modificările tale se reflectă automat în promptul video și scenariu.</span>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={addRoom}
+                className="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <Plus className="w-3 h-3" /> Adaugă Spațiu
+              </button>
               <button
                 type="button"
                 onClick={() => handleAnalyzeFloorplan()}
-                disabled={isAnalyzingPlan}
-                className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                disabled={isAnalyzingPlan || !planUrl}
+                className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Sparkles className="w-3 h-3" /> Re-analizează Schița
               </button>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-              <div className="bg-white/5 p-3 rounded-lg border border-white/5 space-y-1">
-                <span className="text-slate-400 font-semibold block text-[11px]">Camere & Spații Recunoscute:</span>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {spatialAnalysis.detectedRooms?.map((room, idx) => (
-                    <span key={idx} className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10.5px] px-2 py-0.5 rounded-md font-semibold">
-                      ✓ {room}
-                    </span>
-                  ))}
+          <div className="space-y-2.5">
+            {rooms.map((room, idx) => (
+              <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-3 grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center text-xs">
+                <div className="md:col-span-3">
+                  <label className="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5">Nume Încăpere</label>
+                  <input
+                    type="text"
+                    value={room.name}
+                    onChange={e => updateRoomField(idx, 'name', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-slate-200 font-semibold focus:border-amber-500/50 outline-none"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5 flex items-center gap-1">
+                    <Compass className="w-3 h-3 text-cyan-400" /> Poziționare
+                  </label>
+                  <input
+                    type="text"
+                    value={room.position}
+                    placeholder="ex: Vest / Central"
+                    onChange={e => updateRoomField(idx, 'position', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-slate-200 focus:border-cyan-500/50 outline-none"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5 flex items-center gap-1">
+                    <Building className="w-3 h-3 text-amber-400" /> Suprafață
+                  </label>
+                  <input
+                    type="text"
+                    value={room.surface}
+                    placeholder="ex: 20 mp"
+                    onChange={e => updateRoomField(idx, 'surface', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono focus:border-amber-500/50 outline-none"
+                  />
+                </div>
+
+                <div className="md:col-span-4">
+                  <label className="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5">Mobilier & Finisaje Identificate</label>
+                  <input
+                    type="text"
+                    value={room.features}
+                    onChange={e => updateRoomField(idx, 'features', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-slate-200 focus:border-amber-500/50 outline-none"
+                  />
+                </div>
+
+                <div className="md:col-span-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeRoom(idx)}
+                    className="p-1.5 text-slate-500 hover:text-red-400 transition-colors cursor-pointer rounded-lg hover:bg-red-500/10"
+                    title="Șterge încăperea"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-
-              <div className="bg-white/5 p-3 rounded-lg border border-white/5 space-y-1 md:col-span-2">
-                <span className="text-slate-400 font-semibold block text-[11px]">Mobilier & Amenajări Identificate:</span>
-                <p className="text-slate-200 text-[11.5px] leading-relaxed">
-                  {spatialAnalysis.furnitureDetails || spatialAnalysis.spatialSummary}
-                </p>
-              </div>
-            </div>
-
-            {spatialAnalysis.cameraFlightPath && (
-              <div className="bg-cyan-500/5 border border-cyan-500/20 p-3 rounded-lg text-xs flex items-center gap-2 text-cyan-300">
-                <Video className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                <span><strong>Traseu Cameră Recomandat:</strong> {spatialAnalysis.cameraFlightPath}</span>
-              </div>
-            )}
+            ))}
           </div>
-        )}
+
+          {spatialAnalysis?.cameraFlightPath && (
+            <div className="bg-cyan-500/5 border border-cyan-500/20 p-3 rounded-lg text-xs flex items-center gap-2 text-cyan-300">
+              <Video className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+              <span><strong>Traseu Cameră Recomandat:</strong> {spatialAnalysis.cameraFlightPath}</span>
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* ========================================================================= */}
+      {/* PASUL 2: PERSONALIZARE CRITERII & REGLAJ PROMPT INAINTE DE GENERARE */}
+      {/* ========================================================================= */}
       <div className="w-full space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-amber-900/30 shadow-xl">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <div className="flex items-center gap-2.5">
@@ -1370,14 +1551,14 @@ function WalkthroughVideoTool() {
               2
             </span>
             <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Pasul 2: Personalizare Stil & Randare Video</h3>
-              <p className="text-xs text-slate-400">Selectează preferințele de randare și lansează procesul video</p>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Pasul 2: Personalizare Stil, Scenariu & Randare Video</h3>
+              <p className="text-xs text-slate-400">Selectează preferințele de randare și generează scenariul sincronizat pe secunde</p>
             </div>
           </div>
           <div className="text-right">
             <span className="text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
               <Coins size={14} className="text-yellow-400" />
-              Total: {totalCost} credite
+              Total: {totalCost} credite (Balanță: {credits})
             </span>
           </div>
         </div>
@@ -1400,20 +1581,20 @@ function WalkthroughVideoTool() {
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">5. Camere de Evidențiat în Tur</label>
           <div className="flex flex-wrap gap-2 mt-2">
-            {(spatialAnalysis?.detectedRooms || ['Living Open-Space', 'Bucătărie cu Insulă', 'Dormitor Matrimonial', 'Terasă', 'Baie']).map(room => {
-              const isSelected = focusRooms.includes(room);
+            {rooms.map((room, idx) => {
+              const isSelected = focusRooms.includes(room.name);
               return (
                 <button
-                  key={room}
+                  key={idx}
                   type="button"
-                  onClick={() => toggleFocusRoom(room)}
+                  onClick={() => toggleFocusRoom(room.name)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                     isSelected
-                      ? 'border-amber-400 bg-amber-500/20 text-amber-300'
+                      ? 'border-amber-400 bg-amber-500/20 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
                       : 'border-white/10 text-slate-400 hover:border-white/20'
                   }`}
                 >
-                  {isSelected ? '✓ ' : '+ '}{room}
+                  {isSelected ? '✓ ' : '+ '}{room.name} ({room.surface || 'N/A'})
                 </button>
               );
             })}
@@ -1427,31 +1608,97 @@ function WalkthroughVideoTool() {
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">Durată Video</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                Durată Video ({provider === 'gemini' ? 'Google Veo 3.1' : 'Fal.ai Kling AI'})
+              </label>
+              <span className="text-[11px] text-amber-400 font-mono">
+                {isExtended ? `+${extendedVideoCost - standardVideoCost} credite` : 'Cost standard'}
+              </span>
             </div>
             {renderPills(durationOptions, duration, setDuration)}
           </div>
         </div>
 
+        {/* ========================================================================= */}
+        {/* PASUL INTERMEDIAR: SCENARIU & SINCRONIZARE PE SECUNDE (PRE-RENDERING) */}
+        {/* ========================================================================= */}
+        <div className="p-5 rounded-2xl bg-black/50 border border-cyan-500/30 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-cyan-400" />
+              <div>
+                <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider block">
+                  Scenariu & Detaliere Traseu Vizual (Sincronizare {duration})
+                </span>
+                <span className="text-[11px] text-slate-400">Vezi exact ce spații vor fi filmate în secundele selectate înainte de randare.</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateStoryboard}
+              disabled={isGeneratingStoryboard || !planUrl}
+              className="text-xs text-cyan-300 hover:text-white flex items-center gap-1.5 font-bold bg-cyan-500/20 border border-cyan-500/40 px-3 py-1.5 rounded-xl transition-all cursor-pointer disabled:opacity-50 shadow-lg"
+            >
+              {isGeneratingStoryboard ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              <span>Generare Scenariu & Sincronizare pe Secunde</span>
+            </button>
+          </div>
+
+          {storyboardData?.timeline && storyboardData.timeline.length > 0 ? (
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {storyboardData.timeline.map((item, idx) => (
+                  <div key={idx} className="bg-white/5 border border-cyan-500/20 rounded-xl p-3.5 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20 font-bold">
+                        ⏱️ {item.timeframe}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-200">{item.area}</span>
+                    </div>
+                    <p className="text-[11.5px] text-slate-300 leading-relaxed">{item.action}</p>
+                  </div>
+                ))}
+              </div>
+
+              {storyboardData.voiceoverScript && (
+                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-200 flex items-start gap-2">
+                  <span className="text-amber-400 font-bold flex-shrink-0">🎙️ Script Voiceover:</span>
+                  <span className="italic leading-relaxed">„{storyboardData.voiceoverScript}”</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-xs text-slate-400">
+              Apasă pe <strong className="text-cyan-300">„Generare Scenariu & Sincronizare pe Secunde”</strong> pentru a previzualiza defalcarea pe secunde a turului tău de {duration}.
+            </div>
+          )}
+        </div>
+
+        {/* Prompt Tuning Box - Expandable manually */}
         <div className="pt-4 border-t border-white/10 space-y-2.5">
           <div className="flex items-center justify-between">
-            <label className="block text-xs font-semibold text-amber-400 uppercase tracking-widest">7. Prompt AI (Editabil)</label>
+            <label className="block text-xs font-semibold text-amber-400 uppercase tracking-widest">
+              7. Prompt Tehnic Video (Editabil & Conectat la Schiță)
+            </label>
             <button
               type="button"
               onClick={handleOptimizePrompt}
               disabled={isOptimizingPrompt || !planUrl}
-              className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
             >
               {isOptimizingPrompt ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              <span>Auto-Optimizare Prompt</span>
+              <span>Auto-Optimizare Prompt cu Gemini AI</span>
             </button>
           </div>
           <textarea
             rows={5}
             value={promptText}
             onChange={e => setPromptText(e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/50 font-mono resize-y min-h-[140px] max-h-[500px]"
+            className="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/50 font-mono resize-y min-h-[140px] max-h-[500px] leading-relaxed"
           />
+          <p className="text-[10px] text-slate-500 italic">
+            💡 Schimbarea opțiunilor de mai sus sau a încăperilor actualizează automat acest prompt. Îl poți rafina și manual.
+          </p>
         </div>
 
         <div className="pt-2 border-t border-white/10 flex items-center justify-between">
@@ -1476,21 +1723,24 @@ function WalkthroughVideoTool() {
         >
           {isPending ? (
             <div className="flex items-center justify-center gap-2 text-base">
-              <Loader2 className="w-5 h-5 animate-spin" /> Randare Video 3D ({elapsedSeconds}s)...
+              <Loader2 className="w-5 h-5 animate-spin" /> Randare Video 3D în Curs ({elapsedSeconds}s)...
             </div>
           ) : (
             <span className="flex items-center justify-center gap-2 text-base">
-              <Video className="w-5 h-5" /> Lansează AI Walkthrough Video 3D
+              <Video className="w-5 h-5" /> Lansează AI Walkthrough Video 3D ({provider === 'gemini' ? 'Google Veo 3.1' : 'Fal.ai Kling'})
             </span>
           )}
           {!isPending && (
             <span className="text-xs text-white/90 flex items-center gap-1 mt-0.5 font-normal">
-              <Coins size={12}/> Consum: {totalCost} credite
+              <Coins size={12}/> Consum: {totalCost} credite (Balanță: {credits})
             </span>
           )}
         </button>
       </div>
 
+      {/* ========================================================================= */}
+      {/* REZULTAT GENERAT & PIPELINE TERMINAL */}
+      {/* ========================================================================= */}
       <div className="space-y-6">
         <div className="bg-black/40 rounded-2xl border border-white/10 flex flex-col items-center justify-center p-6 md:p-8 min-h-[420px] relative overflow-hidden shadow-2xl">
           {result ? (
@@ -1536,19 +1786,19 @@ function WalkthroughVideoTool() {
                     </div>
                     <div className="flex items-center gap-3 text-amber-300 font-semibold">
                       <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px] font-bold">3</span>
-                      <span className="flex-1">Randare pe GPU</span>
+                      <span className="flex-1">Randare pe GPU ({provider === 'gemini' ? 'Google Veo 3.1' : 'Fal.ai Kling AI'})</span>
                       <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
                     </div>
                   </div>
                   <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-gradient-to-r from-amber-500 to-cyan-400 h-full transition-all duration-500 rounded-full" style={{ width: `${Math.min(95, elapsedSeconds * 2)}%` }} />
+                    <div className="bg-gradient-to-r from-amber-500 to-cyan-400 h-full transition-all duration-500 rounded-full" style={{ width: `${Math.min(95, elapsedSeconds * (provider === 'gemini' ? 5 : 1.3))}%` }} />
                   </div>
                 </div>
               ) : (
                 <>
                   <Building className="w-16 h-16 text-slate-600 mx-auto mb-4" />
                   <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Tur Video 3D</h4>
-                  <p className="text-slate-400 text-sm max-w-md mx-auto">Încarcă schița, configurează parametrii și lansează randarea.</p>
+                  <p className="text-slate-400 text-sm max-w-md mx-auto">Încarcă schița, configurează parametrii, generează scenariul și lansează randarea.</p>
                 </>
               )}
             </div>
