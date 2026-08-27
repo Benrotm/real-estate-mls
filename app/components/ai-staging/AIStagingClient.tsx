@@ -706,149 +706,143 @@ function Panorama360Tool() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-cyan-900/30 shadow-xl">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold text-xs flex items-center justify-center shadow-lg">
-                1
+      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-cyan-900/30 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold text-xs flex items-center justify-center shadow-lg">
+              1
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Configurare Panoramă 360° pe Cameră
+              </h3>
+              <p className="text-xs text-slate-400">Alege camera exactă din schiță pe care dorești să o vezi sferic la 360°</p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-3 py-1 rounded-lg">
+            {cost} credite
+          </span>
+        </div>
+
+        <FileUploader 
+          label="Încarcă schița apartamentului sau planul 2D/3D (JPG, PNG)"
+          accept="image/*"
+          onUploadComplete={urls => setPlanUrl(urls[0] || '')}
+        />
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Selectează Încăperea pentru Vederea 360°
+          </label>
+          {renderPills(roomsList, roomName, setRoomName)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Stil Arhitectural & Mobilier
+          </label>
+          {renderPills(stylesList, style, setStyle)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Atmosferă & Iluminat
+          </label>
+          {renderPills(ambienceList, ambience, setAmbience)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Mobilier & Detalii de Inclus în Încăpere (Opțional)
+          </label>
+          <input
+            type="text"
+            value={furnitureDetails}
+            onChange={e => setFurnitureDetails(e.target.value)}
+            className="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/50"
+            placeholder="ex: Canapea albă, măsuță marmură, deck din lemn, plante..."
+          />
+        </div>
+
+        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
+
+        <button 
+          onClick={handleSubmit}
+          disabled={isPending || credits < cost}
+          className="w-full py-4 bg-gradient-to-r from-cyan-500 via-teal-500 to-cyan-600 hover:from-cyan-400 hover:to-teal-400 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
+        >
+          {isPending ? (
+            <span className="flex items-center gap-2 text-base">
+              <Loader2 className="w-5 h-5 animate-spin" /> Generare Panoramă 360° Sferică...
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 text-base">
+              <Compass className="w-5 h-5" /> Generează Panoramă 360° ({roomName})
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div className="bg-black/50 rounded-2xl border border-cyan-500/30 flex flex-col items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
+        {result ? (
+          <div className="w-full space-y-4 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Panoramă 360° Gata — {roomName}
               </span>
-              <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Configurare Panoramă 360° pe Cameră
-                </h3>
-                <p className="text-xs text-slate-400">Alege camera exactă din schiță pe care dorești să o vezi sferic la 360°</p>
+              <button 
+                onClick={() => handleDownload(result, `panorama_360_${roomName.toLowerCase().replace(/\s+/g, '_')}.jpg`)} 
+                className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all text-xs font-semibold shadow-lg cursor-pointer"
+              >
+                <Download className="w-4 h-4"/> Descarcă Imagine 360°
+              </button>
+            </div>
+
+            <div 
+              className="relative rounded-xl overflow-x-scroll no-scrollbar bg-black aspect-[2/1] border border-white/10 shadow-2xl cursor-grab active:cursor-grabbing select-none"
+              onMouseDown={(e) => {
+                setIsDragging(true);
+                setStartX(e.pageX - e.currentTarget.offsetLeft);
+                setScrollLeft(e.currentTarget.scrollLeft);
+              }}
+              onMouseLeave={() => setIsDragging(false)}
+              onMouseUp={() => setIsDragging(false)}
+              onMouseMove={(e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const x = e.pageX - e.currentTarget.offsetLeft;
+                const walk = (x - startX) * 2;
+                e.currentTarget.scrollLeft = scrollLeft - walk;
+              }}
+            >
+              <img src={result} alt="Panorama 360" className="h-full max-w-none object-cover min-w-[200%]" draggable={false} />
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[11px] text-cyan-300 pointer-events-none flex items-center gap-1.5 shadow-lg">
+                <Compass className="w-3.5 h-3.5 animate-spin" /> Trage cu mouse-ul stânga/dreapta pentru a explora la 360°
               </div>
             </div>
-            <span className="text-xs font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-3 py-1 rounded-lg">
-              {cost} credite
-            </span>
+
+            <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-slate-300 flex items-center justify-between">
+              <span>📐 Format: <strong>2:1 Equirectangular Sferic</strong></span>
+              <span className="text-cyan-400">Compatibil Facebook 360, Kuula, VR & Matterport</span>
+            </div>
           </div>
-
-          <FileUploader 
-            label="Încarcă schița apartamentului sau planul 2D/3D (JPG, PNG)"
-            accept="image/*"
-            onUploadComplete={urls => setPlanUrl(urls[0] || '')}
-          />
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Selectează Încăperea pentru Vederea 360°
-            </label>
-            {renderPills(roomsList, roomName, setRoomName)}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Stil Arhitectural & Mobilier
-            </label>
-            {renderPills(stylesList, style, setStyle)}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Atmosferă & Iluminat
-            </label>
-            {renderPills(ambienceList, ambience, setAmbience)}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Mobilier & Detalii de Inclus în Încăpere (Opțional)
-            </label>
-            <input
-              type="text"
-              value={furnitureDetails}
-              onChange={e => setFurnitureDetails(e.target.value)}
-              className="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/50"
-              placeholder="ex: Canapea albă, măsuță marmură, deck din lemn, plante..."
-            />
-          </div>
-
-          {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
-
-          <button 
-            onClick={handleSubmit}
-            disabled={isPending || credits < cost}
-            className="w-full py-4 bg-gradient-to-r from-cyan-500 via-teal-500 to-cyan-600 hover:from-cyan-400 hover:to-teal-400 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
-          >
+        ) : (
+          <div className="text-center px-4 py-8">
             {isPending ? (
-              <span className="flex items-center gap-2 text-base">
-                <Loader2 className="w-5 h-5 animate-spin" /> Generare Panoramă 360° Sferică...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2 text-base">
-                <Compass className="w-5 h-5" /> Generează Panoramă 360° ({roomName})
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* 360 Viewer / Result Area */}
-        <div className="space-y-6">
-          <div className="bg-black/50 rounded-2xl border border-cyan-500/30 flex flex-col items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
-            {result ? (
-              <div className="w-full space-y-4 animate-in fade-in duration-300">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> Panoramă 360° Gata — {roomName}
-                  </span>
-                  <button 
-                    onClick={() => handleDownload(result, `panorama_360_${roomName.toLowerCase().replace(/\s+/g, '_')}.jpg`)} 
-                    className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all text-xs font-semibold shadow-lg cursor-pointer"
-                  >
-                    <Download className="w-4 h-4"/> Descarcă Imagine 360°
-                  </button>
-                </div>
-
-                {/* Interactive 360 Panning Container */}
-                <div 
-                  className="relative rounded-xl overflow-x-scroll no-scrollbar bg-black aspect-[2/1] border border-white/10 shadow-2xl cursor-grab active:cursor-grabbing select-none"
-                  onMouseDown={(e) => {
-                    setIsDragging(true);
-                    setStartX(e.pageX - e.currentTarget.offsetLeft);
-                    setScrollLeft(e.currentTarget.scrollLeft);
-                  }}
-                  onMouseLeave={() => setIsDragging(false)}
-                  onMouseUp={() => setIsDragging(false)}
-                  onMouseMove={(e) => {
-                    if (!isDragging) return;
-                    e.preventDefault();
-                    const x = e.pageX - e.currentTarget.offsetLeft;
-                    const walk = (x - startX) * 2;
-                    e.currentTarget.scrollLeft = scrollLeft - walk;
-                  }}
-                >
-                  <img src={result} alt="Panorama 360" className="h-full max-w-none object-cover min-w-[200%]" draggable={false} />
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[11px] text-cyan-300 pointer-events-none flex items-center gap-1.5 shadow-lg">
-                    <Compass className="w-3.5 h-3.5 animate-spin" /> Trage cu mouse-ul stânga/dreapta pentru a explora la 360°
-                  </div>
-                </div>
-
-                <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-slate-300 flex items-center justify-between">
-                  <span>📐 Format: <strong>2:1 Equirectangular Sferic</strong></span>
-                  <span className="text-cyan-400">Compatibil Facebook 360, Kuula, VR & Matterport</span>
-                </div>
+              <div className="space-y-4 text-center">
+                <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
+                <p className="font-bold text-slate-200 text-sm">Calculare proiecție sferică equirectangulară...</p>
+                <p className="text-slate-400 text-xs max-w-xs mx-auto">Construiește toate cele 4 laturi ale camerei {roomName} în 360°.</p>
               </div>
             ) : (
-              <div className="text-center px-4 py-8">
-                {isPending ? (
-                  <div className="space-y-4 text-center">
-                    <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
-                    <p className="font-bold text-slate-200 text-sm">Calculare proiecție sferică equirectangulară...</p>
-                    <p className="text-slate-400 text-xs max-w-xs mx-auto">Construiește toate cele 4 laturi ale camerei {roomName} în 360°.</p>
-                  </div>
-                ) : (
-                  <>
-                    <Compass className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                    <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Tur Virtual 360°</h4>
-                    <p className="text-slate-400 text-sm max-w-md mx-auto">Încarcă schița, alege încăperea dorită și explorează camera la 360°.</p>
-                  </>
-                )}
-              </div>
+              <>
+                <Compass className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Tur Virtual 360°</h4>
+                <p className="text-slate-400 text-sm max-w-md mx-auto">Încarcă schița, alege încăperea dorită și explorează camera la 360°.</p>
+              </>
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -886,7 +880,6 @@ function Walkthrough2StageTool() {
     'Intrare dinspre hol spre centrul camerei'
   ];
 
-  // Pasul 1: Randare Foto la nivelul ochilor din schiță
   const handleRenderInterior = async () => {
     if (!planUrl) {
       setError('Vă rugăm să încărcați schița la Pasul 1.');
@@ -915,7 +908,6 @@ function Walkthrough2StageTool() {
     }
   };
 
-  // Pasul 2: Video Walkthrough din imaginea aprobată
   const handleGenerateVideo = () => {
     if (!interiorImageUrl) {
       setError('Vă rugăm să generați mai întâi randarea foto interioară (Pasul 1).');
@@ -961,7 +953,7 @@ function Walkthrough2StageTool() {
   );
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-6">
       {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[
@@ -983,148 +975,141 @@ function Walkthrough2StageTool() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Controls */}
-        <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-emerald-900/30 shadow-xl">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center shadow-lg">
-                1
-              </span>
-              <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Etapa 1: Plan → Randare Foto Interioară
-                </h3>
-                <p className="text-xs text-slate-400">Randează prima cameră la nivelul ochilor respectând mobilierul din plan</p>
-              </div>
+      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-emerald-900/30 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center shadow-lg">
+              1
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Etapa 1: Plan → Randare Foto Interioară
+              </h3>
+              <p className="text-xs text-slate-400">Randează prima cameră la nivelul ochilor respectând mobilierul din plan</p>
+            </div>
+          </div>
+        </div>
+
+        <FileUploader 
+          label="Încarcă schița 2D sau axonometria 3D"
+          accept="image/*"
+          onUploadComplete={urls => setPlanUrl(urls[0] || '')}
+        />
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Selectează Încăperea
+          </label>
+          {renderPills(roomsList, roomName, setRoomName)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Stil & Finisaje
+          </label>
+          {renderPills(['Modern Lux', 'Scandinavian', 'Minimalist', 'Clasic Elegant'], style, setStyle)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Mobilier & Dotări (Fidele Schiței)
+          </label>
+          <input
+            type="text"
+            value={furnitureDetails}
+            onChange={e => setFurnitureDetails(e.target.value)}
+            className="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:border-emerald-500/50 outline-none"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleRenderInterior}
+          disabled={isRenderingImage || !planUrl}
+          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-lg"
+        >
+          {isRenderingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+          <span>Randează Imaginea Foto Interioară din Plan</span>
+        </button>
+
+        <div className="pt-4 border-t border-white/10 space-y-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-orange-500/20 border border-orange-500/40 text-orange-300 font-bold text-xs flex items-center justify-center shadow-lg">
+              2
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Etapa 2: Animare Video Walkthrough
+              </h3>
+              <p className="text-xs text-slate-400">Generează mișcarea camerei din imaginea randată mai sus</p>
             </div>
           </div>
 
-          <FileUploader 
-            label="Încarcă schița 2D sau axonometria 3D"
-            accept="image/*"
-            onUploadComplete={urls => setPlanUrl(urls[0] || '')}
-          />
-
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Selectează Încăperea
+              Tip Mișcare Cameră
             </label>
-            {renderPills(roomsList, roomName, setRoomName)}
+            {renderPills(motionsList, motionType, setMotionType)}
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Stil & Finisaje
+              Durată Video
             </label>
-            {renderPills(['Modern Lux', 'Scandinavian', 'Minimalist', 'Clasic Elegant'], style, setStyle)}
+            {renderPills(['5 secunde', '10 secunde (Extins)', '15 secunde (Max)'], duration, setDuration)}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Mobilier & Dotări (Fidele Schiței)
-            </label>
-            <input
-              type="text"
-              value={furnitureDetails}
-              onChange={e => setFurnitureDetails(e.target.value)}
-              className="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:border-emerald-500/50 outline-none"
-            />
-          </div>
+          {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
 
           <button
             type="button"
-            onClick={handleRenderInterior}
-            disabled={isRenderingImage || !planUrl}
-            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-lg"
+            onClick={handleGenerateVideo}
+            disabled={isPending || !interiorImageUrl || credits < cost}
+            className="w-full py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-2xl"
           >
-            {isRenderingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-            <span>Randează Imaginea Foto Interioară din Plan</span>
+            {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Video className="w-5 h-5" />}
+            <span>Lansează Video Walkthrough Fidel din Randare</span>
           </button>
+        </div>
+      </div>
 
-          {/* Etapa 2 */}
-          <div className="pt-4 border-t border-white/10 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-orange-500/20 border border-orange-500/40 text-orange-300 font-bold text-xs flex items-center justify-center shadow-lg">
-                2
+      <div className="bg-black/50 rounded-2xl border border-emerald-500/30 p-6 min-h-[460px] flex flex-col justify-center items-center shadow-2xl relative overflow-hidden">
+        {videoResultUrl ? (
+          <div className="w-full space-y-3 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" /> Video Walkthrough 3D Generat
               </span>
-              <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Etapa 2: Animare Video Walkthrough
-                </h3>
-                <p className="text-xs text-slate-400">Generează mișcarea camerei din imaginea randată mai sus</p>
-              </div>
+              <button 
+                onClick={() => handleDownload(videoResultUrl, 'walkthrough_fidel_2stage.mp4')}
+                className="text-xs bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/30 flex items-center gap-1 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" /> Descarcă MP4
+              </button>
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                Tip Mișcare Cameră
-              </label>
-              {renderPills(motionsList, motionType, setMotionType)}
+            <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
+              <video src={videoResultUrl} controls autoPlay loop playsInline className="w-full h-full object-contain" />
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                Durată Video
-              </label>
-              {renderPills(['5 secunde', '10 secunde (Extins)', '15 secunde (Max)'], duration, setDuration)}
-            </div>
-
-            {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
-
-            <button
-              type="button"
-              onClick={handleGenerateVideo}
-              disabled={isPending || !interiorImageUrl || credits < cost}
-              className="w-full py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-2xl"
-            >
-              {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Video className="w-5 h-5" />}
-              <span>Lansează Video Walkthrough Fidel din Randare</span>
-            </button>
           </div>
-        </div>
-
-        {/* Results Area (Image + Video) */}
-        <div className="space-y-6">
-          <div className="bg-black/50 rounded-2xl border border-emerald-500/30 p-6 min-h-[460px] flex flex-col justify-center items-center shadow-2xl relative overflow-hidden">
-            {videoResultUrl ? (
-              <div className="w-full space-y-3 animate-in fade-in duration-300">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> Video Walkthrough 3D Generat
-                  </span>
-                  <button 
-                    onClick={() => handleDownload(videoResultUrl, 'walkthrough_fidel_2stage.mp4')}
-                    className="text-xs bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/30 flex items-center gap-1 cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Descarcă MP4
-                  </button>
-                </div>
-                <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
-                  <video src={videoResultUrl} controls autoPlay loop playsInline className="w-full h-full object-contain" />
-                </div>
-              </div>
-            ) : interiorImageUrl ? (
-              <div className="w-full space-y-3 animate-in fade-in duration-300">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> Randare Foto Etapa 1 Gata
-                  </span>
-                  <span className="text-[11px] text-slate-400">Apasă pe butonul de mai jos pentru a o anima</span>
-                </div>
-                <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
-                  <img src={interiorImageUrl} alt="Interior Render" className="w-full h-full object-cover" />
-                </div>
-              </div>
-            ) : (
-              <div className="text-center px-4 py-8 text-slate-400">
-                <Camera className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Pipeline 2-Stage</h4>
-                <p className="text-xs max-w-sm mx-auto">Încarcă schița pentru a obține mai întâi randarea foto exactă a camerei, apoi animă turul video.</p>
-              </div>
-            )}
+        ) : interiorImageUrl ? (
+          <div className="w-full space-y-3 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <span className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" /> Randare Foto Etapa 1 Gata
+              </span>
+              <span className="text-[11px] text-slate-400">Apasă pe butonul de mai jos pentru a o anima</span>
+            </div>
+            <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
+              <img src={interiorImageUrl} alt="Interior Render" className="w-full h-full object-cover" />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center px-4 py-8 text-slate-400">
+            <Camera className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Pipeline 2-Stage</h4>
+            <p className="text-xs max-w-sm mx-auto">Încarcă schița pentru a obține mai întâi randarea foto exactă a camerei, apoi animă turul video.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1204,7 +1189,7 @@ function IsometricFlythroughTool() {
   );
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-6">
       {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[
@@ -1226,118 +1211,109 @@ function IsometricFlythroughTool() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-purple-900/30 shadow-xl">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 font-bold text-xs flex items-center justify-center shadow-lg">
-                1
-              </span>
-              <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Configurare Fly-Through Izometric 3D
-                </h3>
-                <p className="text-xs text-slate-400">Animație 3D continuă peste compartimentarea exactă din imagine</p>
-              </div>
-            </div>
-            <span className="text-xs font-bold text-purple-300 bg-purple-500/15 border border-purple-500/30 px-3 py-1 rounded-lg">
-              {cost} credite
+      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-purple-900/30 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 font-bold text-xs flex items-center justify-center shadow-lg">
+              1
             </span>
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Configurare Fly-Through Izometric 3D
+              </h3>
+              <p className="text-xs text-slate-400">Animație 3D continuă peste compartimentarea exactă din imagine</p>
+            </div>
           </div>
+          <span className="text-xs font-bold text-purple-300 bg-purple-500/15 border border-purple-500/30 px-3 py-1 rounded-lg">
+            {cost} credite
+          </span>
+        </div>
 
-          <FileUploader 
-            label="Încarcă axonometria 3D sau planul de arhitectură"
-            accept="image/*"
-            onUploadComplete={urls => setPlanUrl(urls[0] || '')}
-          />
+        <FileUploader 
+          label="Încarcă axonometria 3D sau planul de arhitectură"
+          accept="image/*"
+          onUploadComplete={urls => setPlanUrl(urls[0] || '')}
+        />
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Unghi & Mișcare Cameră Aeriană
-            </label>
-            {renderPills(cameraAngles, cameraAngle, setCameraAngle)}
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Unghi & Mișcare Cameră Aeriană
+          </label>
+          {renderPills(cameraAngles, cameraAngle, setCameraAngle)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Stil & Iluminat
+          </label>
+          {renderPills(['Modern Lux cu Iluminat Dinamic', 'Lumină Naturală cu Umbre Realiste', 'Atmosferă de Seară cu Spoturi Aprinse'], style, setStyle)}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+            Durată Animație
+          </label>
+          {renderPills(['5 secunde', '10 secunde (Extins)', '15 secunde (Max)'], duration, setDuration)}
+        </div>
+
+        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
+
+        <button 
+          onClick={handleSubmit}
+          disabled={isPending || credits < cost}
+          className="w-full py-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-600 hover:from-purple-400 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
+        >
+          {isPending ? (
+            <span className="flex items-center gap-2 text-base">
+              <Loader2 className="w-5 h-5 animate-spin" /> Randare Fly-Through Izometric 3D...
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 text-base">
+              <Layers className="w-5 h-5" /> Generează Video Izometric 3D ({duration})
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div className="bg-black/50 rounded-2xl border border-purple-500/30 flex flex-col items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
+        {resultUrl ? (
+          <div className="w-full space-y-4 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Fly-Through Izometric Generat cu Succes
+              </span>
+              <button 
+                onClick={() => handleDownload(resultUrl, 'flythrough_izometric_3d.mp4')} 
+                className="bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all text-xs font-semibold shadow-lg cursor-pointer"
+              >
+                <Download className="w-4 h-4"/> Descarcă MP4
+              </button>
+            </div>
+            <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
+              <video src={resultUrl} controls autoPlay loop playsInline className="w-full h-full object-contain" />
+            </div>
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Stil & Iluminat
-            </label>
-            {renderPills(['Modern Lux cu Iluminat Dinamic', 'Lumină Naturală cu Umbre Realiste', 'Atmosferă de Seară cu Spoturi Aprinse'], style, setStyle)}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-              Durată Animație
-            </label>
-            {renderPills(['5 secunde', '10 secunde (Extins)', '15 secunde (Max)'], duration, setDuration)}
-          </div>
-
-          {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20 font-medium">{error}</div>}
-
-          <button 
-            onClick={handleSubmit}
-            disabled={isPending || credits < cost}
-            className="w-full py-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-600 hover:from-purple-400 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
-          >
+        ) : (
+          <div className="text-center px-4 py-8">
             {isPending ? (
-              <span className="flex items-center gap-2 text-base">
-                <Loader2 className="w-5 h-5 animate-spin" /> Randare Fly-Through Izometric 3D...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2 text-base">
-                <Layers className="w-5 h-5" /> Generează Video Izometric 3D ({duration})
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Video Result */}
-        <div className="space-y-6">
-          <div className="bg-black/50 rounded-2xl border border-purple-500/30 flex flex-col items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
-            {resultUrl ? (
-              <div className="w-full space-y-4 animate-in fade-in duration-300">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> Fly-Through Izometric Generat cu Succes
-                  </span>
-                  <button 
-                    onClick={() => handleDownload(resultUrl, 'flythrough_izometric_3d.mp4')} 
-                    className="bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all text-xs font-semibold shadow-lg cursor-pointer"
-                  >
-                    <Download className="w-4 h-4"/> Descarcă MP4
-                  </button>
-                </div>
-                <div className="aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
-                  <video src={resultUrl} controls autoPlay loop playsInline className="w-full h-full object-contain" />
-                </div>
+              <div className="space-y-4 text-center">
+                <Loader2 className="w-10 h-10 text-purple-400 animate-spin mx-auto" />
+                <p className="font-bold text-slate-200 text-sm">Randare traiectorie orbitală peste schiță...</p>
+                <p className="text-slate-400 text-xs max-w-xs mx-auto">Păstrează pereții și camerele din schiță, animând camera în zbor 3D.</p>
               </div>
             ) : (
-              <div className="text-center px-4 py-8">
-                {isPending ? (
-                  <div className="space-y-4 text-center">
-                    <Loader2 className="w-10 h-10 text-purple-400 animate-spin mx-auto" />
-                    <p className="font-bold text-slate-200 text-sm">Randare traiectorie orbitală peste schiță...</p>
-                    <p className="text-slate-400 text-xs max-w-xs mx-auto">Păstrează pereții și camerele din schiță, animând camera în zbor 3D.</p>
-                  </div>
-                ) : (
-                  <>
-                    <Layers className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                    <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Tur Izometric 3D</h4>
-                    <p className="text-slate-400 text-sm max-w-md mx-auto">Încarcă schița 3D pentru a genera o animație cinematică de rotație peste apartament.</p>
-                  </>
-                )}
-              </div>
+              <>
+                <Layers className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <h4 className="text-slate-200 font-semibold text-base mb-1">Previzualizare Tur Izometric 3D</h4>
+                <p className="text-slate-400 text-sm max-w-md mx-auto">Încarcă schița 3D pentru a genera o animație cinematică de rotație peste apartament.</p>
+              </>
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 }
-
-// ----------------------------------------------------
-// Sub-components for each tool
-// ----------------------------------------------------
 
 function VirtualStagingTool() {
   const [isPending, startTransition] = useTransition();
@@ -1385,16 +1361,15 @@ function VirtualStagingTool() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        {canUseCustomKeys ? (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'falai', name: 'Fal.ai API'}, {id: 'midjourney', name: 'Midjourney API'}]}
           onProviderChange={setProvider}
           onKeyChange={setApiKey}
         />
       ) : (
-        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 mb-6 flex items-center justify-between text-xs text-slate-300 shadow-lg">
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/20 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between text-xs text-slate-300 shadow-lg">
           <div className="flex items-center gap-2.5">
             <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
             <span>Serviciul AI este alimentat direct de platformă. Generările consumă credite din balanța contului tău.</span>
@@ -1405,8 +1380,26 @@ function VirtualStagingTool() {
         </div>
       )}
 
+      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-blue-900/30 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 font-bold text-xs flex items-center justify-center shadow-lg">
+              1
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Configurare Virtual Staging AI
+              </h3>
+              <p className="text-xs text-slate-400">Încarcă o imagine a spațiului gol și alege stilul de amenajare</p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-blue-300 bg-blue-500/15 border border-blue-500/30 px-3 py-1 rounded-lg">
+            {cost} credite
+          </span>
+        </div>
+
         <div>
-          <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-widest">1. Încarcă Imagine</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-widest">Încarcă Imagine</label>
           <FileUploader 
              label="Încarcă Imagine Principală" 
              accept="image/*" 
@@ -1417,15 +1410,15 @@ function VirtualStagingTool() {
         <div className="space-y-6 bg-black/20 p-5 rounded-2xl border border-white/5">
           {/* Room Type */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">2. Tipul camerei</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Tipul camerei</label>
             <div className="flex flex-wrap gap-2">
               {['Living', 'Dormitor', 'Bucătărie', 'Birou', 'Dining', 'Baie'].map(rt => (
                 <button
                   key={rt}
                   onClick={() => setRoomType(rt)}
-                  className={`px-4 py-2 rounded-full text-sm border transition-all ${
+                  className={`px-4 py-2 rounded-full text-sm border transition-all cursor-pointer ${
                     roomType === rt
-                      ? 'border-orange-400 text-orange-400 bg-orange-400/10'
+                      ? 'border-orange-400 text-orange-400 bg-orange-400/10 shadow-[0_0_10px_rgba(251,146,60,0.15)]'
                       : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300'
                   }`}
                 >
@@ -1437,13 +1430,13 @@ function VirtualStagingTool() {
 
           {/* Style */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">3. Stilul de mobilare</label>
-            <div className="grid grid-cols-3 gap-3">
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Stilul de mobilare</label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {stylesData.map(st => (
                 <button
                   key={st.id}
                   onClick={() => setStyle(st.id)}
-                  className={`relative p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all group ${
+                  className={`relative p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all group cursor-pointer ${
                     style === st.id
                       ? 'border-orange-400 bg-orange-400/5 shadow-[0_0_15px_rgba(251,146,60,0.15)]'
                       : 'border-white/10 bg-black/40 hover:bg-black/60 hover:border-white/20'
@@ -1463,7 +1456,7 @@ function VirtualStagingTool() {
 
           {/* Additional Options */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">4. Opțiuni suplimentare</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Opțiuni suplimentare</label>
             <div className="flex flex-wrap gap-2">
               {['Plante', 'Lumină naturală', 'Seară', 'Tablouri', 'Covor lux'].map(opt => {
                 const isActive = additionalOptions.includes(opt);
@@ -1474,9 +1467,9 @@ function VirtualStagingTool() {
                       if (isActive) setAdditionalOptions(prev => prev.filter(p => p !== opt));
                       else setAdditionalOptions(prev => [...prev, opt]);
                     }}
-                    className={`px-4 py-2 rounded-full text-sm border transition-all ${
+                    className={`px-4 py-2 rounded-full text-sm border transition-all cursor-pointer ${
                       isActive
-                        ? 'border-orange-400 text-orange-400 bg-orange-400/10'
+                        ? 'border-orange-400 text-orange-400 bg-orange-400/10 shadow-[0_0_10px_rgba(251,146,60,0.15)]'
                         : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300'
                     }`}
                   >
@@ -1493,18 +1486,19 @@ function VirtualStagingTool() {
         <button 
           onClick={submitAction}
           disabled={isPending || credits < cost}
-          className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50"
+          className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50 cursor-pointer"
         >
-          {isPending ? <div className="flex items-center gap-2"><><Loader2 className="w-5 h-5 animate-spin" /> Procesare AI...</></div> : <span className="flex items-center gap-2">Generează Staging AI</span>}
+          {isPending ? <div className="flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Procesare AI...</div> : <span className="flex items-center gap-2">Generează Staging AI</span>}
           {!isPending && <span className="text-xs text-white/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
         </button>
       </div>
       
-      <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px] relative overflow-hidden">
+      {/* Result Area */}
+      <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
         {result ? (
            <>
               <img src={result} alt="Staging Result" className="w-full h-full object-contain rounded-xl relative z-10" />
-              <button onClick={() => handleDownload(result, 'virtual_staging_imobum.png')} className="absolute top-8 right-8 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20">
+              <button onClick={() => handleDownload(result, 'virtual_staging_imobum.png')} className="absolute top-8 right-8 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20 cursor-pointer">
                   <Download className="w-4 h-4"/> Descărcare
               </button>
            </>
@@ -1575,7 +1569,7 @@ function VideoGeneratorTool() {
         <button
           key={opt}
           onClick={() => setter(opt)}
-          className={`px-4 py-2 rounded-full text-sm border transition-all ${
+          className={`px-4 py-2 rounded-full text-sm border transition-all cursor-pointer ${
             currentValue === opt 
               ? 'border-orange-400 text-orange-400 bg-orange-400/10 shadow-[0_0_10px_rgba(251,146,60,0.2)]' 
               : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300 bg-transparent'
@@ -1588,9 +1582,8 @@ function VideoGeneratorTool() {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        {canUseCustomKeys ? (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'luma', name: 'Luma Dream Machine'}, {id: 'runway', name: 'Runway Gen-3'}]}
           onProviderChange={setProvider}
@@ -1608,8 +1601,26 @@ function VideoGeneratorTool() {
         </div>
       )}
 
+      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-orange-900/30 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-orange-500/20 border border-orange-500/40 text-orange-300 font-bold text-xs flex items-center justify-center shadow-lg">
+              1
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Configurare Generator Video Imobiliar
+              </h3>
+              <p className="text-xs text-slate-400">Încarcă pozele proprietății și configurează muzica, vocea și formatul</p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-orange-300 bg-orange-500/15 border border-orange-500/30 px-3 py-1 rounded-lg">
+            {cost} credite
+          </span>
+        </div>
+
         <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wide">1. ÎNcarcă Pozele Proprietății (Max 15)</label>
+          <label className="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wide">Încarcă Pozele Proprietății (Max 15)</label>
           <FileUploader 
             label="Încarcă Poze Multiple" 
             accept="image/*" 
@@ -1621,25 +1632,25 @@ function VideoGeneratorTool() {
         <div className="space-y-6 bg-black/20 p-5 rounded-2xl border border-white/5">
           {/* Background Music */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">2. Muzică de fundal</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">Muzică de fundal</label>
             {renderPills(['Cinematic elegant', 'Modern upbeat', 'Pian moale', 'Corporate'], musicType, setMusicType)}
           </div>
 
           {/* AI Narration Voice */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">3. Narație AI</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">Narație AI</label>
             {renderPills(['Voce feminină', 'Voce masculină', 'Fără narație'], voiceType, setVoiceType)}
           </div>
 
           {/* Video Format */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">4. Format Video</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">Format Video</label>
             {renderPills(['16:9 (YouTube/site)', '9:16 (Reels/TikTok)', '1:1 (Instagram)'], videoFormat, setVideoFormat)}
           </div>
 
           {/* Narration Details */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">5. Detalii Proprietate (pentru narație)</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Detalii Proprietate (pentru narație)</label>
             <textarea 
               rows={3}
               value={narrationDetails}
@@ -1649,7 +1660,7 @@ function VideoGeneratorTool() {
             />
           </div>
 
-          {/* Logo Option (Kept from existing logic) */}
+          {/* Logo Option */}
           <div className="flex items-center justify-between pt-4 border-t border-white/10">
             <span className="text-slate-400 text-xs font-semibold uppercase tracking-widest">Atașare Logo Agenție {logoUrl && '✅'}</span>
             <label className="text-xs bg-white/10 px-4 py-2 rounded-lg border border-white/20 hover:bg-white/20 text-white transition-colors cursor-pointer">
@@ -1672,20 +1683,25 @@ function VideoGeneratorTool() {
         <button 
            onClick={submitAction}
            disabled={isPending || credits < cost}
-           className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all flex flex-col justify-center items-center gap-1 disabled:opacity-50"
+           className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all flex flex-col justify-center items-center gap-1 disabled:opacity-50 cursor-pointer"
         >
           {isPending ? <div className="flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Procesare Video AI...</div> : <span className="flex items-center justify-center gap-2">Lansează Generator Video AI</span>}
           {!isPending && <span className="text-xs text-white/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
         </button>
       </div>
-      <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px] relative overflow-hidden">
+
+      <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
         {result ? (
-           <>
-               <video src={result} controls autoPlay loop className="w-full h-full object-contain rounded-xl bg-black relative z-10" />
-               <button onClick={() => handleDownload(result, 'video_staging_imobum.mp4')} className="absolute top-8 right-8 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20">
-                  <Download className="w-4 h-4"/> Descărcare
-              </button>
-           </>
+           <div className="w-full space-y-4">
+               <div className="aspect-video bg-black rounded-xl overflow-hidden relative border border-white/10">
+                 <video src={result} controls autoPlay loop className="w-full h-full object-contain bg-black" />
+               </div>
+               <div className="flex justify-end">
+                 <button onClick={() => handleDownload(result, 'video_staging_imobum.mp4')} className="bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-300 px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-xs font-semibold shadow-lg cursor-pointer">
+                    <Download className="w-4 h-4"/> Descărcare Video MP4
+                 </button>
+               </div>
+           </div>
         ) : (
             <div className="text-center">
               {isPending ? (
@@ -2728,19 +2744,19 @@ function Plan3DTool() {
         <button 
           onClick={submitAction}
           disabled={isPending || credits < cost}
-          className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50"
+          className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50 cursor-pointer"
         >
-          {isPending ? <div className="flex items-center gap-2"><><Loader2 className="w-5 h-5 animate-spin" /> Extragere Pereți...</></div> : <span className="flex items-center gap-2">Converteste în Plan 3D Mochetat</span>}
+          {isPending ? <div className="flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Extragere Pereți...</div> : <span className="flex items-center gap-2">Convertește în Plan 3D Mochetat</span>}
           {!isPending && <span className="text-xs text-white/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
         </button>
       </div>
 
-      <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px] relative overflow-hidden">
+      <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
         {result ? (
            <>
               <img src={result} alt="3D Plan Result" className="w-full h-full object-contain rounded-xl relative z-10" />
-              <button onClick={() => handleDownload(result, '3d_plan_imobum.png')} className="absolute top-8 right-8 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20">
-                  <Download className="w-4 h-4"/> Descărcare
+              <button onClick={() => handleDownload(result, '3d_plan_imobum.png')} className="absolute top-8 right-8 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20 cursor-pointer">
+                  <Download className="w-4 h-4"/> Descărcare Imagine 3D
               </button>
            </>
         ) : (
@@ -2770,7 +2786,6 @@ function DescriptionGenTool() {
   const [provider, setProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
   
-  // New States matching the picture
   const [propertyType, setPropertyType] = useState('Apartament');
   const [surface, setSurface] = useState('');
   const [rooms, setRooms] = useState('2');
@@ -2807,7 +2822,7 @@ function DescriptionGenTool() {
         <button
           key={opt}
           onClick={() => setter(opt)}
-          className={`px-4 py-2 rounded-full text-sm border transition-all ${
+          className={`px-4 py-2 rounded-full text-sm border transition-all cursor-pointer ${
             currentValue === opt 
               ? 'border-yellow-600 text-yellow-500 bg-yellow-500/10 shadow-[0_0_10px_rgba(202,138,4,0.15)]' 
               : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300 bg-transparent'
@@ -2820,9 +2835,8 @@ function DescriptionGenTool() {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        {canUseCustomKeys ? (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'openai', name: 'OpenAI (ChatGPT)'}, {id: 'anthropic', name: 'Anthropic (Claude)'}, {id: 'gemini', name: 'Google Gemini'}]}
           onProviderChange={setProvider}
@@ -2840,63 +2854,81 @@ function DescriptionGenTool() {
         </div>
       )}
 
-        <div className="bg-[#161513] border border-yellow-900/30 rounded-2xl p-6 space-y-6">
-           <h3 className="text-yellow-600 font-semibold text-xs tracking-widest uppercase mb-4">Detalii Proprietate</h3>
-           
-           <div>
-             <label className="block text-xs text-slate-400 uppercase tracking-widest">Tip Proprietate</label>
-             {renderPills(['Apartament', 'Casă/Vilă', 'Teren', 'Comercial'], propertyType, setPropertyType)}
+      <div className="bg-[#161513] border border-yellow-900/30 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
+         <div className="flex items-center justify-between border-b border-white/10 pb-4">
+           <div className="flex items-center gap-2.5">
+             <span className="w-7 h-7 rounded-lg bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 font-bold text-xs flex items-center justify-center shadow-lg">
+               1
+             </span>
+             <div>
+               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                 Detalii Proprietate & Ton
+               </h3>
+               <p className="text-xs text-slate-400">Completează parametrii esențiali pentru generarea textului publicitar</p>
+             </div>
            </div>
+           <span className="text-xs font-bold text-yellow-400 bg-yellow-500/15 border border-yellow-500/30 px-3 py-1 rounded-lg">
+             {cost} credite
+           </span>
+         </div>
+         
+         <div>
+           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">Tip Proprietate</label>
+           {renderPills(['Apartament', 'Casă/Vilă', 'Teren', 'Comercial'], propertyType, setPropertyType)}
+         </div>
 
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
            <div>
-             <label className="block text-xs text-slate-400 uppercase tracking-widest mb-2">Suprafață (MP)</label>
+             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Suprafață (MP)</label>
              <input type="text" value={surface} onChange={e => setSurface(e.target.value)} placeholder="ex: 82" className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-yellow-500/50 text-sm" />
            </div>
 
            <div>
-             <label className="block text-xs text-slate-400 uppercase tracking-widest">Camere</label>
-             {renderPills(['1', '2', '3', '4', '5+'], rooms, setRooms)}
-           </div>
-
-           <div>
-             <label className="block text-xs text-slate-400 uppercase tracking-widest mb-2">Zonă / Adresă</label>
+             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Zonă / Adresă</label>
              <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="ex: Floreasca, București" className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-yellow-500/50 text-sm" />
            </div>
+         </div>
 
-           <div>
-             <label className="block text-xs text-slate-400 uppercase tracking-widest mb-2">Caracteristici Cheie (Separat prin virgulă)</label>
-             <textarea rows={3} value={features} onChange={e => setFeatures(e.target.value)} placeholder="ex: renovat 2024, parcare, vedere la parc, aer condiționat, centrală proprie, condominium lux" className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-yellow-500/50 resize-none text-sm"></textarea>
-           </div>
+         <div>
+           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">Număr Camere</label>
+           {renderPills(['1', '2', '3', '4', '5+'], rooms, setRooms)}
+         </div>
 
+         <div>
+           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Caracteristici Cheie (Separat prin virgulă)</label>
+           <textarea rows={3} value={features} onChange={e => setFeatures(e.target.value)} placeholder="ex: renovat 2024, parcare, vedere la parc, aer condiționat, centrală proprie, condominium lux" className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-yellow-500/50 resize-none text-sm"></textarea>
+         </div>
+
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
            <div>
-             <label className="block text-xs text-slate-400 uppercase tracking-widest">Tonul Descrierii</label>
+             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">Tonul Descrierii</label>
              {renderPills(['Profesional', 'Premium/Lux', 'Accesibil', 'Tehnic/Detaliat'], tone, setTone)}
            </div>
 
            <div>
-             <label className="block text-xs text-slate-400 uppercase tracking-widest">Destinație Anunț</label>
+             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">Destinație Anunț</label>
              {renderPills(['Portal imobiliar', 'Social Media', 'Email client'], destination, setDestination)}
            </div>
+         </div>
 
-           {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+         {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
 
-           <button 
-             onClick={submitAction}
-             disabled={isPending || credits < cost}
-             className="w-full py-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black font-semibold rounded-xl shadow-[0_0_15px_rgba(212,175,122,0.15)] transition-all flex flex-col items-center justify-center gap-1 mt-4 disabled:opacity-50"
-           >
-             {isPending ? <div className="flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Generare Descriere...</div> : <span className="flex items-center justify-center gap-2">Generează descriere AI</span>}
-             {!isPending && <span className="text-xs text-black/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
-           </button>
-        </div>
+         <button 
+           onClick={submitAction}
+           disabled={isPending || credits < cost}
+           className="w-full py-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black font-bold rounded-xl shadow-[0_0_15px_rgba(212,175,122,0.15)] transition-all flex flex-col items-center justify-center gap-1 mt-4 disabled:opacity-50 cursor-pointer"
+         >
+           {isPending ? <div className="flex items-center justify-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Generare Descriere...</div> : <span className="flex items-center justify-center gap-2">Generează descriere AI</span>}
+           {!isPending && <span className="text-xs text-black/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
+         </button>
       </div>
 
-      <div className="bg-[#161513] rounded-2xl border border-yellow-900/30 p-6 flex flex-col min-h-[400px]">
+      <div className="bg-[#161513] rounded-2xl border border-yellow-900/30 p-6 flex flex-col min-h-[350px] shadow-xl">
         <label className="block text-xs font-semibold text-yellow-600 mb-4 border-b border-white/5 pb-4 uppercase tracking-widest">
           Descrierea Generată 
         </label>
         
-        <div className="flex-1 border border-white/5 bg-black/20 rounded-xl p-4 mb-4 relative overflow-y-auto custom-scrollbar">
+        <div className="flex-1 border border-white/5 bg-black/20 rounded-xl p-4 mb-4 relative overflow-y-auto custom-scrollbar min-h-[220px]">
             {result ? (
                <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{result}</div>
             ) : (
@@ -2913,25 +2945,27 @@ function DescriptionGenTool() {
             )}
         </div>
         
-        <div className="grid grid-cols-2 gap-4 mt-auto">
-           <button 
-              onClick={async () => {
-                  if (result) {
-                      const success = await copyToClipboardSafe(result);
-                      if (success) {
-                          setCopied(true);
-                          setTimeout(() => setCopied(false), 2000);
-                      }
-                  }
-              }} 
-              className="py-3 px-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black border border-[#D4AF7A] font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
-           >
-              {copied ? '✅ Copiat' : '📄 Copiază'}
-           </button>
-           <button onClick={submitAction} disabled={!result || isPending} className="py-3 px-4 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors">
-              🔄 Regenerează
-           </button>
-        </div>
+        {result && (
+          <div className="flex gap-4 mt-auto">
+             <button 
+                onClick={async () => {
+                    if (result) {
+                        const success = await copyToClipboardSafe(result);
+                        if (success) {
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                        }
+                    }
+                }} 
+                className="flex-1 py-3 px-4 bg-[#D4AF7A] hover:bg-[#C29F6E] text-black border border-[#D4AF7A] font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+             >
+                {copied ? '✅ Copiat în Clipboard' : '📄 Copiază Descrierea'}
+             </button>
+             <button onClick={submitAction} disabled={!result || isPending} className="py-3 px-6 bg-transparent border border-white/10 hover:bg-white/5 text-slate-300 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                🔄 Regenerează
+             </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2948,7 +2982,6 @@ function RoomBuilderTool() {
   const [speed, setSpeed] = useState(1.5);
   const [pan, setPan] = useState(true);
   
-  // New States matching picture
   const [selectedFurniture, setSelectedFurniture] = useState<string[]>([]);
   const [ambientColor, setAmbientColor] = useState('Cald');
 
@@ -2980,21 +3013,22 @@ function RoomBuilderTool() {
   };
 
   const renderFurnitureGrid = (items: {id: string, icon: string}[]) => (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5">
         {items.map(item => {
             const isActive = selectedFurniture.includes(item.id);
             return (
                 <button
                    key={item.id}
+                   type="button"
                    onClick={() => toggleFurniture(item.id)}
-                   className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                   className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                        isActive 
-                         ? 'border-pink-500 bg-pink-500/5 shadow-[0_0_15px_rgba(236,72,153,0.1)]'
-                         : 'border-white/10 bg-[#1A1816]/50 hover:bg-black/60 hover:border-white/30'
+                         ? 'border-pink-500 bg-pink-500/10 shadow-[0_0_15px_rgba(236,72,153,0.15)] text-pink-300'
+                         : 'border-white/10 bg-[#1A1816]/50 hover:bg-black/60 hover:border-white/30 text-slate-400'
                    }`}
                 >
-                   <span className="text-2xl drop-shadow-md">{item.icon}</span>
-                   <span className={`text-xs ${isActive ? 'text-pink-400 font-medium' : 'text-slate-400'}`}>{item.id}</span>
+                   <span className="text-xl drop-shadow-md">{item.icon}</span>
+                   <span className="text-[11px] font-medium truncate">{item.id}</span>
                 </button>
             )
         })}
@@ -3002,62 +3036,8 @@ function RoomBuilderTool() {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* Furniture Sidebar Scrollable Panel */}
-      <div className="bg-[#1C1A17] border border-yellow-900/30 rounded-2xl p-6 h-fit max-h-[850px] overflow-y-auto custom-scrollbar space-y-6">
-         <div>
-            <h3 className="text-yellow-600 font-bold text-[11px] tracking-widest uppercase mb-2">Mobilier Disponibil</h3>
-            <p className="text-slate-400 text-xs mb-4">Click pe piese pentru a le adăuga în animație</p>
-         </div>
-
-         <div>
-             <h4 className="text-yellow-600/80 font-bold text-[10px] tracking-widest uppercase mb-3">Living / Dining</h4>
-             {renderFurnitureGrid([
-                 {id: 'Canapea', icon: '🛋️'}, {id: 'Fotoliu', icon: '🪑'}, {id: 'TV', icon: '📺'},
-                 {id: 'Plantă', icon: '🪴'}, {id: 'Măsuță', icon: '☕'}, {id: 'Tablou', icon: '🖼️'},
-                 {id: 'Lampă', icon: '💡'}, {id: 'Oglindă', icon: '🪞'}
-             ])}
-         </div>
-
-         <div>
-             <h4 className="text-yellow-600/80 font-bold text-[10px] tracking-widest uppercase mb-3 mt-6">Dormitor</h4>
-             {renderFurnitureGrid([
-                 {id: 'Pat', icon: '🛏️'}, {id: 'Noptieră', icon: '🗄️'}, {id: 'Șifonier', icon: '👔'},
-                 {id: 'Oglindă', icon: '🪞'}, {id: 'Veioză', icon: '💡'}, {id: 'Plantă ', icon: '🪴'}
-             ])}
-         </div>
-
-         <div>
-             <h4 className="text-yellow-600/80 font-bold text-[10px] tracking-widest uppercase mb-3 mt-6">Decor & Lumini</h4>
-             {renderFurnitureGrid([
-                 {id: 'Lumânări', icon: '🕯️'}, {id: 'Artă', icon: '🎨'}, {id: 'Cărți', icon: '📚'},
-                 {id: 'Perdele', icon: '🪟'}, {id: 'Coș', icon: '🧺'}, {id: 'Flori', icon: '🌸'},
-                 {id: 'Ceas', icon: '🕰️'}, {id: 'Covor', icon: '🛁'}
-             ])}
-         </div>
-
-         <div>
-            <h4 className="text-yellow-600/80 font-bold text-[10px] tracking-widest uppercase mb-3 mt-6">Culoare Ambient</h4>
-            <div className="flex flex-wrap gap-2">
-                {['Cald', 'Rece', 'Neutru', 'Dramatic'].map(color => (
-                    <button
-                        key={color}
-                        onClick={() => setAmbientColor(color)}
-                        className={`px-4 py-2 rounded-full text-xs border transition-all ${
-                            ambientColor === color
-                              ? 'border-yellow-500 text-yellow-500'
-                              : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300'
-                        }`}
-                    >
-                        {color}
-                    </button>
-                ))}
-            </div>
-         </div>
-      </div>
-
-      <div className="col-span-1 lg:col-span-2 space-y-6">
-        {canUseCustomKeys ? (
+    <div className="w-full space-y-8">
+      {canUseCustomKeys ? (
         <ProviderSettings 
           providerList={[{id: 'replicate', name: 'Replicate API'}, {id: 'runway', name: 'Runway API'}]}
           onProviderChange={setProvider}
@@ -3075,76 +3055,131 @@ function RoomBuilderTool() {
         </div>
       )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-2">Încarcă Imagine (Spațiu Nemobilat)</label>
-                  <FileUploader 
-                     label="Imagine Spațiu Gol" 
-                     accept="image/*" 
-                     onUploadComplete={(u) => setImageUrl(u[0])}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-2">Viteză Animație & Efecte</label>
-                  <div className="space-y-4 bg-black/20 p-5 rounded-xl border border-white/5">
-                    <div>
-                       <div className="flex justify-between text-xs text-slate-400 mb-2">
-                         <span>Viteză Apariție</span>
-                         <span>{speed.toFixed(1)} sec / obiect</span>
-                       </div>
-                       <input 
-                         type="range" 
-                         min="0.5" max="3" step="0.1" 
-                         value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                         className="w-full accent-pink-500 bg-black/50 rounded-full appearance-none h-2 cursor-pointer border border-white/5"
-                       />
-                    </div>
-                    <div className="flex items-center gap-3 pt-2">
-                      <input type="checkbox" id="camera-movement" checked={pan} onChange={(e) => setPan(e.target.checked)} className="w-4 h-4 accent-pink-500 rounded bg-black/50" />
-                      <label htmlFor="camera-movement" className="text-slate-300 text-sm cursor-pointer">Adaugă efect de Zoom In (Camera Pan)</label>
-                    </div>
-                  </div>
-                </div>
+      <div className="space-y-6 bg-[#141210] p-6 md:p-8 rounded-2xl border border-pink-900/30 shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-pink-500/20 border border-pink-500/40 text-pink-300 font-bold text-xs flex items-center justify-center shadow-lg">
+              1
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Configurare Room Builder — Animație Mobilare
+              </h3>
+              <p className="text-xs text-slate-400">Încarcă un spațiu nemobilat și alege piesele care vor apărea treptat în animație</p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-pink-300 bg-pink-500/15 border border-pink-500/30 px-3 py-1 rounded-lg">
+            {cost} credite
+          </span>
+        </div>
 
-                {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+        <div>
+          <label className="block text-sm font-medium text-slate-400 mb-2">Încarcă Imagine (Spațiu Nemobilat)</label>
+          <FileUploader 
+             label="Imagine Spațiu Gol" 
+             accept="image/*" 
+             onUploadComplete={(u) => setImageUrl(u[0])}
+          />
+        </div>
 
-                <button 
+        {/* Furniture selection */}
+        <div className="space-y-4 bg-black/20 p-5 rounded-2xl border border-white/5">
+          <div>
+             <h4 className="text-pink-400/90 font-bold text-xs tracking-widest uppercase mb-3">Living / Dining (Click pentru a include)</h4>
+             {renderFurnitureGrid([
+                 {id: 'Canapea', icon: '🛋️'}, {id: 'Fotoliu', icon: '🪑'}, {id: 'TV', icon: '📺'},
+                 {id: 'Plantă', icon: '🪴'}, {id: 'Măsuță', icon: '☕'}, {id: 'Tablou', icon: '🖼️'},
+                 {id: 'Lampă', icon: '💡'}, {id: 'Oglindă', icon: '🪞'}
+             ])}
+          </div>
+
+          <div>
+             <h4 className="text-pink-400/90 font-bold text-xs tracking-widest uppercase mb-3 mt-4">Dormitor & Decor</h4>
+             {renderFurnitureGrid([
+                 {id: 'Pat', icon: '🛏️'}, {id: 'Noptieră', icon: '🗄️'}, {id: 'Șifonier', icon: '👔'},
+                 {id: 'Veioză', icon: '💡'}, {id: 'Lumânări', icon: '🕯️'}, {id: 'Artă', icon: '🎨'},
+                 {id: 'Perdele', icon: '🪟'}, {id: 'Covor', icon: '🛁'}
+             ])}
+          </div>
+
+          <div className="pt-2">
+            <h4 className="text-slate-400 font-semibold text-xs uppercase tracking-widest mb-2">Culoare Ambient</h4>
+            <div className="flex flex-wrap gap-2">
+                {['Cald', 'Rece', 'Neutru', 'Dramatic'].map(color => (
+                    <button
+                        key={color}
+                        type="button"
+                        onClick={() => setAmbientColor(color)}
+                        className={`px-4 py-2 rounded-full text-xs border transition-all cursor-pointer ${
+                            ambientColor === color
+                              ? 'border-pink-500 text-pink-400 bg-pink-500/10 shadow-[0_0_10px_rgba(236,72,153,0.2)]'
+                              : 'border-white/10 text-slate-400 hover:border-white/30 hover:text-slate-300'
+                        }`}
+                    >
+                        {color}
+                    </button>
+                ))}
+            </div>
+          </div>
+
+          <div className="pt-2 space-y-3">
+             <div className="flex justify-between text-xs text-slate-400">
+               <span>Viteză Apariție Mobilier</span>
+               <span className="text-pink-400 font-mono font-semibold">{speed.toFixed(1)} sec / obiect</span>
+             </div>
+             <input 
+               type="range" 
+               min="0.5" max="3" step="0.1" 
+               value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))}
+               className="w-full accent-pink-500 bg-black/50 rounded-full appearance-none h-2 cursor-pointer border border-white/5"
+             />
+             <div className="flex items-center gap-3 pt-1">
+               <input type="checkbox" id="camera-movement" checked={pan} onChange={(e) => setPan(e.target.checked)} className="w-4 h-4 accent-pink-500 rounded bg-black/50 cursor-pointer" />
+               <label htmlFor="camera-movement" className="text-slate-300 text-xs cursor-pointer">Adaugă efect cinematic de Zoom In (Camera Pan)</label>
+             </div>
+          </div>
+        </div>
+
+        {error && <div className="text-red-400 bg-red-500/10 p-3 rounded-xl text-sm border border-red-500/20">{error}</div>}
+
+        <button 
           onClick={submitAction}
           disabled={isPending || credits < cost}
-          className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50"
+          className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all flex items-center justify-center gap-2 flex-col disabled:opacity-50 cursor-pointer"
         >
-          {isPending ? <div className="flex items-center gap-2"><><Loader2 className="w-5 h-5 animate-spin" /> Se asamblează elementele...</></div> : <span className="flex items-center gap-2">Pornește Generatorul de Animație</span>}
+          {isPending ? <div className="flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Se asamblează elementele...</div> : <span className="flex items-center gap-2">Pornește Generatorul de Animație</span>}
           {!isPending && <span className="text-xs text-white/70 flex items-center gap-1 mt-1 font-normal"><Coins size={12}/> Cost: {cost} credite (Balanță: {credits})</span>}
         </button>
-            </div>
+      </div>
 
-            <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[400px] relative overflow-hidden">
-                {result ? (
-           <>
-               <video src={result} controls autoPlay loop className="w-full h-full rounded-xl bg-black relative z-10" />
-               <button onClick={() => handleDownload(result, 'room_builder_imobum.mp4')} className="absolute top-8 right-8 bg-black/60 hover:bg-black/80 border border-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-md transition-all text-sm font-semibold shadow-2xl z-20">
-                  <Download className="w-4 h-4"/> Descărcare
-              </button>
-           </>
+      {/* Video Result */}
+      <div className="bg-black/30 rounded-2xl border border-white/10 flex items-center justify-center p-6 min-h-[460px] relative overflow-hidden shadow-2xl">
+        {result ? (
+           <div className="w-full space-y-4">
+               <div className="aspect-video bg-black rounded-xl overflow-hidden relative border border-white/10">
+                 <video src={result} controls autoPlay loop className="w-full h-full object-contain bg-black" />
+               </div>
+               <div className="flex justify-end">
+                 <button onClick={() => handleDownload(result, 'room_builder_imobum.mp4')} className="bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 text-pink-300 px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-xs font-semibold shadow-lg cursor-pointer">
+                    <Download className="w-4 h-4"/> Descărcare Video MP4
+                 </button>
+               </div>
+           </div>
         ) : (
-                    <div className="text-center px-4">
-                      {isPending ? (
-                          <>
-                            <Loader2 className="w-16 h-16 text-pink-500 animate-spin mx-auto mb-4" />
-                            <p className="text-slate-400 animate-pulse">Analiză flux spațial în curs...</p>
-                          </>
-                      ) : (
-                          <>
-                             <Wand2 className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                             <p className="text-slate-500 text-sm">Animația va fi procesată și validată aici...</p>
-                          </>
-                      )}
-                    </div>
-                )}
+            <div className="text-center px-4">
+              {isPending ? (
+                  <>
+                    <Loader2 className="w-16 h-16 text-pink-500 animate-spin mx-auto mb-4" />
+                    <p className="text-slate-400 animate-pulse">Analiză flux spațial în curs...</p>
+                  </>
+              ) : (
+                  <>
+                     <Wand2 className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                     <p className="text-slate-500 text-sm">Animația va fi procesată și validată aici...</p>
+                  </>
+              )}
             </div>
-        </div>
+        )}
       </div>
     </div>
   );
