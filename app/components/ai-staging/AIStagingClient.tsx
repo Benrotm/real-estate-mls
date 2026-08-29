@@ -766,11 +766,21 @@ function Panorama360Tool() {
   const [apiKey, setApiKey] = useState('');
 
   const [planUrl, setPlanUrl] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [rooms, setRooms] = useState<Array<{ name: string; surface?: string; features: string; position?: string }>>([
+    { name: 'Living & Dining Open-Space', surface: '24 mp', features: 'Canapea modulară albă, măsuță marmură, masă dining 4 scaune, ieșire balcon', position: 'Central' },
+    { name: 'Dormitor Matrimonial', surface: '16 mp', features: 'Pat dublu tapițat, 2 noptiere, dressing încastrat', position: 'Nord' },
+    { name: 'Bucătărie cu Insulă', surface: '12 mp', features: 'Insulă bucătărie granit, electrocasnice încastrate, scaune bar', position: 'Est' },
+    { name: 'Baie Modernă Tip Spa', surface: '6.5 mp', features: 'Cabină duș walk-in sticlă, lavoar suspendat, oglindă LED', position: 'Vest' },
+    { name: 'Terasă Exterioară cu Deck', surface: '15 mp', features: 'Deck din lemn exotic, 2 șezlonguri, măsuță cafea, plante decorative', position: 'Sud' }
+  ]);
+
   const [roomName, setRoomName] = useState('Living & Dining Open-Space');
   const [style, setStyle] = useState('Modern Lux');
   const [ambience, setAmbience] = useState('Lumină Naturală de Zi');
-  const [furnitureDetails, setFurnitureDetails] = useState('');
+  const [furnitureDetails, setFurnitureDetails] = useState('Canapea modulară albă, măsuță marmură, masă dining 4 scaune, ieșire balcon');
   const [customPrompt, setCustomPrompt] = useState('');
+  const [newRoomName, setNewRoomName] = useState('');
 
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
@@ -798,14 +808,53 @@ function Panorama360Tool() {
     });
   };
 
-  const roomsList = [
-    'Living & Dining Open-Space',
-    'Dormitor Matrimonial',
-    'Terasă Exterioară cu Deck',
-    'Bucătărie cu Insulă',
-    'Baie Modernă Tip Spa',
-    'Hol de Intrare & Vestibul'
-  ];
+  // Trigger automatic AI floor plan scanning when a new plan is uploaded
+  useEffect(() => {
+    if (!planUrl) return;
+    let isMounted = true;
+    setIsAnalyzing(true);
+
+    analyzeFloorplanAction({ planUrl, style, ambience }, provider, apiKey)
+      .then(res => {
+        if (!isMounted) return;
+        if (res.data?.rooms && res.data.rooms.length > 0) {
+          setRooms(res.data.rooms);
+          const firstRoom = res.data.rooms[0];
+          setRoomName(firstRoom.name);
+          if (firstRoom.features) {
+            setFurnitureDetails(firstRoom.features);
+          }
+        }
+      })
+      .catch(err => {
+        console.warn('[Panorama360] Floorplan scan warning:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsAnalyzing(false);
+      });
+
+    return () => { isMounted = false; };
+  }, [planUrl]);
+
+  const selectRoom = (room: { name: string; surface?: string; features: string }) => {
+    setRoomName(room.name);
+    if (room.features) {
+      setFurnitureDetails(room.features);
+    }
+  };
+
+  const addCustomRoom = () => {
+    if (!newRoomName.trim()) return;
+    const added = {
+      name: newRoomName.trim(),
+      surface: 'Manual',
+      features: `Mobilier modern specific pentru ${newRoomName.trim()}`,
+      position: 'Personalizat'
+    };
+    setRooms(prev => [...prev, added]);
+    selectRoom(added);
+    setNewRoomName('');
+  };
 
   const stylesList = ['Modern Lux', 'Scandinavian', 'Minimalist', 'Clasic Elegant', 'Industrial', 'Japandi'];
   const ambienceList = ['Lumină Naturală de Zi', 'Apus Cald (Golden Hour)', 'Eleganță Nocturnă (Evening Ambience)'];
@@ -905,7 +954,7 @@ function Panorama360Tool() {
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                 Configurare Panoramă 360° pe Cameră
               </h3>
-              <p className="text-xs text-slate-400">Alege camera exactă din schiță pe care dorești să o vezi sferic la 360°</p>
+              <p className="text-xs text-slate-400">Încarcă schița — AI-ul identifică automat încăperile și mobilierul din plan</p>
             </div>
           </div>
           <span className="text-xs font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-3 py-1 rounded-lg">
@@ -919,16 +968,71 @@ function Panorama360Tool() {
           onUploadComplete={urls => setPlanUrl(urls[0] || '')}
         />
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Selectează Încăperea pentru Vederea 360°
-          </label>
-          {renderPills(roomsList, roomName, setRoomName)}
+        {/* Dynamic Rooms Selection Area */}
+        <div className="space-y-3 p-4 bg-black/40 rounded-xl border border-cyan-500/20">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-semibold text-cyan-300 uppercase tracking-widest">
+              Încăperi Identificate în Schiță {isAnalyzing && '(Se scanează...)'}
+            </label>
+            {isAnalyzing ? (
+              <span className="text-[11px] text-amber-400 flex items-center gap-1 font-mono">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Scanare Gemini Vision...
+              </span>
+            ) : planUrl ? (
+              <span className="text-[11px] text-emerald-400 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> {rooms.length} încăperi detectate din plan
+              </span>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {rooms.map((r, idx) => {
+              const isSelected = roomName === r.name;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => selectRoom(r)}
+                  className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                      : 'border-white/10 text-slate-300 hover:border-white/30 hover:bg-white/5'
+                  }`}
+                >
+                  <span>{isSelected ? '👁️' : '🚪'} {r.name}</span>
+                  {r.surface && (
+                    <span className="text-[10px] text-slate-400 bg-black/40 px-1.5 py-0.5 rounded border border-white/5 font-mono">
+                      {r.surface}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Add custom room input */}
+          <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+            <input
+              type="text"
+              value={newRoomName}
+              onChange={e => setNewRoomName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomRoom(); } }}
+              placeholder="Adaugă altă încăpere (ex: Dressing, Birou, Mansardă)..."
+              className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/50"
+            />
+            <button
+              type="button"
+              onClick={addCustomRoom}
+              className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+            >
+              + Adaugă
+            </button>
+          </div>
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Stil Arhitectural & Mobilier
+            Stil Arhitectural & Finisaje
           </label>
           {renderPills(stylesList, style, setStyle)}
         </div>
@@ -942,14 +1046,14 @@ function Panorama360Tool() {
 
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Mobilier & Detalii de Inclus în Încăpere (Opțional)
+            Mobilier & Detalii Sincronizate pentru {roomName}
           </label>
-          <input
-            type="text"
+          <textarea
+            rows={2}
             value={furnitureDetails}
             onChange={e => setFurnitureDetails(e.target.value)}
-            className="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/50"
-            placeholder="ex: Canapea albă, măsuță marmură, deck din lemn, plante..."
+            className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/50 resize-none"
+            placeholder="Descrie piesele de mobilier vizibile în plan sau adaugă detalii..."
           />
         </div>
 
@@ -957,7 +1061,7 @@ function Panorama360Tool() {
 
         <button 
           onClick={handleSubmit}
-          disabled={isPending || credits < cost}
+          disabled={isPending || isAnalyzing || credits < cost}
           className="w-full py-4 bg-gradient-to-r from-cyan-500 via-teal-500 to-cyan-600 hover:from-cyan-400 hover:to-teal-400 text-white font-bold rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {isPending ? (
@@ -1053,12 +1157,21 @@ function Walkthrough2StageTool() {
   const [apiKey, setApiKey] = useState('');
 
   const [planUrl, setPlanUrl] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [rooms, setRooms] = useState<Array<{ name: string; surface?: string; features: string; position?: string }>>([
+    { name: 'Living Open-Space & Terasă', surface: '26 mp', features: 'Canapea colțar albă, măsuță marmură, masă dining 4 scaune, ieșire pe terasa cu deck', position: 'Central / Sud' },
+    { name: 'Dormitor Matrimonial', surface: '16 mp', features: 'Pat dublu tapițat, două noptiere simetrice, dressing încastrat', position: 'Nord' },
+    { name: 'Bucătărie cu Insulă', surface: '12 mp', features: 'Insulă centrală cu chiuvetă și plită, dulapuri suspendate, scaune bar', position: 'Est' },
+    { name: 'Baie Modernă', surface: '6 mp', features: 'Cabină de duș walk-in sticlă, mașină de spălat rufe, lavoar dublu', position: 'Vest' }
+  ]);
+
   const [roomName, setRoomName] = useState('Living Open-Space & Terasă');
   const [style, setStyle] = useState('Modern Lux');
   const [ambience, setAmbience] = useState('Lumină Naturală de Zi');
   const [furnitureDetails, setFurnitureDetails] = useState('Canapea colțar albă, măsuță marmură, masă dining 4 scaune, ieșire pe terasa cu deck');
   const [motionType, setMotionType] = useState('Înaintare lină prin living spre terasă');
   const [duration, setDuration] = useState('5 secunde');
+  const [newRoomName, setNewRoomName] = useState('');
 
   const [isRenderingImage, setIsRenderingImage] = useState(false);
   const [interiorImageUrl, setInteriorImageUrl] = useState('');
@@ -1084,7 +1197,54 @@ function Walkthrough2StageTool() {
     });
   };
 
-  const roomsList = ['Living Open-Space & Terasă', 'Dormitor Matrimonial', 'Bucătărie cu Insulă', 'Baie Modernă'];
+  // Trigger automatic AI floor plan scanning when a plan is uploaded
+  useEffect(() => {
+    if (!planUrl) return;
+    let isMounted = true;
+    setIsAnalyzing(true);
+
+    analyzeFloorplanAction({ planUrl, style, ambience }, provider, apiKey)
+      .then(res => {
+        if (!isMounted) return;
+        if (res.data?.rooms && res.data.rooms.length > 0) {
+          setRooms(res.data.rooms);
+          const firstRoom = res.data.rooms[0];
+          setRoomName(firstRoom.name);
+          if (firstRoom.features) {
+            setFurnitureDetails(firstRoom.features);
+          }
+        }
+      })
+      .catch(err => {
+        console.warn('[Walkthrough2Stage] Floorplan scan warning:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsAnalyzing(false);
+      });
+
+    return () => { isMounted = false; };
+  }, [planUrl]);
+
+  const selectRoom = (room: { name: string; surface?: string; features: string }) => {
+    setRoomName(room.name);
+    if (room.features) {
+      setFurnitureDetails(room.features);
+    }
+  };
+
+  const addCustomRoom = () => {
+    if (!newRoomName.trim()) return;
+    const added = {
+      name: newRoomName.trim(),
+      surface: 'Manual',
+      features: `Mobilier modern specific pentru ${newRoomName.trim()}`,
+      position: 'Personalizat'
+    };
+    setRooms(prev => [...prev, added]);
+    selectRoom(added);
+    setNewRoomName('');
+  };
+
   const motionsList = [
     'Înaintare lină prin living spre terasă',
     'Panoramare lentă stânga-dreapta',
@@ -1214,7 +1374,7 @@ function Walkthrough2StageTool() {
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                 Etapa 1: Plan → Randare Foto Interioară
               </h3>
-              <p className="text-xs text-slate-400">Randează prima cameră la nivelul ochilor respectând mobilierul din plan</p>
+              <p className="text-xs text-slate-400">Randează prima cameră la nivelul ochilor respectând compartimentarea și mobilierul din plan</p>
             </div>
           </div>
         </div>
@@ -1225,11 +1385,66 @@ function Walkthrough2StageTool() {
           onUploadComplete={urls => setPlanUrl(urls[0] || '')}
         />
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Selectează Camera pentru Randare
-          </label>
-          {renderPills(roomsList, roomName, setRoomName)}
+        {/* Dynamic Rooms Selection Area */}
+        <div className="space-y-3 p-4 bg-black/40 rounded-xl border border-emerald-500/20">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-widest">
+              Selectează Camera pentru Randare {isAnalyzing && '(Se scanează...)'}
+            </label>
+            {isAnalyzing ? (
+              <span className="text-[11px] text-amber-400 flex items-center gap-1 font-mono">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Scanare Gemini Vision...
+              </span>
+            ) : planUrl ? (
+              <span className="text-[11px] text-emerald-400 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> {rooms.length} încăperi detectate din plan
+              </span>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {rooms.map((r, idx) => {
+              const isSelected = roomName === r.name;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => selectRoom(r)}
+                  className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
+                      : 'border-white/10 text-slate-300 hover:border-white/30 hover:bg-white/5'
+                  }`}
+                >
+                  <span>{isSelected ? '👁️' : '🚪'} {r.name}</span>
+                  {r.surface && (
+                    <span className="text-[10px] text-slate-400 bg-black/40 px-1.5 py-0.5 rounded border border-white/5 font-mono">
+                      {r.surface}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Add custom room input */}
+          <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+            <input
+              type="text"
+              value={newRoomName}
+              onChange={e => setNewRoomName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomRoom(); } }}
+              placeholder="Adaugă altă încăpere (ex: Dormitor Copii, Dressing, Birou)..."
+              className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50"
+            />
+            <button
+              type="button"
+              onClick={addCustomRoom}
+              className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+            >
+              + Adaugă
+            </button>
+          </div>
         </div>
 
         <div>
@@ -1248,7 +1463,7 @@ function Walkthrough2StageTool() {
 
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Descriere Mobilier Identificat în Schiță
+            Mobilier Identificat & Sincronizat pentru {roomName}
           </label>
           <textarea
             rows={2}
@@ -1261,20 +1476,20 @@ function Walkthrough2StageTool() {
 
         <button 
           onClick={handleRenderInterior}
-          disabled={isRenderingImage}
+          disabled={isRenderingImage || isAnalyzing}
           className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 text-sm"
         >
           {isRenderingImage ? (
-            <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Randare Cadru Interior din Plan...</span>
+            <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Randare Cadru Interior ({roomName})...</span>
           ) : (
-            <span className="flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Generează Cadrul Interior (Etapa 1)</span>
+            <span className="flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Generează Cadrul Interior pentru {roomName}</span>
           )}
         </button>
 
         {interiorImageUrl && (
           <div className="p-4 bg-black/40 rounded-xl border border-emerald-500/30 space-y-2 animate-in fade-in">
             <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4" /> Cadru interior generat cu fidelitate din plan:
+              <CheckCircle2 className="w-4 h-4" /> Cadru interior generat cu fidelitate din plan ({roomName}):
             </span>
             <div className="aspect-video bg-black rounded-lg overflow-hidden border border-white/10 max-h-[300px]">
               <img src={interiorImageUrl} alt="Interior Render" className="w-full h-full object-contain" />
@@ -1329,7 +1544,7 @@ function Walkthrough2StageTool() {
             </span>
           ) : (
             <span className="flex items-center gap-2 text-base">
-              <Video className="w-5 h-5" /> Randare Video Cinematic din Cadru
+              <Video className="w-5 h-5" /> Randare Video Cinematic din Cadru ({roomName})
             </span>
           )}
         </button>
@@ -1341,7 +1556,7 @@ function Walkthrough2StageTool() {
           <div className="w-full space-y-4 animate-in fade-in duration-300">
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
               <span className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" /> Video Walkthrough 2-Stage Finalizat
+                <CheckCircle2 className="w-4 h-4" /> Video Walkthrough 2-Stage Finalizat ({roomName})
               </span>
               <button 
                 onClick={() => handleDownload(videoResultUrl, 'walkthrough_2stage.mp4')} 
@@ -1360,7 +1575,7 @@ function Walkthrough2StageTool() {
               <div className="space-y-4 text-center">
                 <Loader2 className="w-10 h-10 text-emerald-400 animate-spin mx-auto" />
                 <p className="font-bold text-slate-200 text-sm">Animare cadru foto în mișcare continuă...</p>
-                <p className="text-slate-400 text-xs max-w-xs mx-auto">Păstrează 100% canapeaua, masa și pereții generați la Pasul 1.</p>
+                <p className="text-slate-400 text-xs max-w-xs mx-auto">Păstrează 100% canapeaua, masa și pereții generați la Pasul 1 ({roomName}).</p>
               </div>
             ) : (
               <>

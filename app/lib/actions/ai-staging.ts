@@ -19,51 +19,232 @@ async function getGlobalApiKey(provider: string) {
 }
 
 export async function generateVirtualStaging(payload: { imageUrl: string, roomType: string, style: string, additionalOptions: string[] }, provider: string, apiKey: string) {
-    const finalApiKey = apiKey || await getGlobalApiKey(provider);
-    if (!finalApiKey) return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
+    const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+    const falApiKey = (provider === 'fal' && apiKey) ? apiKey : (apiKey || await getGlobalApiKey('fal') || await getGlobalApiKey('replicate'));
 
     const creditRes = await updateSystemFeatureDeduction('ai_virtual_staging');
     if (creditRes?.error) return { error: creditRes.error };
 
-    try {
-        console.log(`[VirtualStaging] Hooking to ${provider} with additional options `, payload.additionalOptions);
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        return { success: true, resultUrl: payload.imageUrl, message: "Virtual staging generation successful" };
-    } catch (e: any) {
-        return { error: e.message || 'Server error' };
+    const stagingPrompt = `Photorealistic interior virtual staging of an empty room into a luxurious ${payload.roomType}, ${payload.style} interior design style. Elegantly furnished with high-end designer furniture, ${payload.additionalOptions.join(', ')}. Large windows with natural light, high-end hardwood floor, architectural digest photography, 8k resolution, crisp textures, cozy warm ambience.`;
+
+    // 1. Fal.ai Flux Dev
+    if (falApiKey) {
+        try {
+            console.log('[VirtualStaging] Dispatching live staging to Fal.ai Flux Dev...');
+            const falPost = await fetch("https://queue.fal.run/fal-ai/flux/dev", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Key ${falApiKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    prompt: stagingPrompt,
+                    image_size: "landscape_16_9",
+                    num_inference_steps: 28,
+                    guidance_scale: 3.5
+                })
+            });
+
+            if (falPost.ok) {
+                const queueData = await falPost.json();
+                const requestId = queueData.request_id;
+                if (requestId) {
+                    for (let i = 0; i < 20; i++) {
+                        await new Promise(r => setTimeout(r, 2500));
+                        const st = await fetch(`https://queue.fal.run/fal-ai/flux/requests/${requestId}/status`, {
+                            headers: { "Authorization": `Key ${falApiKey}` }
+                        });
+                        if (st.ok) {
+                            const stJson = await st.json();
+                            if (stJson.status === "COMPLETED") {
+                                const res = await fetch(`https://queue.fal.run/fal-ai/flux/requests/${requestId}`, {
+                                    headers: { "Authorization": `Key ${falApiKey}` }
+                                });
+                                if (res.ok) {
+                                    const resData = await res.json();
+                                    const imgUrl = resData.images?.[0]?.url;
+                                    if (imgUrl) {
+                                        return { success: true, resultUrl: imgUrl, message: "Virtual staging generat cu succes" };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (falErr) {
+            console.warn('[VirtualStaging] Fal.ai error, trying Gemini fallback:', falErr);
+        }
     }
+
+    // 2. Gemini Imagen 3 Fallback
+    if (geminiApiKey) {
+        try {
+            const geminiImgResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${geminiApiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    instances: [{ prompt: stagingPrompt }],
+                    parameters: {
+                        sampleCount: 1,
+                        aspectRatio: "16:9",
+                        outputOptions: { mimeType: "image/jpeg" }
+                    }
+                })
+            });
+
+            if (geminiImgResp.ok) {
+                const imgJson = await geminiImgResp.json();
+                const b64 = imgJson.predictions?.[0]?.bytesBase64Encoded;
+                if (b64) {
+                    const buffer = Buffer.from(b64, 'base64');
+                    const supabase = createAdminClient();
+                    const fileName = `virtual_staging_${Date.now()}.jpg`;
+                    const filePath = `ai_uploads/${fileName}`;
+                    await supabase.storage.from('property-images').upload(filePath, buffer, { contentType: 'image/jpeg', upsert: true });
+                    const { data: { publicUrl } } = supabase.storage.from('property-images').getPublicUrl(filePath);
+                    return { success: true, resultUrl: publicUrl, message: "Virtual staging generat cu succes" };
+                }
+            }
+        } catch (gErr) {
+            console.warn('[VirtualStaging] Gemini Imagen error:', gErr);
+        }
+    }
+
+    return { error: "Nu a fost configurată nicio cheie API validă (Fal.ai sau Google Gemini)." };
 }
 
 export async function generateVideo(payload: { imageUrls: string[], musicType: string, voiceType: string, videoFormat: string, narrationDetails: string, logoUrl?: string }, provider: string, apiKey: string) {
-    const finalApiKey = apiKey || await getGlobalApiKey(provider);
-    if (!finalApiKey) return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
+    const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+    const falApiKey = (provider === 'fal' && apiKey) ? apiKey : (apiKey || await getGlobalApiKey('fal'));
 
     const creditRes = await updateSystemFeatureDeduction('ai_video_generator');
     if (creditRes?.error) return { error: creditRes.error };
 
-    try {
-        console.log(`[VideoGenerator] Hooking to ${provider} with format ${payload.videoFormat}...`);
-        await new Promise(resolve => setTimeout(resolve, 4000));
-        return { success: true, resultUrl: "https://www.w3schools.com/html/mov_bbb.mp4", message: "Video generated successfully" };
-    } catch (e: any) {
-        return { error: e.message || 'Server error' };
+    const firstImage = payload.imageUrls[0] || '';
+    const videoPrompt = `Cinematic real estate property presentation showcase video. Smooth graceful camera motion, warm elegant natural daylight, ${payload.narrationDetails || 'luxurious interior with premium finishes'}. Architectural digest videography, 4k resolution, cinematic color grading.`;
+
+    // 1. Google Veo 3.1
+    if (provider === 'gemini' && geminiApiKey) {
+        const veoRes = await callGoogleVeoGenerate(geminiApiKey, firstImage, videoPrompt);
+        if (veoRes.success && veoRes.videoUrl) {
+            return { success: true, resultUrl: veoRes.videoUrl, message: "Video imobiliar generat cu succes" };
+        }
     }
+
+    // 2. Fal.ai Kling Video
+    if (falApiKey) {
+        const falRes = await callFalKlingImageToVideo(falApiKey, firstImage, videoPrompt, "5", payload.videoFormat || "16:9");
+        if (falRes.success && falRes.videoUrl) {
+            return { success: true, resultUrl: falRes.videoUrl, message: "Video imobiliar generat cu succes" };
+        }
+    }
+
+    // Fallback if provider was gemini but no key, try fal or vice-versa
+    if (geminiApiKey) {
+        const veoRes = await callGoogleVeoGenerate(geminiApiKey, firstImage, videoPrompt);
+        if (veoRes.success && veoRes.videoUrl) {
+            return { success: true, resultUrl: veoRes.videoUrl, message: "Video imobiliar generat cu succes" };
+        }
+    }
+
+    return { error: "Nu s-a putut genera videoul. Vă rugăm să verificați cheia API Fal.ai sau Google Gemini." };
 }
 
 export async function generate3DPlan(payload: { planUrl: string, perspective: string }, provider: string, apiKey: string) {
-    const finalApiKey = apiKey || await getGlobalApiKey(provider);
-    if (!finalApiKey) return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
+    const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+    const falApiKey = (provider === 'fal' && apiKey) ? apiKey : (apiKey || await getGlobalApiKey('fal') || await getGlobalApiKey('replicate'));
 
     const creditRes = await updateSystemFeatureDeduction('ai_plan_3d');
     if (creditRes?.error) return { error: creditRes.error };
 
-    try {
-        console.log(`[Plan3D] Hooking to ${provider}...`);
-        await new Promise(resolve => setTimeout(resolve, 3500));
-        return { success: true, resultUrl: payload.planUrl, message: "3D Plan converted successfully" };
-    } catch (e: any) {
-        return { error: e.message || 'Server error' };
+    const planPrompt = `3D architectural cutaway floor plan render, ${payload.perspective}, modern luxury apartment layout. High-detail 3D model, textured wooden parquet, tiled bathrooms, fully furnished rooms with contemporary furniture matching the architectural blueprint, realistic soft sunlight and ambient shadows, clean white walls, Unreal Engine 5 render, 8k resolution.`;
+
+    // 1. Fal.ai Flux Dev
+    if (falApiKey) {
+        try {
+            console.log('[Plan3D] Generating 3D plan render via Fal.ai Flux...');
+            const falPost = await fetch("https://queue.fal.run/fal-ai/flux/dev", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Key ${falApiKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    prompt: planPrompt,
+                    image_size: "landscape_16_9",
+                    num_inference_steps: 28,
+                    guidance_scale: 3.5
+                })
+            });
+
+            if (falPost.ok) {
+                const queueData = await falPost.json();
+                const requestId = queueData.request_id;
+                if (requestId) {
+                    for (let i = 0; i < 20; i++) {
+                        await new Promise(r => setTimeout(r, 2500));
+                        const st = await fetch(`https://queue.fal.run/fal-ai/flux/requests/${requestId}/status`, {
+                            headers: { "Authorization": `Key ${falApiKey}` }
+                        });
+                        if (st.ok) {
+                            const stJson = await st.json();
+                            if (stJson.status === "COMPLETED") {
+                                const res = await fetch(`https://queue.fal.run/fal-ai/flux/requests/${requestId}`, {
+                                    headers: { "Authorization": `Key ${falApiKey}` }
+                                });
+                                if (res.ok) {
+                                    const resData = await res.json();
+                                    const imgUrl = resData.images?.[0]?.url;
+                                    if (imgUrl) {
+                                        return { success: true, resultUrl: imgUrl, message: "Plan 3D generat cu succes" };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (falErr) {
+            console.warn('[Plan3D] Fal.ai error, trying Gemini fallback:', falErr);
+        }
     }
+
+    // 2. Gemini Imagen 3 Fallback
+    if (geminiApiKey) {
+        try {
+            const geminiImgResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${geminiApiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    instances: [{ prompt: planPrompt }],
+                    parameters: {
+                        sampleCount: 1,
+                        aspectRatio: "16:9",
+                        outputOptions: { mimeType: "image/jpeg" }
+                    }
+                })
+            });
+
+            if (geminiImgResp.ok) {
+                const imgJson = await geminiImgResp.json();
+                const b64 = imgJson.predictions?.[0]?.bytesBase64Encoded;
+                if (b64) {
+                    const buffer = Buffer.from(b64, 'base64');
+                    const supabase = createAdminClient();
+                    const fileName = `plan_3d_${Date.now()}.jpg`;
+                    const filePath = `ai_uploads/${fileName}`;
+                    await supabase.storage.from('property-images').upload(filePath, buffer, { contentType: 'image/jpeg', upsert: true });
+                    const { data: { publicUrl } } = supabase.storage.from('property-images').getPublicUrl(filePath);
+                    return { success: true, resultUrl: publicUrl, message: "Plan 3D generat cu succes" };
+                }
+            }
+        } catch (gErr) {
+            console.warn('[Plan3D] Gemini Imagen error:', gErr);
+        }
+    }
+
+    return { error: "Nu a fost configurată nicio cheie API (Fal.ai sau Google Gemini)." };
 }
 
 async function callGeminiGenerate(apiKey: string, prompt: string, systemInstruction?: string, imageUrl?: string): Promise<{ success: boolean; text?: string; error?: string }> {
@@ -163,19 +344,38 @@ Descrierea trebuie să conțină:
 }
 
 export async function generateRoomAnimation(payload: { imageUrl: string, speed: number, pan: boolean, selectedFurniture: string[], ambientColor: string }, provider: string, apiKey: string) {
-    const finalApiKey = apiKey || await getGlobalApiKey(provider);
-    if (!finalApiKey) return { error: "Nu a fost configurată nicio cheie API (nici personală, nici globală)." };
+    const geminiApiKey = (provider === 'gemini' && apiKey) ? apiKey : await getGlobalApiKey('gemini');
+    const falApiKey = (provider === 'fal' && apiKey) ? apiKey : (apiKey || await getGlobalApiKey('fal'));
 
     const creditRes = await updateSystemFeatureDeduction('ai_room_builder');
     if (creditRes?.error) return { error: creditRes.error };
 
-    try {
-        console.log(`[RoomBuilder] Hooking to ${provider} with furniture schema: `, payload.selectedFurniture);
-        await new Promise(resolve => setTimeout(resolve, 4500));
-        return { success: true, resultUrl: "https://www.w3schools.com/html/mov_bbb.mp4", message: "Animation generated successfully" };
-    } catch (e: any) {
-        return { error: e.message || 'Server error' };
+    const roomAnimPrompt = `Stop-motion and smooth cinematic assembly animation of interior design furniture appearing one by one into an empty room: ${payload.selectedFurniture.join(', ')}. ${payload.ambientColor} ambient lighting, ${payload.pan ? 'smooth cinematic camera zoom in' : 'steady camera perspective'}, photorealistic render, architectural staging process.`;
+
+    // 1. Google Veo 3.1
+    if (provider === 'gemini' && geminiApiKey) {
+        const veoRes = await callGoogleVeoGenerate(geminiApiKey, payload.imageUrl, roomAnimPrompt);
+        if (veoRes.success && veoRes.videoUrl) {
+            return { success: true, resultUrl: veoRes.videoUrl, message: "Animație Room Builder generată cu succes" };
+        }
     }
+
+    // 2. Fal.ai Kling Video
+    if (falApiKey) {
+        const falRes = await callFalKlingImageToVideo(falApiKey, payload.imageUrl, roomAnimPrompt, "5", "16:9");
+        if (falRes.success && falRes.videoUrl) {
+            return { success: true, resultUrl: falRes.videoUrl, message: "Animație Room Builder generată cu succes" };
+        }
+    }
+
+    if (geminiApiKey) {
+        const veoRes = await callGoogleVeoGenerate(geminiApiKey, payload.imageUrl, roomAnimPrompt);
+        if (veoRes.success && veoRes.videoUrl) {
+            return { success: true, resultUrl: veoRes.videoUrl, message: "Animație Room Builder generată cu succes" };
+        }
+    }
+
+    return { error: "Nu a fost configurată nicio cheie API validă pentru generare video." };
 }
 
 async function callGoogleVeoGenerate(
